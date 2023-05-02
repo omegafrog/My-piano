@@ -1,16 +1,17 @@
 package com.omegafrog.My.piano.app.post.entity;
 
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.Objects;
 
 @RequiredArgsConstructor
-@Getter
+@Entity
 public class Author {
 
-    @NotNull
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private final Long id;
 
     @NotNull
