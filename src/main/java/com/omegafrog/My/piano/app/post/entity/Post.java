@@ -1,11 +1,16 @@
 package com.omegafrog.My.piano.app.post.entity;
 
+import lombok.Builder;
+import lombok.NoArgsConstructor;
+
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@Builder
+@NoArgsConstructor
 public class Post {
 
     @Id
