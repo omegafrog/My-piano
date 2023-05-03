@@ -2,6 +2,7 @@ package com.omegafrog.My.piano.app.post.entity;
 
 import com.omegafrog.My.piano.app.post.dto.UpdateVideoPostDto;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
@@ -11,6 +12,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 @Entity
 @NoArgsConstructor
+@Getter
 public class VideoPost {
 
     @Id
