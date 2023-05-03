@@ -16,7 +16,7 @@ class PostTest {
         Post post = Post.builder()
                 .title("title")
                 .content("content")
-                .author(new Author(0L, "author", "none"))
+                .author(new Author("author", "none"))
                 .build();
         String title = "updated";
         String content = "updatedContent";
@@ -37,12 +37,12 @@ class PostTest {
         Post post = Post.builder()
                 .title("title")
                 .content("content")
-                .author(new Author(0L, "author", "none"))
+                .author(new Author( "author", "none"))
                 .build();
         String content = "hi";
         Comment comment = new Comment(
                 0L,
-                new Author(0L, "author1", "none"),
+                new Author("author1", "none"),
                 content
                );
         int cnt = post.addComment(comment);
@@ -55,12 +55,12 @@ class PostTest {
         Post post = Post.builder()
                 .title("title")
                 .content("content")
-                .author(new Author(0L, "author", "none"))
+                .author(new Author( "author", "none"))
                 .build();
         String content = "hi";
         Comment comment = new Comment(
                 0L,
-                new Author(0L, "author1", "none"),
+                new Author("author1", "none"),
                 content);
         int cnt = post.addComment(comment);
         post.deleteComment(0L);

@@ -32,7 +32,7 @@ public class Post {
     private String content;
     private int likeCount;
 
-    @OneToMany
+    @OneToMany(cascade = {CascadeType.PERSIST,CascadeType.MERGE})
     private List<Comment> comments = new CopyOnWriteArrayList<>();
 
     public Post update(UpdatePostDto post){

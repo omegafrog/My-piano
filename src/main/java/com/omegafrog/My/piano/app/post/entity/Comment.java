@@ -35,7 +35,7 @@ public class Comment {
     @NotNull
     private int likeCount;
 
-    @OneToMany
+    @OneToMany(cascade = {CascadeType.PERSIST,CascadeType.MERGE})
     @JoinColumn(name = "PARENT_ID")
     private List<Comment> replies = new CopyOnWriteArrayList<>();
 

@@ -27,7 +27,7 @@ class PostRepositoryTest {
         Post post = Post.builder()
                 .title("test1")
                 .content("content1")
-                .author(new Author(0L, "author1", "none"))
+                .author(new Author("author1", "none"))
                 .build();
         Post saved = postRepository.save(post);
         Assertions.assertThat(saved).isEqualTo(post);
@@ -42,7 +42,7 @@ class PostRepositoryTest {
         Post post = Post.builder()
                 .title("test1")
                 .content("content1")
-                .author(new Author(0L, "author1", "none"))
+                .author(new Author( "author1", "none"))
                 .build();
         Post saved = postRepository.save(post);
         UpdatePostDto updatePostDto = UpdatePostDto.builder()
@@ -63,12 +63,58 @@ class PostRepositoryTest {
         Post post = Post.builder()
                 .title("test1")
                 .content("content1")
-                .author(new Author(0L, "author1", "none"))
+                .author(new Author( "author1", "none"))
                 .build();
         Post saved = postRepository.save(post);
         postRepository.deleteById(saved.getId());
         Optional<Post> founded = postRepository.findById(saved.getId());
         Assertions.assertThat(founded.isEmpty()).isTrue();
+    }
+
+    @Test
+    @DisplayName("게시글에 댓글을 작성할 수 있어야 한다.")
+    void addCommentTest(){
+        //given
+        Post post = Post.builder()
+                .title("test1")
+                .content("content1")
+                .author(new Author( "author1", "none"))
+                .build();
+        Post saved = postRepository.save(post);
+        //when
+        Comment comment = Comment.builder()
+                .content("comment1")
+                .author(new Author( "author1", "none"))
+                .build();
+        saved.addComment(comment);
+        Post commentAdded = postRepository.save(saved);
+        //then
+        Assertions.assertThat(commentAdded.getComments().size()).isGreaterThanOrEqualTo(1);
+        Assertions.assertThat(commentAdded.getComments().get(0).getContent()).isEqualTo("comment1");
+    }
+
+    @Test
+    @DisplayName("게시글의 댓글을 삭제할 수 있어야 한다.")
+    void deleteCommentTest(){
+        //given
+        Post post = Post.builder()
+                .title("test1")
+                .content("content1")
+                .author(new Author( "author1", "none"))
+                .build();
+        Post saved = postRepository.save(post);
+        Comment comment = Comment.builder()
+                .content("comment1")
+                .author(new Author( "author1", "none"))
+                .build();
+        saved.addComment(comment);
+        Post commentAdded = postRepository.save(saved);
+        //when
+        commentAdded.deleteComment(commentAdded.getComments().get(0).getId());
+        Post deletedComment = postRepository.save(commentAdded);
+
+        //then
+        Assertions.assertThat(deletedComment.getComments().size()).isEqualTo(0);
     }
 
 }

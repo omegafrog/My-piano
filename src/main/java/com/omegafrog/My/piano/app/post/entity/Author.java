@@ -1,22 +1,31 @@
 package com.omegafrog.My.piano.app.post.entity;
 
+import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.Objects;
 
-@RequiredArgsConstructor
+
 @Entity
+@NoArgsConstructor
 public class Author {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private final Long id;
+    private Long id;
 
     @NotNull
-    private final String name;
-    private final String profileSrc;
+    private String name;
+    private String profileSrc;
+
+    @Builder
+    public Author(String name, String profileSrc) {
+        this.name = name;
+        this.profileSrc = profileSrc;
+    }
 
     @Override
     public boolean equals(Object o) {
