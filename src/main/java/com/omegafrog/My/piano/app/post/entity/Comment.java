@@ -3,6 +3,7 @@ package com.omegafrog.My.piano.app.post.entity;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.apache.logging.log4j.spi.CopyOnWrite;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -11,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @Entity
 @Getter
@@ -35,15 +37,15 @@ public class Comment {
 
     @OneToMany
     @JoinColumn(name = "PARENT_ID")
-    private Queue<Comment> replies = new ConcurrentLinkedQueue<>();
+    private List<Comment> replies = new CopyOnWriteArrayList<>();
 
     @Builder
-    public Comment(Long id, Author author, LocalDateTime createdAt, String content, int likeCount) {
+    public Comment(Long id, Author author, 0 String content) {
         this.id = id;
         this.author = author;
-        this.createdAt = createdAt;
+        this.createdAt = LocalDateTime.now();
         this.content = content;
-        this.likeCount = likeCount;
+        this.likeCount = 0;
     }
 
 
