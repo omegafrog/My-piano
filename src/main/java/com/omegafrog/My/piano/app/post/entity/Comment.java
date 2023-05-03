@@ -14,7 +14,7 @@ public class Comment {
     private Long id;
 
     @OneToOne
-    @JoinColumn(name = "AUTHOR_ID")
+    @JoinColumn(name = "USER_ID")
     private Author author;
     @NotNull
     private LocalDateTime createdAt;
