@@ -38,7 +38,8 @@ public class Comment {
     private Queue<Comment> replies = new ConcurrentLinkedQueue<>();
 
     @Builder
-    public Comment( Author author, LocalDateTime createdAt, String content, int likeCount) {
+    public Comment(Long id, Author author, LocalDateTime createdAt, String content, int likeCount) {
+        this.id = id;
         this.author = author;
         this.createdAt = createdAt;
         this.content = content;
