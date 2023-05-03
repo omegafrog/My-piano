@@ -43,9 +43,8 @@ class PostTest {
         Comment comment = new Comment(
                 0L,
                 new Author(0L, "author1", "none"),
-                LocalDateTime.now(),
-                content,
-                0);
+                content
+               );
         int cnt = post.addComment(comment);
         Assertions.assertThat(cnt).isEqualTo(1);
         Assertions.assertThat(post.getComments().get(0).getContent()).isEqualTo(content);
@@ -62,9 +61,7 @@ class PostTest {
         Comment comment = new Comment(
                 0L,
                 new Author(0L, "author1", "none"),
-                LocalDateTime.now(),
-                content,
-                0);
+                content);
         int cnt = post.addComment(comment);
         post.deleteComment(0L);
         Assertions.assertThat(post.getComments().size()).isEqualTo(0);

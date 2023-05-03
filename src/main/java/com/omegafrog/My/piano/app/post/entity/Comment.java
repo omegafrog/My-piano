@@ -40,7 +40,7 @@ public class Comment {
     private List<Comment> replies = new CopyOnWriteArrayList<>();
 
     @Builder
-    public Comment(Long id, Author author, 0 String content) {
+    public Comment(Long id, Author author,String content) {
         this.id = id;
         this.author = author;
         this.createdAt = LocalDateTime.now();

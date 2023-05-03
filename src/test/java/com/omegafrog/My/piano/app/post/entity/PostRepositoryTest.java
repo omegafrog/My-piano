@@ -2,6 +2,7 @@ package com.omegafrog.My.piano.app.post.entity;
 
 import com.omegafrog.My.piano.app.post.dto.UpdatePostDto;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -21,14 +22,12 @@ class PostRepositoryTest {
     private PostRepository postRepository;
 
     @Test
+    @DisplayName("게시글을 작성하고 조회할 수 있어야 한다")
     void saveNFindPostTest() {
         Post post = Post.builder()
                 .title("test1")
                 .content("content1")
-                .viewCount(0)
-                .likeCount(0)
                 .author(new Author(0L, "author1", "none"))
-                .createdAt(LocalDateTime.now())
                 .build();
         Post saved = postRepository.save(post);
         Assertions.assertThat(saved).isEqualTo(post);
@@ -38,14 +37,12 @@ class PostRepositoryTest {
     }
 
     @Test
+    @DisplayName("게시글을 수정할 수 있어야 한다.")
     void updatePostTest(){
         Post post = Post.builder()
                 .title("test1")
                 .content("content1")
-                .viewCount(0)
-                .likeCount(0)
                 .author(new Author(0L, "author1", "none"))
-                .createdAt(LocalDateTime.now())
                 .build();
         Post saved = postRepository.save(post);
         UpdatePostDto updatePostDto = UpdatePostDto.builder()
@@ -61,14 +58,12 @@ class PostRepositoryTest {
         Assertions.assertThat(updated.getContent()).isEqualTo("updatedContent");
     }
     @Test
+    @DisplayName("게시글을 삭제할 수 있어야 한다")
     void deletePostTest(){
         Post post = Post.builder()
                 .title("test1")
                 .content("content1")
-                .viewCount(0)
-                .likeCount(0)
                 .author(new Author(0L, "author1", "none"))
-                .createdAt(LocalDateTime.now())
                 .build();
         Post saved = postRepository.save(post);
         postRepository.deleteById(saved.getId());
