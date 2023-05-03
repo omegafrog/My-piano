@@ -2,6 +2,7 @@ package com.omegafrog.My.piano.app.post.entity;
 
 import com.omegafrog.My.piano.app.post.dto.UpdatePostDto;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
@@ -12,6 +13,7 @@ import java.util.List;
 @Entity
 @Builder
 @NoArgsConstructor
+@Getter
 public class Post {
 
     @Id
