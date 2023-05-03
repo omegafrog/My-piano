@@ -7,10 +7,11 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @Entity
+
 @NoArgsConstructor
 @Getter
 public class Post {
@@ -31,6 +32,9 @@ public class Post {
     private String content;
     private int likeCount;
 
+    @OneToMany
+    private List<Comment> comments = new CopyOnWriteArrayList<>();
+
     public Post update(UpdatePostDto post){
         this.viewCount = post.getViewCount();
         this.title = post.getTitle();
@@ -39,18 +43,26 @@ public class Post {
         return this;
     }
 
-    @Builder
-    public Post(Author author, LocalDateTime createdAt, int viewCount, String title, String content, int likeCount) {
-        this.author = author;
-        this.createdAt = createdAt;
-        this.viewCount = viewCount;
-        this.title = title;
-        this.content = content;
-        this.likeCount = likeCount;
+    public int addComment(Comment comment){
+        this.comments.add(comment);
+        return this.comments.size();
     }
 
-    @OneToMany
-    private List<Comment> comments = new ArrayList<>();
+    public void deleteComment(Long id){
+        this.comments.forEach(comment -> {
+            if (comment.getId().equals(id)) comments.remove(comment);
+        });
+    }
+
+    @Builder
+    public Post(Author author,String title, String content) {
+        this.author = author;
+        this.createdAt = LocalDateTime.now();
+        this.viewCount = 0;
+        this.title = title;
+        this.content = content;
+        this.likeCount = 0;
+    }
 
     @Override
     public boolean equals(Object o) {
