@@ -1,12 +1,20 @@
 package com.omegafrog.My.piano.app.post.entity;
 
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Entity
+@Getter
+@NoArgsConstructor
 public class Comment {
 
     @Id
@@ -26,6 +34,16 @@ public class Comment {
     private int likeCount;
 
     @OneToMany
-    private List<Comment> replies = new ArrayList<>();
+    @JoinColumn(name = "PARENT_ID")
+    private Queue<Comment> replies = new ConcurrentLinkedQueue<>();
+
+    @Builder
+    public Comment( Author author, LocalDateTime createdAt, String content, int likeCount) {
+        this.author = author;
+        this.createdAt = createdAt;
+        this.content = content;
+        this.likeCount = likeCount;
+    }
+
 
 }
