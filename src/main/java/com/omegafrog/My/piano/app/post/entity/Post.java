@@ -1,6 +1,8 @@
 package com.omegafrog.My.piano.app.post.entity;
 
+import com.omegafrog.My.piano.app.post.dto.UpdatePostDto;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
@@ -11,6 +13,7 @@ import java.util.List;
 @Entity
 @Builder
 @NoArgsConstructor
+@Getter
 public class Post {
 
     @Id
@@ -28,6 +31,24 @@ public class Post {
     private String title;
     private String content;
     private int likeCount;
+
+    public Post update(UpdatePostDto post){
+        this.viewCount = post.getViewCount();
+        this.title = post.getTitle();
+        this.content = post.getContent();
+        this.likeCount = post.getLikeCount();
+        return this;
+    }
+
+    @Builder
+    public Post(Author author, LocalDateTime createdAt, int viewCount, String title, String content, int likeCount) {
+        this.author = author;
+        this.createdAt = createdAt;
+        this.viewCount = viewCount;
+        this.title = title;
+        this.content = content;
+        this.likeCount = likeCount;
+    }
 
     @OneToMany
     private List<Comment> comments = new ArrayList<>();
