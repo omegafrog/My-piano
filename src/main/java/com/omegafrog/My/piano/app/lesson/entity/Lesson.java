@@ -1,6 +1,7 @@
 package com.omegafrog.My.piano.app.lesson.entity;
 
 import com.omegafrog.My.piano.app.lesson.dto.UpdateLessonDto;
+import com.omegafrog.My.piano.app.sheet.Sheet;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -42,7 +43,7 @@ public class Lesson {
         this.title = title;
         this.subTitle = subTitle;
         this.price = price;
-        this.videoInformation = videoInformation
+        this.videoInformation = videoInformation;
         this.lessonProvider = lessonProvider;
         this.sheet = sheet;
         this.lessonInformation = lessonInformation;
@@ -54,7 +55,7 @@ public class Lesson {
         this.title = dto.getTitle();
         this.subTitle = dto.getSubTitle();
         this.price = dto.getPrice();
-        this.videoUrl = dto.getVideoUrl();
+        this.videoInformation = dto.getVideoInformation();
         this.sheet = dto.getSheet();
         this.lessonInformation = dto.getLessonInformation();
         return this;
