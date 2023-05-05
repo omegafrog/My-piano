@@ -19,7 +19,6 @@ public class LessonProvider {
     private String name;
     private String profileSrc;
 
-
     @Builder
     public LessonProvider(String name, String profileSrc) {
         this.name = name;
