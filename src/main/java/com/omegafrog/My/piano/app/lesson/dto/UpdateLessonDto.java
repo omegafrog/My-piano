@@ -3,6 +3,7 @@ package com.omegafrog.My.piano.app.lesson.dto;
 import com.omegafrog.My.piano.app.lesson.entity.LessonInformation;
 import com.omegafrog.My.piano.app.lesson.entity.VideoInformation;
 import com.omegafrog.My.piano.app.sheet.Sheet;
+import lombok.Builder;
 import lombok.Getter;
 
 @Getter
@@ -16,8 +17,8 @@ public class UpdateLessonDto {
     private VideoInformation videoInformation;
 
 
-
-    public UpdateLessonDto(String title, String subTitle, int price, String videoUrl, Sheet sheet,
+@Builder
+    public UpdateLessonDto(String title, String subTitle, int price, Sheet sheet,
                            LessonInformation lessonInformation, VideoInformation videoInformation) {
         this.title = title;
         this.subTitle = subTitle;
