@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Objects;
 
 @Entity
@@ -19,7 +20,9 @@ public class Lesson {
     private String title;
     private String subTitle;
     private int price;
-    private String videoUrl;
+
+    private VideoInformation videoInformation;
+
     private LocalDateTime createdAt;
     private int viewCount;
     @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
@@ -32,12 +35,12 @@ public class Lesson {
     private LessonInformation lessonInformation;
 
     @Builder
-    public Lesson(String title, String subTitle, int price, String videoUrl,
+    public Lesson(String title, String subTitle, int price, VideoInformation videoInformation,
                   LessonProvider lessonProvider, Sheet sheet, LessonInformation lessonInformation) {
         this.title = title;
         this.subTitle = subTitle;
         this.price = price;
-        this.videoUrl = videoUrl;
+        this.videoInformation = videoInformation
         this.lessonProvider = lessonProvider;
         this.sheet = sheet;
         this.lessonInformation = lessonInformation;

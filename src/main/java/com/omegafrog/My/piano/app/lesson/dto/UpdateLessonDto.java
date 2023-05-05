@@ -9,6 +9,7 @@ public class UpdateLessonDto {
     private String subTitle;
     private int price;
     private String videoUrl;
+
     private Sheet sheet;
     private LessonInformation lessonInformation;
 
