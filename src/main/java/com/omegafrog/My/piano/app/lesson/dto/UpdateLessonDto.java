@@ -12,6 +12,8 @@ public class UpdateLessonDto {
     private Sheet sheet;
     private LessonInformation lessonInformation;
 
+
+
     public UpdateLessonDto(String title, String subTitle, int price, String videoUrl, Sheet sheet,
                            LessonInformation lessonInformation) {
         this.title = title;
