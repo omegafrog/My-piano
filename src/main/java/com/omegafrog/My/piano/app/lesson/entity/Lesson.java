@@ -2,6 +2,7 @@ package com.omegafrog.My.piano.app.lesson.entity;
 
 import com.omegafrog.My.piano.app.lesson.dto.UpdateLessonDto;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
@@ -15,6 +16,7 @@ public class Lesson {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Getter
     private Long id;
 
     private String title;
