@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @Entity
+@Table(name = "`USER`")
 @NoArgsConstructor
 public class User {
 
