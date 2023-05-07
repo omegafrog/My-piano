@@ -1,9 +1,9 @@
 package com.omegafrog.My.piano.app.sheet.entity;
 
-import com.omegafrog.My.piano.app.sheet.dto.UpdateSheetDto;
 import com.omegafrog.My.piano.app.sheet.dto.UpdateSheetPostDto;
 import com.omegafrog.My.piano.app.user.entity.User;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
@@ -15,6 +15,7 @@ public class SheetPost {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Getter
     private Long id;
     private String title;
     LocalDateTime created_at;
