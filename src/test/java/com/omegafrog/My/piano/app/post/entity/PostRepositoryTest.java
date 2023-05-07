@@ -119,7 +119,15 @@ class PostRepositoryTest {
         //when
         Comment comment = Comment.builder()
                 .content("comment1")
-                .author(new Author( "author1", "none"))
+                .author(User.builder()
+                        .name("user1")
+                        .profileSrc("profile1")
+                        .loginMethod(LoginMethod.EMAIL)
+                        .phoneNum(PhoneNum.builder()
+                                .phoneNum("010-1111-1112")
+                                .isAuthorized(false)
+                                .build())
+                        .build())
                 .build();
         saved.addComment(comment);
         Post commentAdded = postRepository.save(saved);
@@ -148,7 +156,15 @@ class PostRepositoryTest {
         Post saved = postRepository.save(post);
         Comment comment = Comment.builder()
                 .content("comment1")
-                .author(new Author( "author1", "none"))
+                .author(User.builder()
+                        .name("user1")
+                        .profileSrc("profile1")
+                        .loginMethod(LoginMethod.EMAIL)
+                        .phoneNum(PhoneNum.builder()
+                                .phoneNum("010-1111-1112")
+                                .isAuthorized(false)
+                                .build())
+                        .build())
                 .build();
         saved.addComment(comment);
         Post commentAdded = postRepository.save(saved);

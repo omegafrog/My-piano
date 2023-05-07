@@ -1,5 +1,6 @@
 package com.omegafrog.My.piano.app.post.entity;
 
+import com.omegafrog.My.piano.app.user.entity.User;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,7 +26,7 @@ public class Comment {
 
     @OneToOne
     @JoinColumn(name = "USER_ID")
-    private Author author;
+    private User author;
     @NotNull
     private LocalDateTime createdAt;
 
@@ -40,7 +41,7 @@ public class Comment {
     private List<Comment> replies = new CopyOnWriteArrayList<>();
 
     @Builder
-    public Comment(Long id, Author author,String content) {
+    public Comment(Long id, User author,String content) {
         this.id = id;
         this.author = author;
         this.createdAt = LocalDateTime.now();

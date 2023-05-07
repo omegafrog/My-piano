@@ -1,4 +1,4 @@
-package com.omegafrog.My.piano.app.lesson.entity.enums;
+package com.omegafrog.My.piano.app.enums;
 
 public enum Instrument {
     PIANO_KEY_88("88키"),

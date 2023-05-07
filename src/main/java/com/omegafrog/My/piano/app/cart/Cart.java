@@ -1,6 +1,6 @@
 package com.omegafrog.My.piano.app.cart;
 
-import com.omegafrog.My.piano.app.sheet.Sheet;
+import com.omegafrog.My.piano.app.sheet.entity.Sheet;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;

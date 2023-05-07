@@ -1,10 +1,7 @@
 package com.omegafrog.My.piano.app.post.dto;
 
-import com.omegafrog.My.piano.app.post.entity.Author;
 import lombok.Builder;
 import lombok.Data;
-
-import java.time.LocalDateTime;
 
 @Data
 public class UpdatePostDto {
