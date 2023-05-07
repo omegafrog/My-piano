@@ -4,9 +4,9 @@ import com.omegafrog.My.piano.app.enums.Difficulty;
 import com.omegafrog.My.piano.app.enums.Genre;
 import com.omegafrog.My.piano.app.enums.Instrument;
 import com.omegafrog.My.piano.app.sheet.dto.UpdateSheetDto;
+import com.omegafrog.My.piano.app.user.entity.User;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
-import org.springframework.security.core.userdetails.User;
 
 import javax.persistence.*;
 
