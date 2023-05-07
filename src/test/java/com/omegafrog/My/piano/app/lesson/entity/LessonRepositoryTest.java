@@ -5,6 +5,9 @@ import com.omegafrog.My.piano.app.lesson.entity.enums.Category;
 import com.omegafrog.My.piano.app.lesson.entity.enums.Instrument;
 import com.omegafrog.My.piano.app.lesson.entity.enums.RefundPolicy;
 import com.omegafrog.My.piano.app.sheet.Sheet;
+import com.omegafrog.My.piano.app.user.entity.User;
+import com.omegafrog.My.piano.app.user.vo.LoginMethod;
+import com.omegafrog.My.piano.app.user.vo.PhoneNum;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -37,9 +40,15 @@ class LessonRepositoryTest {
                 .title("lesson1")
                 .subTitle("good lesson 1")
                 .price(12000)
-                .lessonProvider(LessonProvider.builder()
-                        .name("artist1")
-                        .profileSrc("none").build())
+                .lessonProvider(User.builder()
+                        .name("user1")
+                        .profileSrc("profile1")
+                        .loginMethod(LoginMethod.EMAIL)
+                        .phoneNum(PhoneNum.builder()
+                                .phoneNum("010-1111-1112")
+                                .isAuthorized(false)
+                                .build())
+                        .build())
                 .lessonInformation(LessonInformation.builder()
                         .lessonDescription("lessonDesc")
                         .artistDescription("artistDesc")
@@ -67,9 +76,15 @@ class LessonRepositoryTest {
                 .title("lesson1")
                 .subTitle("good lesson 1")
                 .price(12000)
-                .lessonProvider(LessonProvider.builder()
-                        .name("artist1")
-                        .profileSrc("none").build())
+                .lessonProvider(User.builder()
+                        .name("user1")
+                        .profileSrc("profile1")
+                        .loginMethod(LoginMethod.EMAIL)
+                        .phoneNum(PhoneNum.builder()
+                                .phoneNum("010-1111-1112")
+                                .isAuthorized(false)
+                                .build())
+                        .build())
                 .lessonInformation(LessonInformation.builder()
                         .lessonDescription("lessonDesc")
                         .artistDescription("artistDesc")
@@ -117,9 +132,15 @@ class LessonRepositoryTest {
                 .title("lesson1")
                 .subTitle("good lesson 1")
                 .price(12000)
-                .lessonProvider(LessonProvider.builder()
-                        .name("artist1")
-                        .profileSrc("none").build())
+                .lessonProvider(User.builder()
+                        .name("user1")
+                        .profileSrc("profile1")
+                        .loginMethod(LoginMethod.EMAIL)
+                        .phoneNum(PhoneNum.builder()
+                                .phoneNum("010-1111-1112")
+                                .isAuthorized(false)
+                                .build())
+                        .build())
                 .lessonInformation(LessonInformation.builder()
                         .lessonDescription("lessonDesc")
                         .artistDescription("artistDesc")

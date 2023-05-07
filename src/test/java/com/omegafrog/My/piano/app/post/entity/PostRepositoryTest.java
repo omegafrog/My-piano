@@ -1,6 +1,9 @@
 package com.omegafrog.My.piano.app.post.entity;
 
 import com.omegafrog.My.piano.app.post.dto.UpdatePostDto;
+import com.omegafrog.My.piano.app.user.entity.User;
+import com.omegafrog.My.piano.app.user.vo.LoginMethod;
+import com.omegafrog.My.piano.app.user.vo.PhoneNum;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,7 +30,15 @@ class PostRepositoryTest {
         Post post = Post.builder()
                 .title("test1")
                 .content("content1")
-                .author(new Author("author1", "none"))
+                .author(User.builder()
+                        .name("user1")
+                        .profileSrc("profile1")
+                        .loginMethod(LoginMethod.EMAIL)
+                        .phoneNum(PhoneNum.builder()
+                                .phoneNum("010-1111-1112")
+                                .isAuthorized(false)
+                                .build())
+                        .build())
                 .build();
         Post saved = postRepository.save(post);
         Assertions.assertThat(saved).isEqualTo(post);
@@ -42,7 +53,15 @@ class PostRepositoryTest {
         Post post = Post.builder()
                 .title("test1")
                 .content("content1")
-                .author(new Author( "author1", "none"))
+                .author(User.builder()
+                        .name("user1")
+                        .profileSrc("profile1")
+                        .loginMethod(LoginMethod.EMAIL)
+                        .phoneNum(PhoneNum.builder()
+                                .phoneNum("010-1111-1112")
+                                .isAuthorized(false)
+                                .build())
+                        .build())
                 .build();
         Post saved = postRepository.save(post);
         UpdatePostDto updatePostDto = UpdatePostDto.builder()
@@ -63,7 +82,15 @@ class PostRepositoryTest {
         Post post = Post.builder()
                 .title("test1")
                 .content("content1")
-                .author(new Author( "author1", "none"))
+                .author(User.builder()
+                        .name("user1")
+                        .profileSrc("profile1")
+                        .loginMethod(LoginMethod.EMAIL)
+                        .phoneNum(PhoneNum.builder()
+                                .phoneNum("010-1111-1112")
+                                .isAuthorized(false)
+                                .build())
+                        .build())
                 .build();
         Post saved = postRepository.save(post);
         postRepository.deleteById(saved.getId());
@@ -78,7 +105,15 @@ class PostRepositoryTest {
         Post post = Post.builder()
                 .title("test1")
                 .content("content1")
-                .author(new Author( "author1", "none"))
+                .author(User.builder()
+                        .name("user1")
+                        .profileSrc("profile1")
+                        .loginMethod(LoginMethod.EMAIL)
+                        .phoneNum(PhoneNum.builder()
+                                .phoneNum("010-1111-1112")
+                                .isAuthorized(false)
+                                .build())
+                        .build())
                 .build();
         Post saved = postRepository.save(post);
         //when
@@ -100,7 +135,15 @@ class PostRepositoryTest {
         Post post = Post.builder()
                 .title("test1")
                 .content("content1")
-                .author(new Author( "author1", "none"))
+                .author(User.builder()
+                        .name("user1")
+                        .profileSrc("profile1")
+                        .loginMethod(LoginMethod.EMAIL)
+                        .phoneNum(PhoneNum.builder()
+                                .phoneNum("010-1111-1112")
+                                .isAuthorized(false)
+                                .build())
+                        .build())
                 .build();
         Post saved = postRepository.save(post);
         Comment comment = Comment.builder()

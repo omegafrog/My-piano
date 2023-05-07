@@ -1,6 +1,9 @@
 package com.omegafrog.My.piano.app.post.entity;
 
 import com.omegafrog.My.piano.app.post.dto.UpdatePostDto;
+import com.omegafrog.My.piano.app.user.entity.User;
+import com.omegafrog.My.piano.app.user.vo.LoginMethod;
+import com.omegafrog.My.piano.app.user.vo.PhoneNum;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -16,7 +19,15 @@ class PostTest {
         Post post = Post.builder()
                 .title("title")
                 .content("content")
-                .author(new Author("author", "none"))
+                .author(User.builder()
+                        .name("user1")
+                        .profileSrc("profile1")
+                        .loginMethod(LoginMethod.EMAIL)
+                        .phoneNum(PhoneNum.builder()
+                                .phoneNum("010-1111-1112")
+                                .isAuthorized(false)
+                                .build())
+                        .build())
                 .build();
         String title = "updated";
         String content = "updatedContent";
@@ -37,7 +48,15 @@ class PostTest {
         Post post = Post.builder()
                 .title("title")
                 .content("content")
-                .author(new Author( "author", "none"))
+                .author(User.builder()
+                        .name("user1")
+                        .profileSrc("profile1")
+                        .loginMethod(LoginMethod.EMAIL)
+                        .phoneNum(PhoneNum.builder()
+                                .phoneNum("010-1111-1112")
+                                .isAuthorized(false)
+                                .build())
+                        .build())
                 .build();
         String content = "hi";
         Comment comment = new Comment(
@@ -55,7 +74,15 @@ class PostTest {
         Post post = Post.builder()
                 .title("title")
                 .content("content")
-                .author(new Author( "author", "none"))
+                .author(User.builder()
+                        .name("user1")
+                        .profileSrc("profile1")
+                        .loginMethod(LoginMethod.EMAIL)
+                        .phoneNum(PhoneNum.builder()
+                                .phoneNum("010-1111-1112")
+                                .isAuthorized(false)
+                                .build())
+                        .build())
                 .build();
         String content = "hi";
         Comment comment = new Comment(

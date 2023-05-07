@@ -26,7 +26,6 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "USER_ID")
     @Getter
     private Long id;
     private String name;
@@ -89,6 +88,7 @@ public class User {
     @Builder
     public User(String name, Cart cart, LoginMethod loginMethod, String profileSrc, PhoneNum phoneNum) {
         this.name = name;
+        this.alarmProperties = new AlarmProperties();
         this.loginMethod = loginMethod;
         this.profileSrc = profileSrc;
         this.phoneNum = phoneNum;
