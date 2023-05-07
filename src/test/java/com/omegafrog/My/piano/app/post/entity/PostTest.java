@@ -61,7 +61,15 @@ class PostTest {
         String content = "hi";
         Comment comment = new Comment(
                 0L,
-                new Author("author1", "none"),
+                User.builder()
+                        .name("user1")
+                        .profileSrc("profile1")
+                        .loginMethod(LoginMethod.EMAIL)
+                        .phoneNum(PhoneNum.builder()
+                                .phoneNum("010-1111-1112")
+                                .isAuthorized(false)
+                                .build())
+                        .build(),
                 content
                );
         int cnt = post.addComment(comment);
@@ -87,7 +95,15 @@ class PostTest {
         String content = "hi";
         Comment comment = new Comment(
                 0L,
-                new Author("author1", "none"),
+                User.builder()
+                        .name("user1")
+                        .profileSrc("profile1")
+                        .loginMethod(LoginMethod.EMAIL)
+                        .phoneNum(PhoneNum.builder()
+                                .phoneNum("010-1111-1112")
+                                .isAuthorized(false)
+                                .build())
+                        .build(),
                 content);
         int cnt = post.addComment(comment);
         post.deleteComment(0L);

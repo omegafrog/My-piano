@@ -1,4 +1,4 @@
-package com.omegafrog.My.piano.app.lesson.entity.enums;
+package com.omegafrog.My.piano.app.enums;
 
 public enum Category {
     SHEET_COMPLETE("한곡 완성법"),
