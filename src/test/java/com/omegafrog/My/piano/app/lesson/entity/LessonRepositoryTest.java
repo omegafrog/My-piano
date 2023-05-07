@@ -1,10 +1,10 @@
 package com.omegafrog.My.piano.app.lesson.entity;
 
 import com.omegafrog.My.piano.app.lesson.dto.UpdateLessonDto;
-import com.omegafrog.My.piano.app.lesson.entity.enums.Category;
-import com.omegafrog.My.piano.app.lesson.entity.enums.Instrument;
-import com.omegafrog.My.piano.app.lesson.entity.enums.RefundPolicy;
-import com.omegafrog.My.piano.app.sheet.Sheet;
+import com.omegafrog.My.piano.app.enums.Category;
+import com.omegafrog.My.piano.app.enums.Instrument;
+import com.omegafrog.My.piano.app.enums.RefundPolicy;
+import com.omegafrog.My.piano.app.sheet.entity.Sheet;
 import com.omegafrog.My.piano.app.user.entity.User;
 import com.omegafrog.My.piano.app.user.vo.LoginMethod;
 import com.omegafrog.My.piano.app.user.vo.PhoneNum;
@@ -13,14 +13,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
-import javax.persistence.EntityNotFoundException;
 import java.time.LocalTime;
 import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
 class LessonRepositoryTest {
