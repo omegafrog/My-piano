@@ -4,6 +4,7 @@ import com.omegafrog.My.piano.app.enums.Difficulty;
 import com.omegafrog.My.piano.app.enums.Genre;
 import com.omegafrog.My.piano.app.enums.Instrument;
 import com.omegafrog.My.piano.app.sheet.dto.UpdateSheetDto;
+import lombok.Builder;
 import lombok.NoArgsConstructor;
 import org.springframework.security.core.userdetails.User;
 
@@ -28,6 +29,19 @@ public class Sheet {
     @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "USER_ID")
     private User user;
+
+    @Builder
+    public Sheet(int pageNum, Difficulty difficulty, Instrument instrument, Genre genre, boolean isSolo, boolean lyrics, String filePath, int price, User user) {
+        this.pageNum = pageNum;
+        this.difficulty = difficulty;
+        this.instrument = instrument;
+        this.genre = genre;
+        this.isSolo = isSolo;
+        this.lyrics = lyrics;
+        this.filePath = filePath;
+        this.price = price;
+        this.user = user;
+    }
 
     public Sheet update(UpdateSheetDto dto){
         this.pageNum = dto.getPageNum();
