@@ -3,7 +3,7 @@ package com.omegafrog.My.piano.app.user.entity;
 import com.omegafrog.My.piano.app.cart.Cart;
 import com.omegafrog.My.piano.app.lesson.entity.Lesson;
 import com.omegafrog.My.piano.app.post.entity.Post;
-import com.omegafrog.My.piano.app.sheet.Sheet;
+import com.omegafrog.My.piano.app.sheet.entity.Sheet;
 import com.omegafrog.My.piano.app.user.dto.UpdateUserDto;
 import com.omegafrog.My.piano.app.user.vo.AlarmProperties;
 import com.omegafrog.My.piano.app.user.vo.LoginMethod;
