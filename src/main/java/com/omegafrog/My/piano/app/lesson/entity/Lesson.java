@@ -29,7 +29,7 @@ public class Lesson {
     private LocalDateTime createdAt;
     private int viewCount;
     @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinColumn(name = "ARTIST_ID")
+    @JoinColumn(name = "USER_ID")
     private LessonProvider lessonProvider;
     @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "SHEET_ID")
