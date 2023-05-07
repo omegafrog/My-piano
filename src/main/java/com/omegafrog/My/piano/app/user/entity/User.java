@@ -9,6 +9,7 @@ import com.omegafrog.My.piano.app.user.vo.AlarmProperties;
 import com.omegafrog.My.piano.app.user.vo.LoginMethod;
 import com.omegafrog.My.piano.app.user.vo.PhoneNum;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -25,6 +26,7 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "USER_ID")
+    @Getter
     private Long id;
     private String name;
 
