@@ -1,4 +1,4 @@
-package com.omegafrog.My.piano.app.security.entity;
+package com.omegafrog.My.piano.app.security.entity.authorities;
 
 public enum Role {
     ADMIN("관리자"),
