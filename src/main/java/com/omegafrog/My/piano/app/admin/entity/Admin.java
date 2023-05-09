@@ -1,6 +1,7 @@
 package com.omegafrog.My.piano.app.admin.entity;
 
 
+import com.omegafrog.My.piano.app.admin.dto.AdminDto;
 import com.omegafrog.My.piano.app.admin.dto.UpdateAdminDto;
 import com.omegafrog.My.piano.app.enums.Position;
 import lombok.Builder;
@@ -52,4 +53,13 @@ public class Admin {
     public int hashCode() {
         return id.hashCode();
     }
+
+    public AdminDto toDto(){
+        return AdminDto.builder()
+                .name(this.name)
+                .email(this.email)
+                .position(this.position)
+                .build();
+    }
+
 }
