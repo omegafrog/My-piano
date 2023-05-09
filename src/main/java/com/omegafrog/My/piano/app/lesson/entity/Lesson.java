@@ -2,6 +2,7 @@ package com.omegafrog.My.piano.app.lesson.entity;
 
 import com.omegafrog.My.piano.app.lesson.dto.UpdateLessonDto;
 import com.omegafrog.My.piano.app.sheet.Sheet;
+import com.omegafrog.My.piano.app.user.entity.User;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -29,8 +30,8 @@ public class Lesson {
     private LocalDateTime createdAt;
     private int viewCount;
     @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinColumn(name = "ARTIST_ID")
-    private LessonProvider lessonProvider;
+    @JoinColumn(name = "USER_ID")
+    private User lessonProvider;
     @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "SHEET_ID")
     private Sheet sheet;
@@ -39,7 +40,7 @@ public class Lesson {
 
     @Builder
     public Lesson(String title, String subTitle, int price, VideoInformation videoInformation,
-                  LessonProvider lessonProvider, Sheet sheet, LessonInformation lessonInformation) {
+                  User lessonProvider, Sheet sheet, LessonInformation lessonInformation) {
         this.title = title;
         this.subTitle = subTitle;
         this.price = price;

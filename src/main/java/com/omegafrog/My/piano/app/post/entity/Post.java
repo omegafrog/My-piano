@@ -1,6 +1,7 @@
 package com.omegafrog.My.piano.app.post.entity;
 
 import com.omegafrog.My.piano.app.post.dto.UpdatePostDto;
+import com.omegafrog.My.piano.app.user.entity.User;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,9 +21,9 @@ public class Post {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne
+    @OneToOne(cascade = {CascadeType.MERGE, CascadeType.PERSIST})
     @JoinColumn(name = "USER_ID")
-    private Author author;
+    private User author;
 
     private LocalDateTime createdAt;
 
@@ -55,7 +56,7 @@ public class Post {
     }
 
     @Builder
-    public Post(Author author,String title, String content) {
+    public Post(User author,String title, String content) {
         this.author = author;
         this.createdAt = LocalDateTime.now();
         this.viewCount = 0;

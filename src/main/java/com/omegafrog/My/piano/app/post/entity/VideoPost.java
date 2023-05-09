@@ -1,6 +1,7 @@
 package com.omegafrog.My.piano.app.post.entity;
 
 import com.omegafrog.My.piano.app.post.dto.UpdateVideoPostDto;
+import com.omegafrog.My.piano.app.user.entity.User;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,9 +20,9 @@ public class VideoPost {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne(cascade = {CascadeType.MERGE,CascadeType.PERSIST})
+    @OneToOne(cascade = {CascadeType.MERGE, CascadeType.PERSIST})
     @JoinColumn(name = "USER_ID")
-    private Author author;
+    private User author;
 
     private LocalDateTime createdAt;
 
@@ -37,7 +38,7 @@ public class VideoPost {
     private final List<Comment> comments = new CopyOnWriteArrayList<>();
 
     @Builder
-    public VideoPost(Author author, String title, String content, String videoUrl) {
+    public VideoPost(User author, String title, String content, String videoUrl) {
         this.author = author;
         this.createdAt = LocalDateTime.now();
         this.viewCount = 0;
