@@ -1,13 +1,12 @@
 package com.omegafrog.My.piano.app.lesson.entity;
 
-import com.omegafrog.My.piano.app.lesson.entity.enums.Category;
-import com.omegafrog.My.piano.app.lesson.entity.enums.Instrument;
-import com.omegafrog.My.piano.app.lesson.entity.enums.RefundPolicy;
+import com.omegafrog.My.piano.app.enums.Category;
+import com.omegafrog.My.piano.app.enums.Instrument;
+import com.omegafrog.My.piano.app.enums.RefundPolicy;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.Embeddable;
-import java.time.LocalTime;
 
 @Embeddable
 @NoArgsConstructor

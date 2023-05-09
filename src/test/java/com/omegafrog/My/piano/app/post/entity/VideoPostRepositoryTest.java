@@ -104,7 +104,15 @@ class VideoPostRepositoryTest {
         //when
         Comment comment = Comment.builder()
                 .content("comment1")
-                .author(new Author( "author1", "none"))
+                .author(User.builder()
+                        .name("user1")
+                        .profileSrc("profile1")
+                        .loginMethod(LoginMethod.EMAIL)
+                        .phoneNum(PhoneNum.builder()
+                                .phoneNum("010-1111-1112")
+                                .isAuthorized(false)
+                                .build())
+                        .build())
                 .build();
         saved.addComment(comment);
         VideoPost commentAdded = videoPostRepository.save(saved);
@@ -133,7 +141,15 @@ class VideoPostRepositoryTest {
         VideoPost saved = videoPostRepository.save(post);
         Comment comment = Comment.builder()
                 .content("comment1")
-                .author(new Author( "author1", "none"))
+                .author(User.builder()
+                        .name("user1")
+                        .profileSrc("profile1")
+                        .loginMethod(LoginMethod.EMAIL)
+                        .phoneNum(PhoneNum.builder()
+                                .phoneNum("010-1111-1112")
+                                .isAuthorized(false)
+                                .build())
+                        .build())
                 .build();
         saved.addComment(comment);
         VideoPost commentAdded = videoPostRepository.save(saved);

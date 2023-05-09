@@ -2,7 +2,7 @@ package com.omegafrog.My.piano.app.lesson.dto;
 
 import com.omegafrog.My.piano.app.lesson.entity.LessonInformation;
 import com.omegafrog.My.piano.app.lesson.entity.VideoInformation;
-import com.omegafrog.My.piano.app.sheet.Sheet;
+import com.omegafrog.My.piano.app.sheet.entity.Sheet;
 import lombok.Builder;
 import lombok.Getter;
 
