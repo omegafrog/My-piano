@@ -1,6 +1,6 @@
 package com.omegafrog.My.piano.app.lesson.entity;
 
-import com.omegafrog.My.piano.app.lesson.dto.UpdateLessonDto;
+import com.omegafrog.My.piano.app.dto.UpdateLessonDto;
 import com.omegafrog.My.piano.app.sheet.entity.Sheet;
 import com.omegafrog.My.piano.app.user.entity.User;
 import lombok.Builder;

@@ -1,8 +1,8 @@
 package com.omegafrog.My.piano.app.admin.entity;
 
 
-import com.omegafrog.My.piano.app.admin.dto.AdminDto;
-import com.omegafrog.My.piano.app.admin.dto.UpdateAdminDto;
+import com.omegafrog.My.piano.app.dto.AdminDto;
+import com.omegafrog.My.piano.app.dto.UpdateAdminDto;
 import com.omegafrog.My.piano.app.enums.Position;
 import lombok.Builder;
 import lombok.Getter;

@@ -1,4 +1,4 @@
-package com.omegafrog.My.piano.app.sheet.dto;
+package com.omegafrog.My.piano.app.dto;
 
 import com.omegafrog.My.piano.app.enums.Difficulty;
 import com.omegafrog.My.piano.app.enums.Genre;
