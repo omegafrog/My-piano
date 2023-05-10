@@ -1,5 +1,6 @@
 package com.omegafrog.My.piano.app.security.entity;
 
+import com.omegafrog.My.piano.app.dto.SecurityUserDto;
 import com.omegafrog.My.piano.app.security.entity.authorities.Authority;
 import com.omegafrog.My.piano.app.user.entity.User;
 import lombok.Builder;
@@ -8,6 +9,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.persistence.*;
+import javax.transaction.UserTransaction;
 import java.time.LocalDateTime;
 import java.time.temporal.TemporalAmount;
 import java.util.ArrayList;
@@ -32,7 +34,7 @@ public class SecurityUser implements UserDetails {
     private LocalDateTime credentialChangedAt;
     private boolean locked;
 
-    @OneToOne
+    @OneToOne(cascade = {CascadeType.MERGE,CascadeType.PERSIST})
     @JoinColumn(name = "USER_ID")
     private User user;
 
@@ -92,5 +94,17 @@ public class SecurityUser implements UserDetails {
     @Override
     public boolean isEnabled() {
         return isAccountNonExpired() || isCredentialsNonExpired();
+    }
+
+    public SecurityUserDto toDto(){
+        return SecurityUserDto.builder()
+                .createdAt(createdAt)
+                .credentialChangedAt(credentialChangedAt)
+                .authorities(authorities)
+                .locked(locked)
+                .id(id)
+                .password(password)
+                .username(username)
+                .build();
     }
 }
