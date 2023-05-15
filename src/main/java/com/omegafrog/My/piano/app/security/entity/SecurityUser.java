@@ -8,8 +8,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import javax.persistence.*;
-import javax.transaction.UserTransaction;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.time.temporal.TemporalAmount;
 import java.util.ArrayList;

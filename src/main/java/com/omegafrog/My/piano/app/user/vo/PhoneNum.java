@@ -3,7 +3,8 @@ package com.omegafrog.My.piano.app.user.vo;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Embeddable;
+import jakarta.persistence.Embeddable;
+import lombok.Setter;
 
 @Embeddable
 @NoArgsConstructor
