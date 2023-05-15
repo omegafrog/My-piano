@@ -4,14 +4,10 @@ import com.omegafrog.My.piano.app.user.entity.User;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.apache.logging.log4j.spi.CopyOnWrite;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @Entity
@@ -26,13 +22,10 @@ public class Comment {
     @OneToOne
     @JoinColumn(name = "USER_ID")
     private User author;
-    @NotNull
     private LocalDateTime createdAt;
 
-    @NotNull
     private String content;
 
-    @NotNull
     private int likeCount;
 
     @OneToMany(cascade = {CascadeType.PERSIST,CascadeType.MERGE})
