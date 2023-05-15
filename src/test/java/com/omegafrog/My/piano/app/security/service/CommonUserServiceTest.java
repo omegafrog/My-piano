@@ -24,7 +24,7 @@ class CommonUserServiceTest {
     @Autowired
     private SecurityUserRepository securityUserRepository;
 
-    private final PasswordEncoder passwordEncoder = new Pbkdf2PasswordEncoder("test", 32,256);
+    private final PasswordEncoder passwordEncoder = new Pbkdf2PasswordEncoder("test", 32,256, Pbkdf2PasswordEncoder.SecretKeyFactoryAlgorithm.PBKDF2WithHmacSHA256);
 
 
     @Test
@@ -53,6 +53,49 @@ class CommonUserServiceTest {
     }
 
     @Test
+    @DisplayName("securityUser를 추가할 수 있어야 한다.")
     void registerUser() {
+        SecurityUser securityUser = SecurityUser.builder()
+                .username("username")
+                .password(passwordEncoder.encode("password"))
+                .user(User.builder()
+                        .name("name")
+                        .phoneNum(PhoneNum.builder()
+                                .phoneNum("phoneNum")
+                                .isAuthorized(false)
+                                .build())
+                        .cart(new Cart())
+                        .profileSrc("profileSrc")
+                        .loginMethod(LoginMethod.EMAIL)
+                        .build())
+                .build();
+        SecurityUser saved = securityUserRepository.save(securityUser);
+        Optional<SecurityUser> founded = securityUserRepository.findByUsername(saved.getUsername());
+        Assertions.assertThat(founded).isPresent();
+        Assertions.assertThat(founded.get()).isEqualTo(saved);
+    }
+
+    @Test
+    @DisplayName("securityUser를 삭제할 수 있어야 한다.")
+    void deleteUser(){
+        SecurityUser securityUser = SecurityUser.builder()
+                .username("username")
+                .password(passwordEncoder.encode("password"))
+                .user(User.builder()
+                        .name("name")
+                        .phoneNum(PhoneNum.builder()
+                                .phoneNum("phoneNum")
+                                .isAuthorized(false)
+                                .build())
+                        .cart(new Cart())
+                        .profileSrc("profileSrc")
+                        .loginMethod(LoginMethod.EMAIL)
+                        .build())
+                .build();
+        SecurityUser saved = securityUserRepository.save(securityUser);
+        securityUserRepository.deleteById(saved.toDto().getId());
+        Optional<SecurityUser> founded = securityUserRepository.findById(saved.toDto().getId());
+        Assertions.assertThat(founded).isEmpty();
+
     }
 }
