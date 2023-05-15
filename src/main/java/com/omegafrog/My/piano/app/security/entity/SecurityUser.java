@@ -2,6 +2,7 @@ package com.omegafrog.My.piano.app.security.entity;
 
 import com.omegafrog.My.piano.app.dto.SecurityUserDto;
 import com.omegafrog.My.piano.app.security.entity.authorities.Authority;
+import com.omegafrog.My.piano.app.security.entity.authorities.Role;
 import com.omegafrog.My.piano.app.user.entity.User;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
@@ -10,7 +11,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
-import java.time.temporal.TemporalAmount;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -28,7 +28,7 @@ public class SecurityUser implements UserDetails {
 
     private String username;
     private String password;
-    private List<Authority> authorities=new ArrayList<>();
+    private Role role;
     private LocalDateTime createdAt;
     private LocalDateTime credentialChangedAt;
     private boolean locked;
@@ -38,10 +38,14 @@ public class SecurityUser implements UserDetails {
     private User user;
 
     @Builder
-    public SecurityUser(String username, String password, User user) {
+    public SecurityUser(String username, String password, User user, Role role) {
         this.username = username;
         this.password = password;
         this.user = user;
+        this.role = role;
+        this.createdAt = LocalDateTime.now();
+        this.credentialChangedAt = LocalDateTime.now();
+        this.locked=false;
     }
 
     @Override
@@ -61,6 +65,14 @@ public class SecurityUser implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
+        List<GrantedAuthority> authorities = new ArrayList<>();
+        authorities.add(new Authority(role.authorityName));
+        if(role == Role.ADMIN){
+            authorities.add(new Authority(Role.USER.authorityName));
+        }
+        if(role == Role.SUPER_ADMIN){
+            authorities.add(new Authority(Role.SUPER_ADMIN.authorityName));
+        }
         return authorities;
     }
 
@@ -99,11 +111,11 @@ public class SecurityUser implements UserDetails {
         return SecurityUserDto.builder()
                 .createdAt(createdAt)
                 .credentialChangedAt(credentialChangedAt)
-                .authorities(authorities)
                 .locked(locked)
                 .id(id)
                 .password(password)
                 .username(username)
+                .role(role)
                 .build();
     }
 }

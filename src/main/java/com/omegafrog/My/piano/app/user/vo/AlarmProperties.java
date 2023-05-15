@@ -6,6 +6,7 @@ import jakarta.persistence.Embeddable;
 import lombok.Getter;
 
 @Embeddable
+@Getter
 public class AlarmProperties {
 
     private boolean myFollowerAlarm;

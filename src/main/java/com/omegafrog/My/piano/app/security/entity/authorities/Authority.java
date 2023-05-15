@@ -1,8 +1,10 @@
 package com.omegafrog.My.piano.app.security.entity.authorities;
 
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 
+@NoArgsConstructor
 public class Authority implements GrantedAuthority {
     private String authorityName;
     @Override
@@ -11,7 +13,7 @@ public class Authority implements GrantedAuthority {
     }
 
     @Builder
-    public Authority(String authorityName) {
-        this.authorityName = authorityName;
+    public Authority(String  authority) {
+        this.authorityName = authority;
     }
 }

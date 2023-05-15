@@ -2,33 +2,48 @@ package com.omegafrog.My.piano.app.security.provider;
 
 import com.omegafrog.My.piano.app.security.service.CommonUserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+
 @RequiredArgsConstructor
+@Slf4j
 public class CommonUserAuthenticationProvider implements AuthenticationProvider {
 
 
     private final CommonUserService commonUserService;
     private final PasswordEncoder passwordEncoder;
+
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+        log.info("hi");
+        log.debug("authenticating");
         UserDetails foundedUserDetails = commonUserService.loadUserByUsername(authentication.getPrincipal().toString());
-        if(passwordEncoder.matches((CharSequence) authentication.getCredentials(), foundedUserDetails.getPassword())){
-            return new UsernamePasswordAuthenticationToken(foundedUserDetails.getUsername(),
-                    foundedUserDetails.getPassword(), foundedUserDetails.getAuthorities());
-        }else{
-            throw new BadCredentialsException("Password is not match.");
+
+        if (foundedUserDetails.isEnabled()) {
+            if (passwordEncoder.matches((CharSequence) authentication.getCredentials(), foundedUserDetails.getPassword())) {
+                return new UsernamePasswordAuthenticationToken(foundedUserDetails.getUsername(),
+                        foundedUserDetails.getPassword(), foundedUserDetails.getAuthorities());
+            } else {
+                throw new BadCredentialsException("Password is not match.");
+            }
+        } else {
+            if (!foundedUserDetails.isAccountNonLocked()) {
+                throw new LockedException("Account is locked");
+            } else if (!foundedUserDetails.isCredentialsNonExpired()) {
+                throw new CredentialsExpiredException("Credential is expired");
+            } else {
+                throw new AuthenticationServiceException("Internal server error");
+            }
         }
     }
 
     @Override
     public boolean supports(Class<?> authentication) {
-        return authentication.isInstance(UsernamePasswordAuthenticationToken.class);
+        return authentication.equals(UsernamePasswordAuthenticationToken.class);
     }
 }

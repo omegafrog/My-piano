@@ -1,6 +1,7 @@
 package com.omegafrog.My.piano.app.security.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.dto.RegisterUserDto;
 import com.omegafrog.My.piano.app.dto.SecurityUserDto;
 import com.omegafrog.My.piano.app.response.APIBadRequestResponse;
@@ -12,6 +13,7 @@ import com.omegafrog.My.piano.app.security.service.CommonUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
@@ -22,14 +24,16 @@ import java.util.Map;
 @Slf4j
 public class SecurityController {
 
+    private final ObjectMapper objectMapper;
     private final CommonUserService commonUserService;
+
     @PostMapping("/user/register")
-    public JsonAPIResponse registerCommonUser(String username, String password, RegisterUserDto dto){
+    public JsonAPIResponse registerCommonUser(@RequestBody RegisterUserDto dto){
         try {
-            SecurityUserDto securityUserDto = commonUserService.registerUser(username, password, dto);
+            SecurityUserDto securityUserDto = commonUserService.registerUser(dto);
             Map<String, Object> body = new HashMap<>();
             body.put("user", securityUserDto);
-            return new APISuccessResponse("회원가입 성공.", body);
+            return new APISuccessResponse("회원가입 성공.", objectMapper, body);
         }catch (UsernameAlreadyExistException e){
             //TODO : Username중복 exception 처리
             log.debug("Username 중복됨");
@@ -40,4 +44,5 @@ public class SecurityController {
             return new APIInternalServerResponse("Object mapping이 실패했습니다.");
         }
     }
+
 }

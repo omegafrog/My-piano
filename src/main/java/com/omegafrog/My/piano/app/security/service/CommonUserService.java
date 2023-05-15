@@ -4,17 +4,24 @@ import com.omegafrog.My.piano.app.dto.RegisterUserDto;
 import com.omegafrog.My.piano.app.dto.SecurityUserDto;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
+import com.omegafrog.My.piano.app.security.entity.authorities.Role;
 import com.omegafrog.My.piano.app.security.exception.UsernameAlreadyExistException;
 import com.omegafrog.My.piano.app.user.entity.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
 @RequiredArgsConstructor
 public class CommonUserService implements UserDetailsService {
+
+    @Lazy
+    private final PasswordEncoder passwordEncoder;
 
     private final SecurityUserRepository securityUserRepository;
     @Override
@@ -27,11 +34,12 @@ public class CommonUserService implements UserDetailsService {
         }
     }
 
-    public SecurityUserDto registerUser(String username, String password, RegisterUserDto dto) throws UsernameAlreadyExistException {
+    public SecurityUserDto registerUser(RegisterUserDto dto) throws UsernameAlreadyExistException {
         User user = dto.toEntity();
         SecurityUser securityUser = SecurityUser.builder()
-                .username(username)
-                .password(password)
+                .username(dto.getUsername())
+                .password(passwordEncoder.encode(dto.getPassword()))
+                .role(Role.USER)
                 .user(user)
                 .build();
         Optional<SecurityUser> founded = securityUserRepository.findByUsername(securityUser.getUsername());
