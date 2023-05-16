@@ -1,12 +1,12 @@
 package com.omegafrog.My.piano.app.security.provider;
 
+import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.security.service.CommonUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 
@@ -22,12 +22,14 @@ public class CommonUserAuthenticationProvider implements AuthenticationProvider 
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         log.info("hi");
         log.debug("authenticating");
-        UserDetails foundedUserDetails = commonUserService.loadUserByUsername(authentication.getPrincipal().toString());
+        SecurityUser foundedUserDetails = (SecurityUser) commonUserService.loadUserByUsername(authentication.getPrincipal().toString());
 
         if (foundedUserDetails.isEnabled()) {
             if (passwordEncoder.matches((CharSequence) authentication.getCredentials(), foundedUserDetails.getPassword())) {
-                return new UsernamePasswordAuthenticationToken(foundedUserDetails.getUsername(),
+                UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(foundedUserDetails.getUsername(),
                         foundedUserDetails.getPassword(), foundedUserDetails.getAuthorities());
+                token.setDetails(foundedUserDetails.getUser());
+                return token;
             } else {
                 throw new BadCredentialsException("Password is not match.");
             }

@@ -2,8 +2,10 @@ package com.omegafrog.My.piano.app.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
+import com.omegafrog.My.piano.app.security.filter.JwtTokenFilter;
 import com.omegafrog.My.piano.app.security.handler.CommonUserLoginFailureHandler;
 import com.omegafrog.My.piano.app.security.handler.CommonUserLoginSuccessHandler;
+import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.security.provider.CommonUserAuthenticationProvider;
 import com.omegafrog.My.piano.app.security.service.CommonUserService;
 
@@ -14,18 +16,25 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @EnableWebSecurity
 @Configuration
 @Slf4j
 public class SecurityConfig {
     @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
+    @Autowired
     private SecurityUserRepository securityUserRepository;
-    @Value("security.passwordEncoder.secret")
+    @Value("${security.passwordEncoder.secret}")
     private String secret;
+
+    @Value("${security.jwt.secret}")
+    private String jwtSecret;
 
 
     @Bean
@@ -60,10 +69,16 @@ public class SecurityConfig {
                 .loginProcessingUrl("/user/login")
                 .usernameParameter("username")
                 .passwordParameter("password")
-                .successHandler(new CommonUserLoginSuccessHandler(objectMapper))
+                .successHandler(new CommonUserLoginSuccessHandler(objectMapper, jwtSecret))
                 .failureHandler(new CommonUserLoginFailureHandler(objectMapper))
                 .and()
-                .csrf().disable();
+                .addFilterBefore(new JwtTokenFilter(securityUserRepository, refreshTokenRepository, jwtSecret),
+                        UsernamePasswordAuthenticationFilter.class)
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .csrf().disable()
+                .cors().disable();
 
         return http.build();
     }
