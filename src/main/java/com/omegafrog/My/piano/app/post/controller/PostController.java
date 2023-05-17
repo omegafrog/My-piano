@@ -8,10 +8,10 @@ import com.omegafrog.My.piano.app.post.entity.Post;
 import com.omegafrog.My.piano.app.post.entity.PostRepository;
 import com.omegafrog.My.piano.app.response.*;
 import com.omegafrog.My.piano.app.user.entity.User;
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.validation.constraints.NotNull;
+import jakarta.persistence.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.ClientAuthorizationRequiredException;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,13 +26,18 @@ public class PostController {
     private final PostRepository postRepository;
     private final ObjectMapper objectMapper;
 
+    @PersistenceContext
+    private EntityManager em;
+
     @PostMapping("")
-    public JsonAPIResponse writePost(@RequestBody WritePostDto post, Authentication authentication) {
+    public JsonAPIResponse writePost(@RequestBody WritePostDto post) {
         try {
-            User author = (User) authentication.getDetails();
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            User author = (User) auth.getDetails();
             if (author == null) {
                 return new APIInternalServerResponse("Internal server error");
             }
+
             Post entity = Post.builder()
                     .title(post.getTitle())
                     .content(post.getContent())
@@ -40,6 +45,8 @@ public class PostController {
                     .build();
 
             Post saved = postRepository.save(entity);
+
+
             Map<String, Object> data = new HashMap<>();
             data.put("post", saved);
             return new APISuccessResponse("Write post success", objectMapper, data);
@@ -70,9 +77,10 @@ public class PostController {
     }
 
     @PostMapping("/{id}")
-    public JsonAPIResponse updatePost(@RequestParam Long id, @RequestBody UpdatePostDto post, @NotNull Authentication authentication) {
+    public JsonAPIResponse updatePost(@RequestParam Long id, @RequestBody UpdatePostDto post) {
         try {
-            User user = (User) authentication.getDetails();
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            User user = (User) auth.getDetails();
             Post byId = postRepository.findById(id).orElseThrow(
                     () -> new EntityNotFoundException("cannot find post")
             );
@@ -95,10 +103,11 @@ public class PostController {
     }
 
     @DeleteMapping("/{id}")
-    public JsonAPIResponse deletePost(@RequestParam Long id, @NotNull Authentication authentication) {
+    public JsonAPIResponse deletePost(@RequestParam Long id) {
         Throwable ex=null;
         try {
-            User user = (User) authentication.getDetails();
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            User user = (User) auth.getDetails();
             Post founded = postRepository.findById(id).orElseThrow(
                     () -> new EntityNotFoundException("cannot find post")
             );

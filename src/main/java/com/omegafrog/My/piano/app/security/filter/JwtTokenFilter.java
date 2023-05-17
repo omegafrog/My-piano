@@ -58,14 +58,15 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             if(logoutBlacklistRepository.isPresent(accessToken)){
                 throw new SessionAuthenticationException("Already logged out user.");
             }
+            SecurityUser user = securityUserRepository.findById(userId).orElseThrow(
+                    () -> new AuthenticationCredentialsNotFoundException("Invalid access token")
+            );
             // token이 만료되지 않음.
             if (TokenUtils.isNonExpired(accessToken, secret)) {
-                SecurityUser user = securityUserRepository.findById(userId).orElseThrow(
-                        () -> new AuthenticationCredentialsNotFoundException("Invalid access token")
-                );
                 // securityContextHolder에 request와 lifecycle이 같은 객체 저장.
                 Authentication usernameToken = getAuthenticationToken(user);
                 SecurityContextHolder.getContext().setAuthentication(usernameToken);
+                filterChain.doFilter(request,response);
             }
             // 토큰이 만료되어 재발급함
             else{
@@ -76,6 +77,9 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 if(founded.getRefreshToken().equals(refreshToken)){
                     response.setHeader(HttpHeaders.AUTHORIZATION,
                             TokenUtils.generateToken(userId.toString(),secret).getAccessToken());
+                    Authentication usernameToken = getAuthenticationToken(user);
+                    SecurityContextHolder.getContext().setAuthentication(usernameToken);
+                    filterChain.doFilter(request,response);
                 }
             }
         }catch (AuthenticationException e){

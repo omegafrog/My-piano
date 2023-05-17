@@ -11,6 +11,7 @@ import com.omegafrog.My.piano.app.user.vo.PhoneNum;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Value;
 
 import jakarta.persistence.*;
@@ -37,6 +38,7 @@ public class User {
     @Value("{user.baseProfileSrc}")
     private String profileSrc;
     private int point;
+    @Setter
     private int cash;
     private PhoneNum phoneNum;
     private AlarmProperties alarmProperties;
