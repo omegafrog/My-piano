@@ -1,5 +1,6 @@
 package com.omegafrog.My.piano.app.post.entity;
 
+import com.omegafrog.My.piano.app.dto.PostDto;
 import com.omegafrog.My.piano.app.dto.UpdatePostDto;
 import com.omegafrog.My.piano.app.user.entity.User;
 import lombok.Builder;
@@ -63,6 +64,19 @@ public class Post {
         this.title = title;
         this.content = content;
         this.likeCount = 0;
+    }
+
+    public PostDto toDto(){
+        return PostDto.builder()
+                .id(id)
+                .author(author)
+                .createdAt(createdAt)
+                .viewCount(viewCount)
+                .title(title)
+                .content(content)
+                .likeCount(likeCount)
+                .comments(comments)
+                .build();
     }
 
     @Override
