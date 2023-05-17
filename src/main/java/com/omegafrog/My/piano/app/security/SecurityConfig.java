@@ -3,10 +3,10 @@ package com.omegafrog.My.piano.app.security;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
 import com.omegafrog.My.piano.app.security.filter.JwtTokenFilter;
-import com.omegafrog.My.piano.app.security.handler.CommonUserLoginFailureHandler;
-import com.omegafrog.My.piano.app.security.handler.CommonUserLoginSuccessHandler;
+import com.omegafrog.My.piano.app.security.handler.*;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.security.provider.CommonUserAuthenticationProvider;
+import com.omegafrog.My.piano.app.security.reposiotry.InMemoryLogoutBlacklistRepository;
 import com.omegafrog.My.piano.app.security.service.CommonUserService;
 
 import lombok.extern.slf4j.Slf4j;
@@ -56,6 +56,21 @@ public class SecurityConfig {
     }
 
     @Bean
+    public LogoutBlacklistRepository inMemoryLogoutBlackListRepository(){
+        return new InMemoryLogoutBlacklistRepository(jwtSecret);
+    }
+
+    @Bean
+    public JwtTokenFilter jwtTokenFilter(){
+        return new JwtTokenFilter(objectMapper, securityUserRepository,
+                refreshTokenRepository, inMemoryLogoutBlackListRepository(), jwtSecret);
+    }
+    @Bean
+    public CommonUserLogoutHandler commonUserLogoutHandler(){
+        return new CommonUserLogoutHandler(objectMapper, inMemoryLogoutBlackListRepository());
+    }
+
+    @Bean
     public SecurityFilterChain commonUserAuthentication(HttpSecurity http) throws Exception {
         http
                 .securityMatcher("/user/**")
@@ -69,13 +84,20 @@ public class SecurityConfig {
                 .loginProcessingUrl("/user/login")
                 .usernameParameter("username")
                 .passwordParameter("password")
-                .successHandler(new CommonUserLoginSuccessHandler(objectMapper, jwtSecret))
+                .successHandler(new CommonUserLoginSuccessHandler(objectMapper, refreshTokenRepository, jwtSecret))
                 .failureHandler(new CommonUserLoginFailureHandler(objectMapper))
                 .and()
-                .addFilterBefore(new JwtTokenFilter(securityUserRepository, refreshTokenRepository, jwtSecret),
+                .logout()
+                .logoutUrl("/user/logout").permitAll()
+                .addLogoutHandler(commonUserLogoutHandler())
+                .and()
+                .addFilterBefore(jwtTokenFilter(),
                         UsernamePasswordAuthenticationFilter.class)
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .exceptionHandling()
+                .authenticationEntryPoint(new AuthenticationExceptionEntryPoint(objectMapper))
                 .and()
                 .csrf().disable()
                 .cors().disable();

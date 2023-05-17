@@ -12,6 +12,7 @@ import com.omegafrog.My.piano.app.security.exception.UsernameAlreadyExistExcepti
 import com.omegafrog.My.piano.app.security.service.CommonUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -43,6 +44,10 @@ public class SecurityController {
             log.debug("objectmapping 실패함");
             return new APIInternalServerResponse("Object mapping이 실패했습니다.");
         }
+    }
+    @GetMapping("/user/someMethod")
+    public String someMethod(){
+        return "hi";
     }
 
 }
