@@ -31,8 +31,7 @@ public class PostController {
     @PostMapping("")
     public JsonAPIResponse writePost(Authentication authentication, @RequestBody WritePostDto post) {
         try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            User author = (User) auth.getDetails();
+            User author = (User) authentication.getDetails();
             if (author == null) {
                 return new APIInternalServerResponse("Internal server error");
             }
@@ -54,7 +53,7 @@ public class PostController {
     }
 
     @GetMapping("/{id}")
-    public JsonAPIResponse findPost(@RequestParam Long id) {
+    public JsonAPIResponse findPost(@PathVariable Long id) {
         try{
             Post byId = postRepository.findById(id).orElseThrow(
                     () -> new EntityNotFoundException("cannot find post")
@@ -74,10 +73,9 @@ public class PostController {
     }
 
     @PostMapping("/{id}")
-    public JsonAPIResponse updatePost(@RequestParam Long id, @RequestBody UpdatePostDto post) {
+    public JsonAPIResponse updatePost(Authentication authentication,@PathVariable Long id, @RequestBody UpdatePostDto post) {
         try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            User user = (User) auth.getDetails();
+            User user = (User) authentication.getDetails();
             Post byId = postRepository.findById(id).orElseThrow(
                     () -> new EntityNotFoundException("cannot find post")
             );
@@ -100,11 +98,10 @@ public class PostController {
     }
 
     @DeleteMapping("/{id}")
-    public JsonAPIResponse deletePost(@RequestParam Long id) {
+    public JsonAPIResponse deletePost(Authentication authentication,@PathVariable Long id) {
         Throwable ex=null;
         try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            User user = (User) auth.getDetails();
+            User user = (User) authentication.getDetails();
             Post founded = postRepository.findById(id).orElseThrow(
                     () -> new EntityNotFoundException("cannot find post")
             );
