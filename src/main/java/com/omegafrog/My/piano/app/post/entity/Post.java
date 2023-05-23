@@ -86,25 +86,12 @@ public class Post {
 
         Post post = (Post) o;
 
-        if (viewCount != post.viewCount) return false;
-        if (likeCount != post.likeCount) return false;
-        if (!id.equals(post.id)) return false;
-        if (!author.equals(post.author)) return false;
-        if (!createdAt.equals(post.createdAt)) return false;
-        if (!title.equals(post.title)) return false;
-        return content.equals(post.content);
+        return id.equals(post.id);
     }
 
     @Override
     public int hashCode() {
-        int result = id.hashCode();
-        result = 31 * result + author.hashCode();
-        result = 31 * result + createdAt.hashCode();
-        result = 31 * result + viewCount;
-        result = 31 * result + title.hashCode();
-        result = 31 * result + content.hashCode();
-        result = 31 * result + likeCount;
-        return result;
+        return id.hashCode();
     }
 }
 
