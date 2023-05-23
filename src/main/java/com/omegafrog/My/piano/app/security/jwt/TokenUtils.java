@@ -16,8 +16,8 @@ import java.util.Date;
 public class TokenUtils {
     //토큰 생성
     public static TokenInfo generateToken(String userId, String secret){
-        int accessTokenExpirationPeriod = 60*60*60*10;
-        int refreshTokenExpirationPeriod = 60*60*60*60;
+        int accessTokenExpirationPeriod = 1000*60*10;
+        int refreshTokenExpirationPeriod = 1000*60*60;
         String accessToken = getToken(userId, accessTokenExpirationPeriod, secret);
         String refreshToken = getToken(null, refreshTokenExpirationPeriod, secret);
         return TokenInfo.builder()
@@ -39,9 +39,10 @@ public class TokenUtils {
     private static String getToken(String payload, int expirationPeriod, String secret) {
         Claims claims = Jwts.claims();
         claims.put("id", payload);
+        Long curTime = System.currentTimeMillis();
         JwtBuilder jwtBuilder = Jwts.builder()
                 .addClaims(claims)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setIssuedAt(new Date(curTime))
                 .setExpiration(new Date(System.currentTimeMillis() + expirationPeriod))
                 .signWith(SignatureAlgorithm.HS512, secret);
         return jwtBuilder.compact();
@@ -84,7 +85,7 @@ public class TokenUtils {
 
     public static boolean isNonExpired(String token, String secret ){
         Claims body = extractClaims(token, secret);
-        return body.getExpiration().before(new Date());
+        return body.getExpiration().after(new Date());
     }
 
 
