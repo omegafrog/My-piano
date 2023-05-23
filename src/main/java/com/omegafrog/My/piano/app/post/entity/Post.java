@@ -38,10 +38,8 @@ public class Post {
     private List<Comment> comments = new CopyOnWriteArrayList<>();
 
     public Post update(UpdatePostDto post){
-        this.viewCount = post.getViewCount();
         this.title = post.getTitle();
         this.content = post.getContent();
-        this.likeCount = post.getLikeCount();
         return this;
     }
 

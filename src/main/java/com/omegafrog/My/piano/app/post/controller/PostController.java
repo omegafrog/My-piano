@@ -26,11 +26,10 @@ public class PostController {
     private final PostRepository postRepository;
     private final ObjectMapper objectMapper;
 
-    @PersistenceContext
-    private EntityManager em;
+
 
     @PostMapping("")
-    public JsonAPIResponse writePost(@RequestBody WritePostDto post) {
+    public JsonAPIResponse writePost(Authentication authentication, @RequestBody WritePostDto post) {
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             User author = (User) auth.getDetails();
@@ -45,8 +44,6 @@ public class PostController {
                     .build();
 
             Post saved = postRepository.save(entity);
-
-
             Map<String, Object> data = new HashMap<>();
             data.put("post", saved);
             return new APISuccessResponse("Write post success", objectMapper, data);

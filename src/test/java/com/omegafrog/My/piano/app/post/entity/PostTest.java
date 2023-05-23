@@ -29,8 +29,6 @@ class PostTest {
         UpdatePostDto updated = UpdatePostDto.builder()
                 .title(title)
                 .content(content)
-                .likeCount(1)
-                .viewCount(1)
                 .build();
         Post updatedPost = post.update(updated);
 

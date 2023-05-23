@@ -2,6 +2,7 @@ package com.omegafrog.My.piano.app.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
+import com.omegafrog.My.piano.app.security.entity.authorities.Role;
 import com.omegafrog.My.piano.app.security.filter.JwtTokenFilter;
 import com.omegafrog.My.piano.app.security.handler.*;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -21,6 +23,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.RegexRequestMatcher;
 
 @EnableWebSecurity
 @Configuration
@@ -101,7 +104,21 @@ public class SecurityConfig {
                 .and()
                 .csrf().disable()
                 .cors().disable();
-
         return http.build();
+    }
+    @Bean
+    public SecurityFilterChain postAuthentication(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/post/**")
+                .authenticationProvider(commonUserAuthenticationProvider())
+                .authorizeHttpRequests()
+                .requestMatchers(new RegexRequestMatcher("post/[0-9]+", "GET"))
+                .permitAll()
+                .anyRequest().hasRole(Role.USER.authorityName)
+                .and()
+                .csrf().disable()
+                .cors().disable();
+        return http.build();
+
     }
 }
