@@ -165,7 +165,7 @@ class PostControllerTest {
                     .title("updated")
                     .content("updatedContent")
                     .build();
-            JsonAPIResponse response = controller.updatePost(0L, updateDto);
+            JsonAPIResponse response = controller.updatePost(SecurityContextHolder.getContext().getAuthentication(),0L, updateDto);
             Assertions.assertThat(response).isNotNull();
             JsonNode jsonNode = objectMapper.readTree(response.getSerializedData());
             String id = jsonNode.get("post").get("id").asText();
@@ -179,7 +179,7 @@ class PostControllerTest {
             //given
             Post saved = postRepository.save(entity);
             //when
-            JsonAPIResponse response = controller.deletePost(saved.getId());
+            JsonAPIResponse response = controller.deletePost(SecurityContextHolder.getContext().getAuthentication(),saved.getId());
             Assertions.assertThat(response).isNotNull();
             String status = response.getStatus();
             Assertions.assertThat(status).isEqualTo(HttpStatus.OK.toString());
