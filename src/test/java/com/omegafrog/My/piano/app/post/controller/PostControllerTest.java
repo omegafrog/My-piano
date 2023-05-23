@@ -45,8 +45,6 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 @AutoConfigureMockMvc
@@ -142,7 +140,6 @@ class PostControllerTest {
 
         @Test
         @DisplayName("Post dto를 받아서 저장할 수 있어야 한다.")
-        @WithMockUser(username="user1",roles = "USER",password = "password")
         void writePost() throws JsonProcessingException {
             //given
             postDto = WritePostDto.builder()
