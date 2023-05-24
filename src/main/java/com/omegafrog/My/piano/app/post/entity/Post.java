@@ -49,9 +49,7 @@ public class Post {
     }
 
     public void deleteComment(Long id){
-        this.comments.forEach(comment -> {
-            if (comment.getId().equals(id)) comments.remove(comment);
-        });
+        comments.removeIf(comment -> comment.getId().equals(id));
     }
 
     @Builder
