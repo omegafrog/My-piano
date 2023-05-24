@@ -15,16 +15,16 @@ import java.util.Date;
 
 public class TokenUtils {
     //토큰 생성
-    public static TokenInfo generateToken(String userId, String secret){
+    public static TokenInfo generateToken(String securityUserId, String secret){
         int accessTokenExpirationPeriod = 1000*60*10;
         int refreshTokenExpirationPeriod = 1000*60*60;
-        String accessToken = getToken(userId, accessTokenExpirationPeriod, secret);
+        String accessToken = getToken(securityUserId, accessTokenExpirationPeriod, secret);
         String refreshToken = getToken(null, refreshTokenExpirationPeriod, secret);
         return TokenInfo.builder()
                 .grantType("Bearer")
                 .accessToken(accessToken)
                 .refreshToken(RefreshToken.builder()
-                        .userId(Long.valueOf(userId))
+                        .userId(Long.valueOf(securityUserId))
                         .refreshToken(refreshToken)
                         .build())
                 .build();

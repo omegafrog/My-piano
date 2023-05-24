@@ -25,6 +25,7 @@ public class SecurityUser implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Getter
     private Long id;
 
     private String username;
@@ -120,4 +121,5 @@ public class SecurityUser implements UserDetails {
                 .role(role)
                 .build();
     }
+
 }
