@@ -80,6 +80,11 @@ class PostControllerTest {
         public void deleteById(Long id) {
             storage.remove(id);
         }
+
+        @Override
+        public void deleteAll() {
+            storage.clear();
+        }
     }
     private  PostController controller;
     private  final PostRepository postRepository = new TestPostRepository();

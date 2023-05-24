@@ -1,11 +1,8 @@
 package com.omegafrog.My.piano.app.security.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.omegafrog.My.piano.app.dto.RegisterUserDto;
 import com.omegafrog.My.piano.app.dto.SecurityUserDto;
-import com.omegafrog.My.piano.app.response.APISuccessResponse;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
 import com.omegafrog.My.piano.app.security.exception.UsernameAlreadyExistException;
 import com.omegafrog.My.piano.app.security.service.CommonUserService;
@@ -13,10 +10,7 @@ import com.omegafrog.My.piano.app.user.vo.LoginMethod;
 import com.omegafrog.My.piano.app.user.vo.PhoneNum;
 import jakarta.servlet.http.Cookie;
 import lombok.*;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -40,6 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @AutoConfigureMockMvc
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SecurityControllerTest {
 
     @Autowired

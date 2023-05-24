@@ -1,9 +1,12 @@
 package com.omegafrog.My.piano.app.post.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.dto.RegisterUserDto;
 import com.omegafrog.My.piano.app.dto.SecurityUserDto;
+import com.omegafrog.My.piano.app.dto.UpdatePostDto;
 import com.omegafrog.My.piano.app.dto.WritePostDto;
+import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
 import com.omegafrog.My.piano.app.security.exception.UsernameAlreadyExistException;
 import com.omegafrog.My.piano.app.security.service.CommonUserService;
 import com.omegafrog.My.piano.app.user.vo.LoginMethod;
@@ -11,15 +14,15 @@ import com.omegafrog.My.piano.app.user.vo.PhoneNum;
 import jakarta.servlet.http.Cookie;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
@@ -28,13 +31,13 @@ import org.springframework.test.web.servlet.MvcResult;
 import java.time.LocalDateTime;
 import java.util.Map;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @AutoConfigureMockMvc
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PostControllerIntegrationTest {
 
     @Autowired
@@ -51,11 +54,15 @@ class PostControllerIntegrationTest {
 
     private static RegisterUserDto user1;
     private static RegisterUserDto user2;
-
+    @Autowired
+    private SecurityUserRepository securityUserRepository;
+    private String accessToken;
+    private Cookie refreshToken;
 
     @BeforeAll
-     static void setUsers(){
-          user1 = RegisterUserDto.builder()
+    void getTokens() throws Exception, UsernameAlreadyExistException {
+        SecurityContextHolder.clearContext();
+        user1 = RegisterUserDto.builder()
                 .name("user1")
                 .phoneNum(PhoneNum.builder()
                         .phoneNum("010-1111-2222")
@@ -63,10 +70,10 @@ class PostControllerIntegrationTest {
                         .build())
                 .profileSrc("src")
                 .loginMethod(LoginMethod.EMAIL)
-                 .username("user1")
-                 .password("password")
+                .username("user1")
+                .password("password")
                 .build();
-          user2 = RegisterUserDto.builder()
+        user2 = RegisterUserDto.builder()
                 .name("user2")
                 .phoneNum(PhoneNum.builder()
                         .phoneNum("010-1111-2222")
@@ -74,40 +81,56 @@ class PostControllerIntegrationTest {
                         .build())
                 .profileSrc("src")
                 .loginMethod(LoginMethod.EMAIL)
-                 .username("user2")
-                 .password("password")
+                .username("user2")
+                .password("password")
                 .build();
-    }
-
-    @Test
-    @DisplayName("로그인한 유저는 커뮤니티 글을 작성할 수 있어야 한다.")
-    void writePost() throws Exception, UsernameAlreadyExistException {
         SecurityUserDto saved1 = commonUserService.registerUser(user1);
         SecurityUserDto saved2 = commonUserService.registerUser(user2);
-
-        WritePostDto postDto = WritePostDto.builder()
-                .title("title")
-                .content("content")
-                .createdAt(LocalDateTime.now())
-                .build();
-
         MvcResult mvcResult = mockMvc.perform(post("/user/login")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content("username=user1&password=password"))
                 .andReturn();
         String contentAsString = mvcResult.getResponse().getContentAsString();
         LoginResult loginResult = objectMapper.readValue(contentAsString, LoginResult.class);
-        String accessToken = loginResult.getSerializedData().get("access token");
-        Cookie refreshToken = mvcResult.getResponse().getCookie("refreshToken");
+         accessToken = loginResult.getSerializedData().get("access token");
+         refreshToken = mvcResult.getResponse().getCookie("refreshToken");
+    }
+    @AfterAll
+     void deleteusers(){
+        securityUserRepository.deleteAll();
+    }
 
-
-        mockMvc.perform(post("/community")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
-                .cookie(refreshToken)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(postDto)))
+    @Test
+    @DisplayName("로그인한 유저는 커뮤니티 글을 작성하고 조회할 수 있어야 한다.")
+    void writePost() throws Exception {
+        //given
+        WritePostDto postDto = WritePostDto.builder()
+                .title("title")
+                .content("content")
+                .createdAt(LocalDateTime.now())
+                .build();
+        String string = mockMvc.perform(post("/community")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .cookie(refreshToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(postDto)))
                 .andExpect(status().isOk())
-                .andDo(print());
+                .andReturn().getResponse().getContentAsString();
+        String data = objectMapper.readTree(string).get("serializedData").asText();
+        Long postId = objectMapper.readTree(data).get("post").get("id").asLong();
+
+        //when
+        MvcResult mvcResult2 = mockMvc.perform(get("/community/"+postId))
+                .andExpect(status().isOk())
+                .andReturn();
+        //then
+        String contentAsString2 = mvcResult2.getResponse().getContentAsString();
+        JsonNode jsonNode = objectMapper.readTree(contentAsString2);
+        String serializedData = jsonNode.get("serializedData").asText();
+        String id = objectMapper.readTree(serializedData).get("post").get("id").asText();
+        String content = objectMapper.readTree(serializedData).get("post").get("content").asText();
+        Assertions.assertThat(id).isEqualTo(postId.toString());
+        Assertions.assertThat(content).isEqualTo("content");
     }
     @NoArgsConstructor
     @Data
@@ -117,16 +140,73 @@ class PostControllerIntegrationTest {
         private Map<String, String> serializedData;
     }
 
-
     @Test
-    void findPost() {
+    void updatePost() throws Exception {
+        //given
+        WritePostDto postDto = WritePostDto.builder()
+                .title("title")
+                .content("content")
+                .createdAt(LocalDateTime.now())
+                .build();
+        String string = mockMvc.perform(post("/community")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .cookie(refreshToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(postDto)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        String data = objectMapper.readTree(string).get("serializedData").asText();
+        Long postId = objectMapper.readTree(data).get("post").get("id").asLong();
+
+        UpdatePostDto updateDto = UpdatePostDto.builder()
+                .title("changed")
+                .content("changedContent")
+                .build();
+
+        //when
+        MvcResult mvcResult = mockMvc.perform(post("/community/" + postId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .cookie(refreshToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateDto)))
+                .andExpect(status().isOk())
+                .andReturn();
+        //then
+        String s = mvcResult.getResponse().getContentAsString();
+        data = objectMapper.readTree(s).get("serializedData").asText();
+        Long updatedId = objectMapper.readTree(data).get("post").get("id").asLong();
+        String content = objectMapper.readTree(data).get("post").get("content").asText();
+        Assertions.assertThat(updatedId).isEqualTo(postId);
+        Assertions.assertThat(content).isEqualTo("changedContent");
     }
 
     @Test
-    void updatePost() {
-    }
-
-    @Test
-    void deletePost() {
+    void deletePost() throws Exception {
+        //given
+        WritePostDto postDto = WritePostDto.builder()
+                .title("title")
+                .content("content")
+                .createdAt(LocalDateTime.now())
+                .build();
+        String string = mockMvc.perform(post("/community")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .cookie(refreshToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(postDto)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        String data = objectMapper.readTree(string).get("serializedData").asText();
+        Long postId = objectMapper.readTree(data).get("post").get("id").asLong();
+        //when
+        String s = mockMvc.perform(delete("/community/" + postId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .cookie(refreshToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(postDto)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        //then
+        String message = objectMapper.readTree(s).get("message").asText();
+        Assertions.assertThat(message).isEqualTo("delete post success");
     }
 }

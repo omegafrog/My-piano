@@ -1,7 +1,5 @@
 package com.omegafrog.My.piano.app.post.entity;
 
-import com.omegafrog.My.piano.app.post.infrastructure.JpaPostRepository;
-import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
@@ -12,5 +10,7 @@ public interface PostRepository  {
     Optional<Post> findById(Long id);
 
     void deleteById(Long id);
+
+    void deleteAll();
 
 }

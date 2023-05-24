@@ -7,8 +7,10 @@ import com.omegafrog.My.piano.app.user.entity.User;
 import com.omegafrog.My.piano.app.user.vo.LoginMethod;
 import com.omegafrog.My.piano.app.user.vo.PhoneNum;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -19,12 +21,18 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CommonUserServiceTest {
 
     @Autowired
     private SecurityUserRepository securityUserRepository;
 
-    private final PasswordEncoder passwordEncoder = new Pbkdf2PasswordEncoder("test", 32,256, Pbkdf2PasswordEncoder.SecretKeyFactoryAlgorithm.PBKDF2WithHmacSHA256);
+    private final PasswordEncoder passwordEncoder = new Pbkdf2PasswordEncoder("test", 32, 256, Pbkdf2PasswordEncoder.SecretKeyFactoryAlgorithm.PBKDF2WithHmacSHA256);
+
+    @AfterAll
+    public void deleteUsers(){
+        securityUserRepository.deleteAll();
+    }
 
 
     @Test
@@ -77,7 +85,7 @@ class CommonUserServiceTest {
 
     @Test
     @DisplayName("securityUser를 삭제할 수 있어야 한다.")
-    void deleteUser(){
+    void deleteUser() {
         SecurityUser securityUser = SecurityUser.builder()
                 .username("username")
                 .password(passwordEncoder.encode("password"))
