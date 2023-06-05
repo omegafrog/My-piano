@@ -44,7 +44,7 @@ public class Post {
     }
 
     public int addComment(Comment comment){
-        this.comments.add(comment);
+        this.comments.add(0,comment);
         return this.comments.size();
     }
 

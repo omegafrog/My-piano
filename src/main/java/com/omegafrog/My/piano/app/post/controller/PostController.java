@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.dto.CommentDTO;
 import com.omegafrog.My.piano.app.dto.UpdatePostDto;
 import com.omegafrog.My.piano.app.dto.WritePostDto;
+import com.omegafrog.My.piano.app.exception.AuthorizationRequiredException;
 import com.omegafrog.My.piano.app.post.entity.Comment;
 import com.omegafrog.My.piano.app.post.entity.Post;
 import com.omegafrog.My.piano.app.post.entity.PostRepository;
@@ -13,7 +14,6 @@ import com.omegafrog.My.piano.app.user.entity.User;
 import jakarta.persistence.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.ClientAuthorizationRequiredException;
 import org.springframework.web.bind.annotation.*;
 
@@ -113,11 +113,11 @@ public class PostController {
                 return new APISuccessResponse("delete post success");
             }
             else
-                throw new ClientAuthorizationRequiredException("cannot delete other user's post");
+                throw new AuthorizationRequiredException("cannot delete other user's post");
         } catch (EntityNotFoundException e) {
             ex = e;
             return new APIBadRequestResponse(e.getMessage());
-        } catch (ClientAuthorizationRequiredException e) {
+        } catch (AuthorizationRequiredException e) {
             ex = e;
             return new APIForbiddenResponse(e.getMessage());
         } finally {
@@ -150,5 +150,38 @@ public class PostController {
             e.printStackTrace();
             return new APIInternalServerResponse(e.getMessage());
         }
+    }
+
+    @DeleteMapping("/{id}/comment/{comment-id}")
+    public JsonAPIResponse deleteComment(Authentication authentication, @PathVariable Long id, @PathVariable(name = "comment-id")Long commentId){
+        try{
+            User user = (User) authentication.getDetails();
+            Post post = postRepository.findById(id).orElseThrow(
+                    () -> new EntityNotFoundException("cannot find post")
+            );
+            Comment foundedComment = post.getComments().stream().filter(comment -> comment.getId().equals(commentId)).findFirst()
+                    .orElseThrow(
+                            () -> new EntityNotFoundException("cannot find comment")
+                    );
+            if(isLoggedInUserWroteComment(user, foundedComment))
+                throw new AuthorizationRequiredException("cannot delete other user's comment.");
+
+            post.deleteComment(commentId);
+            Post saved = postRepository.save(post);
+            Map<String, Object> data = new HashMap<>();
+            data.put("comments", saved.getComments());
+            return new APISuccessResponse("delete comment success.", objectMapper, data);
+        }catch (EntityNotFoundException | AuthorizationRequiredException e){
+            e.printStackTrace();
+            return new APIBadRequestResponse(e.getMessage());
+        }
+        catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return new APIInternalServerResponse(e.getMessage());
+        }
+    }
+
+    private static boolean isLoggedInUserWroteComment(User user, Comment foundedComment) {
+        return !foundedComment.getAuthor().getId().equals(user.getId());
     }
 }

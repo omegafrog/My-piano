@@ -1,5 +1,6 @@
 package com.omegafrog.My.piano.app.post.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.dto.*;
@@ -30,6 +31,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -234,6 +236,60 @@ class PostControllerIntegrationTest {
     }
 
     @Test
+    @DisplayName("자신이 작성한 comment를 삭제할 수 있어야 한다.")
+    void deleteCommentTest() throws Exception {
+        //given
+        CommentDTO commentDTO = CommentDTO.builder()
+                .content("test comment")
+                .build();
+
+        WritePostDto postDto = WritePostDto.builder()
+                .title("title")
+                .content("content")
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        String string = mockMvc.perform(post("/community")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .cookie(refreshToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(postDto)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        String data = objectMapper.readTree(string).get("serializedData").asText();
+        Long postId = objectMapper.readTree(data).get("post").get("id").asLong();
+        System.out.println("postId = " + postId);
+
+        data = mockMvc.perform(post("/community/" + postId + "/comment")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .cookie(refreshToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(commentDTO)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        JsonNode comments = objectMapper.readTree(data).get("serializedData").get("comments");
+        Comment comment = objectMapper.readValue(comments.get(0).toString(), Comment.class);
+        Long commentId = comment.getId();
+
+        //when
+        // 자신이 작성한 comment를 삭제함.
+        String contentAsString = mockMvc.perform(post("/community/" + postId + "/comment/" + commentId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .cookie(refreshToken))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        JsonNode jsonNode = objectMapper.readTree(contentAsString).get("serializedData").get("comments");
+        List<Comment> commentList = new ArrayList<>();
+        for(JsonNode node : jsonNode) {
+            commentList.add(objectMapper.readValue(node.toString(), Comment.class));
+        }
+
+        //then
+        Optional<Comment> first = commentList.stream().filter(currentComment -> currentComment.getId().equals(commentId)).findFirst();
+        Assertions.assertThat(first).isEmpty();
+    }
+
+    @Test
     void deletePost() throws Exception {
         //given
         WritePostDto postDto = WritePostDto.builder()
@@ -262,6 +318,4 @@ class PostControllerIntegrationTest {
         String message = objectMapper.readTree(s).get("message").asText();
         Assertions.assertThat(message).isEqualTo("delete post success");
     }
-
-
 }
