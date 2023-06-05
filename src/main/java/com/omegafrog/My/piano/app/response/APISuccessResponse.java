@@ -10,6 +10,7 @@ public class APISuccessResponse extends JsonAPIResponse {
     public APISuccessResponse(String message, ObjectMapper objectMapper, Map<String, Object> data) throws JsonProcessingException {
         super(String.valueOf(HttpStatus.OK), message);
         String s = objectMapper.writeValueAsString(data);
+        s=s.replaceAll("\\\\", "");
         this.serializedData =s;
     }
     public APISuccessResponse(String message){

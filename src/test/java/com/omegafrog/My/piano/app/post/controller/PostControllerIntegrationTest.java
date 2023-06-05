@@ -2,10 +2,8 @@ package com.omegafrog.My.piano.app.post.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.omegafrog.My.piano.app.dto.RegisterUserDto;
-import com.omegafrog.My.piano.app.dto.SecurityUserDto;
-import com.omegafrog.My.piano.app.dto.UpdatePostDto;
-import com.omegafrog.My.piano.app.dto.WritePostDto;
+import com.omegafrog.My.piano.app.dto.*;
+import com.omegafrog.My.piano.app.post.entity.Comment;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
 import com.omegafrog.My.piano.app.security.exception.UsernameAlreadyExistException;
 import com.omegafrog.My.piano.app.security.service.CommonUserService;
@@ -29,6 +27,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -54,11 +54,17 @@ class PostControllerIntegrationTest {
 
     private static RegisterUserDto user1;
     private static RegisterUserDto user2;
+
     @Autowired
     private SecurityUserRepository securityUserRepository;
     private String accessToken;
     private Cookie refreshToken;
 
+    /**
+     * 로그인해서 accessToken과 refreshToken을 가져옴.
+     * @throws Exception
+     * @throws UsernameAlreadyExistException
+     */
     @BeforeAll
     void getTokens() throws Exception, UsernameAlreadyExistException {
         SecurityContextHolder.clearContext();
@@ -92,9 +98,13 @@ class PostControllerIntegrationTest {
                 .andReturn();
         String contentAsString = mvcResult.getResponse().getContentAsString();
         LoginResult loginResult = objectMapper.readValue(contentAsString, LoginResult.class);
-         accessToken = loginResult.getSerializedData().get("access token");
-         refreshToken = mvcResult.getResponse().getCookie("refreshToken");
+        accessToken = loginResult.getSerializedData().get("access token");
+        refreshToken = mvcResult.getResponse().getCookie("refreshToken");
     }
+
+    /**
+     * 유저를 모두 삭제함.
+     */
     @AfterAll
      void deleteusers(){
         securityUserRepository.deleteAll();
@@ -118,7 +128,7 @@ class PostControllerIntegrationTest {
                 .andReturn().getResponse().getContentAsString();
         String data = objectMapper.readTree(string).get("serializedData").asText();
         Long postId = objectMapper.readTree(data).get("post").get("id").asLong();
-
+        System.out.println("postId = " + postId);
         //when
         MvcResult mvcResult2 = mockMvc.perform(get("/community/"+postId))
                 .andExpect(status().isOk())
@@ -157,6 +167,7 @@ class PostControllerIntegrationTest {
                 .andReturn().getResponse().getContentAsString();
         String data = objectMapper.readTree(string).get("serializedData").asText();
         Long postId = objectMapper.readTree(data).get("post").get("id").asLong();
+        System.out.println("postId = " + postId);
 
         UpdatePostDto updateDto = UpdatePostDto.builder()
                 .title("changed")
@@ -178,6 +189,48 @@ class PostControllerIntegrationTest {
         String content = objectMapper.readTree(data).get("post").get("content").asText();
         Assertions.assertThat(updatedId).isEqualTo(postId);
         Assertions.assertThat(content).isEqualTo("changedContent");
+    }
+    @Test
+    void addCommentTest() throws Exception {
+        //given
+        CommentDTO commentDTO = CommentDTO.builder()
+                .content("test comment")
+                .build();
+
+        WritePostDto postDto = WritePostDto.builder()
+                .title("title")
+                .content("content")
+                .createdAt(LocalDateTime.now())
+                .build();
+        String string = mockMvc.perform(post("/community")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .cookie(refreshToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(postDto)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        String data = objectMapper.readTree(string).get("serializedData").asText();
+        Long postId = objectMapper.readTree(data).get("post").get("id").asLong();
+        System.out.println("postId = " + postId);
+        //when
+        String contentAsString = mockMvc.perform(post("/community/" + postId + "/comment")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .cookie(refreshToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(commentDTO)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        //then
+        data = objectMapper.readTree(contentAsString).get("serializedData").asText();
+        System.out.println("data = " + data);
+
+        JsonNode comments = objectMapper.readTree(data).get("comments");
+        List<Comment> commentList = new ArrayList<>();
+        for(JsonNode node : comments){
+            commentList.add(objectMapper.readValue(node.toString(), Comment.class));
+        }
+        Assertions.assertThat(commentList.size()).isGreaterThan(0);
+        Assertions.assertThat(commentList.get(0).getContent()).isEqualTo(commentDTO.getContent());
     }
 
     @Test
@@ -209,4 +262,6 @@ class PostControllerIntegrationTest {
         String message = objectMapper.readTree(s).get("message").asText();
         Assertions.assertThat(message).isEqualTo("delete post success");
     }
+
+
 }

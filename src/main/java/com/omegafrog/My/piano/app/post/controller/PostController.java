@@ -2,8 +2,10 @@ package com.omegafrog.My.piano.app.post.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.omegafrog.My.piano.app.dto.CommentDTO;
 import com.omegafrog.My.piano.app.dto.UpdatePostDto;
 import com.omegafrog.My.piano.app.dto.WritePostDto;
+import com.omegafrog.My.piano.app.post.entity.Comment;
 import com.omegafrog.My.piano.app.post.entity.Post;
 import com.omegafrog.My.piano.app.post.entity.PostRepository;
 import com.omegafrog.My.piano.app.response.*;
@@ -16,6 +18,7 @@ import org.springframework.security.oauth2.client.ClientAuthorizationRequiredExc
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -120,6 +123,32 @@ public class PostController {
         } finally {
             if(ex !=null)
                 ex.printStackTrace();
+        }
+    }
+
+    @PostMapping("/{id}/comment")
+    public JsonAPIResponse addComment(Authentication authentication, @RequestBody CommentDTO dto, @PathVariable Long id){
+        try{
+            User loggedinUser = (User) authentication.getDetails();
+            Post post = postRepository.findById(id).orElseThrow(
+                    () -> new EntityNotFoundException("cannot find post.")
+            );
+            post.addComment(Comment.builder()
+                    .author(loggedinUser)
+                    .content(dto.getContent())
+                    .build());
+            Post saved = postRepository.save(post);
+            List<Comment> comments = saved.getComments();
+            Map<String, Object> data = new HashMap<>();
+            data.put("comments", comments);
+            return new APISuccessResponse("add comment success.", objectMapper, data);
+        }catch (EntityNotFoundException e){
+            e.printStackTrace();
+            return new APIBadRequestResponse(e.getMessage());
+        }
+        catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return new APIInternalServerResponse(e.getMessage());
         }
     }
 }
