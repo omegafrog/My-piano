@@ -11,6 +11,7 @@ import com.omegafrog.My.piano.app.post.entity.Post;
 import com.omegafrog.My.piano.app.post.entity.PostRepository;
 import com.omegafrog.My.piano.app.response.*;
 import com.omegafrog.My.piano.app.user.entity.User;
+import com.omegafrog.My.piano.app.user.entity.UserRepository;
 import jakarta.persistence.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -28,7 +29,7 @@ public class PostController {
 
     private final PostRepository postRepository;
     private final ObjectMapper objectMapper;
-
+    private final UserRepository userRepository;
 
 
     @PostMapping("")
@@ -178,6 +179,21 @@ public class PostController {
         catch (JsonProcessingException e) {
             e.printStackTrace();
             return new APIInternalServerResponse(e.getMessage());
+        }
+    }
+
+    @GetMapping("/{id}/like")
+    public JsonAPIResponse likePost(Authentication authentication, @PathVariable Long id){
+        try {
+            User user = (User) authentication.getDetails();
+            Post post = postRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("cannot find post"));
+            user = user.addLikedPost(post);
+            userRepository.save(user);
+            postRepository.save(post);
+            return new APISuccessResponse("Like post success.");
+        }catch (EntityNotFoundException e){
+            e.printStackTrace();
+            return new APIBadRequestResponse(e.getMessage());
         }
     }
 

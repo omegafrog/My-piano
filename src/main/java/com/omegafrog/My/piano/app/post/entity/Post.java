@@ -52,6 +52,10 @@ public class Post {
         comments.removeIf(comment -> comment.getId().equals(id));
     }
 
+
+    public void addLikeCount(){
+        this.likeCount++;
+    }
     @Builder
     public Post(User author,String title, String content) {
         this.author = author;
@@ -74,7 +78,6 @@ public class Post {
                 .comments(comments)
                 .build();
     }
-
 
     @Override
     public boolean equals(Object o) {
