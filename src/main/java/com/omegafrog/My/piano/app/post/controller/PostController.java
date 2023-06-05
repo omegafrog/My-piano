@@ -9,6 +9,7 @@ import com.omegafrog.My.piano.app.exception.AuthorizationRequiredException;
 import com.omegafrog.My.piano.app.post.entity.Comment;
 import com.omegafrog.My.piano.app.post.entity.Post;
 import com.omegafrog.My.piano.app.post.entity.PostRepository;
+import com.omegafrog.My.piano.app.post.service.PostApplicationService;
 import com.omegafrog.My.piano.app.response.*;
 import com.omegafrog.My.piano.app.user.entity.User;
 import com.omegafrog.My.piano.app.user.entity.UserRepository;
@@ -29,13 +30,17 @@ public class PostController {
 
     private final PostRepository postRepository;
     private final ObjectMapper objectMapper;
+    private final PostApplicationService postApplicationService;
     private final UserRepository userRepository;
 
 
     @PostMapping("")
     public JsonAPIResponse writePost(Authentication authentication, @RequestBody WritePostDto post) {
         try {
-            User author = (User) authentication.getDetails();
+            Long authorId = (Long) authentication.getDetails();
+            User author = userRepository.findById(authorId).orElseThrow(
+                    () -> new EntityNotFoundException("cannot find loggedin user")
+            );
             if (author == null) {
                 return new APIInternalServerResponse("Internal server error");
             }
@@ -79,7 +84,9 @@ public class PostController {
     @PostMapping("/{id}")
     public JsonAPIResponse updatePost(Authentication authentication,@PathVariable Long id, @RequestBody UpdatePostDto post) {
         try {
-            User user = (User) authentication.getDetails();
+            Long userId = (Long) authentication.getDetails();
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new EntityNotFoundException("cannot find loggedin user"));
             Post byId = postRepository.findById(id).orElseThrow(
                     () -> new EntityNotFoundException("cannot find post")
             );
@@ -105,11 +112,14 @@ public class PostController {
     public JsonAPIResponse deletePost(Authentication authentication,@PathVariable Long id) {
         Throwable ex=null;
         try {
-            User user = (User) authentication.getDetails();
+            Long userId = (Long) authentication.getDetails();
+            User loggedInUser = userRepository.findById(userId).orElseThrow(
+                    () -> new EntityNotFoundException("cannot find loggedin user")
+            );
             Post founded = postRepository.findById(id).orElseThrow(
                     () -> new EntityNotFoundException("cannot find post")
             );
-            if (user.equals(founded.getAuthor())) {
+            if (loggedInUser.equals(founded.getAuthor())) {
                 postRepository.deleteById(founded.getId());
                 return new APISuccessResponse("delete post success");
             }
@@ -130,12 +140,15 @@ public class PostController {
     @PostMapping("/{id}/comment")
     public JsonAPIResponse addComment(Authentication authentication, @RequestBody CommentDTO dto, @PathVariable Long id){
         try{
-            User loggedinUser = (User) authentication.getDetails();
+            Long userId = (Long) authentication.getDetails();
+            User loggedInUser = userRepository.findById(userId).orElseThrow(
+                    () -> new EntityNotFoundException("cannot find logged in user")
+            );
             Post post = postRepository.findById(id).orElseThrow(
                     () -> new EntityNotFoundException("cannot find post.")
             );
             post.addComment(Comment.builder()
-                    .author(loggedinUser)
+                    .author(loggedInUser)
                     .content(dto.getContent())
                     .build());
             Post saved = postRepository.save(post);
@@ -156,7 +169,10 @@ public class PostController {
     @DeleteMapping("/{id}/comment/{comment-id}")
     public JsonAPIResponse deleteComment(Authentication authentication, @PathVariable Long id, @PathVariable(name = "comment-id")Long commentId){
         try{
-            User user = (User) authentication.getDetails();
+            Long userId = (Long) authentication.getDetails();
+            User loggedInUser = userRepository.findById(userId).orElseThrow(
+                    () -> new EntityNotFoundException("cannot find logged in user")
+            );
             Post post = postRepository.findById(id).orElseThrow(
                     () -> new EntityNotFoundException("cannot find post")
             );
@@ -164,7 +180,7 @@ public class PostController {
                     .orElseThrow(
                             () -> new EntityNotFoundException("cannot find comment")
                     );
-            if(isLoggedInUserWroteComment(user, foundedComment))
+            if(isLoggedInUserWroteComment(loggedInUser, foundedComment))
                 throw new AuthorizationRequiredException("cannot delete other user's comment.");
 
             post.deleteComment(commentId);
@@ -185,11 +201,12 @@ public class PostController {
     @GetMapping("/{id}/like")
     public JsonAPIResponse likePost(Authentication authentication, @PathVariable Long id){
         try {
-            User user = (User) authentication.getDetails();
+            Long userId = (Long) authentication.getDetails();
+            User loggedInUser = userRepository.findById(userId).orElseThrow(
+                    () -> new EntityNotFoundException("cannot find logged in user")
+            );
             Post post = postRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("cannot find post"));
-            user = user.addLikedPost(post);
-            userRepository.save(user);
-            postRepository.save(post);
+            postApplicationService.likePost(loggedInUser, post);
             return new APISuccessResponse("Like post success.");
         }catch (EntityNotFoundException e){
             e.printStackTrace();

@@ -1,6 +1,7 @@
 package com.omegafrog.My.piano.app.user.entity;
 
 import com.omegafrog.My.piano.app.cart.Cart;
+import com.omegafrog.My.piano.app.dto.UserDTO;
 import com.omegafrog.My.piano.app.lesson.entity.Lesson;
 import com.omegafrog.My.piano.app.post.entity.Post;
 import com.omegafrog.My.piano.app.sheet.entity.Sheet;
@@ -103,6 +104,29 @@ public class User {
         this.phoneNum = userDto.getPhoneNum();
         return this;
     }
+
+    public UserDTO toDTO(){
+        return UserDTO.builder()
+                .id(id)
+                .name(name)
+                .email(email)
+                .loginMethod(loginMethod)
+                .profileSrc(profileSrc)
+                .point(point)
+                .cash(cash)
+                .phoneNum(phoneNum)
+                .alarmProperties(alarmProperties)
+                .cart(cart)
+                .purchasedLessons(purchasedLessons)
+                .purchasedSheets(purchasedSheets)
+                .scrappedSheets(scrappedSheets)
+                .uploadedPosts(uploadedPosts)
+                .uploadedSheets(uploadedSheets)
+                .followed(followed)
+                .likedPosts(likedPosts)
+                .build();
+    }
+
 
     public User addLikedPost(Post post) {
         post.addLikeCount();

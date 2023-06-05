@@ -6,39 +6,25 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.omegafrog.My.piano.app.cart.Cart;
-import com.omegafrog.My.piano.app.dto.RegisterUserDto;
 import com.omegafrog.My.piano.app.dto.UpdatePostDto;
 import com.omegafrog.My.piano.app.dto.WritePostDto;
 import com.omegafrog.My.piano.app.post.entity.Post;
 import com.omegafrog.My.piano.app.post.entity.PostRepository;
+import com.omegafrog.My.piano.app.post.service.PostApplicationService;
 import com.omegafrog.My.piano.app.response.JsonAPIResponse;
-import com.omegafrog.My.piano.app.security.entity.SecurityUser;
-import com.omegafrog.My.piano.app.security.entity.authorities.Authorities;
-import com.omegafrog.My.piano.app.security.entity.authorities.Authority;
 import com.omegafrog.My.piano.app.user.entity.User;
-import com.omegafrog.My.piano.app.user.vo.LoginMethod;
+import com.omegafrog.My.piano.app.user.entity.UserRepository;
 import com.omegafrog.My.piano.app.user.vo.PhoneNum;
-import lombok.Getter;
 import org.assertj.core.api.Assertions;
-import org.hibernate.query.sql.internal.ParameterRecognizerImpl;
-import org.junit.Before;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.data.jpa.repository.support.JpaRepositoryFactory;
-import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
@@ -87,13 +73,15 @@ class PostControllerTest {
         }
     }
     private  PostController controller;
-    private  final PostRepository postRepository = new TestPostRepository();
+    private final PostRepository postRepository = new TestPostRepository();
 
     private  ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     @BeforeEach
     public void createController(){
-        controller = new PostController(postRepository, objectMapper);
+        PostApplicationService postApplicationService = Mockito.mock(PostApplicationService.class);
+        UserRepository userRepository = Mockito.mock(UserRepository.class);
+        controller = new PostController(postRepository, objectMapper, postApplicationService, userRepository);
     }
     @AfterEach
     public void clearRepository(){

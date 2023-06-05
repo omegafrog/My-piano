@@ -93,7 +93,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         UsernamePasswordAuthenticationToken usernameToken = new UsernamePasswordAuthenticationToken(
                 user.getUsername(), null, user.getAuthorities()
         );
-        usernameToken.setDetails(user.getUser());
+        usernameToken.setDetails(user.getUser().getId());
         return usernameToken;
     }
 }

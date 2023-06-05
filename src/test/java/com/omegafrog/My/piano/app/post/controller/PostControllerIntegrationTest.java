@@ -1,13 +1,14 @@
 package com.omegafrog.My.piano.app.post.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.dto.*;
 import com.omegafrog.My.piano.app.post.entity.Comment;
+import com.omegafrog.My.piano.app.post.entity.Post;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
 import com.omegafrog.My.piano.app.security.exception.UsernameAlreadyExistException;
 import com.omegafrog.My.piano.app.security.service.CommonUserService;
+import com.omegafrog.My.piano.app.user.entity.UserRepository;
 import com.omegafrog.My.piano.app.user.vo.LoginMethod;
 import com.omegafrog.My.piano.app.user.vo.PhoneNum;
 import jakarta.servlet.http.Cookie;
@@ -267,18 +268,20 @@ class PostControllerIntegrationTest {
                         .content(objectMapper.writeValueAsString(commentDTO)))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        JsonNode comments = objectMapper.readTree(data).get("serializedData").get("comments");
+        data = objectMapper.readTree(data).get("serializedData").asText();
+        JsonNode comments = objectMapper.readTree(data).get("comments");
         Comment comment = objectMapper.readValue(comments.get(0).toString(), Comment.class);
         Long commentId = comment.getId();
 
         //when
         // 자신이 작성한 comment를 삭제함.
-        String contentAsString = mockMvc.perform(post("/community/" + postId + "/comment/" + commentId)
+        String contentAsString = mockMvc.perform(delete("/community/" + postId + "/comment/" + commentId)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
                         .cookie(refreshToken))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        JsonNode jsonNode = objectMapper.readTree(contentAsString).get("serializedData").get("comments");
+        JsonNode jsonNode = objectMapper.readTree(objectMapper.readTree(contentAsString).get("serializedData").asText())
+                .get("comments");
         List<Comment> commentList = new ArrayList<>();
         for(JsonNode node : jsonNode) {
             commentList.add(objectMapper.readValue(node.toString(), Comment.class));
@@ -287,6 +290,38 @@ class PostControllerIntegrationTest {
         //then
         Optional<Comment> first = commentList.stream().filter(currentComment -> currentComment.getId().equals(commentId)).findFirst();
         Assertions.assertThat(first).isEmpty();
+    }
+
+    @Test
+    void likePostTest() throws Exception {
+        //given
+        WritePostDto postDto = WritePostDto.builder()
+                .title("title")
+                .content("content")
+                .createdAt(LocalDateTime.now())
+                .build();
+        String string = mockMvc.perform(post("/community")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .cookie(refreshToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(postDto)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        String data = objectMapper.readTree(string).get("serializedData").asText();
+        Long postId = objectMapper.readTree(data).get("post").get("id").asLong();
+        //when
+        mockMvc.perform(get("/community/" + postId + "/like")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .cookie(refreshToken))
+                .andExpect(status().isOk());
+
+        //then
+        String contentAsString = mockMvc.perform(get("/community/" + postId))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        Post post = objectMapper.readValue(objectMapper.readTree(objectMapper.readTree(contentAsString).get("serializedData").asText())
+                .get("post").toString(),Post.class);
+        Assertions.assertThat(post.getLikeCount()).isGreaterThan(0);
     }
 
     @Test
