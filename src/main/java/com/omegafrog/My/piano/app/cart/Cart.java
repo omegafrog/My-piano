@@ -1,14 +1,16 @@
 package com.omegafrog.My.piano.app.cart;
 
 import com.omegafrog.My.piano.app.sheet.entity.Sheet;
+import jakarta.persistence.*;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @NoArgsConstructor
+@Getter
 public class Cart {
 
     @Id

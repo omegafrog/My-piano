@@ -2,9 +2,11 @@ package com.omegafrog.My.piano.app.user.vo;
 
 import lombok.Builder;
 
-import javax.persistence.Embeddable;
+import jakarta.persistence.Embeddable;
+import lombok.Getter;
 
 @Embeddable
+@Getter
 public class AlarmProperties {
 
     private boolean myFollowerAlarm;

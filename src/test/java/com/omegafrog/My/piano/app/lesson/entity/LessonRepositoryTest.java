@@ -1,6 +1,6 @@
 package com.omegafrog.My.piano.app.lesson.entity;
 
-import com.omegafrog.My.piano.app.lesson.dto.UpdateLessonDto;
+import com.omegafrog.My.piano.app.dto.UpdateLessonDto;
 import com.omegafrog.My.piano.app.enums.Category;
 import com.omegafrog.My.piano.app.enums.Instrument;
 import com.omegafrog.My.piano.app.enums.RefundPolicy;

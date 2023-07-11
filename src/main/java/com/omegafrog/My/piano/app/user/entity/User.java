@@ -11,9 +11,8 @@ import com.omegafrog.My.piano.app.user.vo.PhoneNum;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +40,7 @@ public class User {
     private PhoneNum phoneNum;
     private AlarmProperties alarmProperties;
 
-    @OneToOne(cascade = {CascadeType.PERSIST})
+    @OneToOne(cascade = {CascadeType.PERSIST,CascadeType.REMOVE})
     @JoinColumn(name = "USER_ID")
     private Cart cart;
 

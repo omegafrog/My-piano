@@ -3,15 +3,14 @@ package com.omegafrog.My.piano.app.sheet.entity;
 import com.omegafrog.My.piano.app.enums.Difficulty;
 import com.omegafrog.My.piano.app.enums.Genre;
 import com.omegafrog.My.piano.app.enums.Instrument;
-import com.omegafrog.My.piano.app.order.entity.Item;
-import com.omegafrog.My.piano.app.sheet.dto.UpdateSheetDto;
+import com.omegafrog.My.piano.app.dto.UpdateSheetDto;
 import com.omegafrog.My.piano.app.user.entity.User;
+import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
-
 @Entity
 @NoArgsConstructor
 public class Sheet extends Item {

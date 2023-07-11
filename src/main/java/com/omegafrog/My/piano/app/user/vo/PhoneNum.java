@@ -1,12 +1,16 @@
 package com.omegafrog.My.piano.app.user.vo;
 
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Embeddable;
+import jakarta.persistence.Embeddable;
+import lombok.Setter;
 
 @Embeddable
 @NoArgsConstructor
+@Getter
+@Setter
 public class PhoneNum {
 
     private String phoneNum;

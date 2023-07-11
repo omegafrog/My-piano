@@ -1,16 +1,11 @@
 package com.omegafrog.My.piano.app.post.entity;
 
-import com.omegafrog.My.piano.app.post.dto.UpdatePostDto;
+import com.omegafrog.My.piano.app.dto.UpdatePostDto;
 import com.omegafrog.My.piano.app.user.entity.User;
 import com.omegafrog.My.piano.app.user.vo.LoginMethod;
 import com.omegafrog.My.piano.app.user.vo.PhoneNum;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-
-import java.time.LocalDateTime;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class PostTest {
 
