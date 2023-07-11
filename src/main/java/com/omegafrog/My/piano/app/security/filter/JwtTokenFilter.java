@@ -1,9 +1,6 @@
 package com.omegafrog.My.piano.app.security.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.omegafrog.My.piano.app.response.APIBadRequestResponse;
-import com.omegafrog.My.piano.app.response.APIInternalServerResponse;
-import com.omegafrog.My.piano.app.response.ResponseUtil;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
 import com.omegafrog.My.piano.app.security.handler.LogoutBlacklistRepository;
@@ -26,7 +23,6 @@ import org.springframework.security.web.authentication.session.SessionAuthentica
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Optional;
 
 @RequiredArgsConstructor
 public class JwtTokenFilter extends OncePerRequestFilter {

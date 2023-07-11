@@ -1,14 +1,14 @@
 package com.omegafrog.My.piano.app.security.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.omegafrog.My.piano.app.dto.RegisterUserDto;
-import com.omegafrog.My.piano.app.dto.SecurityUserDto;
+import com.omegafrog.My.piano.app.web.dto.RegisterUserDto;
+import com.omegafrog.My.piano.app.web.dto.SecurityUserDto;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
 import com.omegafrog.My.piano.app.security.exception.UsernameAlreadyExistException;
 import com.omegafrog.My.piano.app.security.service.CommonUserService;
-import com.omegafrog.My.piano.app.user.entity.UserRepository;
-import com.omegafrog.My.piano.app.user.vo.LoginMethod;
-import com.omegafrog.My.piano.app.user.vo.PhoneNum;
+import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
+import com.omegafrog.My.piano.app.web.user.LoginMethod;
+import com.omegafrog.My.piano.app.web.user.PhoneNum;
 import jakarta.servlet.http.Cookie;
 import lombok.*;
 import org.assertj.core.api.Assertions;
@@ -22,7 +22,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.junit.jupiter.SpringExtension;

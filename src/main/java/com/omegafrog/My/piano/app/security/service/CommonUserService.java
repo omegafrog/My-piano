@@ -1,12 +1,12 @@
 package com.omegafrog.My.piano.app.security.service;
 
-import com.omegafrog.My.piano.app.dto.RegisterUserDto;
-import com.omegafrog.My.piano.app.dto.SecurityUserDto;
+import com.omegafrog.My.piano.app.web.dto.RegisterUserDto;
+import com.omegafrog.My.piano.app.web.dto.SecurityUserDto;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
 import com.omegafrog.My.piano.app.security.entity.authorities.Role;
 import com.omegafrog.My.piano.app.security.exception.UsernameAlreadyExistException;
-import com.omegafrog.My.piano.app.user.entity.User;
+import com.omegafrog.My.piano.app.web.domain.user.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
