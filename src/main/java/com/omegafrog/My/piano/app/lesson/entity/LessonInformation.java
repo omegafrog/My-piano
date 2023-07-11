@@ -6,7 +6,7 @@ import com.omegafrog.My.piano.app.enums.RefundPolicy;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Embeddable;
+import jakarta.persistence.Embeddable;
 
 @Embeddable
 @NoArgsConstructor

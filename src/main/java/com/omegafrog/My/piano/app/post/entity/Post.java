@@ -1,12 +1,12 @@
 package com.omegafrog.My.piano.app.post.entity;
 
-import com.omegafrog.My.piano.app.post.dto.UpdatePostDto;
+import com.omegafrog.My.piano.app.dto.UpdatePostDto;
 import com.omegafrog.My.piano.app.user.entity.User;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;

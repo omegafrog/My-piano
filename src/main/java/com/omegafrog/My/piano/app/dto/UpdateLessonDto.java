@@ -1,4 +1,4 @@
-package com.omegafrog.My.piano.app.lesson.dto;
+package com.omegafrog.My.piano.app.dto;
 
 import com.omegafrog.My.piano.app.lesson.entity.LessonInformation;
 import com.omegafrog.My.piano.app.lesson.entity.VideoInformation;

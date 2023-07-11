@@ -1,6 +1,6 @@
 package com.omegafrog.My.piano.app.post.entity;
 
-import com.omegafrog.My.piano.app.post.dto.UpdateVideoPostDto;
+import com.omegafrog.My.piano.app.dto.UpdateVideoPostDto;
 import com.omegafrog.My.piano.app.user.entity.User;
 import com.omegafrog.My.piano.app.user.vo.LoginMethod;
 import com.omegafrog.My.piano.app.user.vo.PhoneNum;
@@ -9,11 +9,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-
-import javax.persistence.EntityNotFoundException;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
 class VideoPostRepositoryTest {
