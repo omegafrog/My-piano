@@ -25,6 +25,7 @@ public class SecurityUser implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Getter
     private Long id;
 
     private String username;
@@ -34,7 +35,7 @@ public class SecurityUser implements UserDetails {
     private LocalDateTime credentialChangedAt;
     private boolean locked;
 
-    @OneToOne(cascade = {CascadeType.MERGE,CascadeType.PERSIST})
+    @OneToOne(cascade = {CascadeType.MERGE,CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinColumn(name = "USER_ID")
     @Getter
     private User user;

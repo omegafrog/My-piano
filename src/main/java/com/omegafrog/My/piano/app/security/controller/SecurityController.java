@@ -10,8 +10,12 @@ import com.omegafrog.My.piano.app.response.APISuccessResponse;
 import com.omegafrog.My.piano.app.response.JsonAPIResponse;
 import com.omegafrog.My.piano.app.security.exception.UsernameAlreadyExistException;
 import com.omegafrog.My.piano.app.security.service.CommonUserService;
+import com.omegafrog.My.piano.app.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,6 +31,9 @@ public class SecurityController {
 
     private final ObjectMapper objectMapper;
     private final CommonUserService commonUserService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @PostMapping("/user/register")
     public JsonAPIResponse registerCommonUser(@RequestBody RegisterUserDto dto){
@@ -45,6 +52,24 @@ public class SecurityController {
             return new APIInternalServerResponse("Object mapping이 실패했습니다.");
         }
     }
+
+    @GetMapping("/user/signOut")
+    public JsonAPIResponse signOutUser(Authentication authentication){
+        String username = (String) authentication.getPrincipal();
+        commonUserService.signOutUser(username);
+        return new APISuccessResponse("회원탈퇴 성공.");
+    }
+
+//    @PostMapping("/user/checkPassword")
+//    public JsonAPIResponse validateCurrentPassword(@RequestBody String password, Authentication authentication) {
+//        String currentPassword = (String) authentication.getCredentials();
+//        if(passwordEncoder.matches(password, currentPassword)){
+//            return new APISuccessResponse("password 재인증 성공");
+//        }else {
+//            return new APISuccessResponse("password 재인증 실패");
+//        }
+//    }
+
     @GetMapping("/user/someMethod")
     public String someMethod(){
         return "hi";

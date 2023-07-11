@@ -46,6 +46,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             filterChain.doFilter(request,response);
             return;
         }
+        SecurityUser user=null;
         // token 추출
         try{
             String accessToken = TokenUtils.getAccessTokenStringFromHeaders(request);
@@ -58,17 +59,8 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             if(logoutBlacklistRepository.isPresent(accessToken)){
                 throw new SessionAuthenticationException("Already logged out user.");
             }
-            // token이 만료되지 않음.
-            if (TokenUtils.isNonExpired(accessToken, secret)) {
-                SecurityUser user = securityUserRepository.findById(userId).orElseThrow(
-                        () -> new AuthenticationCredentialsNotFoundException("Invalid access token")
-                );
-                // securityContextHolder에 request와 lifecycle이 같은 객체 저장.
-                Authentication usernameToken = getAuthenticationToken(user);
-                SecurityContextHolder.getContext().setAuthentication(usernameToken);
-            }
             // 토큰이 만료되어 재발급함
-            else{
+            if (!TokenUtils.isNonExpired(accessToken, secret)){
                 RefreshToken founded = refreshTokenRepository.findByUserId(userId).orElseThrow(
                         ()->new AuthenticationCredentialsNotFoundException("Invalid refresh token")
                 );
@@ -78,9 +70,16 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                             TokenUtils.generateToken(userId.toString(),secret).getAccessToken());
                 }
             }
+            user = securityUserRepository.findById(userId).orElseThrow(
+                            () -> new AuthenticationCredentialsNotFoundException("Invalid access token")
+            );
+            Authentication usernameToken = getAuthenticationToken(user);
+            SecurityContextHolder.getContext().setAuthentication(usernameToken);
         }catch (AuthenticationException e){
-            ResponseUtil.writeResponse(new APIBadRequestResponse(e.getMessage()), response, objectMapper);
+            filterChain.doFilter(request, response);
+            return;
         }
+        filterChain.doFilter(request, response);
     }
 
     private static Authentication getAuthenticationToken(SecurityUser user) {

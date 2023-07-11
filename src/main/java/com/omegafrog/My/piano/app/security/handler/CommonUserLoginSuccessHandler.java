@@ -39,7 +39,7 @@ public class CommonUserLoginSuccessHandler implements AuthenticationSuccessHandl
         User user = (User)authentication.getDetails();
         TokenInfo tokenInfo = TokenUtils.generateToken(String.valueOf(user.getId()), secret);
         RefreshToken savedRefreshToken = refreshTokenRepository.save(tokenInfo.getRefreshToken());
-        data.put("access token", tokenInfo.getAccessToken());
+        data.put("access token", tokenInfo.getGrantType()+" "+tokenInfo.getAccessToken());
         response.addCookie(
                 new Cookie("refreshToken", savedRefreshToken.getRefreshToken())
         );
