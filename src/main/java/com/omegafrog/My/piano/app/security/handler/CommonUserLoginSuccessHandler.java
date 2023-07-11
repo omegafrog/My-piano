@@ -1,12 +1,12 @@
 package com.omegafrog.My.piano.app.security.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.omegafrog.My.piano.app.response.APISuccessResponse;
+import com.omegafrog.My.piano.app.web.response.APISuccessResponse;
 import com.omegafrog.My.piano.app.security.jwt.RefreshToken;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.security.jwt.TokenInfo;
 import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
-import com.omegafrog.My.piano.app.user.entity.User;
+import com.omegafrog.My.piano.app.web.domain.user.User;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
