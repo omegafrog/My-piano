@@ -3,20 +3,19 @@ package com.omegafrog.My.piano.app.sheet.entity;
 import com.omegafrog.My.piano.app.enums.Difficulty;
 import com.omegafrog.My.piano.app.enums.Genre;
 import com.omegafrog.My.piano.app.enums.Instrument;
+import com.omegafrog.My.piano.app.order.entity.Item;
 import com.omegafrog.My.piano.app.sheet.dto.UpdateSheetDto;
 import com.omegafrog.My.piano.app.user.entity.User;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 @NoArgsConstructor
-public class Sheet {
+public class Sheet extends Item {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
     private int pageNum;
     private Difficulty difficulty;
     private Instrument instrument;
@@ -24,7 +23,6 @@ public class Sheet {
     private boolean isSolo;
     private boolean lyrics;
     private String filePath;
-    private int price;
 
     @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "USER_ID")
@@ -32,6 +30,7 @@ public class Sheet {
 
     @Builder
     public Sheet(int pageNum, Difficulty difficulty, Instrument instrument, Genre genre, boolean isSolo, boolean lyrics, String filePath, int price, User user) {
+        super(LocalDateTime.now());
         this.pageNum = pageNum;
         this.difficulty = difficulty;
         this.instrument = instrument;
@@ -55,20 +54,7 @@ public class Sheet {
         return this;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
 
-        Sheet sheet = (Sheet) o;
-
-        return id.equals(sheet.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return id.hashCode();
-    }
 }
 
 
