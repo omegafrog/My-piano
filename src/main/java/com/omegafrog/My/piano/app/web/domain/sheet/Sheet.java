@@ -9,11 +9,14 @@ import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.*;
 import java.time.LocalDateTime;
 @Entity
 @NoArgsConstructor
-public class Sheet extends Item {
+public class Sheet  {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     private int pageNum;
     private Difficulty difficulty;
@@ -23,13 +26,14 @@ public class Sheet extends Item {
     private boolean lyrics;
     private String filePath;
 
+    private LocalDateTime created_at;
+
     @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "USER_ID")
     private User user;
 
     @Builder
     public Sheet(int pageNum, Difficulty difficulty, Instrument instrument, Genre genre, boolean isSolo, boolean lyrics, String filePath, int price, User user) {
-        super(LocalDateTime.now());
         this.pageNum = pageNum;
         this.difficulty = difficulty;
         this.instrument = instrument;
@@ -37,7 +41,6 @@ public class Sheet extends Item {
         this.isSolo = isSolo;
         this.lyrics = lyrics;
         this.filePath = filePath;
-        this.price = price;
         this.user = user;
     }
 
@@ -49,7 +52,6 @@ public class Sheet extends Item {
         this.isSolo = dto.isSolo();
         this.lyrics = dto.isLyrics();
         this.filePath = dto.getFilePath();
-        this.price = dto.getPrice();
         return this;
     }
 
