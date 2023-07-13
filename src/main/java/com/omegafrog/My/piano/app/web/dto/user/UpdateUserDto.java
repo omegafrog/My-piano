@@ -1,6 +1,6 @@
 package com.omegafrog.My.piano.app.web.dto.user;
 
-import com.omegafrog.My.piano.app.web.user.PhoneNum;
+import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 import lombok.Builder;
 import lombok.Data;
 

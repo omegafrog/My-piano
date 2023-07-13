@@ -2,8 +2,8 @@ package com.omegafrog.My.piano.app.web.infrastructure.post;
 
 import com.omegafrog.My.piano.app.web.dto.UpdateVideoPostDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
-import com.omegafrog.My.piano.app.web.user.LoginMethod;
-import com.omegafrog.My.piano.app.web.user.PhoneNum;
+import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
+import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 import com.omegafrog.My.piano.app.web.domain.post.Comment;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPost;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPostRepository;

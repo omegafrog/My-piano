@@ -1,4 +1,4 @@
-package com.omegafrog.My.piano.app.web.user;
+package com.omegafrog.My.piano.app.web.vo.user;
 
 import lombok.Builder;
 

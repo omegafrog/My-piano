@@ -1,8 +1,8 @@
 package com.omegafrog.My.piano.app.web.infrastructure.user;
 
 import com.omegafrog.My.piano.app.web.dto.user.UpdateUserDto;
-import com.omegafrog.My.piano.app.web.user.LoginMethod;
-import com.omegafrog.My.piano.app.web.user.PhoneNum;
+import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
+import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import org.assertj.core.api.Assertions;

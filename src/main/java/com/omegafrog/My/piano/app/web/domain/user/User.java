@@ -4,15 +4,21 @@ import com.omegafrog.My.piano.app.web.domain.cart.Cart;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
 import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
+import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
+import com.omegafrog.My.piano.app.web.dto.order.OrderDto;
 import com.omegafrog.My.piano.app.web.dto.user.UpdateUserDto;
-import com.omegafrog.My.piano.app.web.user.AlarmProperties;
-import com.omegafrog.My.piano.app.web.user.LoginMethod;
-import com.omegafrog.My.piano.app.web.user.PhoneNum;
+import com.omegafrog.My.piano.app.web.exception.payment.NotEnoughCashException;
+import com.omegafrog.My.piano.app.web.exception.payment.PaymentException;
+import com.omegafrog.My.piano.app.web.vo.user.AlarmProperties;
+import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
+import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+
 import jakarta.persistence.*;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -99,6 +105,25 @@ public class User {
         this.profileSrc = userDto.getProfileSrc();
         this.phoneNum = userDto.getPhoneNum();
         return this;
+    }
+
+    public void pay(OrderDto orderDto)throws PaymentException {
+        if(cash < orderDto.getTotalPrice()){
+            throw new NotEnoughCashException("Cannot buy this item => cash:"
+                    + cash + " < price:" + orderDto.getTotalPrice());
+            // 캐시 부족
+        }else{
+            cash-=orderDto.getTotalPrice();
+            if( orderDto.getItem() instanceof Lesson)
+                purchasedLessons.add((Lesson)orderDto.getItem());
+            else if(orderDto.getItem() instanceof SheetPost)
+                purchasedSheets.add( ((SheetPost)(orderDto.getItem())).getSheet());
+            else
+                throw new ClassCastException("Cannot cast this class to child class.");
+        }
+    }
+    public void receiveCash(int totalPrice){
+        cash += totalPrice;
     }
 
     @Override
