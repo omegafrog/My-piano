@@ -3,23 +3,23 @@ package com.omegafrog.My.piano.app.web.domain.lesson;
 import com.omegafrog.My.piano.app.web.dto.UpdateLessonDto;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import com.omegafrog.My.piano.app.web.domain.user.User;
+import com.omegafrog.My.piano.app.web.domain.order.Item;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
-import java.util.Objects;
 
 @Entity
 @NoArgsConstructor
+@Getter
 public class Lesson extends Item {
 
     private String title;
     private String subTitle;
 
     private VideoInformation videoInformation;
-
 
     private int viewCount;
     @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
