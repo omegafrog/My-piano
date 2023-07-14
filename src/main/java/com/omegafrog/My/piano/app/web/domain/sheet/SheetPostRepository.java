@@ -13,5 +13,6 @@ public interface SheetPostRepository  {
     Optional<SheetPost> findBySheetId(Long sheetId);
 
     void deleteById(Long id);
+    void deleteAll();
 
 }

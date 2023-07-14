@@ -32,4 +32,8 @@ public class JpaSheetPostRepositoryImpl implements SheetPostRepository {
     public void deleteById(Long id) {
         jpaRepository.deleteById(id);
     }
+
+    public void deleteAll(){
+        jpaRepository.deleteAll();
+    }
 }

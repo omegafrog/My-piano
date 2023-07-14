@@ -7,6 +7,7 @@ import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonInformation;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
 import com.omegafrog.My.piano.app.web.domain.lesson.VideoInformation;
+import com.omegafrog.My.piano.app.web.domain.order.OrderRepository;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
@@ -18,6 +19,8 @@ import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 import jakarta.persistence.*;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +38,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -55,73 +59,38 @@ class OrderControllerTest {
     private UserRepository userRepository;
     @Autowired
     private ObjectMapper objectMapper;
-    @PersistenceUnit
-    EntityManagerFactory emf;
-    User testUser1 = User.builder()
-            .name("testUser1")
-            .cart(new Cart())
-            .loginMethod(LoginMethod.EMAIL)
-            .cash(20000)
-            .phoneNum(PhoneNum.builder()
-                    .phoneNum("010-1111-2222")
-                    .isAuthorized(true)
-                    .build())
-            .build();
-    User artist = User.builder()
-            .name("artist1")
-            .cart(new Cart())
-            .loginMethod(LoginMethod.EMAIL)
-            .phoneNum(PhoneNum.builder()
-                    .phoneNum("010-1111-2222")
-                    .isAuthorized(true)
-                    .build())
-            .build();
-    @Test
+    @Autowired
+    private OrderRepository orderRepository;
+
+
+    User testUser1;
+    User artist;
+    Lesson savedLesson;
+    SheetPost savedSheetPost;
+    @BeforeEach
     @Transactional
-    @WithMockUser(username = "username", password = "password", roles = {"USER"})
-    void orderSheet() throws Exception {
-        testUser1 = userRepository.save(testUser1);
-        artist = userRepository.save(artist);
-        SheetPost sheetPost = SheetPost.builder()
-                .sheet(Sheet.builder()
-                        .title("title")
-                        .filePath("path1")
-                        .genre(Genre.BGM)
-                        .user(testUser1)
-                        .difficulty(Difficulty.MEDIUM)
-                        .instrument(Instrument.GUITAR_ACOUSTIC)
-                        .isSolo(true)
-                        .lyrics(false)
-                        .pageNum(3)
+    void saveEntity(){
+        User a = User.builder()
+                .name("testUser1")
+                .cart(new Cart())
+                .loginMethod(LoginMethod.EMAIL)
+                .cash(20000)
+                .phoneNum(PhoneNum.builder()
+                        .phoneNum("010-1111-2222")
+                        .isAuthorized(true)
                         .build())
-                .title("SheetPostTItle1")
-                .price(12000)
-                .artist(artist)
-                .content("hihi this is content")
                 .build();
-
-        SheetPost savedSheetPost = sheetPostRepository.save(sheetPost);
-        OrderRegisterDto orderDto = OrderRegisterDto.builder()
-                .itemId(savedSheetPost.getId())
-                .buyerId(testUser1.getId())
+        User b = User.builder()
+                .name("artist1")
+                .cart(new Cart())
+                .loginMethod(LoginMethod.EMAIL)
+                .phoneNum(PhoneNum.builder()
+                        .phoneNum("010-1111-2222")
+                        .isAuthorized(true)
+                        .build())
                 .build();
-        String data = objectMapper.writeValueAsString(orderDto);
-        mockMvc.perform(post("/sheet/buy")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(data))
-                .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("200 OK"))
-                .andDo(print());
-
-        Optional<User> byId = userRepository.findById(testUser1.getId());
-        Assertions.assertThat(byId.get().getPurchasedSheets().size()).isGreaterThan(0);
-        Assertions.assertThat(byId.get().getPurchasedSheets().get(0)).isEqualTo(savedSheetPost.getSheet());
-    }
-
-
-    @Test
-    @Transactional
-    void orderLesson() throws Exception {
+        testUser1 = userRepository.save(a);
+        artist = userRepository.save(b);
         Lesson lesson = Lesson.builder()
                 .sheet(Sheet.builder()
                         .title("title")
@@ -152,10 +121,64 @@ class OrderControllerTest {
                                 .build())
                 .build();
 
-        Lesson saved = lessonRepository.save(lesson);
+        SheetPost sheetPost = SheetPost.builder()
+                .sheet(Sheet.builder()
+                        .title("title")
+                        .filePath("path1")
+                        .genre(Genre.BGM)
+                        .user(testUser1)
+                        .difficulty(Difficulty.MEDIUM)
+                        .instrument(Instrument.GUITAR_ACOUSTIC)
+                        .isSolo(true)
+                        .lyrics(false)
+                        .pageNum(3)
+                        .build())
+                .title("SheetPostTItle1")
+                .price(12000)
+                .artist(artist)
+                .content("hihi this is content")
+                .build();
+
+        savedLesson= lessonRepository.save(lesson);
+        savedSheetPost= sheetPostRepository.save(sheetPost);
+
+    }
+    @AfterEach
+    void deleteEntity(){
+        lessonRepository.deleteAll();
+        sheetPostRepository.deleteAll();
+        userRepository.deleteAll();
+    }
+
+    @Test
+    @Transactional
+    @WithMockUser(username = "username", password = "password", roles = {"USER"})
+    void orderSheet() throws Exception {
+
+        OrderRegisterDto orderDto = OrderRegisterDto.builder()
+                .itemId(savedSheetPost.getId())
+                .buyerId(testUser1.getId())
+                .build();
+        String data = objectMapper.writeValueAsString(orderDto);
+        mockMvc.perform(post("/sheet/buy")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(data))
+                .andExpect(status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("200 OK"))
+                .andDo(print());
+
+        Optional<User> byId = userRepository.findById(testUser1.getId());
+        Assertions.assertThat(byId.get().getPurchasedSheets().size()).isGreaterThan(0);
+        Assertions.assertThat(byId.get().getPurchasedSheets().get(0)).isEqualTo(savedSheetPost.getSheet());
+    }
+
+
+    @Test
+    @Transactional
+    void orderLesson() throws Exception {
         OrderRegisterDto order2 = OrderRegisterDto.builder()
                 .buyerId(testUser1.getId())
-                .itemId(saved.getId())
+                .itemId(savedLesson.getId())
                 .build();
 
         mockMvc.perform(post("/lesson/buy")
@@ -167,7 +190,29 @@ class OrderControllerTest {
         Optional<User> byId = userRepository.findById(testUser1.getId());
         Assertions.assertThat(byId.get().getCash()).isLessThan(20000);
         Assertions.assertThat(byId.get().getPurchasedLessons().size()).isGreaterThan(0);
-        Assertions.assertThat(byId.get().getPurchasedLessons().get(0)).isEqualTo(saved);
+        Assertions.assertThat(byId.get().getPurchasedLessons().get(0)).isEqualTo(savedLesson);
+    }
 
+    @Test
+    @Transactional
+    void cancelOrderTest() throws Exception {
+        OrderRegisterDto orderDto = OrderRegisterDto.builder()
+                .itemId(savedSheetPost.getId())
+                .buyerId(testUser1.getId())
+                .build();
+        String data = objectMapper.writeValueAsString(orderDto);
+        mockMvc.perform(post("/sheet/buy")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(data))
+                .andExpect(status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("200 OK"))
+                .andDo(print());
+
+        mockMvc.perform(get("/order/1/cancel"))
+                .andExpect(status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("200 OK"))
+                .andDo(print());
+
+        Assertions.assertThat(orderRepository.findById(1L)).isEmpty();
     }
 }
