@@ -37,9 +37,7 @@ public class OrderService {
         User buyer = userRepository.findById(orderRegisterDto.getBuyerId())
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity : "
                         + orderRegisterDto.getBuyerId()));
-        Coupon coupon = couponRepository.findById(orderRegisterDto.getCouponId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find Coupon entity : "
-                        + orderRegisterDto.getCouponId()));
+
 
         // TODO : SheetPost의 sheet, artist property는 non-null로 validation 해야함.
         Order.OrderBuilder orderBuilder = Order.builder()
@@ -48,9 +46,14 @@ public class OrderService {
                 .seller(item.getArtist())
                 .initialPrice(item.getPrice());
 
-        if (orderRegisterDto.getCouponId() != null)
+        if (orderRegisterDto.getCouponId() != null){
+            Coupon coupon = couponRepository.findById(orderRegisterDto.getCouponId())
+                    .orElseThrow(() -> new EntityNotFoundException("Cannot find Coupon entity : "
+                            + orderRegisterDto.getCouponId()));
             orderBuilder = orderBuilder.coupon(coupon);
+        }
         Order order = orderBuilder.build();
+        order.calculateTotalPrice();
         return orderRepository.save(order).toDto();
     }
 
@@ -62,9 +65,7 @@ public class OrderService {
         User buyer = userRepository.findById(lessonOrderDto.getBuyerId())
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity : "
                         + lessonOrderDto.getBuyerId()));
-        Coupon coupon = couponRepository.findById(lessonOrderDto.getCouponId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find Coupon entity : "
-                        + lessonOrderDto.getCouponId()));
+
 
         // TODO : SheetPost의 sheet, artist property는 non-null로 validation 해야함.
         Order.OrderBuilder orderBuilder = Order.builder()
@@ -73,9 +74,14 @@ public class OrderService {
                 .seller(item.getLessonProvider())
                 .initialPrice(item.getPrice());
 
-        if (lessonOrderDto.getCouponId() != null)
+        if (lessonOrderDto.getCouponId() != null){
+            Coupon coupon = couponRepository.findById(lessonOrderDto.getCouponId())
+                    .orElseThrow(() -> new EntityNotFoundException("Cannot find Coupon entity : "
+                            + lessonOrderDto.getCouponId()));
             orderBuilder = orderBuilder.coupon(coupon);
+        }
         Order order = orderBuilder.build();
+        order.calculateTotalPrice();
         return orderRepository.save(order).toDto();
     }
 

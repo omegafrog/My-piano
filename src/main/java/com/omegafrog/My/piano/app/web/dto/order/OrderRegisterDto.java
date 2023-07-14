@@ -1,14 +1,13 @@
 package com.omegafrog.My.piano.app.web.dto.order;
 
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Data
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class OrderRegisterDto {
     private Long itemId;
     private Long buyerId;
