@@ -18,6 +18,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -37,7 +39,6 @@ public class OrderService {
         User buyer = userRepository.findById(orderRegisterDto.getBuyerId())
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity : "
                         + orderRegisterDto.getBuyerId()));
-
 
         // TODO : SheetPost의 sheet, artist property는 non-null로 validation 해야함.
         Order.OrderBuilder orderBuilder = Order.builder()
@@ -100,14 +101,12 @@ public class OrderService {
         return orderDto;
     }
 
-    public OrderDto updateOrder(Long orderId, OrderDto after) throws PersistenceException{
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find Order entity : " + orderId));
-        Order updated = order.update(after);
-        return orderRepository.save(updated).toDto();
-    }
-
     public void deleteOrder(Long orderId) throws PersistenceException{
         orderRepository.deleteById(orderId);
+    }
+
+    public List<OrderDto> getAllOrders(User user){
+        List<Order> byBuyerId = orderRepository.findByBuyer_id(user.getId());
+        return byBuyerId.stream().map(Order::toDto).toList();
     }
 }
