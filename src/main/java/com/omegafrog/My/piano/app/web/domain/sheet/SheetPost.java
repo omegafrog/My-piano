@@ -24,7 +24,7 @@ public class SheetPost extends Item {
     private int view;
     private String content;
 
-    @OneToOne(cascade = {CascadeType.MERGE, CascadeType.PERSIST})
+    @OneToOne(cascade = {CascadeType.MERGE})
     @JoinColumn(name = "USER_ID")
     private User artist;
 
