@@ -52,4 +52,20 @@ public class OrderController {
             return new APIBadRequestResponse(e.getMessage());
         }
     }
+
+    @GetMapping(path = "/order/{id}/cancel")
+    public JsonAPIResponse cancelOrder(@PathVariable Long id){
+        try {
+            orderService.deleteOrder(id);
+            return new APISuccessResponse("Cancel order success.");
+        } catch (EntityNotFoundException e) {
+            e.printStackTrace();
+            return new APIBadRequestResponse(e.getMessage());
+        }catch (PersistenceException e){
+            e.printStackTrace();
+            return new APIInternalServerResponse(e.getMessage());
+        }
+    }
+
+
 }

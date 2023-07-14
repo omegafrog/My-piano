@@ -23,7 +23,8 @@ public class JpaOrderRepositoryImpl implements OrderRepository {
     }
 
     @Override
-    public void deleteById(Long id) {
-        jpaRepository.deleteById(id);
+    public void deleteById(Long id) throws EntityNotFoundException{
+        findById(id).ifPresentOrElse(entity->jpaRepository.delete(entity),
+                ()-> {throw new EntityNotFoundException();});
     }
 }
