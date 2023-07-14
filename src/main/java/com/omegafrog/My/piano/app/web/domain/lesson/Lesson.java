@@ -22,7 +22,7 @@ public class Lesson extends Item {
     private VideoInformation videoInformation;
 
     private int viewCount;
-    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @OneToOne(cascade = { CascadeType.MERGE})
     @JoinColumn(name = "USER_ID")
     private User lessonProvider;
     @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
