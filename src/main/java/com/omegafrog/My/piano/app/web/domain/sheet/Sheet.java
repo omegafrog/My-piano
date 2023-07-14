@@ -18,6 +18,7 @@ public class Sheet  {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private String title;
     private int pageNum;
     private Difficulty difficulty;
     private Instrument instrument;
@@ -33,7 +34,8 @@ public class Sheet  {
     private User user;
 
     @Builder
-    public Sheet(int pageNum, Difficulty difficulty, Instrument instrument, Genre genre, boolean isSolo, boolean lyrics, String filePath, int price, User user) {
+    public Sheet(String title, int pageNum, Difficulty difficulty, Instrument instrument, Genre genre, boolean isSolo, boolean lyrics, String filePath, User user) {
+        this.title = title;
         this.pageNum = pageNum;
         this.difficulty = difficulty;
         this.instrument = instrument;
@@ -45,6 +47,7 @@ public class Sheet  {
     }
 
     public Sheet update(UpdateSheetDto dto){
+        this.title = dto.getTitle();
         this.pageNum = dto.getPageNum();
         this.difficulty = dto.getDifficulty();
         this.instrument = dto.getInstrument();

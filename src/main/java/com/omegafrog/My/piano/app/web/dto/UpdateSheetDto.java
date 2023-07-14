@@ -8,6 +8,7 @@ import lombok.Data;
 
 @Data
 public class UpdateSheetDto {
+    private String title;
     private int pageNum;
     private Difficulty difficulty;
     private Instrument instrument;
@@ -18,7 +19,8 @@ public class UpdateSheetDto {
     private int price;
 
     @Builder
-    public UpdateSheetDto(int pageNum, Difficulty difficulty, Instrument instrument, Genre genre, boolean isSolo, boolean lyrics, String filePath, int price) {
+    public UpdateSheetDto(String title, int pageNum, Difficulty difficulty, Instrument instrument, Genre genre, boolean isSolo, boolean lyrics, String filePath, int price) {
+        this.title = title;
         this.pageNum = pageNum;
         this.difficulty = difficulty;
         this.instrument = instrument;
