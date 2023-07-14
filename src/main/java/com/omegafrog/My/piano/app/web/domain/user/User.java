@@ -27,6 +27,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @Entity
 @Table(name = "`USER`")
 @NoArgsConstructor
+@Getter
 public class User {
 
     @Id
@@ -91,13 +92,14 @@ public class User {
 
     // TODO : USER에서 Cart를 팩토리로 생성해보자.
     @Builder
-    public User(String name, Cart cart, LoginMethod loginMethod, String profileSrc, PhoneNum phoneNum) {
+    public User(String name, Cart cart, LoginMethod loginMethod, String profileSrc, PhoneNum phoneNum, int cash) {
         this.name = name;
         this.alarmProperties = new AlarmProperties();
         this.loginMethod = loginMethod;
         this.profileSrc = profileSrc;
         this.phoneNum = phoneNum;
         this.cart = cart;
+        this.cash = cash;
     }
 
     public User update(UpdateUserDto userDto){
