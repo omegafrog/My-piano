@@ -3,13 +3,17 @@ package com.omegafrog.My.piano.app.web.domain.order;
 import com.omegafrog.My.piano.app.web.domain.coupon.Coupon;
 import com.omegafrog.My.piano.app.web.dto.order.OrderDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
 
 @Entity
+@Table(name = "`Order`")
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class Order {
 
     @Id
@@ -33,7 +37,7 @@ public class Order {
     private Integer totalPrice;
 
     @Builder.Default
-    private Long discountRate;
+    private Long discountRate=0L;
 
     @OneToOne
     @JoinColumn(name = "COUPON_ID")
@@ -47,7 +51,6 @@ public class Order {
         this.initialPrice = initialPrice;
         this.discountRate = discountRate;
         this.coupon = coupon;
-        this.totalPrice = calculateTotalPrice();
     }
 
 
@@ -64,11 +67,11 @@ public class Order {
 
 
 
-    public Integer calculateTotalPrice(){
+    public void calculateTotalPrice(){
         Long couponDiscountRate = (coupon != null) ? coupon.getDiscountRate() : 0L;
         Long totalDiscountRate = couponDiscountRate + discountRate;
         double tmp = (double) initialPrice*(1-totalDiscountRate);
-        return (int) Math.floor(tmp);
+        totalPrice =  (int) Math.floor(tmp);
     }
 
     public OrderDto toDto(){
