@@ -2,6 +2,7 @@ package com.omegafrog.My.piano.app.web.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.omegafrog.My.piano.app.security.entity.authorities.Authority;
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonInformation;
@@ -27,17 +28,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalTime;
+import java.util.Arrays;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -72,6 +77,7 @@ class OrderControllerTest {
     void saveEntity(){
         User a = User.builder()
                 .name("testUser1")
+                .email("test@gmail.com")
                 .cart(new Cart())
                 .loginMethod(LoginMethod.EMAIL)
                 .cash(20000)
@@ -82,6 +88,7 @@ class OrderControllerTest {
                 .build();
         User b = User.builder()
                 .name("artist1")
+                .email("test@gmail.com")
                 .cart(new Cart())
                 .loginMethod(LoginMethod.EMAIL)
                 .phoneNum(PhoneNum.builder()
@@ -201,18 +208,70 @@ class OrderControllerTest {
                 .buyerId(testUser1.getId())
                 .build();
         String data = objectMapper.writeValueAsString(orderDto);
-        mockMvc.perform(post("/sheet/buy")
+        MvcResult mvcResult = mockMvc.perform(post("/sheet/buy")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(data))
                 .andExpect(status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("200 OK"))
-                .andDo(print());
+                .andDo(print())
+                .andReturn();
+        String text = objectMapper.readTree(mvcResult.getResponse().getContentAsString()).get("serializedData").asText();
+        Long id = objectMapper.readTree(text).get("order").get("id").asLong();
 
-        mockMvc.perform(get("/order/1/cancel"))
+
+        mockMvc.perform(get("/order/"+id+"/cancel"))
                 .andExpect(status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("200 OK"))
                 .andDo(print());
 
         Assertions.assertThat(orderRepository.findById(1L)).isEmpty();
     }
+
+    @Test
+    @Transactional
+    void getAllOrdersTest() throws Exception {
+        OrderRegisterDto orderDto = OrderRegisterDto.builder()
+                .itemId(savedSheetPost.getId())
+                .buyerId(testUser1.getId())
+                .build();
+        String data = objectMapper.writeValueAsString(orderDto);
+        mockMvc.perform(post("/sheet/buy")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(data))
+                .andExpect(status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("200 OK"))
+                .andDo(print());
+        SecurityContext context = SecurityContextHolder.getContext();
+        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken("username", "password",
+                Arrays.asList(Authority.builder().authority("USER").build()));
+        token.setDetails(testUser1);
+        context.setAuthentication(token);
+
+
+        MvcResult mvcResult = mockMvc.perform(get("/order"))
+                .andExpect(status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("200 OK"))
+                .andDo(print())
+                .andReturn();
+        String result = mvcResult.getResponse().getContentAsString();
+        String text = objectMapper.readTree(result).get("serializedData").asText();
+        System.out.println("text = " + text);
+    }
+
+    @Test
+    @Transactional
+    void createOrderValidationFailTest() throws Exception {
+        OrderRegisterDto orderDto = OrderRegisterDto.builder()
+                .itemId(savedSheetPost.getId())
+                .build();
+        String data = objectMapper.writeValueAsString(orderDto);
+        mockMvc.perform(post("/sheet/buy")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(data))
+                .andExpect(status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("400 BAD_REQUEST"))
+                .andDo(print());
+    }
+
+
 }
