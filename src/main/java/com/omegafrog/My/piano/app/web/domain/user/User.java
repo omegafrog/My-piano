@@ -12,6 +12,9 @@ import com.omegafrog.My.piano.app.web.exception.payment.PaymentException;
 import com.omegafrog.My.piano.app.web.vo.user.AlarmProperties;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,16 +37,24 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Getter
     private Long id;
+
+    @NotNull(message = "name cannot be null")
     private String name;
 
+    @Email
+    @NotNull(message = "email cannot be null")
     private String email;
-
+    
+    @NotNull
     private LoginMethod loginMethod;
 
     @Value("{user.baseProfileSrc}")
     private String profileSrc;
+    @PositiveOrZero
     private int point;
+    @PositiveOrZero
     private int cash;
+
     private PhoneNum phoneNum;
     private AlarmProperties alarmProperties;
 
@@ -92,7 +103,8 @@ public class User {
 
     // TODO : USER에서 Cart를 팩토리로 생성해보자.
     @Builder
-    public User(String name, Cart cart, LoginMethod loginMethod, String profileSrc, PhoneNum phoneNum, int cash) {
+    public User(String name, String email, Cart cart, LoginMethod loginMethod, String profileSrc, PhoneNum phoneNum, int cash) {
+        this.email = email;
         this.name = name;
         this.alarmProperties = new AlarmProperties();
         this.loginMethod = loginMethod;

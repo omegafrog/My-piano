@@ -3,6 +3,9 @@ package com.omegafrog.My.piano.app.web.domain.sheet;
 import com.omegafrog.My.piano.app.web.domain.order.Item;
 import com.omegafrog.My.piano.app.web.dto.UpdateSheetPostDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,11 +22,18 @@ public class SheetPost extends Item {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Getter
     private Long id;
+
+    @NotEmpty
     private String title;
+
     private LocalDateTime createdAt;
+    @PositiveOrZero
     private int view;
+
+    @NotNull
     private String content;
 
+    
     @OneToOne(cascade = {CascadeType.MERGE})
     @JoinColumn(name = "USER_ID")
     private User artist;

@@ -3,6 +3,7 @@ package com.omegafrog.My.piano.app.web.domain.order;
 import com.omegafrog.My.piano.app.web.domain.coupon.Coupon;
 import com.omegafrog.My.piano.app.web.dto.order.OrderDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
@@ -20,18 +21,22 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotNull
     @OneToOne
     @JoinColumn(name = "SELLER_ID")
     private User seller;
 
+    @NotNull
     @OneToOne
     @JoinColumn(name = "BUYER_ID")
     private User buyer;
 
+    @NotNull
     @OneToOne
     @JoinColumn(name = "ITEM_ID")
     private Item item;
 
+    @NotNull
     private int initialPrice;
 
     private Integer totalPrice;

@@ -4,6 +4,7 @@ import com.omegafrog.My.piano.app.web.dto.UpdateLessonDto;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.order.Item;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,19 +17,24 @@ import java.time.LocalDateTime;
 @Getter
 public class Lesson extends Item {
 
+    @NotNull
     private String title;
+    @NotNull
     private String subTitle;
-
+    @NotNull
     private VideoInformation videoInformation;
 
     private int viewCount;
+
     @OneToOne(cascade = { CascadeType.MERGE})
     @JoinColumn(name = "USER_ID")
     private User lessonProvider;
+
     @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "SHEET_ID")
     private Sheet sheet;
 
+    @NotNull
     private LessonInformation lessonInformation;
 
     @Builder
