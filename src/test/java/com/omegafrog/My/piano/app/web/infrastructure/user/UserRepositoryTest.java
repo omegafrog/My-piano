@@ -1,13 +1,13 @@
 package com.omegafrog.My.piano.app.web.infrastructure.user;
 
+import com.omegafrog.My.piano.app.web.domain.cart.Cart;
 import com.omegafrog.My.piano.app.web.dto.user.UpdateUserDto;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
@@ -15,11 +15,20 @@ import java.util.Optional;
 
 
 @DataJpaTest
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class UserRepositoryTest {
 
 
     @Autowired
     private UserRepository userRepository;
+
+    private User user1;
+
+    @AfterEach
+    void clearRepository(){
+        userRepository.deleteAll();
+    }
+
 
     @Test
     @DisplayName("유저를 추가하고 조회할 수 있어야 한다.")
@@ -33,6 +42,8 @@ class UserRepositoryTest {
                         .phoneNum("010-1111-1112")
                         .isAuthorized(false)
                         .build())
+                .email("user1@gmail.com")
+                .cart(new Cart())
                 .build();
         //when
         User saved = userRepository.save(user);
@@ -54,6 +65,8 @@ class UserRepositoryTest {
                         .phoneNum("010-1111-1112")
                         .isAuthorized(false)
                         .build())
+                .email("user1@gmail.com")
+                .cart(new Cart())
                 .build();
         User saved = userRepository.save(user);
         //when
@@ -84,6 +97,8 @@ class UserRepositoryTest {
                         .phoneNum("010-1111-1112")
                         .isAuthorized(false)
                         .build())
+                .email("user1@gmail.com")
+                .cart(new Cart())
                 .build();
         User saved = userRepository.save(user);
         //when

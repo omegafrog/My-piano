@@ -1,5 +1,7 @@
 package com.omegafrog.My.piano.app.web.infrastructure.post;
 
+import com.omegafrog.My.piano.app.web.domain.cart.Cart;
+import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.UpdatePostDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
@@ -8,19 +10,49 @@ import com.omegafrog.My.piano.app.web.domain.post.Comment;
 import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.post.PostRepository;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
 import java.util.Optional;
 
 @DataJpaTest
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PostRepositoryTest {
 
 
     @Autowired
     private PostRepository postRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    private User user1;
+    @BeforeAll
+    void settings(){
+        User build = User.builder()
+                .name("user1")
+                .profileSrc("profile1")
+                .loginMethod(LoginMethod.EMAIL)
+                .phoneNum(PhoneNum.builder()
+                        .phoneNum("010-1111-1112")
+                        .isAuthorized(false)
+                        .build())
+                .email("user1@gmail.com")
+                .cart(new Cart())
+                .build();
+        user1 = userRepository.save(build);
+    }
+
+    @BeforeEach
+    void clearRepository(){
+        postRepository.deleteAll();
+    }
+
+    @BeforeAll
+    void clearAllRepository(){
+        userRepository.deleteAll();
+    }
 
     @Test
     @DisplayName("게시글을 작성하고 조회할 수 있어야 한다")
@@ -28,15 +60,7 @@ class PostRepositoryTest {
         Post post = Post.builder()
                 .title("test1")
                 .content("content1")
-                .author(User.builder()
-                        .name("user1")
-                        .profileSrc("profile1")
-                        .loginMethod(LoginMethod.EMAIL)
-                        .phoneNum(PhoneNum.builder()
-                                .phoneNum("010-1111-1112")
-                                .isAuthorized(false)
-                                .build())
-                        .build())
+                .author(user1)
                 .build();
         Post saved = postRepository.save(post);
         Assertions.assertThat(saved).isEqualTo(post);
@@ -51,15 +75,7 @@ class PostRepositoryTest {
         Post post = Post.builder()
                 .title("test1")
                 .content("content1")
-                .author(User.builder()
-                        .name("user1")
-                        .profileSrc("profile1")
-                        .loginMethod(LoginMethod.EMAIL)
-                        .phoneNum(PhoneNum.builder()
-                                .phoneNum("010-1111-1112")
-                                .isAuthorized(false)
-                                .build())
-                        .build())
+                .author(user1)
                 .build();
         Post saved = postRepository.save(post);
         UpdatePostDto updatePostDto = UpdatePostDto.builder()
@@ -80,15 +96,7 @@ class PostRepositoryTest {
         Post post = Post.builder()
                 .title("test1")
                 .content("content1")
-                .author(User.builder()
-                        .name("user1")
-                        .profileSrc("profile1")
-                        .loginMethod(LoginMethod.EMAIL)
-                        .phoneNum(PhoneNum.builder()
-                                .phoneNum("010-1111-1112")
-                                .isAuthorized(false)
-                                .build())
-                        .build())
+                .author(user1)
                 .build();
         Post saved = postRepository.save(post);
         postRepository.deleteById(saved.getId());
@@ -103,29 +111,13 @@ class PostRepositoryTest {
         Post post = Post.builder()
                 .title("test1")
                 .content("content1")
-                .author(User.builder()
-                        .name("user1")
-                        .profileSrc("profile1")
-                        .loginMethod(LoginMethod.EMAIL)
-                        .phoneNum(PhoneNum.builder()
-                                .phoneNum("010-1111-1112")
-                                .isAuthorized(false)
-                                .build())
-                        .build())
+                .author(user1)
                 .build();
         Post saved = postRepository.save(post);
         //when
         Comment comment = Comment.builder()
                 .content("comment1")
-                .author(User.builder()
-                        .name("user1")
-                        .profileSrc("profile1")
-                        .loginMethod(LoginMethod.EMAIL)
-                        .phoneNum(PhoneNum.builder()
-                                .phoneNum("010-1111-1112")
-                                .isAuthorized(false)
-                                .build())
-                        .build())
+                .author(user1)
                 .build();
         saved.addComment(comment);
         Post commentAdded = postRepository.save(saved);
@@ -141,28 +133,12 @@ class PostRepositoryTest {
         Post post = Post.builder()
                 .title("test1")
                 .content("content1")
-                .author(User.builder()
-                        .name("user1")
-                        .profileSrc("profile1")
-                        .loginMethod(LoginMethod.EMAIL)
-                        .phoneNum(PhoneNum.builder()
-                                .phoneNum("010-1111-1112")
-                                .isAuthorized(false)
-                                .build())
-                        .build())
+                .author(user1)
                 .build();
         Post saved = postRepository.save(post);
         Comment comment = Comment.builder()
                 .content("comment1")
-                .author(User.builder()
-                        .name("user1")
-                        .profileSrc("profile1")
-                        .loginMethod(LoginMethod.EMAIL)
-                        .phoneNum(PhoneNum.builder()
-                                .phoneNum("010-1111-1112")
-                                .isAuthorized(false)
-                                .build())
-                        .build())
+                .author(user1)
                 .build();
         saved.addComment(comment);
         Post commentAdded = postRepository.save(saved);

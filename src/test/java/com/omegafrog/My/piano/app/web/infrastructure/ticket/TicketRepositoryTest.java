@@ -1,6 +1,7 @@
 package com.omegafrog.My.piano.app.web.infrastructure.ticket;
 
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
+import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.enums.TicketType;
 import com.omegafrog.My.piano.app.web.domain.ticket.Ticket;
 import com.omegafrog.My.piano.app.web.domain.ticket.TicketRepository;
@@ -9,7 +10,7 @@ import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
@@ -17,24 +18,45 @@ import java.util.Optional;
 
 
 @DataJpaTest
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class TicketRepositoryTest {
 
     @Autowired
     private TicketRepository ticketRepository;
 
-    @Test
-    void saveNFindTest(){
-        Ticket ticket = Ticket.builder()
-                .author(User.builder()
-                        .name("user1")
-                        .profileSrc("src1")
-                        .phoneNum(PhoneNum.builder()
-                                .phoneNum("010-1111-2222")
-                                .isAuthorized(false)
-                                .build())
-                        .loginMethod(LoginMethod.EMAIL)
-                        .cart(new Cart())
+    private User user1;
+    @Autowired
+    private UserRepository userRepository;
+
+    @BeforeAll
+    void settings(){
+        user1 = userRepository.save(User.builder()
+                .name("user1")
+                .profileSrc("src1")
+                .phoneNum(PhoneNum.builder()
+                        .phoneNum("010-1111-2222")
+                        .isAuthorized(false)
                         .build())
+                .loginMethod(LoginMethod.EMAIL)
+                .email("user1@gmail.com")
+                .cart(new Cart())
+                .build());
+    }
+
+    @AfterEach
+    void clearRepository(){
+        ticketRepository.deleteAll();
+    }
+
+    @AfterAll
+    void clearAllRepository(){
+        userRepository.deleteAll();
+    }
+
+    @Test
+    void saveNFindTest() {
+        Ticket ticket = Ticket.builder()
+                .author(user1)
                 .type(TicketType.TYPE_LESSON)
                 .content("hihi")
                 .build();
@@ -46,18 +68,9 @@ class TicketRepositoryTest {
     }
 
     @Test
-    void updateTest(){
+    void updateTest() {
         Ticket ticket = Ticket.builder()
-                .author(User.builder()
-                        .name("user1")
-                        .profileSrc("src1")
-                        .phoneNum(PhoneNum.builder()
-                                .phoneNum("010-1111-2222")
-                                .isAuthorized(false)
-                                .build())
-                        .loginMethod(LoginMethod.EMAIL)
-                        .cart(new Cart())
-                        .build())
+                .author(user1)
                 .type(TicketType.TYPE_LESSON)
                 .content("hihi")
                 .build();
