@@ -11,10 +11,12 @@ import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonRegisterDto;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.AccessDeniedException;
+import java.util.List;
 
 @Service
 @Transactional
@@ -39,6 +41,16 @@ public class LessonService {
                 .price(lessonRegisterDto.getPrice())
                 .build();
         return lessonRepository.save(lesson).toDto();
+    }
+
+    public List<LessonDto> getAllLessons(Pageable pageable) {
+        return lessonRepository.findAll(pageable).stream().map(Lesson::toDto).toList();
+    }
+
+    public LessonDto getLessonById(Long id)throws EntityNotFoundException{
+        return lessonRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson entity : " + id))
+                .toDto();
     }
 
     public LessonDto updateLesson(Long lessonId, UpdateLessonDto updateLessonDto, User user)
