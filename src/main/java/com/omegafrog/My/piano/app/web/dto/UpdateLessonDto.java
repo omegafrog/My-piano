@@ -3,10 +3,12 @@ package com.omegafrog.My.piano.app.web.dto;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonInformation;
 import com.omegafrog.My.piano.app.web.domain.lesson.VideoInformation;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
-import lombok.Builder;
-import lombok.Getter;
+import lombok.*;
 
 @Getter
+@Setter
+@Data
+@NoArgsConstructor
 public class UpdateLessonDto {
     private String title;
     private String subTitle;

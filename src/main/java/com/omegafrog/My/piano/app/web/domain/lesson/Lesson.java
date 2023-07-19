@@ -4,6 +4,7 @@ import com.omegafrog.My.piano.app.web.dto.UpdateLessonDto;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.order.Item;
+import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
@@ -24,6 +25,9 @@ public class Lesson extends Item {
     @NotNull
     private VideoInformation videoInformation;
 
+    @NotNull
+    private LessonInformation lessonInformation;
+
     private int viewCount;
 
     @OneToOne(cascade = { CascadeType.MERGE})
@@ -34,8 +38,6 @@ public class Lesson extends Item {
     @JoinColumn(name = "SHEET_ID")
     private Sheet sheet;
 
-    @NotNull
-    private LessonInformation lessonInformation;
 
     @Builder
     public Lesson(String title, String subTitle, int price, VideoInformation videoInformation,
@@ -58,5 +60,18 @@ public class Lesson extends Item {
         this.sheet = dto.getSheet();
         this.lessonInformation = dto.getLessonInformation();
         return this;
+    }
+
+    public LessonDto toDto(){
+        return LessonDto.builder()
+                .id(super.getId())
+                .title(this.title)
+                .sheet(this.sheet)
+                .subTitle(this.subTitle)
+                .lessonInformation(this.lessonInformation)
+                .videoInformation(this.videoInformation)
+                .lessonProvider(lessonProvider)
+                .viewCount(viewCount)
+                .build();
     }
 }
