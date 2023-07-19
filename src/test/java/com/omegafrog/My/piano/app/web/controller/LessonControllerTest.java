@@ -1,5 +1,6 @@
 package com.omegafrog.My.piano.app.web.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.security.entity.authorities.Authority;
 import com.omegafrog.My.piano.app.security.entity.authorities.Role;
@@ -14,6 +15,7 @@ import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.UpdateLessonDto;
+import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonRegisterDto;
 import com.omegafrog.My.piano.app.web.enums.*;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
@@ -29,7 +31,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -38,9 +39,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalTime;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Optional;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -195,12 +194,70 @@ class LessonControllerTest {
 
     @Test
     @Transactional
+    void findLessonTest() throws Exception {
+        Lesson saved1 = lessonRepository.save(lesson);
+        MvcResult mvcResult = mockMvc.perform(get("/lesson/" + saved1.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andReturn();
+        String contentAsString = mvcResult.getResponse().getContentAsString();
+        LessonDto lessonDto = objectMapper.convertValue(
+                objectMapper.readTree(
+                        objectMapper.readTree(contentAsString)
+                                .get("serializedData").asText())
+                        .get("lesson"),
+                LessonDto.class);
+
+        Assertions.assertThat(lessonDto.getId()).isEqualTo(saved1.getId());
+        Assertions.assertThat(lessonDto.getTitle()).isEqualTo(saved1.getTitle());
+    }
+
+    @Test
+    @Transactional
+    void findAllLessonTest() throws Exception {
+        Lesson saved1 = lessonRepository.save(lesson);
+        Lesson lesson2 = Lesson.builder()
+                .sheet(saved.getSheet())
+                .title("lesson2")
+                .price(2000)
+                .lessonInformation(LessonInformation.builder()
+                        .instrument(Instrument.GUITAR_ACOUSTIC)
+                        .lessonDescription("hoho")
+                        .category(Category.ACCOMPANIMENT)
+                        .artistDescription("god")
+                        .policy(RefundPolicy.REFUND_IN_7DAYS)
+                        .build())
+                .lessonProvider(artist)
+                .subTitle("this is subtitle")
+                .videoInformation(
+                        VideoInformation.builder()
+                                .videoUrl("url")
+                                .runningTime(LocalTime.of(0, 20))
+                                .build())
+                .build();
+        Lesson saved2 = lessonRepository.save(lesson2);
+        MvcResult mvcResult = mockMvc.perform(get("/lesson"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andReturn();
+
+        String contentAsString = mvcResult.getResponse().getContentAsString();
+        String text = objectMapper.readTree(contentAsString).get("serializedData").asText();
+        List<LessonDto> list = new ArrayList<>();
+        Iterator<JsonNode> elements = objectMapper.readTree(text).get("lessons").elements();
+        while(elements.hasNext()){
+            list.add(objectMapper.convertValue(elements.next(), LessonDto.class));
+        }
+        Assertions.assertThat(list).size().isGreaterThan(1);
+        Assertions.assertThat(list.get(0).getId()).isEqualTo(saved1.getId());
+    }
+
+    @Test
+    @Transactional
     void deleteLessonTest() throws Exception {
         Lesson savedLesson = lessonRepository.save(lesson);
         mockMvc.perform(delete("/lesson/" + savedLesson.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()));
-
     }
-
 }
