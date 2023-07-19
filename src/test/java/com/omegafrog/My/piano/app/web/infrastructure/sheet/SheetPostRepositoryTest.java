@@ -1,31 +1,88 @@
 package com.omegafrog.My.piano.app.web.infrastructure.sheet;
 
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
+import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.enums.Difficulty;
 import com.omegafrog.My.piano.app.web.enums.Genre;
 import com.omegafrog.My.piano.app.web.enums.Instrument;
 import com.omegafrog.My.piano.app.web.dto.UpdateSheetPostDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
+import com.omegafrog.My.piano.app.web.infra.sheetPost.JpaSheetPostRepositoryImpl;
+import com.omegafrog.My.piano.app.web.infra.sheetPost.SimpleJpaSheetPostRepository;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.PersistenceUnit;
+import lombok.Builder;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
 @DataJpaTest
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SheetPostRepositoryTest {
+
     @Autowired
+    private SimpleJpaSheetPostRepository jpaRepository;
+    @Autowired
+    private UserRepository userRepository;
     private SheetPostRepository sheetPostRepository;
+
+    private User user;
+    private User author;
+    @BeforeAll
+    void setRepository(){
+        sheetPostRepository = new JpaSheetPostRepositoryImpl(jpaRepository);
+        User a = User.builder()
+                .name("user")
+                .phoneNum(PhoneNum.builder()
+                        .phoneNum("010-1111-2222")
+                        .isAuthorized(false)
+                        .build())
+                .email("artist@gmail.com")
+                .loginMethod(LoginMethod.EMAIL)
+                .cart(new Cart())
+                .profileSrc("profileSrc")
+                .build();
+        user = userRepository.save(a);
+
+        User b = User.builder()
+                .name("uploader")
+                .profileSrc("none")
+                .loginMethod(LoginMethod.EMAIL)
+                .phoneNum(PhoneNum.builder()
+                        .phoneNum("010-1111-2222")
+                        .isAuthorized(true)
+                        .build())
+                .email("artist@gmail.com")
+                .cart(new Cart())
+                .build();
+        author = userRepository.save(b);
+    }
+
+    @AfterEach
+    void clearRepository(){
+        sheetPostRepository.deleteAll();
+    }
+
+    @AfterAll
+    void clearAllReposiotry(){
+        userRepository.deleteAll();
+        System.out.println("sheetPostRepository.count() = " + sheetPostRepository.count());
+    }
 
     @Test
     @DisplayName("악보 판매글을 추가하고 조회할 수 있어야 한다.")
+    @Transactional
     void saveNFindTest() {
         //given
         SheetPost sheetPost = SheetPost.builder()
@@ -39,27 +96,9 @@ class SheetPostRepositoryTest {
                         .filePath("path")
                         .instrument(Instrument.GUITAR_ACOUSTIC)
                         .pageNum(12)
-                        .user(User.builder()
-                                .name("user")
-                                .phoneNum(PhoneNum.builder()
-                                        .phoneNum("010-1111-2222")
-                                        .isAuthorized(false)
-                                        .build())
-                                .loginMethod(LoginMethod.EMAIL)
-                                .cart(new Cart())
-                                .profileSrc("profileSrc")
-                                .build())
+                        .user(user)
                         .build())
-                .artist(User.builder()
-                        .name("uploader")
-                        .profileSrc("none")
-                        .loginMethod(LoginMethod.EMAIL)
-                        .phoneNum(PhoneNum.builder()
-                                .phoneNum("010-1111-2222")
-                                .isAuthorized(true)
-                                .build())
-                        .cart(new Cart())
-                        .build())
+                .artist(author)
                 .build();
         //when
         SheetPost saved = sheetPostRepository.save(sheetPost);
@@ -71,7 +110,7 @@ class SheetPostRepositoryTest {
 
     @Test
     @DisplayName("악보 판매글을 수정할 수 있어야 한다.")
-    void updateTest(){
+    void updateTest() {
         //given
         SheetPost sheetPost = SheetPost.builder()
                 .title("title")
@@ -84,27 +123,9 @@ class SheetPostRepositoryTest {
                         .filePath("path")
                         .instrument(Instrument.GUITAR_ACOUSTIC)
                         .pageNum(12)
-                        .user(User.builder()
-                                .name("user")
-                                .phoneNum(PhoneNum.builder()
-                                        .phoneNum("010-1111-2222")
-                                        .isAuthorized(false)
-                                        .build())
-                                .loginMethod(LoginMethod.EMAIL)
-                                .cart(new Cart())
-                                .profileSrc("profileSrc")
-                                .build())
+                        .user(user)
                         .build())
-                .artist(User.builder()
-                        .name("uploader")
-                        .profileSrc("none")
-                        .loginMethod(LoginMethod.EMAIL)
-                        .phoneNum(PhoneNum.builder()
-                                .phoneNum("010-1111-2222")
-                                .isAuthorized(true)
-                                .build())
-                        .cart(new Cart())
-                        .build())
+                .artist(author)
                 .build();
         SheetPost saved = sheetPostRepository.save(sheetPost);
         //when
@@ -115,16 +136,7 @@ class SheetPostRepositoryTest {
                         .difficulty(Difficulty.MEDIUM)
                         .lyrics(false)
                         .filePath("changed")
-                        .user(User.builder()
-                                .name("uploader")
-                                .profileSrc("none")
-                                .loginMethod(LoginMethod.EMAIL)
-                                .phoneNum(PhoneNum.builder()
-                                        .phoneNum("010-1111-2222")
-                                        .isAuthorized(true)
-                                        .build())
-                                .cart(new Cart())
-                                .build())
+                        .user(saved.getArtist())
                         .pageNum(5)
                         .instrument(Instrument.GUITAR_BASE)
                         .build())
@@ -134,14 +146,12 @@ class SheetPostRepositoryTest {
 
         SheetPost updatedPost = saved.update(updated);
         SheetPost updatedSheetPost = sheetPostRepository.save(updatedPost);
-
         Assertions.assertThat(updatedSheetPost).isEqualTo(saved);
-
     }
 
     @Test
     @DisplayName("악보 판매글을 삭제할 수 있어야 한다.")
-    void deleteTest(){
+    void deleteTest() {
         //given
         SheetPost sheetPost = SheetPost.builder()
                 .title("title")
@@ -154,27 +164,9 @@ class SheetPostRepositoryTest {
                         .filePath("path")
                         .instrument(Instrument.GUITAR_ACOUSTIC)
                         .pageNum(12)
-                        .user(User.builder()
-                                .name("user")
-                                .phoneNum(PhoneNum.builder()
-                                        .phoneNum("010-1111-2222")
-                                        .isAuthorized(false)
-                                        .build())
-                                .loginMethod(LoginMethod.EMAIL)
-                                .cart(new Cart())
-                                .profileSrc("profileSrc")
-                                .build())
+                        .user(user)
                         .build())
-                .artist(User.builder()
-                        .name("uploader")
-                        .profileSrc("none")
-                        .loginMethod(LoginMethod.EMAIL)
-                        .phoneNum(PhoneNum.builder()
-                                .phoneNum("010-1111-2222")
-                                .isAuthorized(true)
-                                .build())
-                        .cart(new Cart())
-                        .build())
+                .artist(author)
                 .build();
         SheetPost saved = sheetPostRepository.save(sheetPost);
         //when

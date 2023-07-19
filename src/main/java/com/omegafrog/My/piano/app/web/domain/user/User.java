@@ -12,9 +12,7 @@ import com.omegafrog.My.piano.app.web.exception.payment.PaymentException;
 import com.omegafrog.My.piano.app.web.vo.user.AlarmProperties;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -38,11 +36,11 @@ public class User {
     @Getter
     private Long id;
 
-    @NotNull(message = "name cannot be null")
+    @NotBlank(message = "name cannot be null")
     private String name;
 
     @Email
-    @NotNull(message = "email cannot be null")
+    @NotBlank(message = "email cannot be null")
     private String email;
     
     @NotNull
@@ -55,11 +53,14 @@ public class User {
     @PositiveOrZero
     private int cash;
 
+    @NotNull
     private PhoneNum phoneNum;
+    @NotNull
     private AlarmProperties alarmProperties;
 
     @OneToOne(cascade = {CascadeType.PERSIST,CascadeType.REMOVE})
     @JoinColumn(name = "USER_ID")
+    @NotNull
     private Cart cart;
 
     @ManyToMany(cascade = {CascadeType.PERSIST,CascadeType.MERGE})

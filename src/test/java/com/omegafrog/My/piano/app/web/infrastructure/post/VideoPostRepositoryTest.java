@@ -1,5 +1,7 @@
 package com.omegafrog.My.piano.app.web.infrastructure.post;
 
+import com.omegafrog.My.piano.app.web.domain.cart.Cart;
+import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.UpdateVideoPostDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
@@ -8,16 +10,45 @@ import com.omegafrog.My.piano.app.web.domain.post.Comment;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPost;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPostRepository;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
 @DataJpaTest
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class VideoPostRepositoryTest {
 
     @Autowired
     private VideoPostRepository videoPostRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    private User user1;
+    @BeforeAll
+    void settings(){
+        User build = User.builder()
+                .name("user1")
+                .profileSrc("profile1")
+                .loginMethod(LoginMethod.EMAIL)
+                .phoneNum(PhoneNum.builder()
+                        .phoneNum("010-1111-1112")
+                        .isAuthorized(false)
+                        .build())
+                .email("user1@gmail.com")
+                .cart(new Cart())
+                .build();
+        user1 = userRepository.save(build);
+    }
+
+    @AfterEach
+    void clearRepository(){
+        videoPostRepository.deleteAll();
+    }
+    @AfterAll
+    void clearAllRepository(){
+        userRepository.deleteAll();
+    }
 
     @Test
     @DisplayName("비디오 커뮤니티 게시글을 추가하고 조회할 수 있어야 한다.")
@@ -26,15 +57,7 @@ class VideoPostRepositoryTest {
         VideoPost post = VideoPost.builder()
                 .title("title")
                 .content("content")
-                .author(User.builder()
-                        .name("user1")
-                        .profileSrc("profile1")
-                        .loginMethod(LoginMethod.EMAIL)
-                        .phoneNum(PhoneNum.builder()
-                                .phoneNum("010-1111-1112")
-                                .isAuthorized(false)
-                                .build())
-                        .build())
+                .author(user1)
                 .build();
 
         //when
@@ -50,15 +73,7 @@ class VideoPostRepositoryTest {
         VideoPost post = VideoPost.builder()
                 .title("title")
                 .content("content")
-                .author(User.builder()
-                        .name("user1")
-                        .profileSrc("profile1")
-                        .loginMethod(LoginMethod.EMAIL)
-                        .phoneNum(PhoneNum.builder()
-                                .phoneNum("010-1111-1112")
-                                .isAuthorized(false)
-                                .build())
-                        .build())
+                .author(user1)
                 .build();
         VideoPost saved = videoPostRepository.save(post);
         //when
@@ -88,29 +103,13 @@ class VideoPostRepositoryTest {
         VideoPost post = VideoPost.builder()
                 .title("title")
                 .content("content")
-                .author(User.builder()
-                        .name("user1")
-                        .profileSrc("profile1")
-                        .loginMethod(LoginMethod.EMAIL)
-                        .phoneNum(PhoneNum.builder()
-                                .phoneNum("010-1111-1112")
-                                .isAuthorized(false)
-                                .build())
-                        .build())
+                .author(user1)
                 .build();
         VideoPost saved = videoPostRepository.save(post);
         //when
         Comment comment = Comment.builder()
                 .content("comment1")
-                .author(User.builder()
-                        .name("user1")
-                        .profileSrc("profile1")
-                        .loginMethod(LoginMethod.EMAIL)
-                        .phoneNum(PhoneNum.builder()
-                                .phoneNum("010-1111-1112")
-                                .isAuthorized(false)
-                                .build())
-                        .build())
+                .author(user1)
                 .build();
         saved.addComment(comment);
         VideoPost commentAdded = videoPostRepository.save(saved);
@@ -126,28 +125,12 @@ class VideoPostRepositoryTest {
         VideoPost post = VideoPost.builder()
                 .title("title")
                 .content("content")
-                .author(User.builder()
-                        .name("user1")
-                        .profileSrc("profile1")
-                        .loginMethod(LoginMethod.EMAIL)
-                        .phoneNum(PhoneNum.builder()
-                                .phoneNum("010-1111-1112")
-                                .isAuthorized(false)
-                                .build())
-                        .build())
+                .author(user1)
                 .build();
         VideoPost saved = videoPostRepository.save(post);
         Comment comment = Comment.builder()
                 .content("comment1")
-                .author(User.builder()
-                        .name("user1")
-                        .profileSrc("profile1")
-                        .loginMethod(LoginMethod.EMAIL)
-                        .phoneNum(PhoneNum.builder()
-                                .phoneNum("010-1111-1112")
-                                .isAuthorized(false)
-                                .build())
-                        .build())
+                .author(user1)
                 .build();
         saved.addComment(comment);
         VideoPost commentAdded = videoPostRepository.save(saved);

@@ -31,7 +31,7 @@ public class Sheet  {
 
     private LocalDateTime created_at;
 
-    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @OneToOne(cascade = { CascadeType.MERGE})
     @JoinColumn(name = "USER_ID")
     private User user;
 
@@ -60,7 +60,20 @@ public class Sheet  {
         return this;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
+        Sheet sheet = (Sheet) o;
+
+        return id.equals(sheet.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return id.hashCode();
+    }
 }
 
 

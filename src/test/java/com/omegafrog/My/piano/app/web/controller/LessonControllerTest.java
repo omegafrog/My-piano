@@ -21,9 +21,7 @@ import com.omegafrog.My.piano.app.web.enums.*;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -50,6 +48,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @AutoConfigureMockMvc
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class LessonControllerTest {
 
     @Autowired
@@ -69,9 +68,8 @@ class LessonControllerTest {
     SheetPost saved;
     @Autowired
     private LessonRepository lessonRepository;
-
-    @BeforeEach
-    void setLesson(){
+    @BeforeAll
+    void settings(){
         User a = User.builder()
                 .name("artist1")
                 .cart(new Cart())
@@ -104,6 +102,11 @@ class LessonControllerTest {
                 .content("hihi this is content")
                 .build();
         saved = sheetPostRepository.save(sheetPost);
+
+    }
+    @BeforeEach
+    void setLesson(){
+        System.out.println("SecurityContextHolder.getContext().getAuthentication() = " + SecurityContextHolder.getContext().getAuthentication());
         lesson = Lesson.builder()
                 .sheet(saved.getSheet())
                 .title("lesson1")
@@ -123,7 +126,6 @@ class LessonControllerTest {
                                 .runningTime(LocalTime.of(0, 20))
                                 .build())
                 .build();
-
         SecurityContext context = SecurityContextHolder.getContext();
         UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(
                 "username", "password",
@@ -136,9 +138,12 @@ class LessonControllerTest {
     @AfterEach
     void clearRepository(){
         lessonRepository.deleteAll();
+    }
+
+    @AfterAll
+    void clearAllRepository(){
         sheetPostRepository.deleteAll();
         userRepository.deleteAll();
-        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -258,6 +263,7 @@ class LessonControllerTest {
         Lesson savedLesson = lessonRepository.save(lesson);
         mockMvc.perform(delete("/lesson/" + savedLesson.getId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()));
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andDo(print());
     }
 }
