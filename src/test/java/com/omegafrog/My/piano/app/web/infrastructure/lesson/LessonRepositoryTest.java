@@ -1,11 +1,15 @@
 package com.omegafrog.My.piano.app.web.infrastructure.lesson;
 
+import com.omegafrog.My.piano.app.web.domain.cart.Cart;
+import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
+import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
+import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.UpdateLessonDto;
-import com.omegafrog.My.piano.app.web.enums.Category;
-import com.omegafrog.My.piano.app.web.enums.Instrument;
-import com.omegafrog.My.piano.app.web.enums.RefundPolicy;
+import com.omegafrog.My.piano.app.web.enums.*;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import com.omegafrog.My.piano.app.web.domain.user.User;
+import com.omegafrog.My.piano.app.web.infra.sheetPost.JpaSheetPostRepositoryImpl;
+import com.omegafrog.My.piano.app.web.infra.sheetPost.SimpleJpaSheetPostRepository;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
@@ -13,26 +17,72 @@ import com.omegafrog.My.piano.app.web.domain.lesson.LessonInformation;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
 import com.omegafrog.My.piano.app.web.domain.lesson.VideoInformation;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalTime;
 import java.util.Optional;
 
 @DataJpaTest
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class LessonRepositoryTest {
 
     @Autowired
     private LessonRepository lessonRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private SimpleJpaSheetPostRepository jpaSheetPostRepository;
+
+
+    private User author;
+
+    private SheetPost savedSheetPost;
+    @BeforeAll
+    void settings(){
+        SheetPostRepository sheetPostRepository = new JpaSheetPostRepositoryImpl(jpaSheetPostRepository);
+        User build = User.builder()
+                .name("user1")
+                .profileSrc("profile1")
+                .loginMethod(LoginMethod.EMAIL)
+                .phoneNum(PhoneNum.builder()
+                        .phoneNum("010-1111-1112")
+                        .isAuthorized(false)
+                        .build())
+                .cart(new Cart())
+                .email("user1@gmail.com")
+                .build();
+        author = userRepository.save(build);
+        SheetPost sheetPost = SheetPost.builder()
+                .title("title")
+                .content("content")
+                .sheet(Sheet.builder()
+                        .genre(Genre.BGM)
+                        .lyrics(false)
+                        .isSolo(false)
+                        .difficulty(Difficulty.EASY)
+                        .filePath("path")
+                        .instrument(Instrument.GUITAR_ACOUSTIC)
+                        .pageNum(12)
+                        .user(author)
+                        .build())
+                .artist(author)
+                .build();
+         savedSheetPost = sheetPostRepository.save(sheetPost);
+    }
     @AfterEach
     void deleteAll(){
         lessonRepository.deleteAll();
     }
 
+    @AfterAll
+    void clearRepository(){
+        jpaSheetPostRepository.deleteAll();
+    }
     @Test
     @DisplayName("lesson을 추가하고 조회할 수 있어야 한다.")
     void addNFindTest(){
@@ -40,15 +90,7 @@ class LessonRepositoryTest {
                 .title("lesson1")
                 .subTitle("good lesson 1")
                 .price(12000)
-                .lessonProvider(User.builder()
-                        .name("user1")
-                        .profileSrc("profile1")
-                        .loginMethod(LoginMethod.EMAIL)
-                        .phoneNum(PhoneNum.builder()
-                                .phoneNum("010-1111-1112")
-                                .isAuthorized(false)
-                                .build())
-                        .build())
+                .lessonProvider(author)
                 .lessonInformation(LessonInformation.builder()
                         .lessonDescription("lessonDesc")
                         .artistDescription("artistDesc")
@@ -61,7 +103,7 @@ class LessonRepositoryTest {
                         .videoUrl("videoUrl1")
                         .runningTime(LocalTime.of(1, 10))
                         .build())
-                .sheet(new Sheet())
+                .sheet(savedSheetPost.getSheet())
                 .build();
         Lesson saved = lessonRepository.save(lesson);
         Optional<Lesson> founded = lessonRepository.findById(saved.getId());
@@ -76,15 +118,7 @@ class LessonRepositoryTest {
                 .title("lesson1")
                 .subTitle("good lesson 1")
                 .price(12000)
-                .lessonProvider(User.builder()
-                        .name("user1")
-                        .profileSrc("profile1")
-                        .loginMethod(LoginMethod.EMAIL)
-                        .phoneNum(PhoneNum.builder()
-                                .phoneNum("010-1111-1112")
-                                .isAuthorized(false)
-                                .build())
-                        .build())
+                .lessonProvider(author)
                 .lessonInformation(LessonInformation.builder()
                         .lessonDescription("lessonDesc")
                         .artistDescription("artistDesc")
@@ -97,7 +131,7 @@ class LessonRepositoryTest {
                         .videoUrl("videoUrl1")
                         .runningTime(LocalTime.of(1, 10))
                         .build())
-                .sheet(new Sheet())
+                .sheet(savedSheetPost.getSheet())
                 .build();
         Lesson saved = lessonRepository.save(lesson);
         //when
@@ -117,7 +151,7 @@ class LessonRepositoryTest {
                         .runningTime(LocalTime.of(1, 12, 40))
                         .build()
                 )
-                .sheet(new Sheet())
+                .sheet(saved.getSheet())
                 .build());
         Lesson updated = lessonRepository.save(saved);
         //then
@@ -132,15 +166,7 @@ class LessonRepositoryTest {
                 .title("lesson1")
                 .subTitle("good lesson 1")
                 .price(12000)
-                .lessonProvider(User.builder()
-                        .name("user1")
-                        .profileSrc("profile1")
-                        .loginMethod(LoginMethod.EMAIL)
-                        .phoneNum(PhoneNum.builder()
-                                .phoneNum("010-1111-1112")
-                                .isAuthorized(false)
-                                .build())
-                        .build())
+                .lessonProvider(author)
                 .lessonInformation(LessonInformation.builder()
                         .lessonDescription("lessonDesc")
                         .artistDescription("artistDesc")
@@ -153,7 +179,7 @@ class LessonRepositoryTest {
                         .videoUrl("videoUrl1")
                         .runningTime(LocalTime.of(1, 10))
                         .build())
-                .sheet(new Sheet())
+                .sheet(savedSheetPost.getSheet())
                 .build();
         Lesson saved = lessonRepository.save(lesson);
         //when

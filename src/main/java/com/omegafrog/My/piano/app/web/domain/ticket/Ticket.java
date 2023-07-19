@@ -22,7 +22,7 @@ public class Ticket {
 
     private LocalDateTime createdAt;
 
-    @OneToOne(cascade = {CascadeType.MERGE,CascadeType.PERSIST})
+    @OneToOne(cascade = {CascadeType.MERGE})
     @JoinColumn(name = "USER_ID")
     private User author;
     private TicketType type;

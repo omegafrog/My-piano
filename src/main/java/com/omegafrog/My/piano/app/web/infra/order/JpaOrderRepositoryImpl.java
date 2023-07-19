@@ -34,4 +34,9 @@ public class JpaOrderRepositoryImpl implements OrderRepository {
     public List<Order> findByBuyer_id(Long id) {
         return jpaRepository.findByBuyer_Id(id);
     }
+
+    @Override
+    public void deleteAll() {
+        jpaRepository.deleteAll();
+    }
 }

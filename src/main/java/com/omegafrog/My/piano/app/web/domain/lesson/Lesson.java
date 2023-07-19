@@ -34,7 +34,7 @@ public class Lesson extends Item {
     @JoinColumn(name = "USER_ID")
     private User lessonProvider;
 
-    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @OneToOne(cascade = { CascadeType.MERGE})
     @JoinColumn(name = "SHEET_ID")
     private Sheet sheet;
 

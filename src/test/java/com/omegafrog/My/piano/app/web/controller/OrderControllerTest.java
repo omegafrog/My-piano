@@ -20,9 +20,7 @@ import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 import jakarta.persistence.*;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -51,6 +49,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(SpringExtension.class)
 @AutoConfigureMockMvc
 @SpringBootTest
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class OrderControllerTest {
 
     @Autowired
@@ -66,13 +65,11 @@ class OrderControllerTest {
     private ObjectMapper objectMapper;
     @Autowired
     private OrderRepository orderRepository;
-
-
     User testUser1;
     User artist;
     Lesson savedLesson;
     SheetPost savedSheetPost;
-    @BeforeEach
+    @BeforeAll
     @Transactional
     void saveEntity(){
         User a = User.builder()
@@ -98,35 +95,6 @@ class OrderControllerTest {
                 .build();
         testUser1 = userRepository.save(a);
         artist = userRepository.save(b);
-        Lesson lesson = Lesson.builder()
-                .sheet(Sheet.builder()
-                        .title("title")
-                        .filePath("path1")
-                        .genre(Genre.BGM)
-                        .user(testUser1)
-                        .difficulty(Difficulty.MEDIUM)
-                        .instrument(Instrument.GUITAR_ACOUSTIC)
-                        .isSolo(true)
-                        .lyrics(false)
-                        .pageNum(3)
-                        .build())
-                .title("lesson1")
-                .price(2000)
-                .lessonInformation(LessonInformation.builder()
-                        .instrument(Instrument.GUITAR_ACOUSTIC)
-                        .lessonDescription("hoho")
-                        .category(Category.ACCOMPANIMENT)
-                        .artistDescription("god")
-                        .policy(RefundPolicy.REFUND_IN_7DAYS)
-                        .build())
-                .lessonProvider(artist)
-                .subTitle("this is subtitle")
-                .videoInformation(
-                        VideoInformation.builder()
-                                .videoUrl("url")
-                                .runningTime(LocalTime.of(0, 20))
-                                .build())
-                .build();
 
         SheetPost sheetPost = SheetPost.builder()
                 .sheet(Sheet.builder()
@@ -146,16 +114,46 @@ class OrderControllerTest {
                 .content("hihi this is content")
                 .build();
 
-        savedLesson= lessonRepository.save(lesson);
         savedSheetPost= sheetPostRepository.save(sheetPost);
+        Lesson lesson = Lesson.builder()
+                .sheet(savedSheetPost.getSheet())
+                .title("lesson1")
+                .price(2000)
+                .lessonInformation(LessonInformation.builder()
+                        .instrument(Instrument.GUITAR_ACOUSTIC)
+                        .lessonDescription("hoho")
+                        .category(Category.ACCOMPANIMENT)
+                        .artistDescription("god")
+                        .policy(RefundPolicy.REFUND_IN_7DAYS)
+                        .build())
+                .lessonProvider(artist)
+                .subTitle("this is subtitle")
+                .videoInformation(
+                        VideoInformation.builder()
+                                .videoUrl("url")
+                                .runningTime(LocalTime.of(0, 20))
+                                .build())
+                .build();
 
+        savedLesson= lessonRepository.save(lesson);
     }
+
     @AfterEach
-    void deleteEntity(){
+    void clearRepository(){
+        orderRepository.deleteAll();
+    }
+
+    @AfterAll
+    void clearAllRepository(){
         lessonRepository.deleteAll();
         sheetPostRepository.deleteAll();
         userRepository.deleteAll();
+        System.out.println("lesson : "+lessonRepository.count());
+        System.out.println("sheetPost : "+sheetPostRepository.count());
+        System.out.println("user : "+userRepository.count());
+
     }
+
 
     @Test
     @Transactional
