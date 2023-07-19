@@ -14,6 +14,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.nio.file.AccessDeniedException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -42,9 +44,25 @@ public class LessonController {
         }
         User user = (User) authentication.getDetails();
         LessonDto lessonDto = lessonService.createLesson(lessonRegisterDto, user);
-        Map<String, Object> data = new HashMap<>();
-        data.put("lesson", lessonDto);
+        Map<String, Object> data = getStringObjectMap("lesson", lessonDto);
         return new APISuccessResponse("Create new Lesson success", objectMapper, data);
+    }
+
+    //TODO : 로그인 상관없이 접근 가능
+    @GetMapping("/lesson")
+    public JsonAPIResponse getLessons(Pageable pageable) throws JsonProcessingException {
+        List<LessonDto> allLessons = lessonService.getAllLessons(pageable);
+        Map<String, Object> data = getStringObjectMap("lessons", allLessons);
+        return new APISuccessResponse("Success load all lessons.", objectMapper, data);
+    }
+
+
+    //TODO : 로그인 상관없이 접근 가능
+    @GetMapping("/lesson/{id}")
+    public JsonAPIResponse getLesson(@PathVariable Long id) throws JsonProcessingException {
+        LessonDto lessonById = lessonService.getLessonById(id);
+        Map<String, Object> data = getStringObjectMap("lesson", lessonById);
+        return new APISuccessResponse("Success load lesson" + id + ".", objectMapper, data);
     }
 
     @PostMapping("/lesson/{id}")
@@ -59,8 +77,7 @@ public class LessonController {
         }
         User user = (User) auth.getDetails();
         LessonDto updated = lessonService.updateLesson(id, updateLessonDto, user);
-        Map<String, Object> data = new HashMap<>();
-        data.put("lesson", updated);
+        Map<String, Object> data = getStringObjectMap("lesson", updated);
         return new APISuccessResponse("Lesson update success", objectMapper, data);
     }
 
@@ -76,5 +93,11 @@ public class LessonController {
         User user = (User) auth.getDetails();
         lessonService.deleteLesson(id, user);
         return new APISuccessResponse("Lesson delete success");
+    }
+
+    private static Map<String, Object> getStringObjectMap(String keyName, Object item) {
+        Map<String, Object> data = new HashMap<>();
+        data.put(keyName, item);
+        return data;
     }
 }
