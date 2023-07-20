@@ -1,9 +1,9 @@
 package com.omegafrog.My.piano.app.security.entity;
 
-import com.omegafrog.My.piano.app.dto.SecurityUserDto;
+import com.omegafrog.My.piano.app.web.dto.SecurityUserDto;
 import com.omegafrog.My.piano.app.security.entity.authorities.Authority;
 import com.omegafrog.My.piano.app.security.entity.authorities.Role;
-import com.omegafrog.My.piano.app.user.entity.User;
+import com.omegafrog.My.piano.app.web.domain.user.User;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -35,7 +35,7 @@ public class SecurityUser implements UserDetails {
     private LocalDateTime credentialChangedAt;
     private boolean locked;
 
-    @OneToOne(cascade = {CascadeType.MERGE,CascadeType.PERSIST})
+    @OneToOne(cascade = {CascadeType.MERGE,CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinColumn(name = "USER_ID")
     @Getter
     private User user;
