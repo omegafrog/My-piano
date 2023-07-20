@@ -1,7 +1,10 @@
 package com.omegafrog.My.piano.app.web.domain.post;
 
-import com.omegafrog.My.piano.app.web.dto.UpdatePostDto;
+import com.omegafrog.My.piano.app.web.dto.post.UpdatePostDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,10 +12,10 @@ import lombok.NoArgsConstructor;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @Entity
-
 @NoArgsConstructor
 @Getter
 public class Post {
@@ -23,18 +26,24 @@ public class Post {
 
     @OneToOne(cascade = {CascadeType.MERGE})
     @JoinColumn(name = "USER_ID")
+    @NotNull
     private User author;
 
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt = LocalDateTime.now();
 
+    @PositiveOrZero
     private int viewCount;
 
+    @NotEmpty
     private String title;
+    @NotEmpty
     private String content;
+    @PositiveOrZero
     private int likeCount;
 
-    @OneToMany(cascade = {CascadeType.PERSIST,CascadeType.MERGE})
-    private List<Comment> comments = new CopyOnWriteArrayList<>();
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @NotNull
+    private final List<Comment> comments = new CopyOnWriteArrayList<>();
 
     public Post update(UpdatePostDto post){
         this.viewCount = post.getViewCount();
@@ -58,7 +67,6 @@ public class Post {
     @Builder
     public Post(User author,String title, String content) {
         this.author = author;
-        this.createdAt = LocalDateTime.now();
         this.viewCount = 0;
         this.title = title;
         this.content = content;
@@ -72,25 +80,12 @@ public class Post {
 
         Post post = (Post) o;
 
-        if (viewCount != post.viewCount) return false;
-        if (likeCount != post.likeCount) return false;
-        if (!id.equals(post.id)) return false;
-        if (!author.equals(post.author)) return false;
-        if (!createdAt.equals(post.createdAt)) return false;
-        if (!title.equals(post.title)) return false;
-        return content.equals(post.content);
+        return Objects.equals(id, post.id);
     }
 
     @Override
     public int hashCode() {
-        int result = id.hashCode();
-        result = 31 * result + author.hashCode();
-        result = 31 * result + createdAt.hashCode();
-        result = 31 * result + viewCount;
-        result = 31 * result + title.hashCode();
-        result = 31 * result + content.hashCode();
-        result = 31 * result + likeCount;
-        return result;
+        return id.hashCode();
     }
 }
 
