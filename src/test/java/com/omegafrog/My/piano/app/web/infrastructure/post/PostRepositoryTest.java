@@ -2,7 +2,7 @@ package com.omegafrog.My.piano.app.web.infrastructure.post;
 
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
-import com.omegafrog.My.piano.app.web.dto.UpdatePostDto;
+import com.omegafrog.My.piano.app.web.dto.post.UpdatePostDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;

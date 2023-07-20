@@ -1,6 +1,6 @@
 package com.omegafrog.My.piano.app.web.domain.post;
 
-import com.omegafrog.My.piano.app.web.dto.UpdateVideoPostDto;
+import com.omegafrog.My.piano.app.web.dto.post.UpdateVideoPostDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import lombok.Builder;
 import lombok.Getter;

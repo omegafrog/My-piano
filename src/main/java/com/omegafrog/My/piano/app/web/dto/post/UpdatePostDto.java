@@ -1,4 +1,4 @@
-package com.omegafrog.My.piano.app.web.dto;
+package com.omegafrog.My.piano.app.web.dto.post;
 
 import lombok.Builder;
 import lombok.Data;
