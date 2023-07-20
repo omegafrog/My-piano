@@ -1,9 +1,11 @@
 package com.omegafrog.My.piano.app.web.dto.post;
 
-import lombok.Builder;
-import lombok.Getter;
+import lombok.*;
 
 @Getter
+@Setter
+@NoArgsConstructor
+@Data
 public class UpdateVideoPostDto {
      private int viewCount;
 
