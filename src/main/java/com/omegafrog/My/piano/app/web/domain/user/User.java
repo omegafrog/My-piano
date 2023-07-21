@@ -2,6 +2,7 @@ package com.omegafrog.My.piano.app.web.domain.user;
 
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
+import com.omegafrog.My.piano.app.web.domain.post.Comment;
 import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
@@ -85,7 +86,8 @@ public class User {
     @JoinColumn(name = "USER_ID")
     private List<Sheet> uploadedSheets = new ArrayList<>();
 
-    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "USER_ID")
     private List<Post> uploadedPosts = new ArrayList<>();
 
@@ -101,6 +103,9 @@ public class User {
             joinColumns = @JoinColumn(name = "USER_ID"),
             inverseJoinColumns = @JoinColumn(name = "POST_ID"))
     private List<Post> likedPosts = new ArrayList<>();
+
+    @OneToMany(mappedBy = "author", orphanRemoval = true, cascade = CascadeType.REMOVE)
+    private List<Comment> writedComments = new ArrayList<>();
 
     // TODO : USER에서 Cart를 팩토리로 생성해보자.
     @Builder
