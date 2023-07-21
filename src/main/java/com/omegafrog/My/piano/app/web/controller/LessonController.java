@@ -22,7 +22,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.nio.file.AccessDeniedException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -71,14 +70,10 @@ public class LessonController {
             @Validated @RequestBody UpdateLessonDto updateLessonDto,
             @PathVariable Long id)
             throws JsonProcessingException, EntityNotFoundException, AccessDeniedException {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null) {
-            log.error("authentication is null");
-            return new APIInternalServerResponse("authentication is null");
-        }
-        User user = (User) auth.getDetails();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = getLoggedInUser(authentication);
         LessonDto updated = lessonService.updateLesson(id, updateLessonDto, user);
-        Map<String, Object> data = getStringObjectMap("lesson", updated);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("lesson", updated);
         return new APISuccessResponse("Lesson update success", objectMapper, data);
     }
 

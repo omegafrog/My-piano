@@ -16,6 +16,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;
 
+import java.util.List;
 import java.util.Optional;
 
 @DataJpaTest
@@ -29,6 +30,8 @@ class CommonUserServiceTest {
 
     @AfterAll
     public void deleteUsers(){
+        List<SecurityUser> all = securityUserRepository.findAll();
+        all.forEach(user -> System.out.println("user = " + user));
         securityUserRepository.deleteAll();
     }
 

@@ -1,6 +1,7 @@
 package com.omegafrog.My.piano.app.security.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.web.dto.RegisterUserDto;
 import com.omegafrog.My.piano.app.web.dto.SecurityUserDto;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
@@ -12,10 +13,7 @@ import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 import jakarta.servlet.http.Cookie;
 import lombok.*;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -29,6 +27,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 
+import java.util.List;
 import java.util.Map;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -40,6 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @AutoConfigureMockMvc
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SecurityControllerTest {
 
     @Autowired
@@ -61,10 +61,7 @@ class SecurityControllerTest {
     private UserRepository userRepository;
 
 
-    @AfterEach
-    void deleterepository() {
-        securityUserRepository.deleteAll();
-    }
+    
 
     @BeforeEach
     void makeDto(){
@@ -79,6 +76,17 @@ class SecurityControllerTest {
                         .isAuthorized(false)
                         .build())
                 .build();
+    }
+    @AfterEach
+    void deleteRepo(){
+        securityUserRepository.deleteAll();
+    }
+    @AfterAll
+    void deleteRepository(){
+        securityUserRepository.deleteAll();
+        List<SecurityUser> all = securityUserRepository.findAll();
+        all.forEach(user -> System.out.println("user = " + user));
+        System.out.println("SecurityController : securityUserRepository.count() = " + securityUserRepository.count());
     }
 
     @Test

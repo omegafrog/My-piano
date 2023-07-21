@@ -94,6 +94,7 @@ class PostControllerIntegrationTest {
                 .password("password")
                 .build();
         SecurityUserDto saved1 = commonUserService.registerUser(user1);
+        Optional<SecurityUser> byId = securityUserRepository.findById(saved1.getId());
         SecurityUserDto saved2 = commonUserService.registerUser(user2);
         MvcResult mvcResult = mockMvc.perform(post("/user/login")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
@@ -110,8 +111,15 @@ class PostControllerIntegrationTest {
      */
     @AfterAll
      void deleteusers(){
+        System.out.println("PostController : securityUserRepository.count() = " + securityUserRepository.count());
+        List<SecurityUser> all = securityUserRepository.findAll();
+        all.forEach(user -> System.out.println("user = " + user));
         securityUserRepository.deleteAll();
+
+
+        SecurityContextHolder.clearContext();
     }
+
 
     @Test
     @DisplayName("로그인한 유저는 커뮤니티 글을 작성하고 조회할 수 있어야 한다.")
@@ -123,7 +131,7 @@ class PostControllerIntegrationTest {
                 .createdAt(LocalDateTime.now())
                 .build();
         String string = mockMvc.perform(post("/community")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(postDto)))
@@ -251,7 +259,7 @@ class PostControllerIntegrationTest {
                 .build();
 
         String string = mockMvc.perform(post("/community")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(postDto)))
@@ -262,7 +270,7 @@ class PostControllerIntegrationTest {
         System.out.println("postId = " + postId);
 
         data = mockMvc.perform(post("/community/" + postId + "/comment")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .header(HttpHeaders.AUTHORIZATION,  accessToken)
                         .cookie(refreshToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(commentDTO)))
@@ -276,7 +284,7 @@ class PostControllerIntegrationTest {
         //when
         // 자신이 작성한 comment를 삭제함.
         String contentAsString = mockMvc.perform(delete("/community/" + postId + "/comment/" + commentId)
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
@@ -301,7 +309,7 @@ class PostControllerIntegrationTest {
                 .createdAt(LocalDateTime.now())
                 .build();
         String string = mockMvc.perform(post("/community")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(postDto)))
@@ -311,7 +319,7 @@ class PostControllerIntegrationTest {
         Long postId = objectMapper.readTree(data).get("post").get("id").asLong();
         //when
         mockMvc.perform(get("/community/" + postId + "/like")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken))
                 .andExpect(status().isOk());
 
@@ -333,7 +341,7 @@ class PostControllerIntegrationTest {
                 .createdAt(LocalDateTime.now())
                 .build();
         String string = mockMvc.perform(post("/community")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(postDto)))
@@ -343,7 +351,7 @@ class PostControllerIntegrationTest {
         Long postId = objectMapper.readTree(data).get("post").get("id").asLong();
         //when
         String s = mockMvc.perform(delete("/community/" + postId)
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(postDto)))
@@ -351,6 +359,6 @@ class PostControllerIntegrationTest {
                 .andReturn().getResponse().getContentAsString();
         //then
         String message = objectMapper.readTree(s).get("message").asText();
-        Assertions.assertThat(message).isEqualTo("delete post success");
+        Assertions.assertThat(message).isEqualTo("Success to delete post 6");
     }
 }

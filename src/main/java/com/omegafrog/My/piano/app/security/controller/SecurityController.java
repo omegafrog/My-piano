@@ -2,6 +2,7 @@ package com.omegafrog.My.piano.app.security.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.web.dto.RegisterUserDto;
 import com.omegafrog.My.piano.app.web.dto.SecurityUserDto;
 import com.omegafrog.My.piano.app.web.response.APIBadRequestResponse;
