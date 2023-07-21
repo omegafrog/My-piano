@@ -4,6 +4,8 @@ import com.omegafrog.My.piano.app.web.domain.cart.Cart;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.post.UpdateVideoPostDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
+import com.omegafrog.My.piano.app.web.infra.user.JpaUserRepositoryImpl;
+import com.omegafrog.My.piano.app.web.infra.user.SimpleJpaUserRepository;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 import com.omegafrog.My.piano.app.web.domain.post.Comment;
@@ -22,11 +24,15 @@ class VideoPostRepositoryTest {
     private VideoPostRepository videoPostRepository;
 
     @Autowired
+    private SimpleJpaUserRepository jpaUserRepository;
+
     private UserRepository userRepository;
 
     private User user1;
+
     @BeforeAll
-    void settings(){
+    void settings() {
+        userRepository = new JpaUserRepositoryImpl(jpaUserRepository);
         User build = User.builder()
                 .name("user1")
                 .profileSrc("profile1")
@@ -42,11 +48,12 @@ class VideoPostRepositoryTest {
     }
 
     @AfterEach
-    void clearRepository(){
+    void clearRepository() {
         videoPostRepository.deleteAll();
     }
+
     @AfterAll
-    void clearAllRepository(){
+    void clearAllRepository() {
         userRepository.deleteAll();
     }
 
@@ -58,6 +65,7 @@ class VideoPostRepositoryTest {
                 .title("title")
                 .content("content")
                 .author(user1)
+                .videoUrl("url")
                 .build();
 
         //when
@@ -68,12 +76,13 @@ class VideoPostRepositoryTest {
 
     @Test
     @DisplayName("비디오 커뮤니티 게시글을 수정할 수 있어야 한다.")
-    void updateTest(){
+    void updateTest() {
         //given
         VideoPost post = VideoPost.builder()
                 .title("title")
                 .content("content")
                 .author(user1)
+                .videoUrl("url")
                 .build();
         VideoPost saved = videoPostRepository.save(post);
         //when
@@ -96,14 +105,16 @@ class VideoPostRepositoryTest {
         Assertions.assertThat(updatedVideoPost.getVideoUrl())
                 .isEqualTo(changedUrl);
     }
+
     @Test
     @DisplayName("게시글에 댓글을 작성할 수 있어야 한다.")
-    void addCommentTest(){
+    void addCommentTest() {
         //given
         VideoPost post = VideoPost.builder()
                 .title("title")
                 .content("content")
                 .author(user1)
+                .videoUrl("url")
                 .build();
         VideoPost saved = videoPostRepository.save(post);
         //when
@@ -120,12 +131,13 @@ class VideoPostRepositoryTest {
 
     @Test
     @DisplayName("게시글의 댓글을 삭제할 수 있어야 한다.")
-    void deleteCommentTest(){
+    void deleteCommentTest() {
         //given
         VideoPost post = VideoPost.builder()
                 .title("title")
                 .content("content")
                 .author(user1)
+                .videoUrl("url")
                 .build();
         VideoPost saved = videoPostRepository.save(post);
         Comment comment = Comment.builder()

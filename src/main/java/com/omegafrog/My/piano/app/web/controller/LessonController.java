@@ -10,6 +10,7 @@ import com.omegafrog.My.piano.app.web.dto.lesson.LessonRegisterDto;
 import com.omegafrog.My.piano.app.web.response.APIInternalServerResponse;
 import com.omegafrog.My.piano.app.web.response.APISuccessResponse;
 import com.omegafrog.My.piano.app.web.response.JsonAPIResponse;
+import com.omegafrog.My.piano.app.web.response.ResponseUtil;
 import com.omegafrog.My.piano.app.web.service.LessonService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -86,10 +87,11 @@ public class LessonController {
         lessonService.deleteLesson(id, user);
         return new APISuccessResponse("Lesson delete success");
     }
-
-    private static Map<String, Object> getStringObjectMap(String keyName, Object item) {
-        Map<String, Object> data = new HashMap<>();
-        data.put(keyName, item);
-        return data;
+    private static User getLoggedInUser(Authentication authentication) throws org.springframework.security.access.AccessDeniedException {
+        if (authentication == null) {
+            throw new org.springframework.security.access.AccessDeniedException("authentication is null");
+        }
+        return ((SecurityUser)authentication.getPrincipal()).getUser();
     }
+
 }

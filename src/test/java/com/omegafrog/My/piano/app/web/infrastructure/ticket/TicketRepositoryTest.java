@@ -7,6 +7,8 @@ import com.omegafrog.My.piano.app.web.domain.ticket.Ticket;
 import com.omegafrog.My.piano.app.web.domain.ticket.TicketRepository;
 import com.omegafrog.My.piano.app.web.dto.ticket.UpdateTicketDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
+import com.omegafrog.My.piano.app.web.infra.user.JpaUserRepositoryImpl;
+import com.omegafrog.My.piano.app.web.infra.user.SimpleJpaUserRepository;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 import org.assertj.core.api.Assertions;
@@ -26,10 +28,13 @@ class TicketRepositoryTest {
 
     private User user1;
     @Autowired
+    private SimpleJpaUserRepository jpaUserRepository;
+
     private UserRepository userRepository;
 
     @BeforeAll
     void settings(){
+    userRepository = new JpaUserRepositoryImpl(jpaUserRepository);
         user1 = userRepository.save(User.builder()
                 .name("user1")
                 .profileSrc("src1")

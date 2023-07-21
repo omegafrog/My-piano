@@ -1,20 +1,20 @@
 package com.omegafrog.My.piano.app.post.controller;
 
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.omegafrog.My.piano.app.cart.Cart;
-import com.omegafrog.My.piano.app.dto.UpdatePostDto;
-import com.omegafrog.My.piano.app.dto.WritePostDto;
-import com.omegafrog.My.piano.app.post.entity.Post;
-import com.omegafrog.My.piano.app.post.entity.PostRepository;
-import com.omegafrog.My.piano.app.post.service.PostApplicationService;
-import com.omegafrog.My.piano.app.response.JsonAPIResponse;
-import com.omegafrog.My.piano.app.user.entity.User;
-import com.omegafrog.My.piano.app.user.entity.UserRepository;
-import com.omegafrog.My.piano.app.user.vo.PhoneNum;
+import com.omegafrog.My.piano.app.web.controller.PostController;
+import com.omegafrog.My.piano.app.web.domain.cart.Cart;
+import com.omegafrog.My.piano.app.web.domain.post.Post;
+import com.omegafrog.My.piano.app.web.domain.post.PostRepository;
+import com.omegafrog.My.piano.app.web.domain.user.User;
+import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
+import com.omegafrog.My.piano.app.web.dto.post.PostRegisterDto;
+import com.omegafrog.My.piano.app.web.dto.post.UpdatePostDto;
+import com.omegafrog.My.piano.app.web.response.JsonAPIResponse;
+import com.omegafrog.My.piano.app.web.service.PostApplicationService;
+import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -72,7 +72,7 @@ class PostControllerTest {
             storage.clear();
         }
     }
-    private  PostController controller;
+    private PostController controller;
     private final PostRepository postRepository = new TestPostRepository();
 
     private  ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
@@ -81,7 +81,7 @@ class PostControllerTest {
     public void createController(){
         PostApplicationService postApplicationService = Mockito.mock(PostApplicationService.class);
         UserRepository userRepository = Mockito.mock(UserRepository.class);
-        controller = new PostController(postRepository, objectMapper, postApplicationService, userRepository);
+        controller = new PostController( objectMapper, postApplicationService);
     }
     @AfterEach
     public void clearRepository(){
@@ -91,12 +91,15 @@ class PostControllerTest {
     }
     @Nested
     class LoggedInStateClass{
+
+        private PostRegisterDto postDto;
+        private User author;
+        private Post entity;
         @BeforeEach
         public void setEntities(){
-            postDto = WritePostDto.builder()
+            postDto = PostRegisterDto.builder()
                     .title("title")
                     .content("content")
-                    .createdAt(LocalDateTime.now())
                     .build();
             author = User.builder()
                     .phoneNum(PhoneNum.builder()
@@ -127,18 +130,15 @@ class PostControllerTest {
             postRepository1.getStorage().clear();
         }
 
-        private WritePostDto postDto;
-        private User author;
-        private Post entity;
+
 
         @Test
         @DisplayName("Post dto를 받아서 저장할 수 있어야 한다.")
         void writePost() throws JsonProcessingException {
             //given
-            postDto = WritePostDto.builder()
+            postDto = PostRegisterDto.builder()
                     .title("title")
                     .content("content")
-                    .createdAt(LocalDateTime.now())
                     .build();
             //when
             JsonAPIResponse apiResponse = controller.writePost(SecurityContextHolder.getContext().getAuthentication(), postDto);
@@ -182,10 +182,9 @@ class PostControllerTest {
     @DisplayName("Post를 조회할 수 있다.")
     void findPost() throws JsonProcessingException {
         //given
-        WritePostDto postDto = WritePostDto.builder()
+        PostRegisterDto postDto = PostRegisterDto.builder()
                 .title("title")
                 .content("content")
-                .createdAt(LocalDateTime.now())
                 .build();
         User author = User.builder()
                 .phoneNum(PhoneNum.builder()

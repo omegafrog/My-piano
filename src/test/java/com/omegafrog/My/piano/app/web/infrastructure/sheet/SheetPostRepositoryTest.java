@@ -9,6 +9,8 @@ import com.omegafrog.My.piano.app.web.dto.UpdateSheetPostDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.infra.sheetPost.JpaSheetPostRepositoryImpl;
 import com.omegafrog.My.piano.app.web.infra.sheetPost.SimpleJpaSheetPostRepository;
+import com.omegafrog.My.piano.app.web.infra.user.JpaUserRepositoryImpl;
+import com.omegafrog.My.piano.app.web.infra.user.SimpleJpaUserRepository;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
@@ -34,6 +36,8 @@ class SheetPostRepositoryTest {
     @Autowired
     private SimpleJpaSheetPostRepository jpaRepository;
     @Autowired
+    private SimpleJpaUserRepository jpaUserRepository;
+
     private UserRepository userRepository;
     private SheetPostRepository sheetPostRepository;
 
@@ -42,6 +46,7 @@ class SheetPostRepositoryTest {
     @BeforeAll
     void setRepository(){
         sheetPostRepository = new JpaSheetPostRepositoryImpl(jpaRepository);
+        userRepository = new JpaUserRepositoryImpl(jpaUserRepository);
         User a = User.builder()
                 .name("user")
                 .phoneNum(PhoneNum.builder()

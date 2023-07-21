@@ -2,6 +2,8 @@ package com.omegafrog.My.piano.app.web.infrastructure.user;
 
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
 import com.omegafrog.My.piano.app.web.dto.user.UpdateUserDto;
+import com.omegafrog.My.piano.app.web.infra.user.JpaUserRepositoryImpl;
+import com.omegafrog.My.piano.app.web.infra.user.SimpleJpaUserRepository;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 import com.omegafrog.My.piano.app.web.domain.user.User;
@@ -20,12 +22,19 @@ class UserRepositoryTest {
 
 
     @Autowired
+    private SimpleJpaUserRepository jpaUserRepository;
+
     private UserRepository userRepository;
 
     private User user1;
 
+    @BeforeAll
+    void settings() {
+        userRepository = new JpaUserRepositoryImpl(jpaUserRepository);
+    }
+
     @AfterEach
-    void clearRepository(){
+    void clearRepository() {
         userRepository.deleteAll();
     }
 
@@ -55,7 +64,7 @@ class UserRepositoryTest {
 
     @Test
     @DisplayName("유저를 수정할 수 있어야 한다.")
-    void updateTest(){
+    void updateTest() {
         //given
         User user = User.builder()
                 .name("user1")
@@ -87,7 +96,7 @@ class UserRepositoryTest {
 
     @Test
     @DisplayName("유저를 삭제할 수 있어야 한다.")
-    void deleteTest(){
+    void deleteTest() {
         //given
         User user = User.builder()
                 .name("user1")

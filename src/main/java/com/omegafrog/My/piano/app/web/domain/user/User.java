@@ -127,6 +127,14 @@ public class User {
         return this;
     }
 
+    public void addLikePost(Post post){
+        likedPosts.add(post);
+    }
+
+    public boolean dislikePost(Long postId){
+        return likedPosts.removeIf(post -> post.getId().equals(postId));
+    }
+
     public void pay(OrderDto orderDto)throws PaymentException {
         if(cash < orderDto.getTotalPrice()){
             throw new NotEnoughCashException("Cannot buy this item => cash:"

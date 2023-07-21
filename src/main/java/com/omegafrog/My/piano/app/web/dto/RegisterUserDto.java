@@ -14,14 +14,16 @@ public class RegisterUserDto {
     private String username;
     private String password;
     private String name;
+    private String email;
     private LoginMethod loginMethod;
     private String profileSrc;
     private PhoneNum phoneNum;
 
     @Builder
-    public RegisterUserDto(String username, String password, String name, LoginMethod loginMethod, String profileSrc, PhoneNum phoneNum) {
+    public RegisterUserDto(String username, String password, String name, String email, LoginMethod loginMethod, String profileSrc, PhoneNum phoneNum) {
         this.username = username;
         this.password = password;
+        this.email = email;
         this.name = name;
         this.loginMethod = loginMethod;
         this.profileSrc = profileSrc;

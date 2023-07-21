@@ -1,5 +1,6 @@
 package com.omegafrog.My.piano.app.web.domain.post;
 
+import com.omegafrog.My.piano.app.web.dto.post.PostDto;
 import com.omegafrog.My.piano.app.web.dto.post.UpdatePostDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
@@ -33,14 +34,14 @@ public class Post {
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @PositiveOrZero
-    private int viewCount;
+    private int viewCount=0;
 
     @NotEmpty
     private String title;
     @NotEmpty
     private String content;
     @PositiveOrZero
-    private int likeCount;
+    private int likeCount=0;
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @NotNull
@@ -66,10 +67,8 @@ public class Post {
     @Builder
     public Post(User author,String title, String content) {
         this.author = author;
-        this.viewCount = 0;
         this.title = title;
         this.content = content;
-        this.likeCount = 0;
     }
 
     public PostDto toDto(){
