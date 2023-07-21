@@ -2,6 +2,7 @@ package com.omegafrog.My.piano.app.web.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.UpdateLessonDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
@@ -44,7 +45,7 @@ public class LessonController {
         }
         User user = (User) authentication.getDetails();
         LessonDto lessonDto = lessonService.createLesson(lessonRegisterDto, user);
-        Map<String, Object> data = getStringObjectMap("lesson", lessonDto);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("lesson", lessonDto);
         return new APISuccessResponse("Create new Lesson success", objectMapper, data);
     }
 
@@ -52,7 +53,7 @@ public class LessonController {
     @GetMapping("/lesson")
     public JsonAPIResponse getLessons(Pageable pageable) throws JsonProcessingException {
         List<LessonDto> allLessons = lessonService.getAllLessons(pageable);
-        Map<String, Object> data = getStringObjectMap("lessons", allLessons);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("lessons", allLessons);
         return new APISuccessResponse("Success load all lessons.", objectMapper, data);
     }
 
@@ -61,7 +62,7 @@ public class LessonController {
     @GetMapping("/lesson/{id}")
     public JsonAPIResponse getLesson(@PathVariable Long id) throws JsonProcessingException {
         LessonDto lessonById = lessonService.getLessonById(id);
-        Map<String, Object> data = getStringObjectMap("lesson", lessonById);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("lesson", lessonById);
         return new APISuccessResponse("Success load lesson" + id + ".", objectMapper, data);
     }
 
@@ -85,12 +86,8 @@ public class LessonController {
     public JsonAPIResponse deleteLesson(
             @PathVariable Long id)
             throws EntityNotFoundException, AccessDeniedException {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null) {
-            log.error("authentication is null");
-            return new APIInternalServerResponse("authentication is null");
-        }
-        User user = (User) auth.getDetails();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = getLoggedInUser(authentication);
         lessonService.deleteLesson(id, user);
         return new APISuccessResponse("Lesson delete success");
     }

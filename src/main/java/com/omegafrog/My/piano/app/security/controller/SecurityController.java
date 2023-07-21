@@ -53,9 +53,9 @@ public class SecurityController {
     }
 
     @GetMapping("/user/signOut")
-    public JsonAPIResponse signOutUser(Authentication authentication){
-        String username = (String) authentication.getPrincipal();
-        commonUserService.signOutUser(username);
+    public JsonAPIResponse signOutUser(Authentication auth){
+        SecurityUser user = (SecurityUser) auth.getPrincipal();
+        commonUserService.signOutUser(user.getUsername());
         return new APISuccessResponse("회원탈퇴 성공.");
     }
 

@@ -86,12 +86,19 @@ public class OrderController {
 
 
     @GetMapping(path = "/order")
-    public JsonAPIResponse getOrders() throws JsonProcessingException, PersistenceException {
-        SecurityContext context = SecurityContextHolder.getContext();
-        User loggedInUser = (User) context.getAuthentication().getDetails();
+    public JsonAPIResponse getOrders(Authentication authentication) throws JsonProcessingException, PersistenceException {
+        User loggedInUser = getLoggedInUser(authentication);
+        System.out.println("loggedInUser = " + loggedInUser);
         List<OrderDto> allOrders = orderService.getAllOrders(loggedInUser);
         Map<String, Object> data = new HashMap<>();
         data.put("orders", allOrders);
         return new APISuccessResponse("Success get all orders.", objectMapper, data);
     }
+    private static User getLoggedInUser(Authentication authentication) throws org.springframework.security.access.AccessDeniedException {
+        if (authentication == null) {
+            throw new org.springframework.security.access.AccessDeniedException("authentication is null");
+        }
+        return (User) authentication.getPrincipal();
+    }
+
 }

@@ -26,10 +26,8 @@ public class CommonUserAuthenticationProvider implements AuthenticationProvider 
 
         if (foundedUserDetails.isEnabled()) {
             if (passwordEncoder.matches((CharSequence) authentication.getCredentials(), foundedUserDetails.getPassword())) {
-                UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(foundedUserDetails.getUsername(),
+                return new UsernamePasswordAuthenticationToken(foundedUserDetails,
                         foundedUserDetails.getPassword(), foundedUserDetails.getAuthorities());
-                token.setDetails(foundedUserDetails);
-                return token;
             } else {
                 throw new BadCredentialsException("Password is not match.");
             }
