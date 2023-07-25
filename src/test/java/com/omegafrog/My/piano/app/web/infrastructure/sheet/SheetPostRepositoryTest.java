@@ -9,18 +9,15 @@ import com.omegafrog.My.piano.app.web.dto.UpdateSheetPostDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.infra.sheetPost.JpaSheetPostRepositoryImpl;
 import com.omegafrog.My.piano.app.web.infra.sheetPost.SimpleJpaSheetPostRepository;
+import com.omegafrog.My.piano.app.web.infra.user.JpaUserRepositoryImpl;
+import com.omegafrog.My.piano.app.web.infra.user.SimpleJpaUserRepository;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.PersistenceUnit;
-import lombok.Builder;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.*;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +31,8 @@ class SheetPostRepositoryTest {
     @Autowired
     private SimpleJpaSheetPostRepository jpaRepository;
     @Autowired
+    private SimpleJpaUserRepository jpaUserRepository;
+
     private UserRepository userRepository;
     private SheetPostRepository sheetPostRepository;
 
@@ -42,6 +41,7 @@ class SheetPostRepositoryTest {
     @BeforeAll
     void setRepository(){
         sheetPostRepository = new JpaSheetPostRepositoryImpl(jpaRepository);
+        userRepository = new JpaUserRepositoryImpl(jpaUserRepository);
         User a = User.builder()
                 .name("user")
                 .phoneNum(PhoneNum.builder()

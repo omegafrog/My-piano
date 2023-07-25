@@ -7,22 +7,33 @@ import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;
 
+import java.util.List;
 import java.util.Optional;
 
 @DataJpaTest
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CommonUserServiceTest {
 
     @Autowired
     private SecurityUserRepository securityUserRepository;
 
-    private final PasswordEncoder passwordEncoder = new Pbkdf2PasswordEncoder("test", 32,256, Pbkdf2PasswordEncoder.SecretKeyFactoryAlgorithm.PBKDF2WithHmacSHA256);
+    private final PasswordEncoder passwordEncoder = new Pbkdf2PasswordEncoder("test", 32, 256, Pbkdf2PasswordEncoder.SecretKeyFactoryAlgorithm.PBKDF2WithHmacSHA256);
+
+    @AfterAll
+    public void deleteUsers(){
+        List<SecurityUser> all = securityUserRepository.findAll();
+        all.forEach(user -> System.out.println("user = " + user));
+        securityUserRepository.deleteAll();
+    }
 
 
     @Test
@@ -39,6 +50,7 @@ class CommonUserServiceTest {
                                 .isAuthorized(false)
                                 .build())
                         .cart(new Cart())
+                        .email("email@email.com")
                         .profileSrc("profileSrc")
                         .loginMethod(LoginMethod.EMAIL)
                         .build())
@@ -64,6 +76,7 @@ class CommonUserServiceTest {
                                 .build())
                         .cart(new Cart())
                         .profileSrc("profileSrc")
+                        .email("email@email.com")
                         .loginMethod(LoginMethod.EMAIL)
                         .build())
                 .build();
@@ -75,7 +88,7 @@ class CommonUserServiceTest {
 
     @Test
     @DisplayName("securityUser를 삭제할 수 있어야 한다.")
-    void deleteUser(){
+    void deleteUser() {
         SecurityUser securityUser = SecurityUser.builder()
                 .username("username")
                 .password(passwordEncoder.encode("password"))
@@ -86,6 +99,7 @@ class CommonUserServiceTest {
                                 .isAuthorized(false)
                                 .build())
                         .cart(new Cart())
+                        .email("email@email.com")
                         .profileSrc("profileSrc")
                         .loginMethod(LoginMethod.EMAIL)
                         .build())

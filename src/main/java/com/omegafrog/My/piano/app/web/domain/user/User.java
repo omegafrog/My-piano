@@ -2,11 +2,13 @@ package com.omegafrog.My.piano.app.web.domain.user;
 
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
+import com.omegafrog.My.piano.app.web.domain.post.Comment;
 import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.dto.order.OrderDto;
 import com.omegafrog.My.piano.app.web.dto.user.UpdateUserDto;
+import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
 import com.omegafrog.My.piano.app.web.exception.payment.NotEnoughCashException;
 import com.omegafrog.My.piano.app.web.exception.payment.PaymentException;
 import com.omegafrog.My.piano.app.web.vo.user.AlarmProperties;
@@ -42,7 +44,7 @@ public class User {
     @Email
     @NotBlank(message = "email cannot be null")
     private String email;
-    
+
     @NotNull
     private LoginMethod loginMethod;
 
@@ -58,34 +60,35 @@ public class User {
     @NotNull
     private AlarmProperties alarmProperties;
 
-    @OneToOne(cascade = {CascadeType.PERSIST,CascadeType.REMOVE})
+    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinColumn(name = "USER_ID")
     @NotNull
     private Cart cart;
 
-    @ManyToMany(cascade = {CascadeType.PERSIST,CascadeType.MERGE})
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "purchased_sheet",
-            joinColumns = @JoinColumn(name="USER_ID"),
+            joinColumns = @JoinColumn(name = "USER_ID"),
             inverseJoinColumns = @JoinColumn(name = "SHEET_ID"))
     private List<Sheet> purchasedSheets = new ArrayList<>();
 
-    @ManyToMany(cascade = {CascadeType.PERSIST,CascadeType.MERGE})
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "purchased_lesson",
             joinColumns = @JoinColumn(name = "USER_ID"),
             inverseJoinColumns = @JoinColumn(name = "LESSON_ID"))
     private List<Lesson> purchasedLessons = new ArrayList<>();
 
-    @ManyToMany(cascade = {CascadeType.PERSIST,CascadeType.MERGE})
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "scrapped_sheet",
             joinColumns = @JoinColumn(name = "USER_ID"),
             inverseJoinColumns = @JoinColumn(name = "SHEET_ID"))
     private List<Sheet> scrappedSheets = new ArrayList<>();
 
-    @OneToMany(cascade = {CascadeType.PERSIST,CascadeType.MERGE})
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "USER_ID")
     private List<Sheet> uploadedSheets = new ArrayList<>();
 
-    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "USER_ID")
     private List<Post> uploadedPosts = new ArrayList<>();
 
@@ -102,6 +105,9 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "POST_ID"))
     private List<Post> likedPosts = new ArrayList<>();
 
+    @OneToMany(mappedBy = "author", orphanRemoval = true, cascade = CascadeType.REMOVE)
+    private List<Comment> writedComments = new ArrayList<>();
+
     // TODO : USER에서 Cart를 팩토리로 생성해보자.
     @Builder
     public User(String name, String email, Cart cart, LoginMethod loginMethod, String profileSrc, PhoneNum phoneNum, int cash) {
@@ -115,30 +121,55 @@ public class User {
         this.cash = cash;
     }
 
-    public User update(UpdateUserDto userDto){
+    public User update(UpdateUserDto userDto) {
         this.name = userDto.getName();
         this.profileSrc = userDto.getProfileSrc();
         this.phoneNum = userDto.getPhoneNum();
         return this;
     }
 
-    public void pay(OrderDto orderDto)throws PaymentException {
-        if(cash < orderDto.getTotalPrice()){
+    public void addLikePost(Post post){
+        likedPosts.add(post);
+    }
+
+    public boolean dislikePost(Long postId){
+        likedPosts.forEach(
+                post -> { if( post.getId().equals(postId)) post.decreaseLikedCount();}
+        );
+        return likedPosts.removeIf(post -> post.getId().equals(postId));
+    }
+
+    public void pay(OrderDto orderDto) throws PaymentException {
+        if (cash < orderDto.getTotalPrice()) {
             throw new NotEnoughCashException("Cannot buy this item => cash:"
                     + cash + " < price:" + orderDto.getTotalPrice());
             // 캐시 부족
-        }else{
-            cash-=orderDto.getTotalPrice();
-            if( orderDto.getItem() instanceof Lesson)
-                purchasedLessons.add((Lesson)orderDto.getItem());
-            else if(orderDto.getItem() instanceof SheetPost)
-                purchasedSheets.add( ((SheetPost)(orderDto.getItem())).getSheet());
+        } else {
+            cash -= orderDto.getTotalPrice();
+            if (orderDto.getItem() instanceof Lesson)
+                purchasedLessons.add((Lesson) orderDto.getItem());
+            else if (orderDto.getItem() instanceof SheetPost)
+                purchasedSheets.add(((SheetPost) (orderDto.getItem())).getSheet());
             else
                 throw new ClassCastException("Cannot cast this class to child class.");
         }
     }
-    public void receiveCash(int totalPrice){
+
+    public void receiveCash(int totalPrice) {
         cash += totalPrice;
+    }
+
+    public UserProfile getUserProfile() {
+        return UserProfile.builder()
+                .id(id)
+                .name(name)
+                .profileSrc(profileSrc)
+                .build();
+    }
+
+    public void addLikedPost(Post post){
+        post.increaseLikedCount();
+        likedPosts.add(post);
     }
 
     @Override

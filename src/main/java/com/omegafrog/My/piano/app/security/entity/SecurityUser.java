@@ -121,4 +121,5 @@ public class SecurityUser implements UserDetails {
                 .role(role)
                 .build();
     }
+
 }

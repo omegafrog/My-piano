@@ -9,7 +9,7 @@ public class Authority implements GrantedAuthority {
     private String authorityName;
     @Override
     public String getAuthority() {
-        return authorityName;
+        return "ROLE_"+authorityName;
     }
 
     @Builder

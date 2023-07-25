@@ -157,7 +157,6 @@ class OrderControllerTest {
 
     @Test
     @Transactional
-    @WithMockUser(username = "username", password = "password", roles = {"USER"})
     void orderSheet() throws Exception {
 
         OrderRegisterDto orderDto = OrderRegisterDto.builder()

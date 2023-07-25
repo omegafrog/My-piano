@@ -1,18 +1,26 @@
 package com.omegafrog.My.piano.app.web.domain.post;
 
-import com.omegafrog.My.piano.app.web.dto.UpdatePostDto;
+import com.omegafrog.My.piano.app.web.dto.post.PostDto;
+import com.omegafrog.My.piano.app.web.dto.post.UpdatePostDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
+import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-@Entity
+import static java.util.stream.Collectors.toList;
 
+@Entity
 @NoArgsConstructor
 @Getter
 public class Post {
@@ -25,16 +33,21 @@ public class Post {
     @JoinColumn(name = "USER_ID")
     private User author;
 
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt = LocalDateTime.now();
 
-    private int viewCount;
+    @PositiveOrZero
+    private int viewCount=0;
 
+    @NotEmpty
     private String title;
+    @NotEmpty
     private String content;
-    private int likeCount;
+    @PositiveOrZero
+    private int likeCount=0;
 
-    @OneToMany(cascade = {CascadeType.PERSIST,CascadeType.MERGE})
-    private List<Comment> comments = new CopyOnWriteArrayList<>();
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    @NotNull
+    private final List<Comment> comments = new ArrayList<>();
 
     public Post update(UpdatePostDto post){
         this.viewCount = post.getViewCount();
@@ -50,19 +63,36 @@ public class Post {
     }
 
     public void deleteComment(Long id){
-        this.comments.forEach(comment -> {
-            if (comment.getId().equals(id)) comments.remove(comment);
-        });
+        comments.removeIf(comment -> comment.getId().equals(id));
     }
 
     @Builder
     public Post(User author,String title, String content) {
         this.author = author;
-        this.createdAt = LocalDateTime.now();
-        this.viewCount = 0;
         this.title = title;
         this.content = content;
-        this.likeCount = 0;
+    }
+
+
+    public void increaseLikedCount(){
+        likeCount++;
+    }
+
+    public void decreaseLikedCount(){
+        likeCount--;
+    }
+
+    public PostDto toDto(){
+        return PostDto.builder()
+                .id(id)
+                .createdAt(createdAt)
+                .title(title)
+                .content(content)
+                .viewCount(viewCount)
+                .likeCount(likeCount)
+                .comments(comments)
+                .author(author.getUserProfile())
+                .build();
     }
 
     @Override
@@ -72,25 +102,12 @@ public class Post {
 
         Post post = (Post) o;
 
-        if (viewCount != post.viewCount) return false;
-        if (likeCount != post.likeCount) return false;
-        if (!id.equals(post.id)) return false;
-        if (!author.equals(post.author)) return false;
-        if (!createdAt.equals(post.createdAt)) return false;
-        if (!title.equals(post.title)) return false;
-        return content.equals(post.content);
+        return Objects.equals(id, post.id);
     }
 
     @Override
     public int hashCode() {
-        int result = id.hashCode();
-        result = 31 * result + author.hashCode();
-        result = 31 * result + createdAt.hashCode();
-        result = 31 * result + viewCount;
-        result = 31 * result + title.hashCode();
-        result = 31 * result + content.hashCode();
-        result = 31 * result + likeCount;
-        return result;
+        return id.hashCode();
     }
 }
 

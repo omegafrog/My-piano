@@ -1,7 +1,10 @@
 package com.omegafrog.My.piano.app.web.domain.post;
 
-import com.omegafrog.My.piano.app.web.dto.UpdateVideoPostDto;
+import com.omegafrog.My.piano.app.web.dto.post.UpdateVideoPostDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,25 +25,28 @@ public class VideoPost {
 
     @OneToOne(cascade = {CascadeType.MERGE})
     @JoinColumn(name = "USER_ID")
+    @NotNull
     private User author;
 
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt = LocalDateTime.now();
 
+    @PositiveOrZero
     private int viewCount;
 
+    @NotEmpty
     private String title;
-
+    @NotEmpty
     private String content;
-
+    @NotEmpty
     private String videoUrl;
 
     @OneToMany(cascade = {CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REMOVE})
+    @NotNull
     private final List<Comment> comments = new CopyOnWriteArrayList<>();
 
     @Builder
     public VideoPost(User author, String title, String content, String videoUrl) {
         this.author = author;
-        this.createdAt = LocalDateTime.now();
         this.viewCount = 0;
         this.title = title;
         this.content = content;

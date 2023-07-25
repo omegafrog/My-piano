@@ -1,5 +1,7 @@
 package com.omegafrog.My.piano.app.web.infrastructure.lesson;
 
+import com.omegafrog.My.piano.app.web.infra.user.JpaUserRepositoryImpl;
+import com.omegafrog.My.piano.app.web.infra.user.SimpleJpaUserRepository;
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
@@ -20,7 +22,6 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalTime;
 import java.util.Optional;
@@ -33,6 +34,8 @@ class LessonRepositoryTest {
     private LessonRepository lessonRepository;
 
     @Autowired
+    private SimpleJpaUserRepository jpaUserRepository;
+
     private UserRepository userRepository;
 
     @Autowired
@@ -44,6 +47,7 @@ class LessonRepositoryTest {
     private SheetPost savedSheetPost;
     @BeforeAll
     void settings(){
+        userRepository = new JpaUserRepositoryImpl(jpaUserRepository);
         SheetPostRepository sheetPostRepository = new JpaSheetPostRepositoryImpl(jpaSheetPostRepository);
         User build = User.builder()
                 .name("user1")

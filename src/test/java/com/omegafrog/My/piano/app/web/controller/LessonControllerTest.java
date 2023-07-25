@@ -2,8 +2,11 @@ package com.omegafrog.My.piano.app.web.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.omegafrog.My.piano.app.security.entity.authorities.Authority;
+import com.omegafrog.My.piano.app.security.entity.SecurityUser;
+import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
 import com.omegafrog.My.piano.app.security.entity.authorities.Role;
+import com.omegafrog.My.piano.app.security.exception.UsernameAlreadyExistException;
+import com.omegafrog.My.piano.app.security.service.CommonUserService;
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonInformation;
@@ -14,22 +17,26 @@ import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
+import com.omegafrog.My.piano.app.web.dto.RegisterUserDto;
+import com.omegafrog.My.piano.app.web.dto.SecurityUserDto;
 import com.omegafrog.My.piano.app.web.dto.UpdateLessonDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonRegisterDto;
 import com.omegafrog.My.piano.app.web.enums.*;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
+import jakarta.servlet.http.Cookie;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
@@ -53,23 +60,31 @@ class LessonControllerTest {
 
     @Autowired
     MockMvc mockMvc;
-
     @Autowired
     private ObjectMapper objectMapper;
-
     @Autowired
     private UserRepository userRepository;
-
     @Autowired
     private SheetPostRepository sheetPostRepository;
+    @Autowired
+    private SecurityUserRepository securityUserRepository;
+    @Autowired
+    private LessonRepository lessonRepository;
+    @Autowired
+    private CommonUserService commonUserService;
 
     User artist;
     Lesson lesson;
     SheetPost saved;
-    @Autowired
-    private LessonRepository lessonRepository;
+    SecurityUser savedSecurityUser;
+
+
     @BeforeAll
     void settings(){
+        System.out.println("Lesson : securityUSerRepository.count() = " + securityUserRepository.count());
+        List<SecurityUser> all = securityUserRepository.findAll();
+        all.forEach(user -> System.out.println("user = " + user));
+        securityUserRepository.deleteAll();
         User a = User.builder()
                 .name("artist1")
                 .cart(new Cart())
@@ -82,7 +97,14 @@ class LessonControllerTest {
                         .build())
                 .profileSrc("src")
                 .build();
-        artist = userRepository.save(a);
+        SecurityUser securityUser = SecurityUser.builder()
+                .username("username")
+                .password("password")
+                .user(artist)
+                .role(Role.USER)
+                .build();
+        savedSecurityUser = securityUserRepository.save(securityUser);
+        artist = savedSecurityUser.getUser();
 
         SheetPost sheetPost = SheetPost.builder()
                 .sheet(Sheet.builder()
@@ -105,8 +127,7 @@ class LessonControllerTest {
 
     }
     @BeforeEach
-    void setLesson(){
-        System.out.println("SecurityContextHolder.getContext().getAuthentication() = " + SecurityContextHolder.getContext().getAuthentication());
+    void setLesson() {
         lesson = Lesson.builder()
                 .sheet(saved.getSheet())
                 .title("lesson1")
@@ -126,14 +147,9 @@ class LessonControllerTest {
                                 .runningTime(LocalTime.of(0, 20))
                                 .build())
                 .build();
-        SecurityContext context = SecurityContextHolder.getContext();
-        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(
-                "username", "password",
-                Collections.singletonList(Authority.builder().authority(Role.USER.authorityName).build()));
-        token.setDetails(artist);
-        context.setAuthentication(token);
-        SecurityContextHolder.setContext(context);
     }
+
+
 
     @AfterEach
     void clearRepository(){
@@ -142,60 +158,130 @@ class LessonControllerTest {
 
     @AfterAll
     void clearAllRepository(){
-        sheetPostRepository.deleteAll();
+
         userRepository.deleteAll();
     }
 
-    @Test
-    @Transactional
-    void createLessonTest() throws Exception {
-        LessonRegisterDto lessonRegisterDto = LessonRegisterDto.builder()
-                .sheetId(lesson.getSheet().getId())
-                .title(lesson.getTitle())
-                .videoInformation(lesson.getVideoInformation())
-                .lessonInformation(lesson.getLessonInformation())
-                .price(lesson.getPrice())
-                .subTitle(lesson.getSubTitle())
-                .build();
-        String body = objectMapper.writeValueAsString(lessonRegisterDto);
-        System.out.println("body = " + body);
+    @Nested
+    class NeedLoginTest{
+        RegisterUserDto user1;
+        RegisterUserDto user2;
+        String accessToken;
+        Cookie refreshToken;
+        @NoArgsConstructor
+        @Data
+        private static class LoginResult {
+            private String status;
+            private String message;
+            private Map<String, String> serializedData;
+        }
+        @BeforeEach
+        void login() throws UsernameAlreadyExistException, Exception {
+            SecurityContextHolder.clearContext();
+            user1 = RegisterUserDto.builder()
+                    .name("user1")
+                    .phoneNum(PhoneNum.builder()
+                            .phoneNum("010-1111-2222")
+                            .isAuthorized(false)
+                            .build())
+                    .profileSrc("src")
+                    .loginMethod(LoginMethod.EMAIL)
+                    .username("user1")
+                    .password("password")
+                    .email("user1@gmail.com")
+                    .build();
+            user2 = RegisterUserDto.builder()
+                    .name("user2")
+                    .phoneNum(PhoneNum.builder()
+                            .phoneNum("010-1111-2222")
+                            .isAuthorized(false)
+                            .build())
+                    .profileSrc("src")
+                    .loginMethod(LoginMethod.EMAIL)
+                    .username("user2")
+                    .password("password")
+                    .email("user1@gmail.com")
+                    .build();
+            SecurityUserDto saved1 = commonUserService.registerUser(user1);
+            SecurityUserDto saved2 = commonUserService.registerUser(user2);
+            MvcResult mvcResult = mockMvc.perform(post("/user/login")
+                            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                            .content("username=user1&password=password"))
+                    .andReturn();
+            String contentAsString = mvcResult.getResponse().getContentAsString();
+            LoginResult loginResult = objectMapper.readValue(contentAsString, LoginResult.class);
+            accessToken = loginResult.getSerializedData().get("access token");
+            refreshToken = mvcResult.getResponse().getCookie("refreshToken");
+        }
+        @AfterEach
+        void logout(){
+            SecurityContextHolder.clearContext();
+        }
+        @Test
+        @Transactional
+        void createLessonTest() throws Exception {
+            LessonRegisterDto lessonRegisterDto = LessonRegisterDto.builder()
+                    .sheetId(lesson.getSheet().getId())
+                    .title(lesson.getTitle())
+                    .videoInformation(lesson.getVideoInformation())
+                    .lessonInformation(lesson.getLessonInformation())
+                    .price(lesson.getPrice())
+                    .subTitle(lesson.getSubTitle())
+                    .build();
+            String body = objectMapper.writeValueAsString(lessonRegisterDto);
+            System.out.println("body = " + body);
 
-        mockMvc.perform(post("/lesson")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
-                .andDo(print());
+            mockMvc.perform(post("/lesson")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(body)
+                            .header(HttpHeaders.AUTHORIZATION, accessToken)
+                            .cookie(refreshToken))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                    .andDo(print());
+        }
+
+        @Test
+        @Transactional
+        void updateLessonTest() throws Exception{
+
+            Lesson savedLesson = lessonRepository.save(lesson);
+            UpdateLessonDto updatedLessonDto = UpdateLessonDto.builder()
+                    .lessonInformation(lesson.getLessonInformation())
+                    .sheet(lesson.getSheet())
+                    .videoInformation(lesson.getVideoInformation())
+                    .price(30000)
+                    .title("changedTitle")
+                    .subTitle(lesson.getSubTitle())
+                    .build();
+            MvcResult mvcResult = mockMvc.perform(post("/lesson/" + savedLesson.getId())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(updatedLessonDto)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                    .andDo(print())
+                    .andReturn();
+            String contentAsString = mvcResult.getResponse().getContentAsString();
+            String text = objectMapper.readTree(contentAsString).get("serializedData").asText();
+            long id = objectMapper.readTree(text).get("lesson").get("id").asLong();
+            Optional<Lesson> byId = lessonRepository.findById(id);
+            Assertions.assertThat(byId).isPresent();
+            Assertions.assertThat(byId.get()).isEqualTo(savedLesson);
+            Assertions.assertThat(byId.get().getTitle()).isEqualTo("changedTitle");
+        }
+
+        @Test
+        @Transactional
+        void deleteLessonTest() throws Exception {
+            Lesson savedLesson = lessonRepository.save(lesson);
+            mockMvc.perform(delete("/lesson/" + savedLesson.getId()))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                    .andDo(print());
+        }
     }
 
-    @Test
-    @Transactional
-    void updateLessonTest() throws Exception{
 
-        Lesson savedLesson = lessonRepository.save(lesson);
-        UpdateLessonDto updatedLessonDto = UpdateLessonDto.builder()
-                .lessonInformation(lesson.getLessonInformation())
-                .sheet(lesson.getSheet())
-                .videoInformation(lesson.getVideoInformation())
-                .price(30000)
-                .title("changedTitle")
-                .subTitle(lesson.getSubTitle())
-                .build();
-        MvcResult mvcResult = mockMvc.perform(post("/lesson/" + savedLesson.getId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updatedLessonDto)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
-                .andDo(print())
-                .andReturn();
-        String contentAsString = mvcResult.getResponse().getContentAsString();
-        String text = objectMapper.readTree(contentAsString).get("serializedData").asText();
-        long id = objectMapper.readTree(text).get("lesson").get("id").asLong();
-        Optional<Lesson> byId = lessonRepository.findById(id);
-        Assertions.assertThat(byId).isPresent();
-        Assertions.assertThat(byId.get()).isEqualTo(savedLesson);
-        Assertions.assertThat(byId.get().getTitle()).isEqualTo("changedTitle");
-    }
 
     @Test
     @Transactional
@@ -257,13 +343,5 @@ class LessonControllerTest {
         Assertions.assertThat(list.get(0).getId()).isEqualTo(saved1.getId());
     }
 
-    @Test
-    @Transactional
-    void deleteLessonTest() throws Exception {
-        Lesson savedLesson = lessonRepository.save(lesson);
-        mockMvc.perform(delete("/lesson/" + savedLesson.getId()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
-                .andDo(print());
-    }
+
 }
