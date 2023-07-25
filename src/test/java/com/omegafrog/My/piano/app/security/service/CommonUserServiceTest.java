@@ -50,6 +50,7 @@ class CommonUserServiceTest {
                                 .isAuthorized(false)
                                 .build())
                         .cart(new Cart())
+                        .email("email@email.com")
                         .profileSrc("profileSrc")
                         .loginMethod(LoginMethod.EMAIL)
                         .build())
@@ -75,6 +76,7 @@ class CommonUserServiceTest {
                                 .build())
                         .cart(new Cart())
                         .profileSrc("profileSrc")
+                        .email("email@email.com")
                         .loginMethod(LoginMethod.EMAIL)
                         .build())
                 .build();
@@ -97,6 +99,7 @@ class CommonUserServiceTest {
                                 .isAuthorized(false)
                                 .build())
                         .cart(new Cart())
+                        .email("email@email.com")
                         .profileSrc("profileSrc")
                         .loginMethod(LoginMethod.EMAIL)
                         .build())

@@ -1,7 +1,7 @@
-package com.omegafrog.My.piano.app.user.infrastructure;
+package com.omegafrog.My.piano.app.web.infra.user;
 
-import com.omegafrog.My.piano.app.user.entity.User;
-import com.omegafrog.My.piano.app.user.entity.UserRepository;
+import com.omegafrog.My.piano.app.web.domain.user.User;
+import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -9,7 +9,7 @@ import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
-public class JpaUserRepository implements UserRepository {
+public class JpaUserRepositoryImpl implements UserRepository {
 
     private final SimpleJpaUserRepository jpaRepository;
 
@@ -26,5 +26,15 @@ public class JpaUserRepository implements UserRepository {
     @Override
     public void deleteById(Long id) {
         jpaRepository.deleteById(id);
+    }
+
+    @Override
+    public long count() {
+        return jpaRepository.count();
+    }
+
+    @Override
+    public void deleteAll() {
+        jpaRepository.deleteAll();
     }
 }

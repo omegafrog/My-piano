@@ -1,9 +1,6 @@
 package com.omegafrog.My.piano.app.web.dto.user;
 
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Data
 @Setter
@@ -14,6 +11,7 @@ public class UserProfile {
     private String name;
     private String profileSrc;
 
+    @Builder
     public UserProfile(Long id, String name, String profileSrc) {
         this.id = id;
         this.name = name;

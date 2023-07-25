@@ -2,15 +2,19 @@ package com.omegafrog.My.piano.app.post.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.omegafrog.My.piano.app.dto.*;
-import com.omegafrog.My.piano.app.post.entity.Comment;
-import com.omegafrog.My.piano.app.post.entity.Post;
+import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
 import com.omegafrog.My.piano.app.security.exception.UsernameAlreadyExistException;
 import com.omegafrog.My.piano.app.security.service.CommonUserService;
-import com.omegafrog.My.piano.app.user.entity.UserRepository;
-import com.omegafrog.My.piano.app.user.vo.LoginMethod;
-import com.omegafrog.My.piano.app.user.vo.PhoneNum;
+import com.omegafrog.My.piano.app.web.domain.post.Comment;
+import com.omegafrog.My.piano.app.web.domain.post.Post;
+import com.omegafrog.My.piano.app.web.dto.RegisterUserDto;
+import com.omegafrog.My.piano.app.web.dto.SecurityUserDto;
+import com.omegafrog.My.piano.app.web.dto.post.CommentDto;
+import com.omegafrog.My.piano.app.web.dto.post.PostRegisterDto;
+import com.omegafrog.My.piano.app.web.dto.post.UpdatePostDto;
+import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
+import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 import jakarta.servlet.http.Cookie;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -28,7 +32,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -79,6 +82,7 @@ class PostControllerIntegrationTest {
                         .build())
                 .profileSrc("src")
                 .loginMethod(LoginMethod.EMAIL)
+                .email("email@email.com")
                 .username("user1")
                 .password("password")
                 .build();
@@ -89,6 +93,7 @@ class PostControllerIntegrationTest {
                         .isAuthorized(false)
                         .build())
                 .profileSrc("src")
+                .email("email@email.com")
                 .loginMethod(LoginMethod.EMAIL)
                 .username("user2")
                 .password("password")
@@ -115,8 +120,6 @@ class PostControllerIntegrationTest {
         List<SecurityUser> all = securityUserRepository.findAll();
         all.forEach(user -> System.out.println("user = " + user));
         securityUserRepository.deleteAll();
-
-
         SecurityContextHolder.clearContext();
     }
 
@@ -125,10 +128,9 @@ class PostControllerIntegrationTest {
     @DisplayName("로그인한 유저는 커뮤니티 글을 작성하고 조회할 수 있어야 한다.")
     void writePost() throws Exception {
         //given
-        WritePostDto postDto = WritePostDto.builder()
+        PostRegisterDto postDto = PostRegisterDto.builder()
                 .title("title")
                 .content("content")
-                .createdAt(LocalDateTime.now())
                 .build();
         String string = mockMvc.perform(post("/community")
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
@@ -164,13 +166,12 @@ class PostControllerIntegrationTest {
     @Test
     void updatePost() throws Exception {
         //given
-        WritePostDto postDto = WritePostDto.builder()
+        PostRegisterDto postDto = PostRegisterDto.builder()
                 .title("title")
                 .content("content")
-                .createdAt(LocalDateTime.now())
                 .build();
         String string = mockMvc.perform(post("/community")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .header(HttpHeaders.AUTHORIZATION,  accessToken)
                         .cookie(refreshToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(postDto)))
@@ -187,7 +188,7 @@ class PostControllerIntegrationTest {
 
         //when
         MvcResult mvcResult = mockMvc.perform(post("/community/" + postId)
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .header(HttpHeaders.AUTHORIZATION,  accessToken)
                         .cookie(refreshToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDto)))
@@ -204,17 +205,16 @@ class PostControllerIntegrationTest {
     @Test
     void addCommentTest() throws Exception {
         //given
-        CommentDTO commentDTO = CommentDTO.builder()
+        CommentDto commentDTO = CommentDto.builder()
                 .content("test comment")
                 .build();
 
-        WritePostDto postDto = WritePostDto.builder()
+        PostRegisterDto postDto = PostRegisterDto.builder()
                 .title("title")
                 .content("content")
-                .createdAt(LocalDateTime.now())
                 .build();
         String string = mockMvc.perform(post("/community")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .header(HttpHeaders.AUTHORIZATION,  accessToken)
                         .cookie(refreshToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(postDto)))
@@ -225,7 +225,7 @@ class PostControllerIntegrationTest {
         System.out.println("postId = " + postId);
         //when
         String contentAsString = mockMvc.perform(post("/community/" + postId + "/comment")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .header(HttpHeaders.AUTHORIZATION,  accessToken)
                         .cookie(refreshToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(commentDTO)))
@@ -248,14 +248,13 @@ class PostControllerIntegrationTest {
     @DisplayName("자신이 작성한 comment를 삭제할 수 있어야 한다.")
     void deleteCommentTest() throws Exception {
         //given
-        CommentDTO commentDTO = CommentDTO.builder()
+        CommentDto commentDTO = CommentDto.builder()
                 .content("test comment")
                 .build();
 
-        WritePostDto postDto = WritePostDto.builder()
+        PostRegisterDto postDto = PostRegisterDto.builder()
                 .title("title")
                 .content("content")
-                .createdAt(LocalDateTime.now())
                 .build();
 
         String string = mockMvc.perform(post("/community")
@@ -303,10 +302,9 @@ class PostControllerIntegrationTest {
     @Test
     void likePostTest() throws Exception {
         //given
-        WritePostDto postDto = WritePostDto.builder()
+        PostRegisterDto postDto = PostRegisterDto.builder()
                 .title("title")
                 .content("content")
-                .createdAt(LocalDateTime.now())
                 .build();
         String string = mockMvc.perform(post("/community")
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
@@ -335,10 +333,9 @@ class PostControllerIntegrationTest {
     @Test
     void deletePost() throws Exception {
         //given
-        WritePostDto postDto = WritePostDto.builder()
+        PostRegisterDto postDto = PostRegisterDto.builder()
                 .title("title")
                 .content("content")
-                .createdAt(LocalDateTime.now())
                 .build();
         String string = mockMvc.perform(post("/community")
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
@@ -359,6 +356,6 @@ class PostControllerIntegrationTest {
                 .andReturn().getResponse().getContentAsString();
         //then
         String message = objectMapper.readTree(s).get("message").asText();
-        Assertions.assertThat(message).isEqualTo("Success to delete post 6");
+        Assertions.assertThat(message).isEqualTo("delete post success");
     }
 }

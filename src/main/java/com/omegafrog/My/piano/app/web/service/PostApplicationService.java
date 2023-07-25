@@ -10,7 +10,6 @@ import com.omegafrog.My.piano.app.web.dto.post.CommentDto;
 import com.omegafrog.My.piano.app.web.dto.post.PostDto;
 import com.omegafrog.My.piano.app.web.dto.post.PostRegisterDto;
 import com.omegafrog.My.piano.app.web.dto.post.UpdatePostDto;
-import jakarta.persistence.Entity;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
@@ -18,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -89,11 +89,12 @@ public class PostApplicationService {
         return saved.getComments().stream().map(Comment::toDto).toList();
     }
     public void likePost(Long postId, User user) {
+        User byId = userRepository.findById(user.getId()).get();
         Post post = getPostById(postId);
-        user.addLikePost(post);
-        post.addLikeCount();
-        userRepository.save(user);
-        postRepository.save(post);
+        post.increaseLikedCount();
+        byId.addLikePost(post);
+        userRepository.save(byId);
+//        postRepository.save(post);
     }
 
     public void dislikePost(Long id, User loggedInUser) throws EntityNotFoundException{

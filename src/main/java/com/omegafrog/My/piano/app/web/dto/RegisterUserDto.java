@@ -36,6 +36,7 @@ public class RegisterUserDto {
         return User.builder()
                 .name(name)
                 .loginMethod(loginMethod)
+                .email(email)
                 .phoneNum(phoneNum)
                 .cart(new Cart())
                 .profileSrc(profileSrc)
