@@ -24,6 +24,7 @@ public class Comment {
     @ManyToOne
     @JoinColumn(name = "USER_ID")
     private User author;
+    @Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime createdAt=LocalDateTime.now();
 
     private String content;
@@ -42,15 +43,14 @@ public class Comment {
         this.likeCount = 0;
     }
 
-
     public CommentDto toDto(){
         return CommentDto.builder()
                 .id(id)
+                .author(author.getUserProfile())
                 .content(content)
                 .createdAt(createdAt)
-                .replies(replies)
-                .author(new UserProfile(author.getId(),author.getName(),author.getProfileSrc()))
                 .likeCount(likeCount)
+                .replies(replies.stream().map(Comment::toDto).toList())
                 .build();
     }
 

@@ -69,6 +69,7 @@ class SecurityControllerTest {
                 .username("username")
                 .password("password")
                 .name("user1")
+                .email("email@email.com")
                 .profileSrc("src")
                 .loginMethod(LoginMethod.EMAIL)
                 .phoneNum(PhoneNum.builder().

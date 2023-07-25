@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import static java.util.stream.Collectors.toList;
+
 @Entity
 @NoArgsConstructor
 @Getter
@@ -43,7 +45,7 @@ public class Post {
     @PositiveOrZero
     private int likeCount=0;
 
-    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
     @NotNull
     private final List<Comment> comments = new ArrayList<>();
 
@@ -71,21 +73,26 @@ public class Post {
         this.content = content;
     }
 
+
+    public void increaseLikedCount(){
+        likeCount++;
+    }
+
+    public void decreaseLikedCount(){
+        likeCount--;
+    }
+
     public PostDto toDto(){
         return PostDto.builder()
                 .id(id)
+                .createdAt(createdAt)
                 .title(title)
                 .content(content)
-                .createdAt(createdAt)
-                .author(new UserProfile(author.getId(), author.getName(), author.getProfileSrc()))
-                .likeCount(likeCount)
                 .viewCount(viewCount)
+                .likeCount(likeCount)
                 .comments(comments)
+                .author(author.getUserProfile())
                 .build();
-    }
-
-    public void addLikeCount(){
-        likeCount++;
     }
 
     @Override

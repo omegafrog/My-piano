@@ -22,10 +22,10 @@ public class CommentDto {
 
     private int likeCount;
 
-    private List<Comment> replies;
+    private List<CommentDto> replies;
 
     @Builder
-    public CommentDto(Long id, UserProfile author, LocalDateTime createdAt, String content, int likeCount, List<Comment> replies) {
+    public CommentDto(Long id, UserProfile author, LocalDateTime createdAt, String content, int likeCount, List<CommentDto> replies) {
         this.id = id;
         this.author = author;
         this.createdAt = createdAt;
