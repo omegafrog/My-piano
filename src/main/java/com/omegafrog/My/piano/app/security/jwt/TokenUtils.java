@@ -48,6 +48,15 @@ public class TokenUtils {
         return jwtBuilder.compact();
     }
 
+    public static String getAccessTokenString(String tokenString){
+        if (tokenString != null){
+            String[] tokenSplit = tokenString.split(" ");
+            if(verifyAccessTokenString(tokenSplit))
+                return tokenSplit[1];
+        }
+        throw new AuthenticationCredentialsNotFoundException("Invalid Access token");
+    }
+
     public static String getAccessTokenStringFromHeaders(HttpServletRequest request)throws AuthenticationException {
         String tokenString = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (tokenString != null){
