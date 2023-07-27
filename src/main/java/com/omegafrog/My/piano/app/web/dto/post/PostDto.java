@@ -1,13 +1,11 @@
 package com.omegafrog.My.piano.app.web.dto.post;
 
-import com.omegafrog.My.piano.app.web.domain.post.Comment;
+import com.omegafrog.My.piano.app.web.domain.article.Comment;
 import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Data
 @Setter
@@ -33,6 +31,6 @@ public class PostDto {
         this.author = author;
         this.likeCount = likeCount;
         this.viewCount = viewCount;
-        this.comments = comments.stream().map(Comment::toDto).collect(Collectors.toList());
+        this.comments = comments.stream().map(Comment::toDto).toList();
     }
 }

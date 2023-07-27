@@ -59,7 +59,7 @@ public class LessonService {
             throws AccessDeniedException, EntityNotFoundException {
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson entity : " + lessonId));
-        if(!lesson.getLessonProvider().equals(user)){
+        if(!lesson.getAuthor().equals(user)){
             throw new AccessDeniedException("Cannot update other user's lesson.");
         }
 
@@ -72,7 +72,7 @@ public class LessonService {
     public void deleteLesson(Long lessonId, User user) throws AccessDeniedException, EntityNotFoundException {
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson Entity : " + lessonId));
-        if(!lesson.getLessonProvider().equals(user)){
+        if(!lesson.getAuthor().equals(user)){
             throw new AccessDeniedException("Cannot update other user's lesson.");
         }
         lessonRepository.deleteById(lessonId);

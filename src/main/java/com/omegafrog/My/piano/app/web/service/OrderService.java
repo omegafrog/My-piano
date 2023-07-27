@@ -30,21 +30,21 @@ public class OrderService {
     private final LessonRepository lessonRepository;
     private final CouponRepository couponRepository;
     private final OrderRepository orderRepository;
-
+    private final String USER_ENTITY_NOT_FOUNT_ERROR_MSG = "Cannot find User entity : ";
     public OrderDto createSheetOrder(OrderRegisterDto orderRegisterDto)
             throws PersistenceException {
-        SheetPost item = sheetPostRepository.findBySheetId(orderRegisterDto.getItemId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find Sheet entity : "
+        SheetPost item = sheetPostRepository.findById(orderRegisterDto.getItemId())
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find SheetPost entity : "
                         + orderRegisterDto.getItemId()));
         User buyer = userRepository.findById(orderRegisterDto.getBuyerId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity : "
+                .orElseThrow(() -> new EntityNotFoundException(USER_ENTITY_NOT_FOUNT_ERROR_MSG
                         + orderRegisterDto.getBuyerId()));
 
         // TODO : SheetPost의 sheet, artist property는 non-null로 validation 해야함.
         Order.OrderBuilder orderBuilder = Order.builder()
                 .item(item)
                 .buyer(buyer)
-                .seller(item.getArtist())
+                .seller(item.getAuthor())
                 .initialPrice(item.getPrice());
 
         if (orderRegisterDto.getCouponId() != null){
@@ -64,7 +64,7 @@ public class OrderService {
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find Sheet entity : "
                         + lessonOrderDto.getItemId()));
         User buyer = userRepository.findById(lessonOrderDto.getBuyerId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity : "
+                .orElseThrow(() -> new EntityNotFoundException(USER_ENTITY_NOT_FOUNT_ERROR_MSG
                         + lessonOrderDto.getBuyerId()));
 
 
@@ -72,7 +72,7 @@ public class OrderService {
         Order.OrderBuilder orderBuilder = Order.builder()
                 .item(item)
                 .buyer(buyer)
-                .seller(item.getLessonProvider())
+                .seller(item.getAuthor())
                 .initialPrice(item.getPrice());
 
         if (lessonOrderDto.getCouponId() != null){
@@ -90,10 +90,10 @@ public class OrderService {
         Order order = orderRepository.findById(orderDto.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find Order entity : " + orderDto.getId()));
         User buyer = userRepository.findById(orderDto.getBuyer().getId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity : " +
+                .orElseThrow(() -> new EntityNotFoundException(USER_ENTITY_NOT_FOUNT_ERROR_MSG +
                         orderDto.getBuyer().getId()));
         User seller = userRepository.findById(orderDto.getSeller().getId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity : " +
+                .orElseThrow(() -> new EntityNotFoundException(USER_ENTITY_NOT_FOUNT_ERROR_MSG +
                         orderDto.getSeller().getId()));
 
         buyer.pay(order);

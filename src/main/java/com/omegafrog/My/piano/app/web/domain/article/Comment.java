@@ -1,5 +1,6 @@
-package com.omegafrog.My.piano.app.web.domain.post;
+package com.omegafrog.My.piano.app.web.domain.article;
 
+import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.post.CommentDto;
 import lombok.Builder;

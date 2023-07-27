@@ -1,54 +1,27 @@
 package com.omegafrog.My.piano.app.web.domain.post;
 
+import com.omegafrog.My.piano.app.web.domain.article.Article;
 import com.omegafrog.My.piano.app.web.dto.post.UpdateVideoPostDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 @Entity
 @NoArgsConstructor
 @Getter
-public class VideoPost {
+public class VideoPost extends Article {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @OneToOne(cascade = {CascadeType.MERGE})
-    @JoinColumn(name = "USER_ID")
-    @NotNull
-    private User author;
-
-    private LocalDateTime createdAt = LocalDateTime.now();
-
-    @PositiveOrZero
-    private int viewCount;
-
-    @NotEmpty
-    private String title;
-    @NotEmpty
-    private String content;
     @NotEmpty
     private String videoUrl;
 
-    @OneToMany(cascade = {CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REMOVE})
-    @NotNull
-    private final List<Comment> comments = new CopyOnWriteArrayList<>();
-
     @Builder
     public VideoPost(User author, String title, String content, String videoUrl) {
-        this.author = author;
-        this.viewCount = 0;
-        this.title = title;
+        this.author=author;
+        this.title=title;
         this.content = content;
         this.videoUrl = videoUrl;
     }
@@ -64,40 +37,5 @@ public class VideoPost {
          this.content= updateVideoPostDto.getContent();
          this.videoUrl= updateVideoPostDto.getVideoUrl();
          return this;
-    }
-
-    /**
-     * 댓글을 추가한다.
-     * @param comment  추가할 comment entity
-     * @return comments의 길이를 반환한다.
-     */
-    public int addComment(Comment comment){
-        this.comments.add(comment);
-        return this.comments.size();
-    }
-
-    /**
-     * id를 가진 댓글을 삭제한다.
-     * @param id 삭제할 댓글의 id
-     */
-    public void deleteComment(Long id){
-        this.comments.forEach(comment -> {
-            if (comment.getId().equals(id)) comments.remove(comment);
-        });
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        VideoPost videoPost = (VideoPost) o;
-
-        return id.equals(videoPost.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return id.hashCode();
     }
 }
