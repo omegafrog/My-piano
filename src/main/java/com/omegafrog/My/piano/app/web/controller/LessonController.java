@@ -7,10 +7,10 @@ import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.UpdateLessonDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonRegisterDto;
-import com.omegafrog.My.piano.app.web.response.APIInternalServerResponse;
-import com.omegafrog.My.piano.app.web.response.APISuccessResponse;
-import com.omegafrog.My.piano.app.web.response.JsonAPIResponse;
-import com.omegafrog.My.piano.app.web.response.ResponseUtil;
+import com.omegafrog.My.piano.app.web.util.AuthenticationUtil;
+import com.omegafrog.My.piano.app.web.util.response.APISuccessResponse;
+import com.omegafrog.My.piano.app.web.util.response.JsonAPIResponse;
+import com.omegafrog.My.piano.app.web.util.response.ResponseUtil;
 import com.omegafrog.My.piano.app.web.service.LessonService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -38,12 +38,7 @@ public class LessonController {
     @PostMapping("/lesson")
     public JsonAPIResponse createLesson(@Validated @RequestBody LessonRegisterDto lessonRegisterDto)
             throws JsonProcessingException, EntityNotFoundException {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null) {
-            log.error("authentication is null");
-            return new APIInternalServerResponse("authentication is null");
-        }
-        User user = ((SecurityUser) authentication.getPrincipal()).getUser();
+        User user = AuthenticationUtil.getLoggedInUser();
         LessonDto lessonDto = lessonService.createLesson(lessonRegisterDto, user);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("lesson", lessonDto);
         return new APISuccessResponse("Create new Lesson success", data,objectMapper );
