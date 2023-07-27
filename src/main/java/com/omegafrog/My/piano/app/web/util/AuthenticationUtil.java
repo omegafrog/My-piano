@@ -10,7 +10,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 @Slf4j
 public class AuthenticationUtil {
-    public static User getLoggedInUser()throws AccessDeniedException{
+    public static User getLoggedInUser() throws AccessDeniedException{
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null) {
             log.error("authentication is null");

@@ -1,5 +1,6 @@
 package com.omegafrog.My.piano.app.web.service;
 
+import com.omegafrog.My.piano.app.web.domain.article.Comment;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
@@ -9,13 +10,15 @@ import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.UpdateLessonDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonRegisterDto;
+import com.omegafrog.My.piano.app.web.dto.post.CommentDto;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.PersistenceException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.file.AccessDeniedException;
 import java.util.List;
 
 @Service
@@ -27,7 +30,7 @@ public class LessonService {
     @Autowired
     private LessonRepository lessonRepository;
 
-    public LessonDto createLesson(LessonRegisterDto lessonRegisterDto, User artist) throws EntityNotFoundException{
+    public LessonDto createLesson(LessonRegisterDto lessonRegisterDto, User artist) throws EntityNotFoundException {
         SheetPost sheetPost = sheetPostRepository.findBySheetId(lessonRegisterDto.getSheetId())
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity : " + lessonRegisterDto.getSheetId()));
         Sheet sheet = sheetPost.getSheet();
@@ -49,7 +52,7 @@ public class LessonService {
                 .stream().map(Lesson::toDto).toList();
     }
 
-    public LessonDto getLessonById(Long id)throws EntityNotFoundException{
+    public LessonDto getLessonById(Long id) throws EntityNotFoundException {
         return lessonRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson entity : " + id))
                 .toDto();
@@ -59,7 +62,7 @@ public class LessonService {
             throws AccessDeniedException, EntityNotFoundException {
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson entity : " + lessonId));
-        if(!lesson.getAuthor().equals(user)){
+        if (!lesson.getAuthor().equals(user)) {
             throw new AccessDeniedException("Cannot update other user's lesson.");
         }
 
@@ -69,12 +72,54 @@ public class LessonService {
         Lesson updated = lesson.update(updateLessonDto, sheet);
         return lessonRepository.save(updated).toDto();
     }
+
     public void deleteLesson(Long lessonId, User user) throws AccessDeniedException, EntityNotFoundException {
-        Lesson lesson = lessonRepository.findById(lessonId)
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson Entity : " + lessonId));
-        if(!lesson.getAuthor().equals(user)){
+        Lesson lesson = getLesson(lessonId);
+        if (!lesson.getAuthor().equals(user))
             throw new AccessDeniedException("Cannot update other user's lesson.");
-        }
         lessonRepository.deleteById(lessonId);
     }
+
+    public List<CommentDto> addComment(Long lessonId, CommentDto dto, User loggedInUser) {
+        Lesson lesson = getLesson(lessonId);
+        lesson.addComment(Comment.builder()
+                .content(dto.getContent())
+                .author(loggedInUser)
+                .build());
+        return lessonRepository.save(lesson).getComments().stream().map(Comment::toDto).toList();
+    }
+
+    public List<CommentDto> deleteComment(Long lessonId, Long commentId, User loggedInUser)
+            throws PersistenceException, AccessDeniedException {
+        Lesson lesson = getLesson(lessonId);
+
+        boolean isCommentRemoved = lesson.getComments().removeIf(
+                comment -> {
+                    if (isCommentIdEquals(commentId, comment)) {
+                        if (isCommentAuthorEquals(loggedInUser, comment))
+                            return true;
+                        else throw new AccessDeniedException("Cannot delete other user's comment : " + commentId);
+                    }
+                    return false;
+                }
+        );
+        if(isCommentRemoved){
+            Lesson saved = lessonRepository.save(lesson);
+            return saved.getComments().stream().map(Comment::toDto).toList();
+        } else throw new EntityNotFoundException("Cannot find Comment entity : " + commentId);
+    }
+
+    private static boolean isCommentAuthorEquals(User loggedInUser, Comment comment) {
+        return comment.getAuthor().equals(loggedInUser);
+    }
+
+    private static boolean isCommentIdEquals(Long commentId, Comment comment) {
+        return comment.getId().equals(commentId);
+    }
+
+    private Lesson getLesson(Long lessonId) {
+        return lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson Entity : " + lessonId));
+    }
+
 }
