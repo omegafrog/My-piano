@@ -2,19 +2,16 @@ package com.omegafrog.My.piano.app.web.dto.lesson;
 
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonInformation;
 import com.omegafrog.My.piano.app.web.domain.lesson.VideoInformation;
-import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
-import com.omegafrog.My.piano.app.web.domain.user.User;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
-import jakarta.validation.constraints.NotNull;
+import com.omegafrog.My.piano.app.web.dto.order.ItemDto;
+import com.omegafrog.My.piano.app.web.dto.sheet.SheetDto;
+import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
 import lombok.*;
 
 @Data
 @NoArgsConstructor
 @Setter
 @Getter
-public class LessonDto {
+public class LessonDto extends ItemDto {
     Long id;
 
     private String title;
@@ -23,14 +20,14 @@ public class LessonDto {
 
     private int viewCount;
 
-    private User lessonProvider;
+    private UserProfile lessonProvider;
 
-    private Sheet sheet;
+    private SheetDto sheet;
 
     private LessonInformation lessonInformation;
 
     @Builder
-    public LessonDto(Long id, String title, String subTitle, VideoInformation videoInformation, int viewCount, User lessonProvider, Sheet sheet, LessonInformation lessonInformation) {
+    public LessonDto(Long id, String title, String subTitle, VideoInformation videoInformation, int viewCount, UserProfile lessonProvider, SheetDto sheet, LessonInformation lessonInformation) {
         this.id = id;
         this.title = title;
         this.subTitle = subTitle;

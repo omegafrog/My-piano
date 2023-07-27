@@ -67,8 +67,7 @@ class PostTest {
                         .build(),
                 content
                );
-        int cnt = post.addComment(comment);
-        Assertions.assertThat(cnt).isEqualTo(1);
+        post.addComment(comment);
         Assertions.assertThat(post.getComments().get(0).getContent()).isEqualTo(content);
     }
 
@@ -100,7 +99,7 @@ class PostTest {
                                 .build())
                         .build(),
                 content);
-        int cnt = post.addComment(comment);
+        post.addComment(comment);
         post.deleteComment(0L);
         Assertions.assertThat(post.getComments().size()).isEqualTo(0);
     }

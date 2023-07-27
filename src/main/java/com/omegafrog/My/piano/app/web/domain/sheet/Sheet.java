@@ -1,5 +1,7 @@
 package com.omegafrog.My.piano.app.web.domain.sheet;
 
+import com.omegafrog.My.piano.app.web.dto.sheet.SheetDto;
+import com.omegafrog.My.piano.app.web.dto.sheet.SheetInfoDto;
 import com.omegafrog.My.piano.app.web.enums.Difficulty;
 import com.omegafrog.My.piano.app.web.enums.Genre;
 import com.omegafrog.My.piano.app.web.enums.Instrument;
@@ -13,11 +15,11 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 @Entity
 @NoArgsConstructor
+@Getter
 public class Sheet  {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Getter
     private Long id;
 
     private String title;
@@ -29,7 +31,7 @@ public class Sheet  {
     private boolean lyrics;
     private String filePath;
 
-    private LocalDateTime created_at;
+    private LocalDateTime createdAt;
 
     @OneToOne(cascade = { CascadeType.MERGE})
     @JoinColumn(name = "USER_ID")
@@ -58,6 +60,22 @@ public class Sheet  {
         this.lyrics = dto.isLyrics();
         this.filePath = dto.getFilePath();
         return this;
+    }
+
+    public SheetDto toSheetDto(){
+        return SheetDto.builder()
+                .id(id)
+                .createdAt(createdAt)
+                .difficulty(difficulty)
+                .genre(genre)
+                .filePath(filePath)
+                .instrument(instrument)
+                .lyrics(lyrics)
+                .pageNum(pageNum)
+                .isSolo(isSolo)
+                .title(title)
+                .user(user.getUserProfile())
+                .build();
     }
 
     @Override

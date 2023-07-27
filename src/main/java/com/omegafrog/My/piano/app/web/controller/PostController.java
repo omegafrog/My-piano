@@ -37,7 +37,7 @@ public class PostController {
         User loggedInUser = getLoggedInUser();
         PostDto postDto = postApplicationService.writePost(post, loggedInUser);
         Map<String, Object> data = getStringObjectMap("post", postDto);
-        return new APISuccessResponse("Write post success", objectMapper, data);
+        return new APISuccessResponse("Write post success", data, objectMapper );
     }
 
     @GetMapping("/{id}")
@@ -45,7 +45,7 @@ public class PostController {
             throws PersistenceException, JsonProcessingException {
         PostDto postById = postApplicationService.findPostById(id);
         Map<String, Object> data = getStringObjectMap("post", postById);
-        return new APISuccessResponse("Find post success", objectMapper, data);
+        return new APISuccessResponse("Find post success", data, objectMapper);
     }
 
     @PostMapping("/{id}")
@@ -54,7 +54,7 @@ public class PostController {
         User loggedInUser = getLoggedInUser();
         PostDto postDto = postApplicationService.updatePost(id, post, loggedInUser);
         Map<String, Object> data = getStringObjectMap("post", postDto);
-        return new APISuccessResponse("update post success", objectMapper, data);
+        return new APISuccessResponse("update post success", data, objectMapper);
     }
 
     @DeleteMapping("/{id}")
@@ -71,7 +71,7 @@ public class PostController {
         User loggedInUser = getLoggedInUser();
         List<CommentDto> commentDtos = postApplicationService.addComment(id, loggedInUser, dto);
         Map<String, Object> data = getStringObjectMap("comments", commentDtos);
-        return new APISuccessResponse("add comment success.", objectMapper, data);
+        return new APISuccessResponse("add comment success.", data, objectMapper);
     }
 
     @DeleteMapping("/{id}/comment/{comment-id}")
@@ -80,7 +80,7 @@ public class PostController {
         User loggedInUser = getLoggedInUser();
         List<CommentDto> commentDtos = postApplicationService.deleteComment(id, commentId, loggedInUser);
         Map<String, Object> data = getStringObjectMap("comments", commentDtos);
-        return new APISuccessResponse("delete comment success.", objectMapper, data);
+        return new APISuccessResponse("delete comment success.", data, objectMapper);
     }
 
     @GetMapping("/{id}/like")

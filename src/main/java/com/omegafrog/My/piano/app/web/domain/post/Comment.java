@@ -2,7 +2,6 @@ package com.omegafrog.My.piano.app.web.domain.post;
 
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.post.CommentDto;
-import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,6 +23,7 @@ public class Comment {
     @ManyToOne
     @JoinColumn(name = "USER_ID")
     private User author;
+
     @Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime createdAt=LocalDateTime.now();
 
@@ -35,8 +35,12 @@ public class Comment {
     @JoinColumn(name = "PARENT_ID")
     private List<Comment> replies = new CopyOnWriteArrayList<>();
 
+    @ManyToOne
+    private Post target;
+
+
     @Builder
-    public Comment(Long id, User author,String content) {
+    public Comment(Long id, User author, String content) {
         this.id = id;
         this.author = author;
         this.content = content;

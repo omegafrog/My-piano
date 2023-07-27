@@ -43,10 +43,10 @@ public class LessonController {
             log.error("authentication is null");
             return new APIInternalServerResponse("authentication is null");
         }
-        User user = (User) authentication.getDetails();
+        User user = ((SecurityUser) authentication.getPrincipal()).getUser();
         LessonDto lessonDto = lessonService.createLesson(lessonRegisterDto, user);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("lesson", lessonDto);
-        return new APISuccessResponse("Create new Lesson success", objectMapper, data);
+        return new APISuccessResponse("Create new Lesson success", data,objectMapper );
     }
 
     //TODO : 로그인 상관없이 접근 가능
@@ -54,7 +54,7 @@ public class LessonController {
     public JsonAPIResponse getLessons(Pageable pageable) throws JsonProcessingException {
         List<LessonDto> allLessons = lessonService.getAllLessons(pageable);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("lessons", allLessons);
-        return new APISuccessResponse("Success load all lessons.", objectMapper, data);
+        return new APISuccessResponse("Success load all lessons.", data, objectMapper);
     }
 
 
@@ -63,7 +63,7 @@ public class LessonController {
     public JsonAPIResponse getLesson(@PathVariable Long id) throws JsonProcessingException {
         LessonDto lessonById = lessonService.getLessonById(id);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("lesson", lessonById);
-        return new APISuccessResponse("Success load lesson" + id + ".", objectMapper, data);
+        return new APISuccessResponse("Success load lesson" + id + ".", data, objectMapper);
     }
 
     @PostMapping("/lesson/{id}")
@@ -75,7 +75,7 @@ public class LessonController {
         User user = getLoggedInUser(authentication);
         LessonDto updated = lessonService.updateLesson(id, updateLessonDto, user);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("lesson", updated);
-        return new APISuccessResponse("Lesson update success", objectMapper, data);
+        return new APISuccessResponse("Lesson update success", data, objectMapper);
     }
 
     @DeleteMapping("/lesson/{id}")

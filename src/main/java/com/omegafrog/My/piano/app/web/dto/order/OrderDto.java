@@ -1,11 +1,11 @@
 package com.omegafrog.My.piano.app.web.dto.order;
 
+import com.nimbusds.openid.connect.sdk.claims.UserInfo;
 import com.omegafrog.My.piano.app.web.domain.coupon.Coupon;
 import com.omegafrog.My.piano.app.web.domain.order.Item;
 import com.omegafrog.My.piano.app.web.domain.user.User;
+import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
 import lombok.*;
-
-import jakarta.persistence.*;
 
 @Data
 @NoArgsConstructor
@@ -13,9 +13,9 @@ import jakarta.persistence.*;
 @Getter
 public class OrderDto {
     private Long id;
-    private User seller;
-    private User buyer;
-    private Item item;
+    private UserProfile seller;
+    private UserProfile buyer;
+    private ItemDto item;
     private int initialPrice;
     private int totalPrice;
     private Long discountRate;
@@ -24,9 +24,9 @@ public class OrderDto {
     @Builder
     public OrderDto(
             Long id,
-            User seller,
-            User buyer,
-            Item item,
+            UserProfile seller,
+            UserProfile buyer,
+            ItemDto item,
             Long discountRate,
             Coupon coupon,
             int initialPrice,

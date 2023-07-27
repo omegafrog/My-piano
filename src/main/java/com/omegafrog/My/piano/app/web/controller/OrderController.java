@@ -18,7 +18,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
@@ -77,7 +76,7 @@ public class OrderController {
 
         Map<String, Object> data = new HashMap<>();
         data.put("order", processedOrder);
-        return new APISuccessResponse("Buy " + mainResource + " success.", objectMapper, data);
+        return new APISuccessResponse("Buy " + mainResource + " success.", data, objectMapper);
     }
 
     @GetMapping(path = "/order/{id}/cancel")
@@ -94,7 +93,7 @@ public class OrderController {
         List<OrderDto> allOrders = orderService.getAllOrders(loggedInUser);
         Map<String, Object> data = new HashMap<>();
         data.put("orders", allOrders);
-        return new APISuccessResponse("Success get all orders.", objectMapper, data);
+        return new APISuccessResponse("Success get all orders.", data, objectMapper);
     }
 
     private static User getLoggedInUser() throws org.springframework.security.access.AccessDeniedException {

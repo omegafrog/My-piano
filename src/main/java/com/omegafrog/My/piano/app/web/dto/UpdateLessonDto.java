@@ -14,18 +14,18 @@ public class UpdateLessonDto {
     private String subTitle;
     private int price;
 
-    private Sheet sheet;
+    private Long sheetId;
     private LessonInformation lessonInformation;
     private VideoInformation videoInformation;
 
 
 @Builder
-    public UpdateLessonDto(String title, String subTitle, int price, Sheet sheet,
+    public UpdateLessonDto(String title, String subTitle, int price, Long sheetId,
                            LessonInformation lessonInformation, VideoInformation videoInformation) {
         this.title = title;
         this.subTitle = subTitle;
         this.price = price;
-        this.sheet = sheet;
+        this.sheetId = sheetId;
         this.lessonInformation = lessonInformation;
         this.videoInformation = videoInformation;
     }

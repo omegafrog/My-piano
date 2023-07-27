@@ -17,7 +17,7 @@ public class Cart {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "cart_content",
             joinColumns = @JoinColumn(name = "CART_ID"),
             inverseJoinColumns = @JoinColumn(name = "SHEET_ID"))

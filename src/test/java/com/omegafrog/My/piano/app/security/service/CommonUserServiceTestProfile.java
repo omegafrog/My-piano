@@ -21,7 +21,7 @@ import java.util.Optional;
 
 @DataJpaTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class CommonUserServiceTest {
+class CommonUserServiceTestProfile {
 
     @Autowired
     private SecurityUserRepository securityUserRepository;

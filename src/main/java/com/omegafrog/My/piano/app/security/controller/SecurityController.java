@@ -29,7 +29,9 @@ import java.util.Map;
 @Slf4j
 public class SecurityController {
 
-    private final ObjectMapper objectMapper;
+    @Autowired
+    private ObjectMapper objectMapper;
+
     private final CommonUserService commonUserService;
 
     @Autowired
@@ -41,7 +43,7 @@ public class SecurityController {
             SecurityUserDto securityUserDto = commonUserService.registerUser(dto);
             Map<String, Object> body = new HashMap<>();
             body.put("user", securityUserDto);
-            return new APISuccessResponse("회원가입 성공.", objectMapper, body);
+            return new APISuccessResponse("회원가입 성공.", body, objectMapper);
         }catch (UsernameAlreadyExistException e){
             //TODO : Username중복 exception 처리
             log.debug("Username 중복됨");

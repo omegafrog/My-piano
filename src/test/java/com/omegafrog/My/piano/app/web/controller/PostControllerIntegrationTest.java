@@ -1,4 +1,4 @@
-package com.omegafrog.My.piano.app.post.controller;
+package com.omegafrog.My.piano.app.web.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

@@ -42,11 +42,11 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.LinkedMultiValueMap;
 
 import java.time.LocalTime;
 import java.util.*;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -62,8 +62,7 @@ class LessonControllerTest {
     MockMvc mockMvc;
     @Autowired
     private ObjectMapper objectMapper;
-    @Autowired
-    private UserRepository userRepository;
+
     @Autowired
     private SheetPostRepository sheetPostRepository;
     @Autowired
@@ -80,31 +79,22 @@ class LessonControllerTest {
 
 
     @BeforeAll
-    void settings(){
-        System.out.println("Lesson : securityUSerRepository.count() = " + securityUserRepository.count());
-        List<SecurityUser> all = securityUserRepository.findAll();
-        all.forEach(user -> System.out.println("user = " + user));
+    void settings() throws UsernameAlreadyExistException {
         securityUserRepository.deleteAll();
-        User a = User.builder()
-                .name("artist1")
-                .cart(new Cart())
-                .email("artist@Gmail.com")
-                .cash(20000)
-                .loginMethod(LoginMethod.EMAIL)
+        RegisterUserDto user1 = RegisterUserDto.builder()
+                .name("user1")
                 .phoneNum(PhoneNum.builder()
-                        .phoneNum("010-1111-1111")
-                        .isAuthorized(true)
+                        .phoneNum("010-1111-2222")
+                        .isAuthorized(false)
                         .build())
                 .profileSrc("src")
-                .build();
-        SecurityUser securityUser = SecurityUser.builder()
-                .username("username")
+                .loginMethod(LoginMethod.EMAIL)
+                .username("user1")
                 .password("password")
-                .user(artist)
-                .role(Role.USER)
+                .email("user1@gmail.com")
                 .build();
-        savedSecurityUser = securityUserRepository.save(securityUser);
-        artist = savedSecurityUser.getUser();
+        SecurityUserDto securityUserDto = commonUserService.registerUser(user1);
+        artist = ((SecurityUser) commonUserService.loadUserByUsername(securityUserDto.getUsername())).getUser();
 
         SheetPost sheetPost = SheetPost.builder()
                 .sheet(Sheet.builder()
@@ -158,14 +148,11 @@ class LessonControllerTest {
 
     @AfterAll
     void clearAllRepository(){
-
-        userRepository.deleteAll();
+        securityUserRepository.deleteAll();
     }
 
     @Nested
     class NeedLoginTest{
-        RegisterUserDto user1;
-        RegisterUserDto user2;
         String accessToken;
         Cookie refreshToken;
         @NoArgsConstructor
@@ -176,34 +163,7 @@ class LessonControllerTest {
             private Map<String, String> serializedData;
         }
         @BeforeEach
-        void login() throws UsernameAlreadyExistException, Exception {
-            SecurityContextHolder.clearContext();
-            user1 = RegisterUserDto.builder()
-                    .name("user1")
-                    .phoneNum(PhoneNum.builder()
-                            .phoneNum("010-1111-2222")
-                            .isAuthorized(false)
-                            .build())
-                    .profileSrc("src")
-                    .loginMethod(LoginMethod.EMAIL)
-                    .username("user1")
-                    .password("password")
-                    .email("user1@gmail.com")
-                    .build();
-            user2 = RegisterUserDto.builder()
-                    .name("user2")
-                    .phoneNum(PhoneNum.builder()
-                            .phoneNum("010-1111-2222")
-                            .isAuthorized(false)
-                            .build())
-                    .profileSrc("src")
-                    .loginMethod(LoginMethod.EMAIL)
-                    .username("user2")
-                    .password("password")
-                    .email("user1@gmail.com")
-                    .build();
-            SecurityUserDto saved1 = commonUserService.registerUser(user1);
-            SecurityUserDto saved2 = commonUserService.registerUser(user2);
+        void login() throws Exception {
             MvcResult mvcResult = mockMvc.perform(post("/user/login")
                             .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                             .content("username=user1&password=password"))
@@ -213,10 +173,7 @@ class LessonControllerTest {
             accessToken = loginResult.getSerializedData().get("access token");
             refreshToken = mvcResult.getResponse().getCookie("refreshToken");
         }
-        @AfterEach
-        void logout(){
-            SecurityContextHolder.clearContext();
-        }
+
         @Test
         @Transactional
         void createLessonTest() throws Exception {
@@ -248,7 +205,7 @@ class LessonControllerTest {
             Lesson savedLesson = lessonRepository.save(lesson);
             UpdateLessonDto updatedLessonDto = UpdateLessonDto.builder()
                     .lessonInformation(lesson.getLessonInformation())
-                    .sheet(lesson.getSheet())
+                    .sheetId(lesson.getSheet().getId())
                     .videoInformation(lesson.getVideoInformation())
                     .price(30000)
                     .title("changedTitle")
@@ -256,7 +213,9 @@ class LessonControllerTest {
                     .build();
             MvcResult mvcResult = mockMvc.perform(post("/lesson/" + savedLesson.getId())
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(updatedLessonDto)))
+                            .content(objectMapper.writeValueAsString(updatedLessonDto))
+                            .header(HttpHeaders.AUTHORIZATION, accessToken)
+                            .cookie(refreshToken))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
                     .andDo(print())
@@ -274,7 +233,9 @@ class LessonControllerTest {
         @Transactional
         void deleteLessonTest() throws Exception {
             Lesson savedLesson = lessonRepository.save(lesson);
-            mockMvc.perform(delete("/lesson/" + savedLesson.getId()))
+            mockMvc.perform(delete("/lesson/" + savedLesson.getId())
+                            .header(HttpHeaders.AUTHORIZATION, accessToken)
+                            .cookie(refreshToken))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
                     .andDo(print());
@@ -327,7 +288,9 @@ class LessonControllerTest {
                                 .build())
                 .build();
         Lesson saved2 = lessonRepository.save(lesson2);
-        MvcResult mvcResult = mockMvc.perform(get("/lesson"))
+        MvcResult mvcResult = mockMvc.perform(get("/lesson")
+                        .param("page","0")
+                        .param("size","10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
                 .andReturn();

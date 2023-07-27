@@ -38,13 +38,15 @@ public class LessonService {
                 .subTitle(lessonRegisterDto.getSubTitle())
                 .videoInformation(lessonRegisterDto.getVideoInformation())
                 .lessonInformation(lessonRegisterDto.getLessonInformation())
+                .lessonProvider(artist)
                 .price(lessonRegisterDto.getPrice())
                 .build();
         return lessonRepository.save(lesson).toDto();
     }
 
     public List<LessonDto> getAllLessons(Pageable pageable) {
-        return lessonRepository.findAll(pageable).stream().map(Lesson::toDto).toList();
+        return lessonRepository.findAll(pageable)
+                .stream().map(Lesson::toDto).toList();
     }
 
     public LessonDto getLessonById(Long id)throws EntityNotFoundException{
@@ -61,7 +63,10 @@ public class LessonService {
             throw new AccessDeniedException("Cannot update other user's lesson.");
         }
 
-        Lesson updated = lesson.update(updateLessonDto);
+        SheetPost sheetPost = sheetPostRepository.findBySheetId(updateLessonDto.getSheetId())
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + updateLessonDto.getSheetId()));
+        Sheet sheet = sheetPost.getSheet();
+        Lesson updated = lesson.update(updateLessonDto, sheet);
         return lessonRepository.save(updated).toDto();
     }
     public void deleteLesson(Long lessonId, User user) throws AccessDeniedException, EntityNotFoundException {

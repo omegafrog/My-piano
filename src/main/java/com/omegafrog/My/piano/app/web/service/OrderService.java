@@ -87,6 +87,8 @@ public class OrderService {
     }
 
     public OrderDto makePayment(OrderDto orderDto) throws PersistenceException{
+        Order order = orderRepository.findById(orderDto.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find Order entity : " + orderDto.getId()));
         User buyer = userRepository.findById(orderDto.getBuyer().getId())
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity : " +
                         orderDto.getBuyer().getId()));
@@ -94,10 +96,10 @@ public class OrderService {
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity : " +
                         orderDto.getSeller().getId()));
 
-        buyer.pay(orderDto);
+        buyer.pay(order);
         seller.receiveCash(orderDto.getTotalPrice());
-        orderDto.setBuyer(buyer);
-        orderDto.setSeller(seller);
+        orderDto.setBuyer(buyer.getUserProfile());
+        orderDto.setSeller(seller.getUserProfile());
         return orderDto;
     }
 

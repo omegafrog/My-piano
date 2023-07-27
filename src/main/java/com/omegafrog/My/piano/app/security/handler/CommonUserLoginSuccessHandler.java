@@ -7,7 +7,6 @@ import com.omegafrog.My.piano.app.security.jwt.RefreshToken;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.security.jwt.TokenInfo;
 import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
-import com.omegafrog.My.piano.app.web.domain.user.User;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -44,7 +43,7 @@ public class CommonUserLoginSuccessHandler implements AuthenticationSuccessHandl
         response.addCookie(
                 new Cookie("refreshToken", savedRefreshToken.getRefreshToken())
         );
-        APISuccessResponse loginSuccess = new APISuccessResponse("login success", objectMapper, data);
+        APISuccessResponse loginSuccess = new APISuccessResponse("login success", data, objectMapper);
         String s = objectMapper.writeValueAsString(loginSuccess).replaceAll("\\\\","");
         s = s.replaceAll("\"\\{","{");
         s = s.replaceAll("}\"","}");

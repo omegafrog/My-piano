@@ -155,8 +155,8 @@ class LessonRepositoryTest {
                         .runningTime(LocalTime.of(1, 12, 40))
                         .build()
                 )
-                .sheet(saved.getSheet())
-                .build());
+                .sheetId(saved.getSheet().getId())
+                .build(), saved.getSheet());
         Lesson updated = lessonRepository.save(saved);
         //then
         Assertions.assertThat(updated).isEqualTo(saved);

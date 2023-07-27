@@ -1,11 +1,13 @@
 package com.omegafrog.My.piano.app.web.infrastructure.post;
 
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
+import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.post.UpdatePostDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.infra.post.JpaPostRepositoryImpl;
 import com.omegafrog.My.piano.app.web.infra.post.SimpleJpaPostRepository;
+import com.omegafrog.My.piano.app.web.infra.sheetPost.SimpleJpaSheetPostRepository;
 import com.omegafrog.My.piano.app.web.infra.user.JpaUserRepositoryImpl;
 import com.omegafrog.My.piano.app.web.infra.user.SimpleJpaUserRepository;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
@@ -17,7 +19,9 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @DataJpaTest
@@ -33,10 +37,17 @@ class PostRepositoryTest {
     @Autowired
     private SimpleJpaUserRepository jpaUserRepository;
 
+    @Autowired
+    private SimpleJpaSheetPostRepository jpaSheetPostRepository;
+
     private UserRepository userRepository;
 
     private User user1;
-
+    @BeforeAll
+    @Transactional
+    void clearAllRepository() {
+        jpaUserRepository.deleteAll();
+    }
     @BeforeAll
     void settings() {
         userRepository = new JpaUserRepositoryImpl(jpaUserRepository);
@@ -60,10 +71,7 @@ class PostRepositoryTest {
         postRepository.deleteAll();
     }
 
-    @BeforeAll
-    void clearAllRepository() {
-        jpaUserRepository.deleteAll();
-    }
+
 
     @Test
     @DisplayName("게시글을 작성하고 조회할 수 있어야 한다")

@@ -1,11 +1,17 @@
 package com.omegafrog.My.piano.app.web.domain.order;
 
+import com.nimbusds.openid.connect.sdk.claims.UserInfo;
 import com.omegafrog.My.piano.app.web.domain.coupon.Coupon;
+import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
+import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
+import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
+import com.omegafrog.My.piano.app.web.dto.order.ItemDto;
 import com.omegafrog.My.piano.app.web.dto.order.OrderDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
@@ -15,6 +21,7 @@ import jakarta.persistence.*;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
 public class Order {
 
     @Id
@@ -59,14 +66,13 @@ public class Order {
     }
 
 
-    public Order update(OrderDto orderDto){
-        this.seller = orderDto.getSeller();
-        this.buyer = orderDto.getBuyer();
-        this.item = orderDto.getItem();
-        this.initialPrice = orderDto.getInitialPrice();
-        this.discountRate = orderDto.getDiscountRate();
-        this.coupon = orderDto.getCoupon();
-        this.totalPrice = orderDto.getTotalPrice();
+    public Order update(Order order){
+        this.seller = order.getSeller();
+        this.buyer = order.getBuyer();
+        this.initialPrice = order.getInitialPrice();
+        this.discountRate = order.getDiscountRate();
+        this.coupon = order.getCoupon();
+        this.totalPrice = order.getTotalPrice();
         return this;
     }
 
@@ -79,13 +85,19 @@ public class Order {
         totalPrice =  (int) Math.floor(tmp);
     }
 
-    public OrderDto toDto(){
+    public OrderDto toDto() {
+        ItemDto dto=null;
+        if (item instanceof Lesson) {
+            dto = ((Lesson) item).toDto();
+        }else if(item instanceof SheetPost) {
+            dto = ((SheetPost) item).toInfoDto();
+        }
         return OrderDto.builder()
                 .discountRate(discountRate)
-                .buyer(buyer)
-                .seller(seller)
+                .buyer(buyer.getUserProfile())
+                .seller(buyer.getUserProfile())
                 .id(id)
-                .item(item)
+                .item(dto)
                 .coupon(coupon)
                 .initialPrice(initialPrice)
                 .totalPrice(totalPrice)

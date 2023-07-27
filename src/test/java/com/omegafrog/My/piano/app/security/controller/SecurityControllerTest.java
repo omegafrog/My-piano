@@ -65,6 +65,7 @@ class SecurityControllerTest {
 
     @BeforeEach
     void makeDto(){
+        securityUserRepository.deleteAll();
         dto = RegisterUserDto.builder()
                 .username("username")
                 .password("password")

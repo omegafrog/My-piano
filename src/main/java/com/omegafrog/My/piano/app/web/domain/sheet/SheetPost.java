@@ -3,6 +3,7 @@ package com.omegafrog.My.piano.app.web.domain.sheet;
 import com.omegafrog.My.piano.app.web.domain.order.Item;
 import com.omegafrog.My.piano.app.web.dto.UpdateSheetPostDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
+import com.omegafrog.My.piano.app.web.dto.sheet.SheetInfoDto;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -20,13 +21,13 @@ public class SheetPost extends Item {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Getter
     private Long id;
 
     @NotEmpty
     private String title;
 
-    private LocalDateTime createdAt;
+    @Temporal(TemporalType.TIMESTAMP)
+    private LocalDateTime createdAt=LocalDateTime.now();
     @PositiveOrZero
     private int view;
 
@@ -38,7 +39,7 @@ public class SheetPost extends Item {
     @JoinColumn(name = "USER_ID")
     private User artist;
 
-    @OneToOne(cascade = {CascadeType.MERGE, CascadeType.PERSIST})
+    @OneToOne(cascade = {CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinColumn(name = "SHEET_ID")
     private Sheet sheet;
 
@@ -62,4 +63,12 @@ public class SheetPost extends Item {
         return this;
     }
 
+    public SheetInfoDto toInfoDto(){
+        return SheetInfoDto.builder()
+                .id(id)
+                .sheetUrl(sheet.getFilePath())
+                .artist(artist.getUserProfile())
+                .createdAt(createdAt)
+                .build();
+    }
 }

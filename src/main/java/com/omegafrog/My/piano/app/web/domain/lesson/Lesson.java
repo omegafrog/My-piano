@@ -5,6 +5,8 @@ import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.order.Item;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
+import com.omegafrog.My.piano.app.web.dto.sheet.SheetDto;
+import com.omegafrog.My.piano.app.web.dto.sheet.SheetInfoDto;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
@@ -34,7 +36,7 @@ public class Lesson extends Item {
     @JoinColumn(name = "USER_ID")
     private User lessonProvider;
 
-    @OneToOne(cascade = { CascadeType.MERGE})
+    @OneToOne
     @JoinColumn(name = "SHEET_ID")
     private Sheet sheet;
 
@@ -52,12 +54,12 @@ public class Lesson extends Item {
         viewCount=0;
     }
 
-    public Lesson update(UpdateLessonDto dto){
+    public Lesson update(UpdateLessonDto dto, Sheet sheet){
         this.title = dto.getTitle();
         this.subTitle = dto.getSubTitle();
         this.updatePrice(dto.getPrice());
         this.videoInformation = dto.getVideoInformation();
-        this.sheet = dto.getSheet();
+        this.sheet = sheet;
         this.lessonInformation = dto.getLessonInformation();
         return this;
     }
@@ -66,11 +68,11 @@ public class Lesson extends Item {
         return LessonDto.builder()
                 .id(super.getId())
                 .title(this.title)
-                .sheet(this.sheet)
+                .sheet(sheet.toSheetDto())
                 .subTitle(this.subTitle)
                 .lessonInformation(this.lessonInformation)
                 .videoInformation(this.videoInformation)
-                .lessonProvider(lessonProvider)
+                .lessonProvider(lessonProvider.getUserProfile())
                 .viewCount(viewCount)
                 .build();
     }

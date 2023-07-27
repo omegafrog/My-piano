@@ -143,6 +143,10 @@ public class User {
         return likedPosts.removeIf(post -> post.getId().equals(postId));
     }
 
+    public void addCash(int cash){
+        this.cash += cash;
+    }
+
     public void pay(Order order) throws PaymentException {
         if (cash < order.getTotalPrice()) {
             throw new NotEnoughCashException("Cannot buy this item => cash:"

@@ -80,7 +80,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests()
                 .requestMatchers("/user/register")
                 .permitAll()
-                .anyRequest().authenticated()
+                .anyRequest().hasRole(Role.USER.authorityName)
                 .and()
                 .formLogin().permitAll()
                 .loginProcessingUrl("/user/login")

@@ -3,7 +3,6 @@ package com.omegafrog.My.piano.app.web.domain.post;
 import com.omegafrog.My.piano.app.web.dto.post.PostDto;
 import com.omegafrog.My.piano.app.web.dto.post.UpdatePostDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
-import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -16,9 +15,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.CopyOnWriteArrayList;
-
-import static java.util.stream.Collectors.toList;
 
 @Entity
 @NoArgsConstructor
@@ -45,7 +41,7 @@ public class Post {
     @PositiveOrZero
     private int likeCount=0;
 
-    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true, mappedBy = "target")
     @NotNull
     private final List<Comment> comments = new ArrayList<>();
 
@@ -57,9 +53,8 @@ public class Post {
         return this;
     }
 
-    public int addComment(Comment comment){
+    public void addComment(Comment comment){
         this.comments.add(comment);
-        return this.comments.size();
     }
 
     public void deleteComment(Long id){
@@ -67,7 +62,7 @@ public class Post {
     }
 
     @Builder
-    public Post(User author,String title, String content) {
+    public Post(User author, String title, String content) {
         this.author = author;
         this.title = title;
         this.content = content;
