@@ -132,7 +132,7 @@ class PostControllerIntegrationTest {
                 .title("title")
                 .content("content")
                 .build();
-        String string = mockMvc.perform(post("/community")
+        String string = mockMvc.perform(post("/community/post")
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -143,7 +143,9 @@ class PostControllerIntegrationTest {
         Long postId = objectMapper.readTree(data).get("post").get("id").asLong();
         System.out.println("postId = " + postId);
         //when
-        MvcResult mvcResult2 = mockMvc.perform(get("/community/"+postId))
+        MvcResult mvcResult2 = mockMvc.perform(get("/community/post/"+postId)
+                        .header(HttpHeaders.AUTHORIZATION, accessToken)
+                        .cookie(refreshToken))
                 .andExpect(status().isOk())
                 .andReturn();
         //then
@@ -170,7 +172,7 @@ class PostControllerIntegrationTest {
                 .title("title")
                 .content("content")
                 .build();
-        String string = mockMvc.perform(post("/community")
+        String string = mockMvc.perform(post("/community/post")
                         .header(HttpHeaders.AUTHORIZATION,  accessToken)
                         .cookie(refreshToken)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -187,7 +189,7 @@ class PostControllerIntegrationTest {
                 .build();
 
         //when
-        MvcResult mvcResult = mockMvc.perform(post("/community/" + postId)
+        MvcResult mvcResult = mockMvc.perform(post("/community/post/" + postId)
                         .header(HttpHeaders.AUTHORIZATION,  accessToken)
                         .cookie(refreshToken)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -213,7 +215,7 @@ class PostControllerIntegrationTest {
                 .title("title")
                 .content("content")
                 .build();
-        String string = mockMvc.perform(post("/community")
+        String string = mockMvc.perform(post("/community/post")
                         .header(HttpHeaders.AUTHORIZATION,  accessToken)
                         .cookie(refreshToken)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -224,7 +226,7 @@ class PostControllerIntegrationTest {
         Long postId = objectMapper.readTree(data).get("post").get("id").asLong();
         System.out.println("postId = " + postId);
         //when
-        String contentAsString = mockMvc.perform(post("/community/" + postId + "/comment")
+        String contentAsString = mockMvc.perform(post("/community/post/" + postId + "/comment")
                         .header(HttpHeaders.AUTHORIZATION,  accessToken)
                         .cookie(refreshToken)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -257,7 +259,7 @@ class PostControllerIntegrationTest {
                 .content("content")
                 .build();
 
-        String string = mockMvc.perform(post("/community")
+        String string = mockMvc.perform(post("/community/post")
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -268,7 +270,7 @@ class PostControllerIntegrationTest {
         Long postId = objectMapper.readTree(data).get("post").get("id").asLong();
         System.out.println("postId = " + postId);
 
-        data = mockMvc.perform(post("/community/" + postId + "/comment")
+        data = mockMvc.perform(post("/community/post/" + postId + "/comment")
                         .header(HttpHeaders.AUTHORIZATION,  accessToken)
                         .cookie(refreshToken)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -282,7 +284,7 @@ class PostControllerIntegrationTest {
 
         //when
         // 자신이 작성한 comment를 삭제함.
-        String contentAsString = mockMvc.perform(delete("/community/" + postId + "/comment/" + commentId)
+        String contentAsString = mockMvc.perform(delete("/community/post/" + postId + "/comment/" + commentId)
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken))
                 .andExpect(status().isOk())
@@ -306,7 +308,7 @@ class PostControllerIntegrationTest {
                 .title("title")
                 .content("content")
                 .build();
-        String string = mockMvc.perform(post("/community")
+        String string = mockMvc.perform(post("/community/post")
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -316,13 +318,15 @@ class PostControllerIntegrationTest {
         String data = objectMapper.readTree(string).get("serializedData").asText();
         Long postId = objectMapper.readTree(data).get("post").get("id").asLong();
         //when
-        mockMvc.perform(get("/community/" + postId + "/like")
+        mockMvc.perform(get("/community/post/" + postId + "/like")
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken))
                 .andExpect(status().isOk());
 
         //then
-        String contentAsString = mockMvc.perform(get("/community/" + postId))
+        String contentAsString = mockMvc.perform(get("/community/post/" + postId)
+                        .header(HttpHeaders.AUTHORIZATION, accessToken)
+                        .cookie(refreshToken))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         Post post = objectMapper.readValue(objectMapper.readTree(objectMapper.readTree(contentAsString).get("serializedData").asText())
@@ -337,7 +341,7 @@ class PostControllerIntegrationTest {
                 .title("title")
                 .content("content")
                 .build();
-        String string = mockMvc.perform(post("/community")
+        String string = mockMvc.perform(post("/community/post")
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -347,7 +351,7 @@ class PostControllerIntegrationTest {
         String data = objectMapper.readTree(string).get("serializedData").asText();
         Long postId = objectMapper.readTree(data).get("post").get("id").asLong();
         //when
-        String s = mockMvc.perform(delete("/community/" + postId)
+        String s = mockMvc.perform(delete("/community/post/" + postId)
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken)
                         .contentType(MediaType.APPLICATION_JSON)

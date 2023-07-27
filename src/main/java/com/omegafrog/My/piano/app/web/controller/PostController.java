@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/community")
+@RequestMapping("/community/post")
 @RequiredArgsConstructor
 public class PostController {
 
