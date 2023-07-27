@@ -17,6 +17,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.BindingResult;
@@ -96,7 +97,7 @@ public class OrderController {
         return new APISuccessResponse("Success get all orders.", data, objectMapper);
     }
 
-    private static User getLoggedInUser() throws org.springframework.security.access.AccessDeniedException {
+    private static User getLoggedInUser() throws AccessDeniedException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null) {
             throw new org.springframework.security.access.AccessDeniedException("authentication is null");

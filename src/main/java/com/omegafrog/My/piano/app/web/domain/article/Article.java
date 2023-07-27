@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -62,8 +63,16 @@ public abstract class Article {
      * id를 가진 댓글을 삭제한다.
      * @param id 삭제할 댓글의 id
      */
-    public void deleteComment(Long id) {
-        this.comments.removeIf(comment -> comment.getId().equals(id));
+    public void deleteComment(Long id, User loggedInUser) throws AccessDeniedException, EntityNotFoundException{
+        boolean isCommentRemoved = this.comments.removeIf(comment -> {
+            if (comment.getId().equals(id)) {
+                if (comment.getAuthor().equals(loggedInUser))
+                    return true;
+                else throw new AccessDeniedException("Cannot delete other user's comment.");
+            } else return false;
+        });
+        if(!isCommentRemoved)
+            throw new EntityNotFoundException("Cannot find comment entity : " + id);
     }
 
     public List<Comment> getComments(){

@@ -14,9 +14,9 @@ import jakarta.persistence.*;
 @Getter
 public class SellableItem extends Article {
 
-    private int price;
+    protected int price;
 
-    private Long discountRate = 0L;
+    protected Double discountRate = 0d;
 
     public SellableItem(User author, String title, String content, int price) {
         this.author = author;
@@ -28,5 +28,5 @@ public class SellableItem extends Article {
     public void updatePrice(int price){
         this.price = price;
     }
-    public void updateDiscountRate(Long discountRate){ this.discountRate = discountRate;}
+    public void updateDiscountRate(Double discountRate){ this.discountRate = discountRate;}
 }
