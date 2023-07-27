@@ -138,9 +138,6 @@ class LessonControllerTest {
                                 .build())
                 .build();
     }
-
-
-
     @AfterEach
     void clearRepository(){
         lessonRepository.deleteAll();
@@ -148,6 +145,7 @@ class LessonControllerTest {
 
     @AfterAll
     void clearAllRepository(){
+        sheetPostRepository.deleteAll();
         securityUserRepository.deleteAll();
     }
 
@@ -183,7 +181,7 @@ class LessonControllerTest {
                     .videoInformation(lesson.getVideoInformation())
                     .lessonInformation(lesson.getLessonInformation())
                     .price(lesson.getPrice())
-                    .subTitle(lesson.getSubTitle())
+                    .subTitle(lesson.getContent())
                     .build();
             String body = objectMapper.writeValueAsString(lessonRegisterDto);
             System.out.println("body = " + body);
@@ -209,7 +207,7 @@ class LessonControllerTest {
                     .videoInformation(lesson.getVideoInformation())
                     .price(30000)
                     .title("changedTitle")
-                    .subTitle(lesson.getSubTitle())
+                    .subTitle(lesson.getContent())
                     .build();
             MvcResult mvcResult = mockMvc.perform(post("/lesson/" + savedLesson.getId())
                             .contentType(MediaType.APPLICATION_JSON)

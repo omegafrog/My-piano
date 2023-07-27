@@ -74,11 +74,6 @@ class SheetPostRepositoryTest {
         sheetPostRepository.deleteAll();
     }
 
-    @AfterAll
-    void clearAllReposiotry(){
-        userRepository.deleteAll();
-        System.out.println("sheetPostRepository.count() = " + sheetPostRepository.count());
-    }
 
     @Test
     @DisplayName("악보 판매글을 추가하고 조회할 수 있어야 한다.")
@@ -136,7 +131,7 @@ class SheetPostRepositoryTest {
                         .difficulty(Difficulty.MEDIUM)
                         .lyrics(false)
                         .filePath("changed")
-                        .user(saved.getArtist())
+                        .user(saved.getAuthor())
                         .pageNum(5)
                         .instrument(Instrument.GUITAR_BASE)
                         .build())
@@ -174,4 +169,12 @@ class SheetPostRepositoryTest {
         Optional<SheetPost> founded = sheetPostRepository.findById(saved.getId());
         Assertions.assertThat(founded).isEmpty();
     }
+
+    @AfterAll
+    void clearAllReposiotry(){
+        sheetPostRepository.deleteAll();
+        userRepository.deleteAll();
+        System.out.println("sheetPostRepository.count() = " + sheetPostRepository.count());
+    }
+
 }

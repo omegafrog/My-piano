@@ -12,7 +12,7 @@ import com.omegafrog.My.piano.app.web.infra.user.JpaUserRepositoryImpl;
 import com.omegafrog.My.piano.app.web.infra.user.SimpleJpaUserRepository;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
-import com.omegafrog.My.piano.app.web.domain.post.Comment;
+import com.omegafrog.My.piano.app.web.domain.article.Comment;
 import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.post.PostRepository;
 import org.assertj.core.api.Assertions;
@@ -170,4 +170,9 @@ class PostRepositoryTest {
         Assertions.assertThat(deletedComment.getComments().size()).isEqualTo(0);
     }
 
+    @AfterAll
+    void deleteAll(){
+        postRepository.deleteAll();
+        userRepository.deleteAll();
+    }
 }

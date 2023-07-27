@@ -6,7 +6,7 @@ import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
 import com.omegafrog.My.piano.app.security.exception.UsernameAlreadyExistException;
 import com.omegafrog.My.piano.app.security.service.CommonUserService;
-import com.omegafrog.My.piano.app.web.domain.post.Comment;
+import com.omegafrog.My.piano.app.web.domain.article.Comment;
 import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.dto.RegisterUserDto;
 import com.omegafrog.My.piano.app.web.dto.SecurityUserDto;
