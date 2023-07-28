@@ -2,6 +2,7 @@ package com.omegafrog.My.piano.app.web.infrastructure.sheet;
 
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
+import com.omegafrog.My.piano.app.web.dto.UpdateSheetDto;
 import com.omegafrog.My.piano.app.web.enums.Difficulty;
 import com.omegafrog.My.piano.app.web.enums.Genre;
 import com.omegafrog.My.piano.app.web.enums.Instrument;
@@ -125,13 +126,12 @@ class SheetPostRepositoryTest {
         SheetPost saved = sheetPostRepository.save(sheetPost);
         //when
         UpdateSheetPostDto updated = UpdateSheetPostDto.builder()
-                .sheet(Sheet.builder()
+                .sheetDto(UpdateSheetDto.builder()
                         .genre(Genre.CAROL)
                         .isSolo(false)
                         .difficulty(Difficulty.MEDIUM)
                         .lyrics(false)
                         .filePath("changed")
-                        .user(saved.getAuthor())
                         .pageNum(5)
                         .instrument(Instrument.GUITAR_BASE)
                         .build())

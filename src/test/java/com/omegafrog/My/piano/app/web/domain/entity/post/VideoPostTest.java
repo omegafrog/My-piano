@@ -8,6 +8,7 @@ import com.omegafrog.My.piano.app.web.domain.article.Comment;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPost;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 class VideoPostTest {
 
@@ -90,20 +91,22 @@ class VideoPostTest {
                 .videoUrl("url1")
                 .build();
         String content = "hi";
+        User build = User.builder()
+                .name("user1")
+                .profileSrc("profile1")
+                .loginMethod(LoginMethod.EMAIL)
+                .phoneNum(PhoneNum.builder()
+                        .phoneNum("010-1111-1112")
+                        .isAuthorized(false)
+                        .build())
+                .build();
+        ReflectionTestUtils.setField(build,"id",0L);
         Comment comment = new Comment(
                 0L,
-                User.builder()
-                        .name("user1")
-                        .profileSrc("profile1")
-                        .loginMethod(LoginMethod.EMAIL)
-                        .phoneNum(PhoneNum.builder()
-                                .phoneNum("010-1111-1112")
-                                .isAuthorized(false)
-                                .build())
-                        .build(),
+                build,
                 content);
         post.addComment(comment);
-        post.deleteComment(0L);
+        post.deleteComment(0L, build);
         Assertions.assertThat(post.getComments().size()).isEqualTo(0);
     }
 }

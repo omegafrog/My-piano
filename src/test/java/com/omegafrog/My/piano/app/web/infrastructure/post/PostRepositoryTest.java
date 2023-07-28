@@ -163,7 +163,7 @@ class PostRepositoryTest {
         saved.addComment(comment);
         Post commentAdded = postRepository.save(saved);
         //when
-        commentAdded.deleteComment(commentAdded.getComments().get(0).getId());
+        commentAdded.deleteComment(commentAdded.getComments().get(0).getId(), commentAdded.getComments().get(0).getAuthor());
         Post deletedComment = postRepository.save(commentAdded);
 
         //then

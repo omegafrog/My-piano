@@ -147,7 +147,7 @@ class VideoPostRepositoryTest {
         saved.addComment(comment);
         VideoPost commentAdded = videoPostRepository.save(saved);
         //when
-        commentAdded.deleteComment(commentAdded.getComments().get(0).getId());
+        commentAdded.deleteComment(commentAdded.getComments().get(0).getId(), commentAdded.getComments().get(0).getAuthor());
         VideoPost deletedComment = videoPostRepository.save(commentAdded);
 
         //then
