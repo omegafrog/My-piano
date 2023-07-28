@@ -2,29 +2,29 @@ package com.omegafrog.My.piano.app.web.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.UpdateLessonDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonRegisterDto;
-import com.omegafrog.My.piano.app.web.response.APIInternalServerResponse;
-import com.omegafrog.My.piano.app.web.response.APISuccessResponse;
-import com.omegafrog.My.piano.app.web.response.JsonAPIResponse;
-import com.omegafrog.My.piano.app.web.response.ResponseUtil;
+import com.omegafrog.My.piano.app.web.dto.post.CommentDto;
+import com.omegafrog.My.piano.app.web.util.response.APISuccessResponse;
+import com.omegafrog.My.piano.app.web.util.response.JsonAPIResponse;
+import com.omegafrog.My.piano.app.web.util.response.ResponseUtil;
 import com.omegafrog.My.piano.app.web.service.LessonService;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.PersistenceException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.nio.file.AccessDeniedException;
 import java.util.List;
 import java.util.Map;
+
+import static com.omegafrog.My.piano.app.web.util.AuthenticationUtil.getLoggedInUser;
 
 @RestController
 @Slf4j
@@ -38,15 +38,10 @@ public class LessonController {
     @PostMapping("/lesson")
     public JsonAPIResponse createLesson(@Validated @RequestBody LessonRegisterDto lessonRegisterDto)
             throws JsonProcessingException, EntityNotFoundException {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null) {
-            log.error("authentication is null");
-            return new APIInternalServerResponse("authentication is null");
-        }
-        User user = ((SecurityUser) authentication.getPrincipal()).getUser();
+        User user = getLoggedInUser();
         LessonDto lessonDto = lessonService.createLesson(lessonRegisterDto, user);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("lesson", lessonDto);
-        return new APISuccessResponse("Create new Lesson success", data,objectMapper );
+        return new APISuccessResponse("Create new Lesson success", data, objectMapper);
     }
 
     //TODO : 로그인 상관없이 접근 가능
@@ -71,8 +66,7 @@ public class LessonController {
             @Validated @RequestBody UpdateLessonDto updateLessonDto,
             @PathVariable Long id)
             throws JsonProcessingException, EntityNotFoundException, AccessDeniedException {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User user = getLoggedInUser(authentication);
+        User user = getLoggedInUser();
         LessonDto updated = lessonService.updateLesson(id, updateLessonDto, user);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("lesson", updated);
         return new APISuccessResponse("Lesson update success", data, objectMapper);
@@ -82,16 +76,32 @@ public class LessonController {
     public JsonAPIResponse deleteLesson(
             @PathVariable Long id)
             throws EntityNotFoundException, AccessDeniedException {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User user = getLoggedInUser(authentication);
+        User user = getLoggedInUser();
         lessonService.deleteLesson(id, user);
         return new APISuccessResponse("Lesson delete success");
     }
-    private static User getLoggedInUser(Authentication authentication) throws org.springframework.security.access.AccessDeniedException {
-        if (authentication == null) {
-            throw new org.springframework.security.access.AccessDeniedException("authentication is null");
-        }
-        return ((SecurityUser)authentication.getPrincipal()).getUser();
+
+    @PostMapping("/lesson/{id}/comment")
+    public JsonAPIResponse addComment(
+            @PathVariable Long id,
+            @RequestBody CommentDto dto
+    ) throws JsonProcessingException, AccessDeniedException, PersistenceException {
+        User loggedInUser = getLoggedInUser();
+        List<CommentDto> commentDtos = lessonService.addComment(id, dto, loggedInUser);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", commentDtos);
+        return new APISuccessResponse("Add Comment success.", data, objectMapper);
     }
+
+    @DeleteMapping("/lesson/{id}/comment/{comment-id}")
+    public JsonAPIResponse deleteComment(
+            @PathVariable Long id,
+            @PathVariable(name = "comment-id") Long commentId
+    ) throws JsonProcessingException, AccessDeniedException, PersistenceException {
+        User loggedInUser = getLoggedInUser();
+        List<CommentDto> commentDtos = lessonService.deleteComment(id, commentId, loggedInUser);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", commentDtos);
+        return new APISuccessResponse("Delete Comment success.", data, objectMapper);
+    }
+
 
 }

@@ -1,42 +1,31 @@
 package com.omegafrog.My.piano.app.web.domain.lesson;
 
+import com.omegafrog.My.piano.app.web.domain.order.SellableItem;
 import com.omegafrog.My.piano.app.web.dto.UpdateLessonDto;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import com.omegafrog.My.piano.app.web.domain.user.User;
-import com.omegafrog.My.piano.app.web.domain.order.Item;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
-import com.omegafrog.My.piano.app.web.dto.sheet.SheetDto;
-import com.omegafrog.My.piano.app.web.dto.sheet.SheetInfoDto;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
 
 @Entity
 @NoArgsConstructor
 @Getter
-public class Lesson extends Item {
+public class Lesson extends SellableItem {
 
-    @NotNull
-    private String title;
-    @NotNull
-    private String subTitle;
+
     @NotNull
     private VideoInformation videoInformation;
 
     @NotNull
     private LessonInformation lessonInformation;
 
-    private int viewCount;
 
     @OneToOne(cascade = { CascadeType.MERGE})
-    @JoinColumn(name = "USER_ID")
-    private User lessonProvider;
-
-    @OneToOne
     @JoinColumn(name = "SHEET_ID")
     private Sheet sheet;
 
@@ -44,19 +33,15 @@ public class Lesson extends Item {
     @Builder
     public Lesson(String title, String subTitle, int price, VideoInformation videoInformation,
                   User lessonProvider, Sheet sheet, LessonInformation lessonInformation) {
-        super(price,LocalDateTime.now());
-        this.title = title;
-        this.subTitle = subTitle;
+        super(lessonProvider, title, subTitle, price);
         this.videoInformation = videoInformation;
-        this.lessonProvider = lessonProvider;
         this.sheet = sheet;
         this.lessonInformation = lessonInformation;
-        viewCount=0;
     }
 
     public Lesson update(UpdateLessonDto dto, Sheet sheet){
-        this.title = dto.getTitle();
-        this.subTitle = dto.getSubTitle();
+        title = dto.getTitle();
+        content = dto.getSubTitle();
         this.updatePrice(dto.getPrice());
         this.videoInformation = dto.getVideoInformation();
         this.sheet = sheet;
@@ -66,13 +51,13 @@ public class Lesson extends Item {
 
     public LessonDto toDto(){
         return LessonDto.builder()
-                .id(super.getId())
-                .title(this.title)
-                .sheet(sheet.toSheetDto())
-                .subTitle(this.subTitle)
+                .id(id)
+                .title(title)
+                .sheet(this.sheet.toSheetDto())
+                .subTitle(content)
                 .lessonInformation(this.lessonInformation)
                 .videoInformation(this.videoInformation)
-                .lessonProvider(lessonProvider.getUserProfile())
+                .lessonProvider(author.getUserProfile())
                 .viewCount(viewCount)
                 .build();
     }

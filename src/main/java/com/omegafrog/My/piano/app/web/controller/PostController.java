@@ -8,8 +8,8 @@ import com.omegafrog.My.piano.app.web.dto.post.CommentDto;
 import com.omegafrog.My.piano.app.web.dto.post.PostDto;
 import com.omegafrog.My.piano.app.web.dto.post.PostRegisterDto;
 import com.omegafrog.My.piano.app.web.dto.post.UpdatePostDto;
-import com.omegafrog.My.piano.app.web.response.APISuccessResponse;
-import com.omegafrog.My.piano.app.web.response.JsonAPIResponse;
+import com.omegafrog.My.piano.app.web.util.response.APISuccessResponse;
+import com.omegafrog.My.piano.app.web.util.response.JsonAPIResponse;
 import com.omegafrog.My.piano.app.web.service.PostApplicationService;
 import jakarta.persistence.*;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/community")
+@RequestMapping("/community/post")
 @RequiredArgsConstructor
 public class PostController {
 

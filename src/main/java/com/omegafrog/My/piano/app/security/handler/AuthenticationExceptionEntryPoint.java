@@ -1,8 +1,8 @@
 package com.omegafrog.My.piano.app.security.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.omegafrog.My.piano.app.web.response.APIBadRequestResponse;
-import com.omegafrog.My.piano.app.web.response.APIInternalServerResponse;
+import com.omegafrog.My.piano.app.web.util.response.APIBadRequestResponse;
+import com.omegafrog.My.piano.app.web.util.response.APIInternalServerResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

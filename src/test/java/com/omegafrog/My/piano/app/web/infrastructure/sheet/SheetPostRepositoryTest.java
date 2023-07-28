@@ -2,6 +2,7 @@ package com.omegafrog.My.piano.app.web.infrastructure.sheet;
 
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
+import com.omegafrog.My.piano.app.web.dto.UpdateSheetDto;
 import com.omegafrog.My.piano.app.web.enums.Difficulty;
 import com.omegafrog.My.piano.app.web.enums.Genre;
 import com.omegafrog.My.piano.app.web.enums.Instrument;
@@ -74,11 +75,6 @@ class SheetPostRepositoryTest {
         sheetPostRepository.deleteAll();
     }
 
-    @AfterAll
-    void clearAllReposiotry(){
-        userRepository.deleteAll();
-        System.out.println("sheetPostRepository.count() = " + sheetPostRepository.count());
-    }
 
     @Test
     @DisplayName("악보 판매글을 추가하고 조회할 수 있어야 한다.")
@@ -130,13 +126,12 @@ class SheetPostRepositoryTest {
         SheetPost saved = sheetPostRepository.save(sheetPost);
         //when
         UpdateSheetPostDto updated = UpdateSheetPostDto.builder()
-                .sheet(Sheet.builder()
+                .sheetDto(UpdateSheetDto.builder()
                         .genre(Genre.CAROL)
                         .isSolo(false)
                         .difficulty(Difficulty.MEDIUM)
                         .lyrics(false)
                         .filePath("changed")
-                        .user(saved.getArtist())
                         .pageNum(5)
                         .instrument(Instrument.GUITAR_BASE)
                         .build())
@@ -174,4 +169,12 @@ class SheetPostRepositoryTest {
         Optional<SheetPost> founded = sheetPostRepository.findById(saved.getId());
         Assertions.assertThat(founded).isEmpty();
     }
+
+    @AfterAll
+    void clearAllReposiotry(){
+        sheetPostRepository.deleteAll();
+        userRepository.deleteAll();
+        System.out.println("sheetPostRepository.count() = " + sheetPostRepository.count());
+    }
+
 }

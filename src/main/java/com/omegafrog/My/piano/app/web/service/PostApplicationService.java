@@ -1,7 +1,7 @@
 package com.omegafrog.My.piano.app.web.service;
 
 
-import com.omegafrog.My.piano.app.web.domain.post.Comment;
+import com.omegafrog.My.piano.app.web.domain.article.Comment;
 import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.post.PostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -69,7 +68,7 @@ public class PostApplicationService {
         Post post = getPostById(id);
         post.addComment(build);
         Post saved = postRepository.save(post);
-        return saved.getComments().stream().map(Comment::toDto).collect(Collectors.toList());
+        return saved.getComments().stream().map(Comment::toDto).toList();
     }
 
     private Post getPostById(Long id) throws EntityNotFoundException {
@@ -87,16 +86,16 @@ public class PostApplicationService {
         return saved.getComments().stream().map(Comment::toDto).toList();
     }
     public void likePost(Long postId, User user) {
-        User byId = userRepository.findById(user.getId()).get();
+        User byId = userRepository.findById(user.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + user.getId()));
         Post post = getPostById(postId);
         post.increaseLikedCount();
         byId.addLikePost(post);
         userRepository.save(byId);
-//        postRepository.save(post);
     }
 
     public void dislikePost(Long id, User loggedInUser) throws EntityNotFoundException{
-        Post post = getPostById(id);
+        getPostById(id);
         if(!loggedInUser.dislikePost(id)){
             throw new EntityNotFoundException("Cannot find post entity that you liked.");
         }

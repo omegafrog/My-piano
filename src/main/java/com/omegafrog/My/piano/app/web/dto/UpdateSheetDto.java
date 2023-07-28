@@ -3,18 +3,20 @@ package com.omegafrog.My.piano.app.web.dto;
 import com.omegafrog.My.piano.app.web.enums.Difficulty;
 import com.omegafrog.My.piano.app.web.enums.Genre;
 import com.omegafrog.My.piano.app.web.enums.Instrument;
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
 @Data
+@NoArgsConstructor
+@Setter
+@Getter
 public class UpdateSheetDto {
     private String title;
     private int pageNum;
     private Difficulty difficulty;
     private Instrument instrument;
     private Genre genre;
-    private boolean solo;
-    private boolean lyrics;
+    private Boolean solo;
+    private Boolean lyrics;
     private String filePath;
     private int price;
 

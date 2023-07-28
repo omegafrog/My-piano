@@ -96,6 +96,7 @@ class OrderControllerTest {
 
     @BeforeAll
     void register() throws Exception, UsernameAlreadyExistException {
+        securityUserRepository.deleteAll();
         RegisterUserDto user1 = RegisterUserDto.builder()
                 .name("testUser1")
                 .phoneNum(PhoneNum.builder()
@@ -206,6 +207,7 @@ class OrderControllerTest {
                 .itemId(savedSheetPost.getId())
                 .buyerId(testUser1Profile.getId())
                 .build();
+
         String data = objectMapper.writeValueAsString(orderDto);
         mockMvc.perform(post("/sheet/buy")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -277,6 +279,7 @@ class OrderControllerTest {
     @Test
     @Transactional
     void getAllOrdersTest() throws Exception {
+        Optional<SheetPost> bySheetId = sheetPostRepository.findById(savedSheetPost.getId());
         OrderRegisterDto orderDto = OrderRegisterDto.builder()
                 .itemId(savedSheetPost.getId())
                 .buyerId(testUser1Profile.getId())

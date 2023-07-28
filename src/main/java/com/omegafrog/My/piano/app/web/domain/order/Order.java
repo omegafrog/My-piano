@@ -1,11 +1,9 @@
 package com.omegafrog.My.piano.app.web.domain.order;
 
-import com.nimbusds.openid.connect.sdk.claims.UserInfo;
 import com.omegafrog.My.piano.app.web.domain.coupon.Coupon;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
-import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
-import com.omegafrog.My.piano.app.web.dto.order.ItemDto;
+import com.omegafrog.My.piano.app.web.dto.order.SellableItemDto;
 import com.omegafrog.My.piano.app.web.dto.order.OrderDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import jakarta.validation.constraints.NotNull;
@@ -41,7 +39,7 @@ public class Order {
     @NotNull
     @OneToOne
     @JoinColumn(name = "ITEM_ID")
-    private Item item;
+    private SellableItem item;
 
     @NotNull
     private int initialPrice;
@@ -56,7 +54,7 @@ public class Order {
     private Coupon coupon;
 
     @Builder
-    public Order(User seller, User buyer, Item item, int initialPrice, Long discountRate, Coupon coupon) {
+    public Order(User seller, User buyer, SellableItem item, int initialPrice, Long discountRate, Coupon coupon) {
         this.seller = seller;
         this.buyer = buyer;
         this.item = item;
@@ -86,11 +84,11 @@ public class Order {
     }
 
     public OrderDto toDto() {
-        ItemDto dto=null;
-        if (item instanceof Lesson) {
-            dto = ((Lesson) item).toDto();
-        }else if(item instanceof SheetPost) {
-            dto = ((SheetPost) item).toInfoDto();
+        SellableItemDto dto=null;
+        if (item instanceof Lesson lesson) {
+            dto =lesson.toDto();
+        }else if(item instanceof SheetPost sheetPost) {
+            dto = sheetPost.toInfoDto();
         }
         return OrderDto.builder()
                 .discountRate(discountRate)

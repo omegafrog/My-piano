@@ -111,7 +111,7 @@ class UserControllerTest {
                 .title("title")
                 .content("content")
                 .build();
-        String string = mockMvc.perform(post("/community")
+        String string = mockMvc.perform(post("/community/post")
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken)
                         .contentType(MediaType.APPLICATION_JSON)

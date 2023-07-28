@@ -8,7 +8,7 @@ import com.omegafrog.My.piano.app.web.infra.user.JpaUserRepositoryImpl;
 import com.omegafrog.My.piano.app.web.infra.user.SimpleJpaUserRepository;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
-import com.omegafrog.My.piano.app.web.domain.post.Comment;
+import com.omegafrog.My.piano.app.web.domain.article.Comment;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPost;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPostRepository;
 import org.assertj.core.api.Assertions;
@@ -147,7 +147,7 @@ class VideoPostRepositoryTest {
         saved.addComment(comment);
         VideoPost commentAdded = videoPostRepository.save(saved);
         //when
-        commentAdded.deleteComment(commentAdded.getComments().get(0).getId());
+        commentAdded.deleteComment(commentAdded.getComments().get(0).getId(), commentAdded.getComments().get(0).getAuthor());
         VideoPost deletedComment = videoPostRepository.save(commentAdded);
 
         //then

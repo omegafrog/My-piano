@@ -8,7 +8,6 @@ import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
 import com.omegafrog.My.piano.app.web.dto.post.PostDto;
 import com.omegafrog.My.piano.app.web.dto.sheet.SheetInfoDto;
 import com.omegafrog.My.piano.app.web.dto.user.UpdateUserDto;
-import com.omegafrog.My.piano.app.web.dto.user.UserDto;
 import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceException;
@@ -23,19 +22,20 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserApplicationService {
 
+    public static final String USER_ENTITY_NOT_FOUNT_ERROR_MSG = "Cannot find User entity : ";
     private final UserRepository userRepository;
 
     public List<PostDto> getMyCommunityPosts(User loggedInUser)
             throws PersistenceException {
         User user = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity : " + loggedInUser.getId()));
+                .orElseThrow(() -> new EntityNotFoundException(USER_ENTITY_NOT_FOUNT_ERROR_MSG + loggedInUser.getId()));
         return user.getUploadedPosts().stream().map(Post::toDto).toList();
     }
 
     public List<ReturnCommentDto> getMyComments(User loggedInUser)
             throws PersistenceException {
         User user = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity : " + loggedInUser.getId()));
+                .orElseThrow(() -> new EntityNotFoundException(USER_ENTITY_NOT_FOUNT_ERROR_MSG + loggedInUser.getId()));
         return user.getWritedComments().stream().map(
                 comment -> ReturnCommentDto.builder()
                         .id(comment.getId())
@@ -50,13 +50,13 @@ public class UserApplicationService {
 
     public List<SheetInfoDto> getPurchasedSheets(User loggedInUser) {
         User user = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity : " + loggedInUser.getId()));
+                .orElseThrow(() -> new EntityNotFoundException(USER_ENTITY_NOT_FOUNT_ERROR_MSG+ loggedInUser.getId()));
         return user.getPurchasedSheets().stream().map(
                 sheetPost -> SheetInfoDto.builder()
                         .id(sheetPost.getId())
                         .title(sheetPost.getTitle())
                         .sheetUrl(sheetPost.getSheet().getFilePath())
-                        .artist(sheetPost.getArtist().getUserProfile())
+                        .artist(sheetPost.getAuthor().getUserProfile())
                         .createdAt(sheetPost.getCreatedAt())
                         .build()
         ).toList();
@@ -65,13 +65,13 @@ public class UserApplicationService {
 
     public List<SheetInfoDto> uploadedSheets(User loggedInUser) {
         User user = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity : " + loggedInUser.getId()));
+                .orElseThrow(() -> new EntityNotFoundException(USER_ENTITY_NOT_FOUNT_ERROR_MSG + loggedInUser.getId()));
         return user.getUploadedSheets().stream().map(
                 sheetPost -> SheetInfoDto.builder()
                         .id(sheetPost.getId())
                         .title(sheetPost.getTitle())
                         .sheetUrl(sheetPost.getSheet().getFilePath())
-                        .artist(sheetPost.getArtist().getUserProfile())
+                        .artist(sheetPost.getAuthor().getUserProfile())
                         .createdAt(sheetPost.getCreatedAt())
                         .build()
         ).toList();
@@ -79,13 +79,13 @@ public class UserApplicationService {
 
     public List<SheetInfoDto> getScrappedSheets(User loggedInUser) {
         User user = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity : " + loggedInUser.getId()));
+                .orElseThrow(() -> new EntityNotFoundException(USER_ENTITY_NOT_FOUNT_ERROR_MSG + loggedInUser.getId()));
         return user.getScrappedSheets().stream().map(
                 sheetPost -> SheetInfoDto.builder()
                         .id(sheetPost.getId())
                         .title(sheetPost.getTitle())
                         .sheetUrl(sheetPost.getSheet().getFilePath())
-                        .artist(sheetPost.getArtist().getUserProfile())
+                        .artist(sheetPost.getAuthor().getUserProfile())
                         .createdAt(sheetPost.getCreatedAt())
                         .build()
         ).toList();
@@ -93,7 +93,7 @@ public class UserApplicationService {
 
     public List<com.omegafrog.My.piano.app.web.dto.user.UserProfile> getFollowingFollwer(User loggedInUser) {
         User user = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity : " + loggedInUser.getId()));
+                .orElseThrow(() -> new EntityNotFoundException(USER_ENTITY_NOT_FOUNT_ERROR_MSG + loggedInUser.getId()));
         return user.getFollowed().stream().map(
                 follower -> com.omegafrog.My.piano.app.web.dto.user.UserProfile.builder()
                         .name(follower.getName())
@@ -105,15 +105,15 @@ public class UserApplicationService {
 
     public List<LessonDto> getPurchasedLessons(User loggedInUserProfile) {
         User userProfile = userRepository.findById(loggedInUserProfile.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity : " + loggedInUserProfile.getId()));
+                .orElseThrow(() -> new EntityNotFoundException(USER_ENTITY_NOT_FOUNT_ERROR_MSG + loggedInUserProfile.getId()));
        return userProfile.getPurchasedLessons().stream().map(
                 lesson -> LessonDto.builder()
                         .id(lesson.getId())
-                        .lessonProvider(lesson.getLessonProvider().getUserProfile())
+                        .lessonProvider(lesson.getAuthor().getUserProfile())
                         .lessonInformation(lesson.getLessonInformation())
                         .title(lesson.getTitle())
                         .viewCount(lesson.getViewCount())
-                        .subTitle(lesson.getSubTitle())
+                        .subTitle(lesson.getContent())
                         .sheet(lesson.getSheet().toSheetDto())
                         .build()
         ).toList();
@@ -121,7 +121,7 @@ public class UserApplicationService {
 
     public UserProfile updateUser(User loggedInUser, UpdateUserDto userDto) {
         User user = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity : " + loggedInUser.getId()));
+                .orElseThrow(() -> new EntityNotFoundException(USER_ENTITY_NOT_FOUNT_ERROR_MSG + loggedInUser.getId()));
         User updated = user.update(userDto);
         User save = userRepository.save(updated);
         return UserProfile.builder()

@@ -9,6 +9,6 @@ import lombok.Setter;
 @Setter
 @Getter
 @NoArgsConstructor
-public abstract class ItemDto {
+public abstract class SellableItemDto {
 
 }

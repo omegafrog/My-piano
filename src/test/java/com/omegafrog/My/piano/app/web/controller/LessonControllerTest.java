@@ -1,5 +1,6 @@
 package com.omegafrog.My.piano.app.web.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
@@ -7,6 +8,7 @@ import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
 import com.omegafrog.My.piano.app.security.entity.authorities.Role;
 import com.omegafrog.My.piano.app.security.exception.UsernameAlreadyExistException;
 import com.omegafrog.My.piano.app.security.service.CommonUserService;
+import com.omegafrog.My.piano.app.web.domain.article.Comment;
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonInformation;
@@ -22,6 +24,7 @@ import com.omegafrog.My.piano.app.web.dto.SecurityUserDto;
 import com.omegafrog.My.piano.app.web.dto.UpdateLessonDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonRegisterDto;
+import com.omegafrog.My.piano.app.web.dto.post.CommentDto;
 import com.omegafrog.My.piano.app.web.enums.*;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
@@ -44,6 +47,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 
+import java.io.UnsupportedEncodingException;
 import java.time.LocalTime;
 import java.util.*;
 
@@ -138,9 +142,6 @@ class LessonControllerTest {
                                 .build())
                 .build();
     }
-
-
-
     @AfterEach
     void clearRepository(){
         lessonRepository.deleteAll();
@@ -148,6 +149,8 @@ class LessonControllerTest {
 
     @AfterAll
     void clearAllRepository(){
+        lessonRepository.deleteAll();
+        sheetPostRepository.deleteAll();
         securityUserRepository.deleteAll();
     }
 
@@ -176,6 +179,7 @@ class LessonControllerTest {
 
         @Test
         @Transactional
+        @DisplayName("로그인하고 lesson을 생성할 수 있어야 한다.")
         void createLessonTest() throws Exception {
             LessonRegisterDto lessonRegisterDto = LessonRegisterDto.builder()
                     .sheetId(lesson.getSheet().getId())
@@ -183,7 +187,7 @@ class LessonControllerTest {
                     .videoInformation(lesson.getVideoInformation())
                     .lessonInformation(lesson.getLessonInformation())
                     .price(lesson.getPrice())
-                    .subTitle(lesson.getSubTitle())
+                    .subTitle(lesson.getContent())
                     .build();
             String body = objectMapper.writeValueAsString(lessonRegisterDto);
             System.out.println("body = " + body);
@@ -200,6 +204,7 @@ class LessonControllerTest {
 
         @Test
         @Transactional
+        @DisplayName("로그인하고 lesson을 수정할 수 있어야 한다.")
         void updateLessonTest() throws Exception{
 
             Lesson savedLesson = lessonRepository.save(lesson);
@@ -209,7 +214,7 @@ class LessonControllerTest {
                     .videoInformation(lesson.getVideoInformation())
                     .price(30000)
                     .title("changedTitle")
-                    .subTitle(lesson.getSubTitle())
+                    .subTitle(lesson.getContent())
                     .build();
             MvcResult mvcResult = mockMvc.perform(post("/lesson/" + savedLesson.getId())
                             .contentType(MediaType.APPLICATION_JSON)
@@ -231,6 +236,7 @@ class LessonControllerTest {
 
         @Test
         @Transactional
+        @DisplayName("로그인하고 레슨을 삭제할 수 있다.")
         void deleteLessonTest() throws Exception {
             Lesson savedLesson = lessonRepository.save(lesson);
             mockMvc.perform(delete("/lesson/" + savedLesson.getId())
@@ -239,6 +245,67 @@ class LessonControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
                     .andDo(print());
+        }
+
+        @Test
+        @Transactional
+        @DisplayName("로그인하고 댓글을 작성할 수 있다.")
+        void addCommentTest() throws Exception {
+            Lesson savedLesson = lessonRepository.save(lesson);
+            CommentDto comment = CommentDto.builder()
+                    .content("comment")
+                    .build();
+            MvcResult mvcResult = mockMvc.perform(post("/lesson/" + savedLesson.getId() + "/comment")
+                            .header(HttpHeaders.AUTHORIZATION, accessToken)
+                            .cookie(refreshToken)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(comment)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                    .andDo(print())
+                    .andReturn();
+            String contentAsString = mvcResult.getResponse().getContentAsString();
+            String text = objectMapper.readTree(contentAsString).get("serializedData").asText();
+            String content = objectMapper.readTree(text).get("comments").get(0).get("content").asText();
+            Long commentId = objectMapper.readTree(text).get("comments").get(0).get("id").asLong();
+            Assertions.assertThat(content).isEqualTo("comment");
+        }
+        @Test
+        @Transactional
+        @DisplayName("자신이 쓴 댓글을 삭제할 수 있다.")
+        void deleteCommentTest() throws Exception {
+            // given
+            Lesson savedLesson = lessonRepository.save(lesson);
+
+            CommentDto comment = CommentDto.builder()
+                    .content("comment")
+                    .build();
+
+            MvcResult mvcResult = mockMvc.perform(post("/lesson/" + savedLesson.getId() + "/comment")
+                            .header(HttpHeaders.AUTHORIZATION, accessToken)
+                            .cookie(refreshToken)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(comment)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                    .andDo(print())
+                    .andReturn();
+            String contentAsString = mvcResult.getResponse().getContentAsString();
+            String text = objectMapper.readTree(contentAsString).get("serializedData").asText();
+            String content = objectMapper.readTree(text).get("comments").get(0).get("content").asText();
+            Long commentId = objectMapper.readTree(text).get("comments").get(0).get("id").asLong();
+
+            MvcResult deleteCommentResult = mockMvc.perform(delete("/lesson/" + savedLesson.getId() + "/comment/" + commentId)
+                            .header(HttpHeaders.AUTHORIZATION, accessToken)
+                            .cookie(refreshToken))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                    .andReturn();
+
+            String responseBody = deleteCommentResult.getResponse().getContentAsString();
+            String serializedData = objectMapper.readTree(responseBody).get("serializedData").asText();
+            JsonNode jsonNode = objectMapper.readTree(serializedData).get("comments");
+            Assertions.assertThat(jsonNode).isEmpty();
         }
     }
 

@@ -1,4 +1,4 @@
-package com.omegafrog.My.piano.app.web.response;
+package com.omegafrog.My.piano.app.web.util.response;
 
 import org.springframework.http.HttpStatus;
 

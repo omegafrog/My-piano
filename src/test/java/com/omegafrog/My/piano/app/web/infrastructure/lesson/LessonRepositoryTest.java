@@ -83,10 +83,7 @@ class LessonRepositoryTest {
         lessonRepository.deleteAll();
     }
 
-    @AfterAll
-    void clearRepository(){
-        jpaSheetPostRepository.deleteAll();
-    }
+
     @Test
     @DisplayName("lesson을 추가하고 조회할 수 있어야 한다.")
     void addNFindTest(){
@@ -192,5 +189,11 @@ class LessonRepositoryTest {
         Long id = saved.getId();
         Optional<Lesson> founded = lessonRepository.findById(id);
         Assertions.assertThat(founded).isEmpty();
+    }
+
+    @AfterAll
+    void clearRepository(){
+        jpaSheetPostRepository.deleteAll();
+        userRepository.deleteAll();
     }
 }

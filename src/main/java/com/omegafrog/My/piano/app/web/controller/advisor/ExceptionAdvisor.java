@@ -1,8 +1,8 @@
 package com.omegafrog.My.piano.app.web.controller.advisor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.omegafrog.My.piano.app.web.response.APIBadRequestResponse;
-import com.omegafrog.My.piano.app.web.response.APIInternalServerResponse;
+import com.omegafrog.My.piano.app.web.util.response.APIBadRequestResponse;
+import com.omegafrog.My.piano.app.web.util.response.APIInternalServerResponse;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceException;
 import org.springframework.validation.BindingResult;
