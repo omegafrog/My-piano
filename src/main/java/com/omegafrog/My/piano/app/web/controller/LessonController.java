@@ -7,6 +7,7 @@ import com.omegafrog.My.piano.app.web.dto.UpdateLessonDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonRegisterDto;
 import com.omegafrog.My.piano.app.web.dto.post.CommentDto;
+import com.omegafrog.My.piano.app.web.util.AuthenticationUtil;
 import com.omegafrog.My.piano.app.web.util.response.APISuccessResponse;
 import com.omegafrog.My.piano.app.web.util.response.JsonAPIResponse;
 import com.omegafrog.My.piano.app.web.util.response.ResponseUtil;
@@ -63,8 +64,7 @@ public class LessonController {
 
     @PostMapping("/lesson/{id}")
     public JsonAPIResponse updateLesson(
-            @Validated @RequestBody UpdateLessonDto updateLessonDto,
-            @PathVariable Long id)
+            @Validated @RequestBody UpdateLessonDto updateLessonDto, @PathVariable Long id)
             throws JsonProcessingException, EntityNotFoundException, AccessDeniedException {
         User user = getLoggedInUser();
         LessonDto updated = lessonService.updateLesson(id, updateLessonDto, user);
@@ -73,8 +73,7 @@ public class LessonController {
     }
 
     @DeleteMapping("/lesson/{id}")
-    public JsonAPIResponse deleteLesson(
-            @PathVariable Long id)
+    public JsonAPIResponse deleteLesson(@PathVariable Long id)
             throws EntityNotFoundException, AccessDeniedException {
         User user = getLoggedInUser();
         lessonService.deleteLesson(id, user);
@@ -82,21 +81,41 @@ public class LessonController {
     }
 
     @PostMapping("/lesson/{id}/comment")
-    public JsonAPIResponse addComment(
-            @PathVariable Long id,
-            @RequestBody CommentDto dto
-    ) throws JsonProcessingException, AccessDeniedException, PersistenceException {
+    public JsonAPIResponse addComment(@PathVariable Long id, @RequestBody CommentDto dto)
+            throws JsonProcessingException, AccessDeniedException, PersistenceException {
         User loggedInUser = getLoggedInUser();
         List<CommentDto> commentDtos = lessonService.addComment(id, dto, loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", commentDtos);
         return new APISuccessResponse("Add Comment success.", data, objectMapper);
     }
 
+    @GetMapping("/lesson/{id}/comment")
+    public JsonAPIResponse getComments(@PathVariable Long id)
+            throws JsonProcessingException, PersistenceException {
+        List<CommentDto> allComments = lessonService.getAllComments(id);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", allComments);
+        return new APISuccessResponse("Get All comments success.", data, objectMapper);
+    }
+
+    @GetMapping("/lesson/{id}/comment/{comment-id}/like")
+    public JsonAPIResponse likeComments(@PathVariable Long id, @PathVariable(name = "comment-id") Long commentId)
+            throws JsonProcessingException, PersistenceException {
+        List<CommentDto> commentDtos = lessonService.likeComment(id, commentId);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", commentDtos);
+        return new APISuccessResponse("Like comment success.", data, objectMapper);
+    }
+
+    @GetMapping("/lesson/{id}/comment/{comment-id}/dislike")
+    public JsonAPIResponse dislikeComments(@PathVariable Long id, @PathVariable(name = "comment-id") Long commentId)
+            throws JsonProcessingException, PersistenceException {
+        List<CommentDto> commentDtos = lessonService.dislikeComment(id, commentId);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", commentDtos);
+        return new APISuccessResponse("Like comment success.", data, objectMapper);
+    }
+
     @DeleteMapping("/lesson/{id}/comment/{comment-id}")
-    public JsonAPIResponse deleteComment(
-            @PathVariable Long id,
-            @PathVariable(name = "comment-id") Long commentId
-    ) throws JsonProcessingException, AccessDeniedException, PersistenceException {
+    public JsonAPIResponse deleteComment(@PathVariable Long id, @PathVariable(name = "comment-id") Long commentId)
+            throws JsonProcessingException, AccessDeniedException, PersistenceException {
         User loggedInUser = getLoggedInUser();
         List<CommentDto> commentDtos = lessonService.deleteComment(id, commentId, loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", commentDtos);

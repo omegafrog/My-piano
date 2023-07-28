@@ -83,13 +83,29 @@ public class SheetPostController {
         return new APISuccessResponse("Get all comments success.", data, objectMapper);
     }
 
-    @PostMapping("{id}/comment/")
+    @PostMapping("{id}/comment")
     public JsonAPIResponse writeComment(@PathVariable Long id, @RequestBody CommentDto dto)
             throws AccessDeniedException, PersistenceException, JsonProcessingException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         List<CommentDto> commentDtos = sheetPostService.writeComment(id, dto, loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", commentDtos);
         return new APISuccessResponse("Write comment success.", data, objectMapper);
+    }
+
+    @GetMapping("/{id}/comment/{comment-id}/like")
+    public JsonAPIResponse likeComments(@PathVariable Long id, @PathVariable(name = "comment-id") Long commentId)
+            throws JsonProcessingException, PersistenceException {
+        List<CommentDto> commentDtos = sheetPostService.likeComment(id, commentId);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", commentDtos);
+        return new APISuccessResponse("Like comment success.", data, objectMapper);
+    }
+
+    @GetMapping("/{id}/comment/{comment-id}/dislike")
+    public JsonAPIResponse dislikeComments(@PathVariable Long id, @PathVariable(name = "comment-id") Long commentId)
+            throws JsonProcessingException, PersistenceException {
+        List<CommentDto> commentDtos = sheetPostService.dislikeComment(id, commentId);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", commentDtos);
+        return new APISuccessResponse("dislike comment success.", data, objectMapper);
     }
 
     @DeleteMapping("{id}/comment/{comment-id}")

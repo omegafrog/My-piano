@@ -39,6 +39,12 @@ public class Comment {
     @ManyToOne
     private Post target;
 
+    public void increaseLikeCount(){
+        likeCount++;
+    }
+    public void decreaseLikeCount(){
+        likeCount--;
+    }
 
     @Builder
     public Comment(Long id, User author, String content) {

@@ -1,6 +1,7 @@
 package com.omegafrog.My.piano.app.web.service;
 
 import com.omegafrog.My.piano.app.web.domain.article.Comment;
+import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
@@ -104,5 +105,31 @@ public class SheetPostApplicationService {
         SheetPost sheetPost = sheetPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find Sheet post entity : " + id));
         sheetPost.deleteComment(commentId, loggedInUser);
+    }
+
+    public List<CommentDto> likeComment(Long id, Long commentId) {
+        SheetPost sheetPost = sheetPostRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity : " + id));
+        sheetPost.getComments().forEach(
+                comment -> {
+                    if(comment.getId().equals(commentId))
+                        comment.increaseLikeCount();
+                }
+        );
+        SheetPost saved = sheetPostRepository.save(sheetPost);
+        return saved.getComments().stream().map(Comment::toDto).toList();
+    }
+
+    public List<CommentDto> dislikeComment(Long id, Long commentId) {
+        SheetPost sheetPost = sheetPostRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity : " + id));
+        sheetPost.getComments().forEach(
+                comment -> {
+                    if(comment.getId().equals(commentId))
+                        comment.decreaseLikeCount();
+                }
+        );
+        SheetPost saved = sheetPostRepository.save(sheetPost);
+        return saved.getComments().stream().map(Comment::toDto).toList();
     }
 }
