@@ -8,6 +8,7 @@ import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.dto.user.UpdateUserDto;
 import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
+import com.omegafrog.My.piano.app.web.enums.OrderStatus;
 import com.omegafrog.My.piano.app.web.exception.payment.NotEnoughCashException;
 import com.omegafrog.My.piano.app.web.exception.payment.PaymentException;
 import com.omegafrog.My.piano.app.web.vo.user.AlarmProperties;
@@ -143,13 +144,14 @@ public class User {
         this.cash += cash;
     }
 
-    public void pay(Order order) throws PaymentException {
+    public void pay(Order order) throws PaymentException, ClassCastException {
         if (cash < order.getTotalPrice()) {
             throw new NotEnoughCashException("Cannot buy this item => cash:"
                     + cash + " < price:" + order.getTotalPrice());
             // 캐시 부족
         } else {
             cash -= order.getTotalPrice();
+            order.setStatus(OrderStatus.PROGRESSING);
             if (order.getItem() instanceof Lesson)
                 purchasedLessons.add((Lesson) order.getItem());
             else if (order.getItem() instanceof SheetPost)
