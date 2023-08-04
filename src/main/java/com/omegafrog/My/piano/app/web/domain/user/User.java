@@ -55,6 +55,11 @@ public class User {
     @PositiveOrZero
     private int cash;
 
+    public int chargeCash(int cash){
+        this.cash += cash;
+        return this.cash;
+    }
+
     @NotNull
     private PhoneNum phoneNum;
     @NotNull

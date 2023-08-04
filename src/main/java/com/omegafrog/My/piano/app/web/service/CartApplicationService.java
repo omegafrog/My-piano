@@ -6,6 +6,7 @@ import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.order.OrderDto;
 import com.omegafrog.My.piano.app.web.dto.order.OrderRegisterDto;
+import com.omegafrog.My.piano.app.web.exception.payment.PaymentException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -41,5 +42,11 @@ public class CartApplicationService {
         User user = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity : " + loggedInUser.getId()));
         return user.getCart().getContents().stream().map(Order::toDto).toList();
+    }
+
+    public void payAll(User loggedInUser) throws PaymentException{
+        User user = userRepository.findById(loggedInUser.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity : " + loggedInUser.getId()));
+        user.getCart().payContents();
     }
 }

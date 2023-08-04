@@ -6,6 +6,7 @@ import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonRegisterDto;
 import com.omegafrog.My.piano.app.web.dto.order.OrderDto;
 import com.omegafrog.My.piano.app.web.dto.order.OrderRegisterDto;
+import com.omegafrog.My.piano.app.web.exception.payment.PaymentException;
 import com.omegafrog.My.piano.app.web.service.CartApplicationService;
 import com.omegafrog.My.piano.app.web.service.OrderService;
 import com.omegafrog.My.piano.app.web.util.AuthenticationUtil;
@@ -46,13 +47,19 @@ public class CartController {
         return new APISuccessResponse("Add order to cart success.", data, objectMapper);
     }
 
-
     @DeleteMapping("/{id}")
     public JsonAPIResponse deleteFromCart(@PathVariable Long id)
             throws EntityNotFoundException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         cartService.deleteFromCart(id, loggedInUser);
         return new APISuccessResponse("Delete order from cart success.");
+    }
+
+    @GetMapping("/pay")
+    public JsonAPIResponse payCart() throws PaymentException, EntityNotFoundException {
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+        cartService.payAll(loggedInUser);
+        return new APISuccessResponse("Buy items in your cart success.");
     }
 
     @GetMapping("")
@@ -62,5 +69,4 @@ public class CartController {
         Map<String, Object> data = ResponseUtil.getStringObjectMap("contents", allContentFromCart);
         return new APISuccessResponse("Get all cart contents success.", data, objectMapper);
     }
-
 }

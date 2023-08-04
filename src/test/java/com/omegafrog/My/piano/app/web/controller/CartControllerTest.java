@@ -60,7 +60,6 @@ class CartControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
-
     @Autowired
     private ObjectMapper objectMapper;
     @Autowired
@@ -73,7 +72,6 @@ class CartControllerTest {
     private OrderRepository orderRepository;
     @Autowired
     private UserRepository userRepository;
-
 
     private String accessToken;
     private Cookie refreshToken;
@@ -112,7 +110,6 @@ class CartControllerTest {
                 .andExpect(status().isOk())
                 .andReturn();
 
-
         MvcResult mvcResult = mockMvc.perform(post("/user/login")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content("username=username&password=password"))
@@ -146,7 +143,6 @@ class CartControllerTest {
                 .artist(user.getUser())
                 .content("hihi this is content")
                 .build();
-
 
         savedSheetPost = sheetPostRepository.save(sheetPost);
         Lesson lesson = Lesson.builder()
@@ -265,24 +261,58 @@ class CartControllerTest {
                 .andDo(print())
                 .andReturn();
 
-        String contentAsString = mvcResult.getResponse().getContentAsString();
         String content = mvcResult.getResponse().getContentAsString();
         String text = objectMapper.readTree(content).get("serializedData").asText();
         Long id = objectMapper.readTree(text).get("contents").get(0).get("item").get("id").asLong();
         Assertions.assertThat(id).isEqualTo(savedSheetPost.getId());
-        int a = securityUserRepository.findByUsername("username").get().getUser().getUploadedSheets().size();
-        System.out.println("a = " + a);
-        int b = securityUserRepository.findByUsername("username").get().getUser().getUploadedLessons().size();
-        System.out.println("b = " + b);
+    }
+
+    @Test
+    void payAllInCartTest() throws Exception {
+
+        mockMvc.perform(post("/user/cash")
+                .header(HttpHeaders.AUTHORIZATION, accessToken)
+                .cookie(refreshToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(20000)));
+        OrderRegisterDto build1 = OrderRegisterDto.builder()
+                .buyerId(user.getUser().getId())
+                .itemId(savedSheetPost.getId())
+                .build();
+        OrderRegisterDto build2 = OrderRegisterDto.builder()
+                .buyerId(user.getUser().getId())
+                .itemId(savedLesson.getId())
+                .build();
+        mockMvc.perform(post("/cart/sheet")
+                        .header(HttpHeaders.AUTHORIZATION, accessToken)
+                        .cookie(refreshToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(build1)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andReturn();
+        mockMvc.perform(post("/cart/lesson")
+                        .header(HttpHeaders.AUTHORIZATION, accessToken)
+                        .cookie(refreshToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(build2)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andReturn();
+
+        mockMvc.perform(get("/cart/pay")
+                        .header(HttpHeaders.AUTHORIZATION, accessToken)
+                        .cookie(refreshToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()));
     }
 
     @AfterAll
-    void deleteRepository(){
+    void deleteRepository() {
         System.out.println("lesson:" + lessonRepository.count());
         System.out.println("Sheetpost:" + sheetPostRepository.count());
         lessonRepository.deleteAll();
         sheetPostRepository.deleteAll();
         securityUserRepository.deleteAll();
     }
-
 }
