@@ -14,8 +14,12 @@ import jakarta.persistence.*;
 @Getter
 @NoArgsConstructor
 public class Post extends Article {
-
-
+    public void setAuthor(User author){
+        this.author = author;
+        if(!author.getUploadedPosts().contains(this)){
+            author.addUploadedPost(this);
+        }
+    }
     public Post update(UpdatePostDto post){
         super.viewCount = post.getViewCount();
         super.title = post.getTitle();
@@ -30,8 +34,6 @@ public class Post extends Article {
         this.title = title;
         this.content = content;
     }
-
-
 
     public PostDto toDto(){
         return PostDto.builder()

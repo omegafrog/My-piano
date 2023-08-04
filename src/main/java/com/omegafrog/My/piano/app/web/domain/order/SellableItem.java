@@ -18,6 +18,11 @@ public class SellableItem extends Article {
 
     protected Double discountRate = 0d;
 
+    @Override
+    public void setAuthor(User user) {
+
+    }
+
     public SellableItem(User author, String title, String content, int price) {
         this.author = author;
         this.title = title;

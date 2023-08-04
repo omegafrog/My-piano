@@ -27,12 +27,16 @@ public class PostApplicationService {
     private final PostRepository postRepository;
 
     public PostDto writePost(PostRegisterDto post, User author) {
+        User user = userRepository.findById(author.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity : " + author.getId()));
         Post build = Post.builder()
                 .title(post.getTitle())
                 .content(post.getContent())
-                .author(author)
+                .author(user)
                 .build();
-        return postRepository.save(build).toDto();
+        Post saved = postRepository.save(build);
+        user.getUploadedPosts().add(saved);
+        return saved.toDto();
     }
 
 
@@ -54,7 +58,6 @@ public class PostApplicationService {
 
     public void deletePost(Long id, User loggedInUser) {
         Post post = getPostById(id);
-
         if(post.getAuthor().equals(loggedInUser)){
             postRepository.deleteById(id);
         } else throw new AccessDeniedException("Cannot delete other user's post");
@@ -68,6 +71,7 @@ public class PostApplicationService {
         Post post = getPostById(id);
         post.addComment(build);
         Post saved = postRepository.save(post);
+
         return saved.getComments().stream().map(Comment::toDto).toList();
     }
 

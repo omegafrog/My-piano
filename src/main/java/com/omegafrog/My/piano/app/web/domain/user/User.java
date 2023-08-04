@@ -87,9 +87,18 @@ public class User {
     private List<SheetPost> uploadedSheets = new ArrayList<>();
 
 
-    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
-    @JoinColumn(name = "USER_ID")
+    @OneToMany(mappedBy = "author", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     private List<Post> uploadedPosts = new ArrayList<>();
+
+    public void addUploadedPost(Post post){
+        uploadedPosts.add(post);
+        if(post.getAuthor()!=this){
+            post.setAuthor(this);
+        }
+    }
+    public void deleteUploadedPost(Post post){
+        uploadedPosts.remove(post);
+    }
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "followed",

@@ -24,6 +24,8 @@ public class JpaPostRepositoryImpl implements PostRepository {
 
     @Override
     public void deleteById(Long id) {
+        Optional<Post> byId = findById(id);
+        byId.get().getAuthor().deleteUploadedPost(byId.get());
         postRepository.deleteById(id);
     }
 

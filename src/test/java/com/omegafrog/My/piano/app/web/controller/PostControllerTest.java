@@ -113,6 +113,7 @@ class PostControllerTest {
                     .build();
             ReflectionTestUtils.setField(build,"id", 0L);
             Mockito.when(postRepository.save(any(Post.class))).thenReturn(build);
+            Mockito.when(userRepository.findById(0L)).thenReturn(Optional.of(author));
             JsonAPIResponse apiResponse = controller.writePost( postDto);
             //then
             Assertions.assertThat(apiResponse).isNotNull();

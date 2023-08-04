@@ -31,10 +31,11 @@ public abstract class Article {
     @PositiveOrZero
     protected int likeCount=0;
 
-    @OneToOne
-    @JoinColumn(name = "USER_ID")
+    @ManyToOne
+    @JoinColumn(name="AUTHOR_ID")
     protected User author;
 
+    public abstract void setAuthor(User user);
     @Temporal(TemporalType.TIMESTAMP)
     protected LocalDateTime createdAt = LocalDateTime.now();
 
