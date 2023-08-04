@@ -95,7 +95,7 @@ public class Order {
         if (item instanceof Lesson lesson) {
             dto =lesson.toDto();
         }else if(item instanceof SheetPost sheetPost) {
-            dto = sheetPost.toInfoDto();
+            dto = sheetPost.toDto();
         }
         return OrderDto.builder()
                 .discountRate(discountRate)

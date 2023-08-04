@@ -71,6 +71,7 @@ public class SheetPost extends SellableItem {
     public SheetInfoDto toInfoDto(){
         return SheetInfoDto.builder()
                 .id(id)
+                .title(sheet.getTitle())
                 .sheetUrl(sheet.getFilePath())
                 .artist(author.getUserProfile())
                 .createdAt(createdAt)

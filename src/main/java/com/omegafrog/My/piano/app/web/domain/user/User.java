@@ -60,7 +60,7 @@ public class User {
     @NotNull
     private AlarmProperties alarmProperties;
 
-    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
     @JoinColumn(name = "USER_ID")
     @NotNull
     private Cart cart;
@@ -83,10 +83,13 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "SHEET_ID"))
     private List<SheetPost> scrappedSheets = new ArrayList<>();
 
-    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    @OneToMany(cascade = { CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "USER_ID")
     private List<SheetPost> uploadedSheets = new ArrayList<>();
 
+    @OneToMany(cascade = { CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
+    @JoinColumn(name = "USER_ID")
+    private List<Lesson> uploadedLessons = new ArrayList<>();
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "USER_ID")
