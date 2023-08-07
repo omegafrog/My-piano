@@ -111,7 +111,7 @@ public class SecurityConfig {
                 .securityMatcher("/community/**")
                 .authenticationProvider(commonUserAuthenticationProvider())
                 .authorizeHttpRequests()
-                .requestMatchers(HttpMethod.GET,"/community/{id:[0-9]+}")
+                .requestMatchers(HttpMethod.GET, "/community/{id:[0-9]+}")
                 .permitAll()
                 .anyRequest().hasRole(Role.USER.authorityName)
                 .and()
@@ -123,6 +123,27 @@ public class SecurityConfig {
                 .csrf().disable()
                 .cors().disable();
         return http.build();
+    }
 
+    @Bean
+    public SecurityFilterChain lessonAuthentication(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/lesson/**")
+                .authenticationProvider(commonUserAuthenticationProvider())
+                .authorizeHttpRequests()
+                .requestMatchers(HttpMethod.GET, "/lesson/{id:[0-9]+}")
+                .permitAll()
+                .requestMatchers(HttpMethod.GET, "/lesson")
+                .permitAll()
+                .anyRequest().hasRole(Role.USER.authorityName)
+                .and()
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .addFilterBefore(jwtTokenFilter(),
+                        UsernamePasswordAuthenticationFilter.class)
+                .csrf().disable()
+                .cors().disable();
+        return http.build();
     }
 }

@@ -45,7 +45,7 @@ public class LessonController {
     }
 
     //TODO : 로그인 상관없이 접근 가능
-    @GetMapping("/lesson")
+    @GetMapping("/lessons")
     public JsonAPIResponse getLessons(Pageable pageable) throws JsonProcessingException {
         List<LessonDto> allLessons = lessonService.getAllLessons(pageable);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("lessons", allLessons);
