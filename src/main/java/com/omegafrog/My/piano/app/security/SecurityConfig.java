@@ -2,6 +2,7 @@ package com.omegafrog.My.piano.app.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
+import com.omegafrog.My.piano.app.security.entity.authorities.Authority;
 import com.omegafrog.My.piano.app.security.entity.authorities.Role;
 import com.omegafrog.My.piano.app.security.filter.JwtTokenFilter;
 import com.omegafrog.My.piano.app.security.handler.*;
@@ -155,6 +156,31 @@ public class SecurityConfig {
                 .and()
                 .csrf().disable()
                 .cors().disable();
+        return http.build();
+    }
+
+    @Bean
+    public SecurityFilterChain OrderAuthentication(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/order/**")
+                .authenticationProvider(commonUserAuthenticationProvider())
+                .authorizeHttpRequests()
+                .requestMatchers(HttpMethod.GET, "/order")
+                .permitAll()
+                .requestMatchers(HttpMethod.GET, "/order/{id:[0-9]+}")
+                .permitAll()
+                .anyRequest().hasRole(Role.USER.authorityName)
+                .and()
+                .addFilterBefore(jwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .exceptionHandling()
+                .authenticationEntryPoint(UnAuthorizedEntryPoint())
+                .and()
+                .cors()
+                .disable()
+                .csrf().disable();
         return http.build();
     }
 }

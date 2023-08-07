@@ -355,7 +355,7 @@ class LessonControllerTest {
                                 .build())
                 .build();
         Lesson saved2 = lessonRepository.save(lesson2);
-        MvcResult mvcResult = mockMvc.perform(get("/lesson")
+        MvcResult mvcResult = mockMvc.perform(get("/lessons")
                         .param("page","0")
                         .param("size","10"))
                 .andExpect(status().isOk())
