@@ -26,6 +26,8 @@ import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.servlet.util.matcher.MvcRequestMatcher;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @EnableWebSecurity
 @Configuration
@@ -60,6 +62,10 @@ public class SecurityConfig {
     public CommonUserAuthenticationProvider commonUserAuthenticationProvider() {
         return new CommonUserAuthenticationProvider(commonUserService(), passwordEncoder());
     }
+    @Bean
+    public CommonUserAccessDeniedHandler commonUserAccessDeniedHandler(){
+        return new CommonUserAccessDeniedHandler(objectMapper);
+    }
 
     @Bean
     public LogoutBlacklistRepository inMemoryLogoutBlackListRepository() {
@@ -81,6 +87,7 @@ public class SecurityConfig {
     public AuthenticationEntryPoint UnAuthorizedEntryPoint() {
         return new AuthenticationExceptionEntryPoint(objectMapper);
     }
+
 
     @Bean
     public SecurityFilterChain commonUserAuthentication(HttpSecurity http) throws Exception {
@@ -110,6 +117,7 @@ public class SecurityConfig {
                 .and()
                 .exceptionHandling()
                 .authenticationEntryPoint(UnAuthorizedEntryPoint())
+                .accessDeniedHandler(commonUserAccessDeniedHandler())
                 .and()
                 .csrf().disable()
                 .cors().disable();
@@ -131,6 +139,7 @@ public class SecurityConfig {
                 .and()
                 .exceptionHandling()
                 .authenticationEntryPoint(UnAuthorizedEntryPoint())
+                .accessDeniedHandler(commonUserAccessDeniedHandler())
                 .and()
                 .addFilterBefore(jwtTokenFilter(),
                         UsernamePasswordAuthenticationFilter.class)
@@ -158,6 +167,7 @@ public class SecurityConfig {
                         UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling()
                 .authenticationEntryPoint(UnAuthorizedEntryPoint())
+                .accessDeniedHandler(commonUserAccessDeniedHandler())
                 .and()
                 .csrf().disable()
                 .cors().disable();
@@ -182,6 +192,7 @@ public class SecurityConfig {
                 .and()
                 .exceptionHandling()
                 .authenticationEntryPoint(UnAuthorizedEntryPoint())
+                .accessDeniedHandler(commonUserAccessDeniedHandler())
                 .and()
                 .cors().disable()
                 .csrf().disable();
@@ -207,6 +218,7 @@ public class SecurityConfig {
                 .addFilterBefore(jwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling()
                 .authenticationEntryPoint(UnAuthorizedEntryPoint())
+                .accessDeniedHandler(commonUserAccessDeniedHandler())
                 .and()
                 .csrf().disable()
                 .cors().disable();
