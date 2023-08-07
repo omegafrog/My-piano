@@ -66,7 +66,6 @@ class LessonControllerTest {
     MockMvc mockMvc;
     @Autowired
     private ObjectMapper objectMapper;
-
     @Autowired
     private SheetPostRepository sheetPostRepository;
     @Autowired
@@ -97,7 +96,20 @@ class LessonControllerTest {
                 .password("password")
                 .email("user1@gmail.com")
                 .build();
+        RegisterUserDto user2 = RegisterUserDto.builder()
+                .name("user2")
+                .phoneNum(PhoneNum.builder()
+                        .phoneNum("010-1111-2222")
+                        .isAuthorized(false)
+                        .build())
+                .profileSrc("src")
+                .loginMethod(LoginMethod.EMAIL)
+                .username("user2")
+                .password("password")
+                .email("user1@gmail.com")
+                .build();
         SecurityUserDto securityUserDto = commonUserService.registerUser(user1);
+        commonUserService.registerUser(user2);
         artist = ((SecurityUser) commonUserService.loadUserByUsername(securityUserDto.getUsername())).getUser();
 
         SheetPost sheetPost = SheetPost.builder()
@@ -118,7 +130,6 @@ class LessonControllerTest {
                 .content("hihi this is content")
                 .build();
         saved = sheetPostRepository.save(sheetPost);
-
     }
     @BeforeEach
     void setLesson() {
@@ -158,6 +169,9 @@ class LessonControllerTest {
     class NeedLoginTest{
         String accessToken;
         Cookie refreshToken;
+
+        String wrongAccessToken;
+        Cookie wrongRefreshToken;
         @NoArgsConstructor
         @Data
         private static class LoginResult {
@@ -175,6 +189,15 @@ class LessonControllerTest {
             LoginResult loginResult = objectMapper.readValue(contentAsString, LoginResult.class);
             accessToken = loginResult.getSerializedData().get("access token");
             refreshToken = mvcResult.getResponse().getCookie("refreshToken");
+
+            MvcResult mvcResult2 = mockMvc.perform(post("/user/login")
+                            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                            .content("username=user2&password=password"))
+                    .andReturn();
+            String contentAsString2 = mvcResult2.getResponse().getContentAsString();
+            LoginResult loginResult2 = objectMapper.readValue(contentAsString2, LoginResult.class);
+            wrongAccessToken = loginResult2.getSerializedData().get("access token");
+            wrongRefreshToken = mvcResult2.getResponse().getCookie("refreshToken");
         }
 
         @Test
@@ -206,7 +229,6 @@ class LessonControllerTest {
         @Transactional
         @DisplayName("로그인하고 lesson을 수정할 수 있어야 한다.")
         void updateLessonTest() throws Exception{
-
             Lesson savedLesson = lessonRepository.save(lesson);
             UpdateLessonDto updatedLessonDto = UpdateLessonDto.builder()
                     .lessonInformation(lesson.getLessonInformation())
@@ -232,6 +254,43 @@ class LessonControllerTest {
             Assertions.assertThat(byId).isPresent();
             Assertions.assertThat(byId.get()).isEqualTo(savedLesson);
             Assertions.assertThat(byId.get().getTitle()).isEqualTo("changedTitle");
+
+
+        }
+        
+        @Test
+        @DisplayName("작성자가 아닌 유저는 수정할 수 없다")
+        void updateAuthorizationTest() throws Exception {
+            Lesson savedLesson = lessonRepository.save(lesson);
+            UpdateLessonDto updatedLessonDto = UpdateLessonDto.builder()
+                    .lessonInformation(lesson.getLessonInformation())
+                    .sheetId(lesson.getSheet().getId())
+                    .videoInformation(lesson.getVideoInformation())
+                    .price(30000)
+                    .title("changedTitle")
+                    .subTitle(lesson.getContent())
+                    .build();
+
+            // 작성자가 아닌 유저는 접근할 수 없다.
+            mockMvc.perform(post("/lesson/" + savedLesson.getId())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(updatedLessonDto))
+                            .header(HttpHeaders.AUTHORIZATION, wrongAccessToken)
+                            .cookie(wrongRefreshToken))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.toString()));
+        }
+
+        @Test
+        @DisplayName("작성자가 아닌 유저는 레슨을 삭제할 수 없다")
+        void deleteAuthorizationTest() throws Exception {
+            Lesson savedLesson = lessonRepository.save(lesson);
+            mockMvc.perform(delete("/lesson/" + savedLesson.getId())
+                            .header(HttpHeaders.AUTHORIZATION, wrongAccessToken)
+                            .cookie(wrongRefreshToken))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.toString()))
+                    .andDo(print());
         }
 
         @Test
@@ -270,6 +329,20 @@ class LessonControllerTest {
             Long commentId = objectMapper.readTree(text).get("comments").get(0).get("id").asLong();
             Assertions.assertThat(content).isEqualTo("comment");
         }
+
+        @Test
+        @DisplayName("로그인하지 않으면 댓글을 작성할 수 없다.")
+        void addCommentAuthenticationTest() throws Exception {
+            Lesson savedLesson = lessonRepository.save(lesson);
+            CommentDto comment = CommentDto.builder()
+                    .content("comment")
+                    .build();
+            mockMvc.perform(post("/lesson/" + savedLesson.getId() + "/comment")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(comment)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.toString()));
+        }
         @Test
         @Transactional
         @DisplayName("자신이 쓴 댓글을 삭제할 수 있다.")
@@ -306,6 +379,34 @@ class LessonControllerTest {
             String serializedData = objectMapper.readTree(responseBody).get("serializedData").asText();
             JsonNode jsonNode = objectMapper.readTree(serializedData).get("comments");
             Assertions.assertThat(jsonNode).isEmpty();
+        }
+        @Test
+        @DisplayName("남의 댓글은 삭제할 수 없다.")
+        void deleteCommentAuthorizationTest() throws Exception {
+            Lesson savedLesson = lessonRepository.save(lesson);
+
+            CommentDto comment = CommentDto.builder()
+                    .content("comment")
+                    .build();
+
+            MvcResult mvcResult = mockMvc.perform(post("/lesson/" + savedLesson.getId() + "/comment")
+                            .header(HttpHeaders.AUTHORIZATION, accessToken)
+                            .cookie(refreshToken)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(comment)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                    .andDo(print())
+                    .andReturn();
+            String contentAsString = mvcResult.getResponse().getContentAsString();
+            String text = objectMapper.readTree(contentAsString).get("serializedData").asText();
+            Long commentId = objectMapper.readTree(text).get("comments").get(0).get("id").asLong();
+
+            mockMvc.perform(delete("/lesson/" + savedLesson.getId() + "/comment/" + commentId)
+                            .header(HttpHeaders.AUTHORIZATION, wrongAccessToken)
+                            .cookie(wrongRefreshToken))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.toString()));
         }
     }
 
