@@ -11,6 +11,7 @@ import com.omegafrog.My.piano.app.security.provider.CommonUserAuthenticationProv
 import com.omegafrog.My.piano.app.security.reposiotry.InMemoryLogoutBlacklistRepository;
 import com.omegafrog.My.piano.app.security.service.CommonUserService;
 
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -48,33 +49,36 @@ public class SecurityConfig {
 
     @Autowired
     private ObjectMapper objectMapper;
+
     @Bean
-    public CommonUserService commonUserService(){
+    public CommonUserService commonUserService() {
         return new CommonUserService(passwordEncoder(), securityUserRepository);
     }
 
 
     @Bean
-    public CommonUserAuthenticationProvider commonUserAuthenticationProvider(){
+    public CommonUserAuthenticationProvider commonUserAuthenticationProvider() {
         return new CommonUserAuthenticationProvider(commonUserService(), passwordEncoder());
     }
 
     @Bean
-    public LogoutBlacklistRepository inMemoryLogoutBlackListRepository(){
+    public LogoutBlacklistRepository inMemoryLogoutBlackListRepository() {
         return new InMemoryLogoutBlacklistRepository(jwtSecret);
     }
 
     @Bean
-    public JwtTokenFilter jwtTokenFilter(){
+    public JwtTokenFilter jwtTokenFilter() {
         return new JwtTokenFilter(objectMapper, securityUserRepository,
                 refreshTokenRepository, inMemoryLogoutBlackListRepository(), jwtSecret);
     }
+
     @Bean
-    public CommonUserLogoutHandler commonUserLogoutHandler(){
+    public CommonUserLogoutHandler commonUserLogoutHandler() {
         return new CommonUserLogoutHandler(objectMapper, inMemoryLogoutBlackListRepository());
     }
+
     @Bean
-    public AuthenticationEntryPoint UnAuthorizedEntryPoint(){
+    public AuthenticationEntryPoint UnAuthorizedEntryPoint() {
         return new AuthenticationExceptionEntryPoint(objectMapper);
     }
 
@@ -111,6 +115,7 @@ public class SecurityConfig {
                 .cors().disable();
         return http.build();
     }
+
     @Bean
     public SecurityFilterChain postAuthentication(HttpSecurity http) throws Exception {
         http
@@ -178,9 +183,33 @@ public class SecurityConfig {
                 .exceptionHandling()
                 .authenticationEntryPoint(UnAuthorizedEntryPoint())
                 .and()
-                .cors()
-                .disable()
+                .cors().disable()
                 .csrf().disable();
+        return http.build();
+    }
+
+    @SneakyThrows
+    @Bean
+    public SecurityFilterChain sheetPostAuthentication(HttpSecurity http){
+        http
+                .securityMatcher("/sheet/**")
+                .authenticationProvider(commonUserAuthenticationProvider())
+                .authorizeHttpRequests()
+                .requestMatchers(HttpMethod.GET, "/sheet/{id:[0-9]+}")
+                .permitAll()
+                .requestMatchers(HttpMethod.GET, "/sheet")
+                .permitAll()
+                .anyRequest().hasRole(Role.USER.authorityName)
+                .and()
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .addFilterBefore(jwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling()
+                .authenticationEntryPoint(UnAuthorizedEntryPoint())
+                .and()
+                .csrf().disable()
+                .cors().disable();
         return http.build();
     }
 }
