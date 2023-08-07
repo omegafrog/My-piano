@@ -2,6 +2,7 @@ package com.omegafrog.My.piano.app.web.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.UpdateLessonDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
@@ -38,7 +39,7 @@ public class LessonController {
     @PostMapping("/lesson")
     public JsonAPIResponse createLesson(@Validated @RequestBody LessonRegisterDto lessonRegisterDto)
             throws JsonProcessingException, EntityNotFoundException {
-        User user = getLoggedInUser();
+        User user = AuthenticationUtil.getLoggedInUser();
         LessonDto lessonDto = lessonService.createLesson(lessonRegisterDto, user);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("lesson", lessonDto);
         return new APISuccessResponse("Create new Lesson success", data, objectMapper);
@@ -66,7 +67,7 @@ public class LessonController {
             @Validated @RequestBody UpdateLessonDto updateLessonDto,
             @PathVariable Long id)
             throws JsonProcessingException, EntityNotFoundException, AccessDeniedException {
-        User user = getLoggedInUser();
+        User user = AuthenticationUtil.getLoggedInUser();
         LessonDto updated = lessonService.updateLesson(id, updateLessonDto, user);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("lesson", updated);
         return new APISuccessResponse("Lesson update success", data, objectMapper);
@@ -76,7 +77,7 @@ public class LessonController {
     public JsonAPIResponse deleteLesson(
             @PathVariable Long id)
             throws EntityNotFoundException, AccessDeniedException {
-        User user = getLoggedInUser();
+        User user = AuthenticationUtil.getLoggedInUser();
         lessonService.deleteLesson(id, user);
         return new APISuccessResponse("Lesson delete success");
     }
@@ -86,7 +87,7 @@ public class LessonController {
             @PathVariable Long id,
             @RequestBody CommentDto dto
     ) throws JsonProcessingException, AccessDeniedException, PersistenceException {
-        User loggedInUser = getLoggedInUser();
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
         List<CommentDto> commentDtos = lessonService.addComment(id, dto, loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", commentDtos);
         return new APISuccessResponse("Add Comment success.", data, objectMapper);
@@ -97,7 +98,7 @@ public class LessonController {
             @PathVariable Long id,
             @PathVariable(name = "comment-id") Long commentId
     ) throws JsonProcessingException, AccessDeniedException, PersistenceException {
-        User loggedInUser = getLoggedInUser();
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
         List<CommentDto> commentDtos = lessonService.deleteComment(id, commentId, loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", commentDtos);
         return new APISuccessResponse("Delete Comment success.", data, objectMapper);

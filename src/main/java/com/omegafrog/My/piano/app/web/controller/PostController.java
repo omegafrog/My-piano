@@ -3,6 +3,8 @@ package com.omegafrog.My.piano.app.web.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
+import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
+import com.omegafrog.My.piano.app.utils.response.ResponseUtil;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.post.CommentDto;
 import com.omegafrog.My.piano.app.web.dto.post.PostDto;
@@ -34,9 +36,9 @@ public class PostController {
     @PostMapping("")
     public JsonAPIResponse writePost(@RequestBody PostRegisterDto post)
             throws PersistenceException, JsonProcessingException, AccessDeniedException {
-        User loggedInUser = getLoggedInUser();
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
         PostDto postDto = postApplicationService.writePost(post, loggedInUser);
-        Map<String, Object> data = getStringObjectMap("post", postDto);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("post", postDto);
         return new APISuccessResponse("Write post success", data, objectMapper );
     }
 
@@ -44,23 +46,23 @@ public class PostController {
     public JsonAPIResponse findPost(@PathVariable Long id)
             throws PersistenceException, JsonProcessingException {
         PostDto postById = postApplicationService.findPostById(id);
-        Map<String, Object> data = getStringObjectMap("post", postById);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("post", postById);
         return new APISuccessResponse("Find post success", data, objectMapper);
     }
 
     @PostMapping("/{id}")
     public JsonAPIResponse updatePost(@PathVariable Long id, @RequestBody UpdatePostDto post)
             throws JsonProcessingException, PersistenceException, AccessDeniedException {
-        User loggedInUser = getLoggedInUser();
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
         PostDto postDto = postApplicationService.updatePost(id, post, loggedInUser);
-        Map<String, Object> data = getStringObjectMap("post", postDto);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("post", postDto);
         return new APISuccessResponse("update post success", data, objectMapper);
     }
 
     @DeleteMapping("/{id}")
     public JsonAPIResponse deletePost(@PathVariable Long id)
             throws PersistenceException, AccessDeniedException {
-        User loggedInUser = getLoggedInUser();
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
         postApplicationService.deletePost(id, loggedInUser);
         return new APISuccessResponse("delete post success");
     }
@@ -68,25 +70,25 @@ public class PostController {
     @PostMapping("/{id}/comment")
     public JsonAPIResponse addComment(@RequestBody CommentDto dto, @PathVariable Long id)
             throws JsonProcessingException, AccessDeniedException, PersistenceException {
-        User loggedInUser = getLoggedInUser();
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
         List<CommentDto> commentDtos = postApplicationService.addComment(id, loggedInUser, dto);
-        Map<String, Object> data = getStringObjectMap("comments", commentDtos);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", commentDtos);
         return new APISuccessResponse("add comment success.", data, objectMapper);
     }
 
     @DeleteMapping("/{id}/comment/{comment-id}")
     public JsonAPIResponse deleteComment(@PathVariable Long id, @PathVariable(name = "comment-id") Long commentId)
             throws JsonProcessingException, AccessDeniedException, PersistenceException {
-        User loggedInUser = getLoggedInUser();
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
         List<CommentDto> commentDtos = postApplicationService.deleteComment(id, commentId, loggedInUser);
-        Map<String, Object> data = getStringObjectMap("comments", commentDtos);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", commentDtos);
         return new APISuccessResponse("delete comment success.", data, objectMapper);
     }
 
     @GetMapping("/{id}/like")
     public JsonAPIResponse likePost(@PathVariable Long id)
             throws PersistenceException, AccessDeniedException {
-        User loggedInUser = getLoggedInUser();
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
         postApplicationService.likePost(id, loggedInUser);
         return new APISuccessResponse("Like post success.");
     }
@@ -94,22 +96,9 @@ public class PostController {
     @DeleteMapping("/{id}/like")
     public JsonAPIResponse dislikePost(@PathVariable Long id)
             throws PersistenceException, AccessDeniedException {
-        User loggedInUser = getLoggedInUser();
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
         postApplicationService.dislikePost(id, loggedInUser);
         return new APISuccessResponse("Dlslike post success");
-    }
-
-    public User getLoggedInUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null)
-            throw new AccessDeniedException("authentication is null");
-        return ((SecurityUser) authentication.getPrincipal()).getUser();
-    }
-
-    public Map<String, Object> getStringObjectMap(String keyName, Object object) {
-        Map<String, Object> data = new HashMap<>();
-        data.put(keyName, object);
-        return data;
     }
 
 }

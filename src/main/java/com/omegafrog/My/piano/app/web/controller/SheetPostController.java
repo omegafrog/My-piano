@@ -54,7 +54,6 @@ public class SheetPostController {
         SheetPostDto sheetPostDto = sheetPostService.writeSheetPost(dto, loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("sheetPost", sheetPostDto);
         return new APISuccessResponse("Write sheet post success.", data, objectMapper);
-
     }
 
     @PostMapping("{id}")

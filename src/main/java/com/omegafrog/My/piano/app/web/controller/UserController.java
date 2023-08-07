@@ -3,6 +3,9 @@ package com.omegafrog.My.piano.app.web.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
+import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
+import com.omegafrog.My.piano.app.utils.response.ResponseKeyName;
+import com.omegafrog.My.piano.app.utils.response.ResponseUtil;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.ReturnCommentDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
@@ -38,85 +41,76 @@ public class UserController {
     @GetMapping("/community/posts")
     public JsonAPIResponse getMyCommunityPosts()
             throws AccessDeniedException, JsonProcessingException, PersistenceException {
-        User loggedInUser = getLoggedInUser();
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
         List<PostDto> myCommunityPosts = userService.getMyCommunityPosts(loggedInUser);
-        Map<String, Object> data = getStringObjectMap("posts", myCommunityPosts);
+        Map<String, Object> data =
+                ResponseUtil.getStringObjectMap(ResponseKeyName.UPLOADED_COMMUNITY_POSTS.keyName, myCommunityPosts);
         return new APISuccessResponse("Get community posts success.", data, objectMapper);
     }
 
     @GetMapping("/lesson")
     public JsonAPIResponse getPurchasedLessons()
         throws AccessDeniedException, JsonProcessingException, PersistenceException{
-        User loggedInUser = getLoggedInUser();
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
         List<LessonDto> purchasedLessons = userService.getPurchasedLessons(loggedInUser);
-        Map<String, Object> data = getStringObjectMap("lessons", purchasedLessons);
+        Map<String, Object> data =
+                ResponseUtil.getStringObjectMap(ResponseKeyName.PURCHASED_LESSONS.keyName, purchasedLessons);
         return new APISuccessResponse("Get purchased lessons success.", data, objectMapper);
     }
 
     @GetMapping("/comments")
     public JsonAPIResponse getMyComments()
             throws JsonProcessingException, PersistenceException {
-        User loggedInUser = getLoggedInUser();
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
         List<ReturnCommentDto> myComments = userService.getMyComments(loggedInUser);
-        Map<String, Object> data = getStringObjectMap("comments", myComments);
+        Map<String, Object> data =
+                ResponseUtil.getStringObjectMap(ResponseKeyName.UPLOADED_COMMENTS.keyName, myComments);
         return new APISuccessResponse("Get all comments success.", data, objectMapper);
     }
 
     @GetMapping("/purchasedSheets")
     public JsonAPIResponse getPurchasedSheets()
             throws JsonProcessingException, PersistenceException, AccessDeniedException {
-        User loggedInUser = getLoggedInUser();
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
         List<SheetInfoDto> purchasedSheets = userService.getPurchasedSheets(loggedInUser);
-        Map<String, Object> data = getStringObjectMap("sheets", purchasedSheets);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap(ResponseKeyName.PURCHASED_SHEETS.keyName, purchasedSheets);
         return new APISuccessResponse("Get all purchased sheets success.", data, objectMapper);
     }
 
     @GetMapping("/uploadedSheets")
     public JsonAPIResponse getUploadedSheets()
         throws JsonProcessingException, PersistenceException, AccessDeniedException{
-        User loggedInUser = getLoggedInUser();
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
         List<SheetInfoDto> sheetInfoDtos = userService.uploadedSheets(loggedInUser);
-        Map<String, Object> data = getStringObjectMap("sheets", sheetInfoDtos);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap(ResponseKeyName.UPLOADED_SHEETS.keyName, sheetInfoDtos);
         return new APISuccessResponse("Get all uploaded sheets success.", data, objectMapper);
     }
 
     @GetMapping("/scrappedSheets")
     public JsonAPIResponse getScrappedSheets()
             throws JsonProcessingException, PersistenceException, AccessDeniedException {
-        User loggedInUser = getLoggedInUser();
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
         List<SheetInfoDto> scrappedSheets = userService.getScrappedSheets(loggedInUser);
-        Map<String, Object> data = getStringObjectMap("sheets", scrappedSheets);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap(ResponseKeyName.SCRAPPED_SHEETS.keyName, scrappedSheets);
         return new APISuccessResponse("Get all scrapped sheets success.", data, objectMapper);
     }
 
     @GetMapping("/follow")
-    public JsonAPIResponse getFolloingFollower()
+    public JsonAPIResponse getFollowingFollower()
         throws JsonProcessingException, PersistenceException, AccessDeniedException{
-        User loggedInUser = getLoggedInUser();
-        List<UserProfile> followingFollwer = userService.getFollowingFollwer(loggedInUser);
-        Map<String, Object> data = getStringObjectMap("follower", followingFollwer);
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+        List<UserProfile> followingFollower = userService.getFollowingFollwer(loggedInUser);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap(ResponseKeyName.FOLLOWED_USERS.keyName, followingFollower);
         return new APISuccessResponse("Get all follower success.", data, objectMapper);
     }
 
     @PostMapping("/update")
     public JsonAPIResponse updateUserInformation(@RequestBody UpdateUserDto userDto)
             throws JsonProcessingException, PersistenceException, AccessDeniedException {
-        User loggedInUser = getLoggedInUser();
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
         UserProfile userProfile = userService.updateUser(loggedInUser, userDto);
-        Map<String, Object> data = getStringObjectMap("user", userProfile);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("user", userProfile);
         return new APISuccessResponse("Update user success.", data, objectMapper);
     }
 
-    private static User getLoggedInUser() throws AccessDeniedException {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null)
-            throw new AccessDeniedException("authentication is null.");
-        return ((SecurityUser) auth.getPrincipal()).getUser();
-    }
-
-    private static Map<String, Object> getStringObjectMap(String keyname, Object item) {
-        Map<String, Object> data = new HashMap<>();
-        data.put(keyname, item);
-        return data;
-    }
 }
