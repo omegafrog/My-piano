@@ -21,6 +21,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -71,6 +72,10 @@ public class SecurityConfig {
     public CommonUserLogoutHandler commonUserLogoutHandler(){
         return new CommonUserLogoutHandler(objectMapper, inMemoryLogoutBlackListRepository());
     }
+    @Bean
+    public AuthenticationEntryPoint UnAuthorizedEntryPoint(){
+        return new AuthenticationExceptionEntryPoint(objectMapper);
+    }
 
     @Bean
     public SecurityFilterChain commonUserAuthentication(HttpSecurity http) throws Exception {
@@ -99,7 +104,7 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .exceptionHandling()
-                .authenticationEntryPoint(new AuthenticationExceptionEntryPoint(objectMapper))
+                .authenticationEntryPoint(UnAuthorizedEntryPoint())
                 .and()
                 .csrf().disable()
                 .cors().disable();
@@ -117,6 +122,9 @@ public class SecurityConfig {
                 .and()
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .exceptionHandling()
+                .authenticationEntryPoint(UnAuthorizedEntryPoint())
                 .and()
                 .addFilterBefore(jwtTokenFilter(),
                         UsernamePasswordAuthenticationFilter.class)
@@ -142,6 +150,9 @@ public class SecurityConfig {
                 .and()
                 .addFilterBefore(jwtTokenFilter(),
                         UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling()
+                .authenticationEntryPoint(UnAuthorizedEntryPoint())
+                .and()
                 .csrf().disable()
                 .cors().disable();
         return http.build();

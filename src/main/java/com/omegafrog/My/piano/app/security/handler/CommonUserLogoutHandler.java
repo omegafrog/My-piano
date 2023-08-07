@@ -1,8 +1,8 @@
 package com.omegafrog.My.piano.app.security.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.omegafrog.My.piano.app.web.util.response.APISuccessResponse;
-import com.omegafrog.My.piano.app.web.util.response.ResponseUtil;
+import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
+import com.omegafrog.My.piano.app.utils.response.ResponseUtil;
 import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

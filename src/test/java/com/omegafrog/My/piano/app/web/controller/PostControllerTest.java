@@ -14,7 +14,7 @@ import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.post.PostRegisterDto;
 import com.omegafrog.My.piano.app.web.dto.post.UpdatePostDto;
-import com.omegafrog.My.piano.app.web.util.response.JsonAPIResponse;
+import com.omegafrog.My.piano.app.utils.response.JsonAPIResponse;
 import com.omegafrog.My.piano.app.web.service.PostApplicationService;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 import org.assertj.core.api.Assertions;

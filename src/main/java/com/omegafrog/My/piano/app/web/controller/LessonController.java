@@ -7,9 +7,9 @@ import com.omegafrog.My.piano.app.web.dto.UpdateLessonDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonRegisterDto;
 import com.omegafrog.My.piano.app.web.dto.post.CommentDto;
-import com.omegafrog.My.piano.app.web.util.response.APISuccessResponse;
-import com.omegafrog.My.piano.app.web.util.response.JsonAPIResponse;
-import com.omegafrog.My.piano.app.web.util.response.ResponseUtil;
+import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
+import com.omegafrog.My.piano.app.utils.response.JsonAPIResponse;
+import com.omegafrog.My.piano.app.utils.response.ResponseUtil;
 import com.omegafrog.My.piano.app.web.service.LessonService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceException;
@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
-import static com.omegafrog.My.piano.app.web.util.AuthenticationUtil.getLoggedInUser;
+import static com.omegafrog.My.piano.app.utils.AuthenticationUtil.getLoggedInUser;
 
 @RestController
 @Slf4j

@@ -1,4 +1,4 @@
-package com.omegafrog.My.piano.app.web.util.response;
+package com.omegafrog.My.piano.app.utils.response;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
