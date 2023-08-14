@@ -7,6 +7,7 @@ import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
+import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.UpdateLessonDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonRegisterDto;
@@ -29,10 +30,14 @@ public class LessonService {
     private SheetPostRepository sheetPostRepository;
     @Autowired
     private LessonRepository lessonRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     public LessonDto createLesson(LessonRegisterDto lessonRegisterDto, User artist) throws EntityNotFoundException {
         SheetPost sheetPost = sheetPostRepository.findBySheetId(lessonRegisterDto.getSheetId())
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity : " + lessonRegisterDto.getSheetId()));
+        User user = userRepository.findById(artist.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + artist.getId()));
         Sheet sheet = sheetPost.getSheet();
         Lesson lesson = Lesson.builder()
                 .sheet(sheet)
@@ -44,7 +49,10 @@ public class LessonService {
                 .lessonProvider(artist)
                 .price(lessonRegisterDto.getPrice())
                 .build();
-        return lessonRepository.save(lesson).toDto();
+        Lesson saved = lessonRepository.save(lesson);
+        user.getUploadedLessons().add(saved);
+        userRepository.save(user);
+        return saved.toDto();
     }
 
     public List<LessonDto> getAllLessons(Pageable pageable) {

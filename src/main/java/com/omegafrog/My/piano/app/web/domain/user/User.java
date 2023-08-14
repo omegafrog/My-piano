@@ -8,6 +8,7 @@ import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.dto.user.UpdateUserDto;
 import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
+import com.omegafrog.My.piano.app.web.enums.OrderStatus;
 import com.omegafrog.My.piano.app.web.exception.payment.NotEnoughCashException;
 import com.omegafrog.My.piano.app.web.exception.payment.PaymentException;
 import com.omegafrog.My.piano.app.web.vo.user.AlarmProperties;
@@ -54,12 +55,17 @@ public class User {
     @PositiveOrZero
     private int cash;
 
+    public int chargeCash(int cash){
+        this.cash += cash;
+        return this.cash;
+    }
+
     @NotNull
     private PhoneNum phoneNum;
     @NotNull
     private AlarmProperties alarmProperties;
 
-    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
     @JoinColumn(name = "USER_ID")
     @NotNull
     private Cart cart;
@@ -82,10 +88,13 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "SHEET_ID"))
     private List<SheetPost> scrappedSheets = new ArrayList<>();
 
-    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    @OneToMany(cascade = { CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "USER_ID")
     private List<SheetPost> uploadedSheets = new ArrayList<>();
 
+    @OneToMany(cascade = { CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
+    @JoinColumn(name = "USER_ID")
+    private List<Lesson> uploadedLessons = new ArrayList<>();
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "USER_ID")
@@ -143,13 +152,14 @@ public class User {
         this.cash += cash;
     }
 
-    public void pay(Order order) throws PaymentException {
+    public void pay(Order order) throws PaymentException, ClassCastException {
         if (cash < order.getTotalPrice()) {
             throw new NotEnoughCashException("Cannot buy this item => cash:"
                     + cash + " < price:" + order.getTotalPrice());
             // 캐시 부족
         } else {
             cash -= order.getTotalPrice();
+            order.setStatus(OrderStatus.PROGRESSING);
             if (order.getItem() instanceof Lesson)
                 purchasedLessons.add((Lesson) order.getItem());
             else if (order.getItem() instanceof SheetPost)

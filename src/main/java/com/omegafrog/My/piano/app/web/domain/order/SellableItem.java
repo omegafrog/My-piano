@@ -9,7 +9,7 @@ import jakarta.persistence.*;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
-@DiscriminatorColumn
+@DiscriminatorColumn(name = "DTYPE")
 @NoArgsConstructor
 @Getter
 public class SellableItem extends Article {

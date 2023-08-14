@@ -38,6 +38,13 @@ public class UserController {
 
     private final UserApplicationService userService;
 
+    @PostMapping("/cash")
+    public JsonAPIResponse chargeCash(@RequestBody int cash) throws JsonProcessingException , PersistenceException{
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+        int chargedCash = userService.chargeCash(cash, loggedInUser);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("chargedCash", chargedCash);
+        return new APISuccessResponse("Charge cash " + cash + " success.", data, objectMapper);
+    }
     @GetMapping("/community/posts")
     public JsonAPIResponse getMyCommunityPosts()
             throws AccessDeniedException, JsonProcessingException, PersistenceException {

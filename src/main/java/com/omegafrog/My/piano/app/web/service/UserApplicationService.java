@@ -9,6 +9,8 @@ import com.omegafrog.My.piano.app.web.dto.post.PostDto;
 import com.omegafrog.My.piano.app.web.dto.sheet.SheetInfoDto;
 import com.omegafrog.My.piano.app.web.dto.user.UpdateUserDto;
 import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
+import com.omegafrog.My.piano.app.web.util.response.APISuccessResponse;
+import com.omegafrog.My.piano.app.web.util.response.ResponseUtil;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceException;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Transactional
@@ -24,6 +27,12 @@ public class UserApplicationService {
 
     public static final String USER_ENTITY_NOT_FOUNT_ERROR_MSG = "Cannot find User entity : ";
     private final UserRepository userRepository;
+
+    public int chargeCash(int cash, User loggedInuser){
+        User user = userRepository.findById(loggedInuser.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity : " + loggedInuser.getId()));
+        return user.chargeCash(cash);
+    }
 
     public List<PostDto> getMyCommunityPosts(User loggedInUser)
             throws PersistenceException {
