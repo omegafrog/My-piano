@@ -27,10 +27,17 @@ public class PostApplicationService {
     private final PostRepository postRepository;
 
     public PostDto writePost(PostRegisterDto post, User author) {
-        Post build = Post.builder().title(post.getTitle()).content(post.getContent()).author(author).build();
-        return postRepository.save(build).toDto();
+        User user = userRepository.findById(author.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity : " + author.getId()));
+        Post build = Post.builder()
+                .title(post.getTitle())
+                .content(post.getContent())
+                .author(user)
+                .build();
+        Post saved = postRepository.save(build);
+        user.getUploadedPosts().add(saved);
+        return saved.toDto();
     }
-
 
     public PostDto findPostById(Long id) {
         return postRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Cannot find post entity : " + id)).toDto();
@@ -46,8 +53,7 @@ public class PostApplicationService {
 
     public void deletePost(Long id, User loggedInUser) {
         Post post = getPostById(id);
-
-        if (post.getAuthor().equals(loggedInUser)) {
+        if(post.getAuthor().equals(loggedInUser)){
             postRepository.deleteById(id);
         } else throw new AccessDeniedException("Cannot delete other user's post");
     }

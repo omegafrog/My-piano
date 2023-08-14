@@ -18,6 +18,11 @@ public class VideoPost extends Article {
     @NotEmpty
     private String videoUrl;
 
+    @Override
+    public void setAuthor(User user) {
+
+    }
+
     @Builder
     public VideoPost(User author, String title, String content, String videoUrl) {
         this.author=author;
