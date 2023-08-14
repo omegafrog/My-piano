@@ -117,6 +117,11 @@ public class LessonService {
         } else throw new EntityNotFoundException("Cannot find Comment entity : " + commentId);
     }
 
+    public List<CommentDto> getAllComments(Long id){
+        Lesson lesson = lessonRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find Lesson entity : " + id));
+        return lesson.getComments().stream().map(Comment::toDto).toList();
+    }
     private static boolean isCommentAuthorEquals(User loggedInUser, Comment comment) {
         return comment.getAuthor().equals(loggedInUser);
     }
@@ -125,9 +130,35 @@ public class LessonService {
         return comment.getId().equals(commentId);
     }
 
+
     private Lesson getLesson(Long lessonId) {
         return lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson Entity : " + lessonId));
     }
 
+    public List<CommentDto> likeComment(Long id, Long commentId) {
+        Lesson lesson = lessonRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson entity : " + id));
+        lesson.getComments().forEach(
+                comment -> {
+                    if(comment.getId().equals(commentId))
+                        comment.increaseLikeCount();
+                }
+        );
+        Lesson saved = lessonRepository.save(lesson);
+        return saved.getComments().stream().map(Comment::toDto).toList();
+    }
+
+    public List<CommentDto> dislikeComment(Long id, Long commentId) {
+        Lesson lesson = lessonRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson entity : " + id));
+        lesson.getComments().forEach(
+                comment -> {
+                    if(comment.getId().equals(commentId))
+                        comment.decreaseLikeCount();
+                }
+        );
+        Lesson saved = lessonRepository.save(lesson);
+        return saved.getComments().stream().map(Comment::toDto).toList();
+    }
 }

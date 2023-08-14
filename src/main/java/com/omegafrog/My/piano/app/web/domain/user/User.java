@@ -32,7 +32,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @NoArgsConstructor
 @Getter
 public class User {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Getter
@@ -125,9 +124,9 @@ public class User {
     @OneToMany(mappedBy = "author", orphanRemoval = true, cascade = CascadeType.REMOVE)
     private List<Comment> writedComments = new ArrayList<>();
 
-    // TODO : USER에서 Cart를 팩토리로 생성해보자.
     @Builder
     public User(String name, String email, Cart cart, LoginMethod loginMethod, String profileSrc, PhoneNum phoneNum, int cash) {
+
         this.email = email;
         this.name = name;
         this.alarmProperties = new AlarmProperties();
@@ -137,7 +136,6 @@ public class User {
         this.cart = cart;
         this.cash = cash;
     }
-
 
     public User update(UpdateUserDto userDto) {
         this.name = userDto.getName();
