@@ -38,14 +38,13 @@ public class LessonController {
 
     @PostMapping("/lesson")
     public JsonAPIResponse createLesson(@Validated @RequestBody LessonRegisterDto lessonRegisterDto)
-            throws JsonProcessingException, EntityNotFoundException {
+            throws JsonProcessingException {
         User user = AuthenticationUtil.getLoggedInUser();
         LessonDto lessonDto = lessonService.createLesson(lessonRegisterDto, user);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("lesson", lessonDto);
         return new APISuccessResponse("Create new Lesson success", data, objectMapper);
     }
 
-    //TODO : 로그인 상관없이 접근 가능
     @GetMapping("/lessons")
     public JsonAPIResponse getLessons(Pageable pageable) throws JsonProcessingException {
         List<LessonDto> allLessons = lessonService.getAllLessons(pageable);
@@ -53,8 +52,6 @@ public class LessonController {
         return new APISuccessResponse("Success load all lessons.", data, objectMapper);
     }
 
-
-    //TODO : 로그인 상관없이 접근 가능
     @GetMapping("/lesson/{id}")
     public JsonAPIResponse getLesson(@PathVariable Long id) throws JsonProcessingException {
         LessonDto lessonById = lessonService.getLessonById(id);
@@ -83,48 +80,22 @@ public class LessonController {
     @PostMapping("/lesson/{id}/comment")
     public JsonAPIResponse addComment(
             @PathVariable Long id,
-            @RequestBody CommentDto dto
-    ) throws JsonProcessingException, AccessDeniedException, PersistenceException {
+            @Validated @RequestBody CommentDto dto
+    ) throws JsonProcessingException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         List<CommentDto> commentDtos = lessonService.addComment(id, dto, loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", commentDtos);
         return new APISuccessResponse("Add Comment success.", data, objectMapper);
     }
 
-    @GetMapping("/lesson/{id}/comment")
-    public JsonAPIResponse getComments(@PathVariable Long id)
-            throws JsonProcessingException, PersistenceException {
-        List<CommentDto> allComments = lessonService.getAllComments(id);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", allComments);
-        return new APISuccessResponse("Get All comments success.", data, objectMapper);
-    }
-
-    @GetMapping("/lesson/{id}/comment/{comment-id}/like")
-    public JsonAPIResponse likeComments(@PathVariable Long id, @PathVariable(name = "comment-id") Long commentId)
-            throws JsonProcessingException, PersistenceException {
-        List<CommentDto> commentDtos = lessonService.likeComment(id, commentId);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", commentDtos);
-        return new APISuccessResponse("Like comment success.", data, objectMapper);
-    }
-
-    @GetMapping("/lesson/{id}/comment/{comment-id}/dislike")
-    public JsonAPIResponse dislikeComments(@PathVariable Long id, @PathVariable(name = "comment-id") Long commentId)
-            throws JsonProcessingException, PersistenceException {
-        List<CommentDto> commentDtos = lessonService.dislikeComment(id, commentId);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", commentDtos);
-        return new APISuccessResponse("Like comment success.", data, objectMapper);
-    }
-
     @DeleteMapping("/lesson/{id}/comment/{comment-id}")
     public JsonAPIResponse deleteComment(
             @PathVariable Long id,
             @PathVariable(name = "comment-id") Long commentId
-    ) throws JsonProcessingException, AccessDeniedException, PersistenceException {
+    ) throws JsonProcessingException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         List<CommentDto> commentDtos = lessonService.deleteComment(id, commentId, loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", commentDtos);
         return new APISuccessResponse("Delete Comment success.", data, objectMapper);
     }
-
-
 }

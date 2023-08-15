@@ -33,7 +33,7 @@ public class LessonService {
     @Autowired
     private UserRepository userRepository;
 
-    public LessonDto createLesson(LessonRegisterDto lessonRegisterDto, User artist) throws EntityNotFoundException {
+    public LessonDto createLesson(LessonRegisterDto lessonRegisterDto, User artist) {
         SheetPost sheetPost = sheetPostRepository.findBySheetId(lessonRegisterDto.getSheetId())
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity : " + lessonRegisterDto.getSheetId()));
         User user = userRepository.findById(artist.getId())
@@ -60,14 +60,13 @@ public class LessonService {
                 .stream().map(Lesson::toDto).toList();
     }
 
-    public LessonDto getLessonById(Long id) throws EntityNotFoundException {
+    public LessonDto getLessonById(Long id) {
         return lessonRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson entity : " + id))
                 .toDto();
     }
 
-    public LessonDto updateLesson(Long lessonId, UpdateLessonDto updateLessonDto, User user)
-            throws AccessDeniedException, EntityNotFoundException {
+    public LessonDto updateLesson(Long lessonId, UpdateLessonDto updateLessonDto, User user) {
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson entity : " + lessonId));
         if (!lesson.getAuthor().equals(user)) {
@@ -81,7 +80,7 @@ public class LessonService {
         return lessonRepository.save(updated).toDto();
     }
 
-    public void deleteLesson(Long lessonId, User user) throws AccessDeniedException, EntityNotFoundException {
+    public void deleteLesson(Long lessonId, User user) {
         Lesson lesson = getLesson(lessonId);
         if (!lesson.getAuthor().equals(user))
             throw new AccessDeniedException("Cannot update other user's lesson.");
@@ -97,8 +96,7 @@ public class LessonService {
         return lessonRepository.save(lesson).getComments().stream().map(Comment::toDto).toList();
     }
 
-    public List<CommentDto> deleteComment(Long lessonId, Long commentId, User loggedInUser)
-            throws PersistenceException, AccessDeniedException {
+    public List<CommentDto> deleteComment(Long lessonId, Long commentId, User loggedInUser) {
         Lesson lesson = getLesson(lessonId);
 
         boolean isCommentRemoved = lesson.getComments().removeIf(
@@ -111,17 +109,18 @@ public class LessonService {
                     return false;
                 }
         );
-        if(isCommentRemoved){
+        if (isCommentRemoved) {
             Lesson saved = lessonRepository.save(lesson);
             return saved.getComments().stream().map(Comment::toDto).toList();
         } else throw new EntityNotFoundException("Cannot find Comment entity : " + commentId);
     }
 
-    public List<CommentDto> getAllComments(Long id){
+    public List<CommentDto> getAllComments(Long id) {
         Lesson lesson = lessonRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find Lesson entity : " + id));
         return lesson.getComments().stream().map(Comment::toDto).toList();
     }
+
     private static boolean isCommentAuthorEquals(User loggedInUser, Comment comment) {
         return comment.getAuthor().equals(loggedInUser);
     }
@@ -141,7 +140,7 @@ public class LessonService {
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson entity : " + id));
         lesson.getComments().forEach(
                 comment -> {
-                    if(comment.getId().equals(commentId))
+                    if (comment.getId().equals(commentId))
                         comment.increaseLikeCount();
                 }
         );
@@ -154,7 +153,7 @@ public class LessonService {
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson entity : " + id));
         lesson.getComments().forEach(
                 comment -> {
-                    if(comment.getId().equals(commentId))
+                    if (comment.getId().equals(commentId))
                         comment.decreaseLikeCount();
                 }
         );

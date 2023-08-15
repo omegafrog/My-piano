@@ -224,6 +224,27 @@ class LessonControllerTest {
                     .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
                     .andDo(print());
         }
+        @Test
+        @Transactional
+        @DisplayName("로그인하지 않으면 lesson을 등록할 수 없다.")
+        void createLessonAuthorizationTest() throws Exception {
+            LessonRegisterDto lessonRegisterDto = LessonRegisterDto.builder()
+                    .sheetId(lesson.getSheet().getId())
+                    .title(lesson.getTitle())
+                    .videoInformation(lesson.getVideoInformation())
+                    .lessonInformation(lesson.getLessonInformation())
+                    .price(lesson.getPrice())
+                    .subTitle(lesson.getContent())
+                    .build();
+            String body = objectMapper.writeValueAsString(lessonRegisterDto);
+            mockMvc.perform(post("/lesson")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(body)
+                            )
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.toString()))
+                    .andDo(print());
+        }
 
         @Test
         @Transactional
@@ -430,6 +451,15 @@ class LessonControllerTest {
 
         Assertions.assertThat(lessonDto.getId()).isEqualTo(saved1.getId());
         Assertions.assertThat(lessonDto.getTitle()).isEqualTo(saved1.getTitle());
+    }
+    @Test
+    @Transactional
+    @DisplayName("존재하지 않는 Lesson을 조회할 수 없다.")
+    void findLessonFailedTest() throws Exception {
+        mockMvc.perform(get("/lesson/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(HttpStatus.BAD_REQUEST.toString()))
+                .andDo(print());
     }
 
     @Test
