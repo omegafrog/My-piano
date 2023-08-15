@@ -76,7 +76,7 @@ public class LessonService {
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + updateLessonDto.getSheetId()));
         Sheet sheet = sheetPost.getSheet();
         Lesson updated = lesson.update(updateLessonDto, sheet);
-        return lessonRepository.save(updated).toDto();
+        return updated.toDto();
     }
 
     public void deleteLesson(Long lessonId, User user) {
@@ -143,8 +143,7 @@ public class LessonService {
                         comment.increaseLikeCount();
                 }
         );
-        Lesson saved = lessonRepository.save(lesson);
-        return saved.getComments().stream().map(Comment::toDto).toList();
+        return lesson.getComments().stream().map(Comment::toDto).toList();
     }
 
     public List<CommentDto> dislikeComment(Long id, Long commentId) {
@@ -156,7 +155,6 @@ public class LessonService {
                         comment.decreaseLikeCount();
                 }
         );
-        Lesson saved = lessonRepository.save(lesson);
-        return saved.getComments().stream().map(Comment::toDto).toList();
+        return lesson.getComments().stream().map(Comment::toDto).toList();
     }
 }

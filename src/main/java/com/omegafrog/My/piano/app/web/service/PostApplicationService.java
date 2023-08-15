@@ -48,8 +48,8 @@ public class PostApplicationService {
     public PostDto updatePost(Long id, UpdatePostDto updatePostDto, User loggedInUser) {
         Post post = getPostById(id);
         if (post.getAuthor().equals(loggedInUser)) {
-            Post updated = post.update(updatePostDto);
-            return postRepository.save(updated).toDto();
+            return post.update(updatePostDto).toDto();
+
         } else throw new AccessDeniedException("Cannot update other user's post");
     }
 
@@ -96,7 +96,6 @@ public class PostApplicationService {
         Post post = getPostById(postId);
         post.increaseLikedCount();
         byId.addLikePost(post);
-        userRepository.save(byId);
     }
 
     public void dislikePost(Long id, User loggedInUser){

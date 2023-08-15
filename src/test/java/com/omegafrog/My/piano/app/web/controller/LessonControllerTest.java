@@ -475,6 +475,7 @@ class LessonControllerTest {
                                 .runningTime(LocalTime.of(0, 20))
                                 .build())
                 .build();
+        lessonRepository.save(lesson2);
         MvcResult mvcResult = mockMvc.perform(get("/lessons")
                         .param("page","0")
                         .param("size","10"))

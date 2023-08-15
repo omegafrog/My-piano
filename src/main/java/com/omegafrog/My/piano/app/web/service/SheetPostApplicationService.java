@@ -68,8 +68,7 @@ public class SheetPostApplicationService {
         SheetPost sheetPost = sheetPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
         if (sheetPost.getAuthor().equals(loggedInUser)) {
-            SheetPost updated = sheetPost.update(dto);
-            return sheetPostRepository.save(updated).toDto();
+            return sheetPost.update(dto).toDto();
         } else throw new AccessDeniedException("Cannot update other user's sheet post." + id);
     }
 
@@ -116,8 +115,8 @@ public class SheetPostApplicationService {
                         comment.increaseLikeCount();
                 }
         );
-        SheetPost saved = sheetPostRepository.save(sheetPost);
-        return saved.getComments().stream().map(Comment::toDto).toList();
+
+        return sheetPost.getComments().stream().map(Comment::toDto).toList();
     }
 
     public List<CommentDto> dislikeComment(Long id, Long commentId) {
@@ -129,7 +128,6 @@ public class SheetPostApplicationService {
                         comment.decreaseLikeCount();
                 }
         );
-        SheetPost saved = sheetPostRepository.save(sheetPost);
-        return saved.getComments().stream().map(Comment::toDto).toList();
+        return sheetPost.getComments().stream().map(Comment::toDto).toList();
     }
 }

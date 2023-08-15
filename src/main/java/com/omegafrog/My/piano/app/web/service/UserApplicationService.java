@@ -1,6 +1,10 @@
 package com.omegafrog.My.piano.app.web.service;
 
+import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
+import com.omegafrog.My.piano.app.web.domain.article.Comment;
+import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
 import com.omegafrog.My.piano.app.web.domain.post.Post;
+import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.ReturnCommentDto;
@@ -16,7 +20,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
 
 @Service
 @Transactional
@@ -28,113 +31,59 @@ public class UserApplicationService {
 
     public int chargeCash(int cash, User loggedInuser){
         User user = userRepository.findById(loggedInuser.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity : " + loggedInuser.getId()));
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInuser.getId()));
         return user.chargeCash(cash);
     }
 
     public List<PostDto> getMyCommunityPosts(User loggedInUser)
             throws PersistenceException {
         User user = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException(USER_ENTITY_NOT_FOUNT_ERROR_MSG + loggedInUser.getId()));
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInUser.getId()));
         return user.getUploadedPosts().stream().map(Post::toDto).toList();
     }
 
     public List<ReturnCommentDto> getMyComments(User loggedInUser)
             throws PersistenceException {
         User user = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException(USER_ENTITY_NOT_FOUNT_ERROR_MSG + loggedInUser.getId()));
-        return user.getWritedComments().stream().map(
-                comment -> ReturnCommentDto.builder()
-                        .id(comment.getId())
-                        .content(comment.getContent())
-                        .targetId(comment.getTarget().getId())
-                        .likeCount(comment.getLikeCount())
-                        .author(comment.getAuthor().getUserProfile())
-                        .createdAt(comment.getCreatedAt())
-                        .build()
-        ).toList();
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInUser.getId()));
+        return user.getWritedComments().stream().map(Comment::toReturnCommentDto).toList();
     }
 
     public List<SheetInfoDto> getPurchasedSheets(User loggedInUser) {
         User user = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException(USER_ENTITY_NOT_FOUNT_ERROR_MSG+ loggedInUser.getId()));
-        return user.getPurchasedSheets().stream().map(
-                sheetPost -> SheetInfoDto.builder()
-                        .id(sheetPost.getId())
-                        .title(sheetPost.getTitle())
-                        .sheetUrl(sheetPost.getSheet().getFilePath())
-                        .artist(sheetPost.getAuthor().getUserProfile())
-                        .createdAt(sheetPost.getCreatedAt())
-                        .build()
-        ).toList();
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER+ loggedInUser.getId()));
+        return user.getPurchasedSheets().stream().map(SheetPost::toInfoDto).toList();
 
     }
 
     public List<SheetInfoDto> uploadedSheets(User loggedInUser) {
         User user = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException(USER_ENTITY_NOT_FOUNT_ERROR_MSG + loggedInUser.getId()));
-        return user.getUploadedSheets().stream().map(
-                sheetPost -> SheetInfoDto.builder()
-                        .id(sheetPost.getId())
-                        .title(sheetPost.getTitle())
-                        .sheetUrl(sheetPost.getSheet().getFilePath())
-                        .artist(sheetPost.getAuthor().getUserProfile())
-                        .createdAt(sheetPost.getCreatedAt())
-                        .build()
-        ).toList();
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInUser.getId()));
+        return user.getUploadedSheets().stream().map(SheetPost::toInfoDto).toList();
     }
 
     public List<SheetInfoDto> getScrappedSheets(User loggedInUser) {
         User user = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException(USER_ENTITY_NOT_FOUNT_ERROR_MSG + loggedInUser.getId()));
-        return user.getScrappedSheets().stream().map(
-                sheetPost -> SheetInfoDto.builder()
-                        .id(sheetPost.getId())
-                        .title(sheetPost.getTitle())
-                        .sheetUrl(sheetPost.getSheet().getFilePath())
-                        .artist(sheetPost.getAuthor().getUserProfile())
-                        .createdAt(sheetPost.getCreatedAt())
-                        .build()
-        ).toList();
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInUser.getId()));
+        return user.getScrappedSheets().stream().map(SheetPost::toInfoDto).toList();
     }
 
-    public List<com.omegafrog.My.piano.app.web.dto.user.UserProfile> getFollowingFollwer(User loggedInUser) {
+    public List<com.omegafrog.My.piano.app.web.dto.user.UserProfile> getFollowingFollower(User loggedInUser) {
         User user = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException(USER_ENTITY_NOT_FOUNT_ERROR_MSG + loggedInUser.getId()));
-        return user.getFollowed().stream().map(
-                follower -> com.omegafrog.My.piano.app.web.dto.user.UserProfile.builder()
-                        .name(follower.getName())
-                        .profileSrc(follower.getProfileSrc())
-                        .id(follower.getId())
-                        .build()
-        ).toList();
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInUser.getId()));
+        return user.getFollowed().stream().map(User::getUserProfile).toList();
     }
 
     public List<LessonDto> getPurchasedLessons(User loggedInUserProfile) {
         User userProfile = userRepository.findById(loggedInUserProfile.getId())
-                .orElseThrow(() -> new EntityNotFoundException(USER_ENTITY_NOT_FOUNT_ERROR_MSG + loggedInUserProfile.getId()));
-       return userProfile.getPurchasedLessons().stream().map(
-                lesson -> LessonDto.builder()
-                        .id(lesson.getId())
-                        .lessonProvider(lesson.getAuthor().getUserProfile())
-                        .lessonInformation(lesson.getLessonInformation())
-                        .title(lesson.getTitle())
-                        .viewCount(lesson.getViewCount())
-                        .subTitle(lesson.getContent())
-                        .sheet(lesson.getSheet().toSheetDto())
-                        .build()
-        ).toList();
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInUserProfile.getId()));
+       return userProfile.getPurchasedLessons().stream().map(Lesson::toDto).toList();
     }
 
     public UserProfile updateUser(User loggedInUser, UpdateUserDto userDto) {
         User user = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException(USER_ENTITY_NOT_FOUNT_ERROR_MSG + loggedInUser.getId()));
-        User updated = user.update(userDto);
-        User save = userRepository.save(updated);
-        return UserProfile.builder()
-                .name(save.getName())
-                .profileSrc(save.getProfileSrc())
-                .id(save.getId())
-                .build();
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInUser.getId()));
+        return user.update(userDto).getUserProfile();
+
     }
 }

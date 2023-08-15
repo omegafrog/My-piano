@@ -143,8 +143,6 @@ class PostControllerTest {
             ReflectionTestUtils.setField(build, "title", updateDto.getTitle());
             ReflectionTestUtils.setField(build, "content", updateDto.getContent());
 
-            Mockito.when(postRepository.save(build)).thenReturn(build);
-
 
             JsonAPIResponse response = controller.updatePost(0L, updateDto);
 

@@ -35,7 +35,7 @@ public class UserController {
     private final UserApplicationService userService;
 
     @PostMapping("/cash")
-    public JsonAPIResponse chargeCash(@RequestBody int cash) throws JsonProcessingException , PersistenceException{
+    public JsonAPIResponse chargeCash(@RequestBody int cash) throws JsonProcessingException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         int chargedCash = userService.chargeCash(cash, loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("chargedCash", chargedCash);
@@ -43,7 +43,7 @@ public class UserController {
     }
     @GetMapping("/community/posts")
     public JsonAPIResponse getMyCommunityPosts()
-            throws AccessDeniedException, JsonProcessingException, PersistenceException {
+            throws AccessDeniedException, JsonProcessingException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         List<PostDto> myCommunityPosts = userService.getMyCommunityPosts(loggedInUser);
         Map<String, Object> data =
@@ -53,7 +53,7 @@ public class UserController {
 
     @GetMapping("/lesson")
     public JsonAPIResponse getPurchasedLessons()
-        throws AccessDeniedException, JsonProcessingException, PersistenceException{
+        throws AccessDeniedException, JsonProcessingException{
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         List<LessonDto> purchasedLessons = userService.getPurchasedLessons(loggedInUser);
         Map<String, Object> data =
@@ -63,7 +63,7 @@ public class UserController {
 
     @GetMapping("/comments")
     public JsonAPIResponse getMyComments()
-            throws JsonProcessingException, PersistenceException {
+            throws JsonProcessingException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         List<ReturnCommentDto> myComments = userService.getMyComments(loggedInUser);
         Map<String, Object> data =
@@ -73,7 +73,7 @@ public class UserController {
 
     @GetMapping("/purchasedSheets")
     public JsonAPIResponse getPurchasedSheets()
-            throws JsonProcessingException, PersistenceException, AccessDeniedException {
+            throws JsonProcessingException{
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         List<SheetInfoDto> purchasedSheets = userService.getPurchasedSheets(loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap(ResponseKeyName.PURCHASED_SHEETS.keyName, purchasedSheets);
@@ -91,7 +91,7 @@ public class UserController {
 
     @GetMapping("/scrappedSheets")
     public JsonAPIResponse getScrappedSheets()
-            throws JsonProcessingException, PersistenceException, AccessDeniedException {
+            throws JsonProcessingException{
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         List<SheetInfoDto> scrappedSheets = userService.getScrappedSheets(loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap(ResponseKeyName.SCRAPPED_SHEETS.keyName, scrappedSheets);
@@ -100,16 +100,16 @@ public class UserController {
 
     @GetMapping("/follow")
     public JsonAPIResponse getFollowingFollower()
-        throws JsonProcessingException, PersistenceException, AccessDeniedException{
+        throws JsonProcessingException{
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        List<UserProfile> followingFollower = userService.getFollowingFollwer(loggedInUser);
+        List<UserProfile> followingFollower = userService.getFollowingFollower(loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap(ResponseKeyName.FOLLOWED_USERS.keyName, followingFollower);
         return new APISuccessResponse("Get all follower success.", data, objectMapper);
     }
 
     @PostMapping("/update")
     public JsonAPIResponse updateUserInformation(@RequestBody UpdateUserDto userDto)
-            throws JsonProcessingException, PersistenceException, AccessDeniedException {
+            throws JsonProcessingException{
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         UserProfile userProfile = userService.updateUser(loggedInUser, userDto);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("user", userProfile);
