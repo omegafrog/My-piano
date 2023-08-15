@@ -1,6 +1,7 @@
 package com.omegafrog.My.piano.app.web.service;
 
 
+import com.omegafrog.My.piano.app.utils.exception.payment.ExceptionMessage;
 import com.omegafrog.My.piano.app.web.domain.article.Comment;
 import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.post.PostRepository;
@@ -28,7 +29,7 @@ public class PostApplicationService {
 
     public PostDto writePost(PostRegisterDto post, User author) {
         User user = userRepository.findById(author.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity : " + author.getId()));
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + author.getId()));
         Post build = Post.builder()
                 .title(post.getTitle())
                 .content(post.getContent())
@@ -40,10 +41,11 @@ public class PostApplicationService {
     }
 
     public PostDto findPostById(Long id) {
-        return postRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Cannot find post entity : " + id)).toDto();
+        return postRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_POST + id)).toDto();
     }
 
-    public PostDto updatePost(Long id, UpdatePostDto updatePostDto, User loggedInUser) throws AccessDeniedException {
+    public PostDto updatePost(Long id, UpdatePostDto updatePostDto, User loggedInUser) {
         Post post = getPostById(id);
         if (post.getAuthor().equals(loggedInUser)) {
             Post updated = post.update(updatePostDto);
@@ -53,7 +55,7 @@ public class PostApplicationService {
 
     public void deletePost(Long id, User loggedInUser) {
         Post post = getPostById(id);
-        if(post.getAuthor().equals(loggedInUser)){
+        if (post.getAuthor().equals(loggedInUser)) {
             postRepository.deleteById(id);
         } else throw new AccessDeniedException("Cannot delete other user's post");
     }
@@ -66,21 +68,20 @@ public class PostApplicationService {
         return saved.getComments().stream().map(Comment::toDto).toList();
     }
 
-    private Post getPostById(Long id) throws EntityNotFoundException {
-        return postRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Cannot find post entity : " + id));
+    private Post getPostById(Long id) {
+        return postRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_POST+ id));
     }
 
-    public List<CommentDto> deleteComment(Long id, Long commentId, User loggedInUser)
-            throws EntityNotFoundException, AccessDeniedException{
+    public List<CommentDto> deleteComment(Long id, Long commentId, User loggedInUser) {
         Post post = getPostById(id);
         if (!isCommentRemoved(commentId, loggedInUser, post))
-            throw new EntityNotFoundException("Cannot find Comment entity : " + commentId);
+            throw new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_COMMENT + commentId);
         Post saved = postRepository.save(post);
         return saved.getComments().stream().map(Comment::toDto).toList();
     }
 
-    private static boolean isCommentRemoved(Long commentId, User loggedInUser, Post post)
-            throws AccessDeniedException {
+    private static boolean isCommentRemoved(Long commentId, User loggedInUser, Post post) {
         return post.getComments().removeIf(comment -> {
             if (comment.getId().equals(commentId)) {
                 if (comment.getAuthor().equals(loggedInUser)) return true;
@@ -90,14 +91,15 @@ public class PostApplicationService {
     }
 
     public void likePost(Long postId, User user) {
-        User byId = userRepository.findById(user.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + user.getId()));
+        User byId = userRepository.findById(user.getId())
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + user.getId()));
         Post post = getPostById(postId);
         post.increaseLikedCount();
         byId.addLikePost(post);
         userRepository.save(byId);
     }
 
-    public void dislikePost(Long id, User loggedInUser) throws EntityNotFoundException {
+    public void dislikePost(Long id, User loggedInUser){
         getPostById(id);
         if (!loggedInUser.dislikePost(id)) {
             throw new EntityNotFoundException("Cannot find post entity that you liked.");
