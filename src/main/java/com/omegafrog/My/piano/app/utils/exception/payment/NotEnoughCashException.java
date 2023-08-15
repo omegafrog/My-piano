@@ -1,4 +1,4 @@
-package com.omegafrog.My.piano.app.web.exception.payment;
+package com.omegafrog.My.piano.app.utils.exception.payment;
 
 public class NotEnoughCashException extends PaymentException {
     public NotEnoughCashException() {

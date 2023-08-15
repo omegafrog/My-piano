@@ -1,13 +1,10 @@
 package com.omegafrog.My.piano.app.web.domain.cart;
 
 import com.omegafrog.My.piano.app.web.domain.order.Order;
-import com.omegafrog.My.piano.app.web.domain.order.SellableItem;
-import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
-import com.omegafrog.My.piano.app.web.exception.payment.PaymentException;
+import com.omegafrog.My.piano.app.utils.exception.payment.PaymentException;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
