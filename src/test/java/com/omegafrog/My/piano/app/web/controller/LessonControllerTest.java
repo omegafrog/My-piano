@@ -1,15 +1,11 @@
 package com.omegafrog.My.piano.app.web.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
-import com.omegafrog.My.piano.app.security.entity.authorities.Role;
 import com.omegafrog.My.piano.app.security.exception.UsernameAlreadyExistException;
 import com.omegafrog.My.piano.app.security.service.CommonUserService;
-import com.omegafrog.My.piano.app.web.domain.article.Comment;
-import com.omegafrog.My.piano.app.web.domain.cart.Cart;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonInformation;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
@@ -45,9 +41,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.LinkedMultiValueMap;
 
-import java.io.UnsupportedEncodingException;
 import java.time.LocalTime;
 import java.util.*;
 
@@ -78,8 +72,6 @@ class LessonControllerTest {
     User artist;
     Lesson lesson;
     SheetPost saved;
-    SecurityUser savedSecurityUser;
-
 
     @BeforeAll
     void settings() throws UsernameAlreadyExistException {
@@ -273,7 +265,7 @@ class LessonControllerTest {
             long id = objectMapper.readTree(text).get("lesson").get("id").asLong();
             Optional<Lesson> byId = lessonRepository.findById(id);
             Assertions.assertThat(byId).isPresent();
-            Assertions.assertThat(byId.get()).isEqualTo(savedLesson);
+            Assertions.assertThat(byId).contains(savedLesson);
             Assertions.assertThat(byId.get().getTitle()).isEqualTo("changedTitle");
 
 
@@ -347,7 +339,6 @@ class LessonControllerTest {
             String contentAsString = mvcResult.getResponse().getContentAsString();
             String text = objectMapper.readTree(contentAsString).get("serializedData").asText();
             String content = objectMapper.readTree(text).get("comments").get(0).get("content").asText();
-            Long commentId = objectMapper.readTree(text).get("comments").get(0).get("id").asLong();
             Assertions.assertThat(content).isEqualTo("comment");
         }
 
@@ -386,7 +377,6 @@ class LessonControllerTest {
                     .andReturn();
             String contentAsString = mvcResult.getResponse().getContentAsString();
             String text = objectMapper.readTree(contentAsString).get("serializedData").asText();
-            String content = objectMapper.readTree(text).get("comments").get(0).get("content").asText();
             Long commentId = objectMapper.readTree(text).get("comments").get(0).get("id").asLong();
 
             MvcResult deleteCommentResult = mockMvc.perform(delete("/lesson/" + savedLesson.getId() + "/comment/" + commentId)
@@ -485,7 +475,6 @@ class LessonControllerTest {
                                 .runningTime(LocalTime.of(0, 20))
                                 .build())
                 .build();
-        Lesson saved2 = lessonRepository.save(lesson2);
         MvcResult mvcResult = mockMvc.perform(get("/lessons")
                         .param("page","0")
                         .param("size","10"))

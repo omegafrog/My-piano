@@ -9,7 +9,6 @@ import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -30,7 +29,7 @@ public class ExceptionAdvisor {
         List<ObjectError> allErrors = bindingResult.getAllErrors();
         allErrors.forEach(objectError -> {
             FieldError fieldError = (FieldError) objectError;
-            builder.append(fieldError.getField() + " " + fieldError.getDefaultMessage());
+            builder.append(fieldError.getField()).append(" ").append(fieldError.getDefaultMessage());
         });
         return new APIBadRequestResponse(builder.toString());
     }
