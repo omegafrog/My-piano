@@ -305,6 +305,10 @@ class CartControllerTest {
                         .cookie(refreshToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()));
+
+        Optional<User> byId = userRepository.findById(user.getUser().getId());
+        System.out.println("byId.get().getCash() = " + byId.get().getCash());
+        Assertions.assertThat(byId.get().getCash()).isLessThan(20000);
     }
 
     @AfterAll

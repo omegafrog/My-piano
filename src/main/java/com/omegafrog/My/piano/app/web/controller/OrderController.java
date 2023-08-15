@@ -8,8 +8,6 @@ import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.order.OrderDto;
 import com.omegafrog.My.piano.app.web.dto.order.OrderRegisterDto;
 import com.omegafrog.My.piano.app.web.service.OrderService;
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.persistence.PersistenceException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +30,7 @@ public class OrderController {
 
     @PostMapping(path = {"/sheet/buy", "/lesson/buy"})
     public JsonAPIResponse orderItem(@Validated @RequestBody OrderRegisterDto order, HttpServletRequest request)
-            throws JsonProcessingException, EntityNotFoundException {
+            throws JsonProcessingException{
         String mainResource = getMainResourceName(request);
         OrderDto createdOrder = createMainResourceOrder(order, mainResource);
         OrderDto processedOrder = orderService.makePayment(createdOrder);
@@ -50,13 +48,13 @@ public class OrderController {
     }
 
     @GetMapping(path = "/order/{id}/cancel")
-    public JsonAPIResponse cancelOrder(@PathVariable Long id) throws PersistenceException {
+    public JsonAPIResponse cancelOrder(@PathVariable Long id){
         orderService.deleteOrder(id);
         return new APISuccessResponse("Cancel order success.");
     }
 
     @GetMapping(path = "/order")
-    public JsonAPIResponse getOrders() throws JsonProcessingException, PersistenceException {
+    public JsonAPIResponse getOrders() throws JsonProcessingException{
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         List<OrderDto> allOrders = orderService.getAllOrders(loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("orders", allOrders);
