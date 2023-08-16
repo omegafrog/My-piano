@@ -1,6 +1,6 @@
 package com.omegafrog.My.piano.app.web.dto;
 
-import com.omegafrog.My.piano.app.web.dto.post.CommentDto;
+import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
 import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;

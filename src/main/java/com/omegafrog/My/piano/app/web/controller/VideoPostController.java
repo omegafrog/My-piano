@@ -14,6 +14,7 @@ import com.omegafrog.My.piano.app.web.dto.videoPost.VideoPostDto;
 import com.omegafrog.My.piano.app.web.dto.videoPost.VideoPostRegisterDto;
 import com.omegafrog.My.piano.app.web.service.VideoPostApplicationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -66,7 +67,7 @@ public class VideoPostController {
     }
 
     @PostMapping("/{id}/comment")
-    public JsonAPIResponse addComment(@RequestBody CommentDto dto, @PathVariable Long id)
+    public JsonAPIResponse addComment(@RequestBody RegisterCommentDto dto, @PathVariable Long id)
             throws JsonProcessingException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         List<CommentDto> commentDtos = videoPostApplicationService.addComment(id, loggedInUser, dto);

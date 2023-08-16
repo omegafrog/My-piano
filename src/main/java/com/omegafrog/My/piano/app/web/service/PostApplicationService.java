@@ -7,7 +7,8 @@ import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.post.PostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
-import com.omegafrog.My.piano.app.web.dto.post.CommentDto;
+import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
+import com.omegafrog.My.piano.app.web.dto.comment.RegisterCommentDto;
 import com.omegafrog.My.piano.app.web.dto.post.PostDto;
 import com.omegafrog.My.piano.app.web.dto.post.PostRegisterDto;
 import com.omegafrog.My.piano.app.web.dto.post.UpdatePostDto;
@@ -60,7 +61,7 @@ public class PostApplicationService {
         } else throw new AccessDeniedException("Cannot delete other user's post");
     }
 
-    public List<CommentDto> addComment(Long id, User loggedInUser, CommentDto dto) {
+    public List<CommentDto> addComment(Long id, User loggedInUser, RegisterCommentDto dto) {
         Comment build = Comment.builder().author(loggedInUser).content(dto.getContent()).build();
         Post post = getPostById(id);
         post.addComment(build);

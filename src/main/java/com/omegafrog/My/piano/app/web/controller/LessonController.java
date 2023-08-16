@@ -5,9 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.UpdateLessonDto;
+import com.omegafrog.My.piano.app.web.dto.comment.RegisterCommentDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonRegisterDto;
-import com.omegafrog.My.piano.app.web.dto.post.CommentDto;
+import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
 import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
 import com.omegafrog.My.piano.app.utils.response.JsonAPIResponse;
 import com.omegafrog.My.piano.app.utils.response.ResponseUtil;
@@ -75,7 +76,7 @@ public class LessonController {
     @PostMapping("/lesson/{id}/comment")
     public JsonAPIResponse addComment(
             @PathVariable Long id,
-            @Validated @RequestBody CommentDto dto
+            @Validated @RequestBody RegisterCommentDto dto
     ) throws JsonProcessingException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         List<CommentDto> commentDtos = lessonService.addComment(id, dto, loggedInUser);

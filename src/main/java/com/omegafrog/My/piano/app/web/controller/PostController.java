@@ -5,7 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.utils.response.ResponseUtil;
 import com.omegafrog.My.piano.app.web.domain.user.User;
-import com.omegafrog.My.piano.app.web.dto.post.CommentDto;
+import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
+import com.omegafrog.My.piano.app.web.dto.comment.RegisterCommentDto;
 import com.omegafrog.My.piano.app.web.dto.post.PostDto;
 import com.omegafrog.My.piano.app.web.dto.post.PostRegisterDto;
 import com.omegafrog.My.piano.app.web.dto.post.UpdatePostDto;
@@ -36,6 +37,8 @@ public class PostController {
         return new APISuccessResponse("Write post success", data, objectMapper);
     }
 
+    //TODO : 모든 post pagination해서 조회해야함
+
     @GetMapping("/{id}")
     public JsonAPIResponse findPost(@PathVariable Long id)
             throws JsonProcessingException {
@@ -61,7 +64,7 @@ public class PostController {
     }
 
     @PostMapping("/{id}/comment")
-    public JsonAPIResponse addComment(@RequestBody CommentDto dto, @PathVariable Long id)
+    public JsonAPIResponse addComment(@RequestBody RegisterCommentDto dto, @PathVariable Long id)
             throws JsonProcessingException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         List<CommentDto> commentDtos = postApplicationService.addComment(id, loggedInUser, dto);

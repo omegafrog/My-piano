@@ -9,9 +9,10 @@ import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.UpdateLessonDto;
+import com.omegafrog.My.piano.app.web.dto.comment.RegisterCommentDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonRegisterDto;
-import com.omegafrog.My.piano.app.web.dto.post.CommentDto;
+import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -86,7 +87,7 @@ public class LessonService {
         lessonRepository.deleteById(lessonId);
     }
 
-    public List<CommentDto> addComment(Long lessonId, CommentDto dto, User loggedInUser) {
+    public List<CommentDto> addComment(Long lessonId, RegisterCommentDto dto, User loggedInUser) {
         Lesson lesson = getLesson(lessonId);
         lesson.addComment(Comment.builder()
                 .content(dto.getContent())

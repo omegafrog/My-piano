@@ -14,13 +14,13 @@ import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
-import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.RegisterUserDto;
 import com.omegafrog.My.piano.app.web.dto.SecurityUserDto;
 import com.omegafrog.My.piano.app.web.dto.UpdateLessonDto;
+import com.omegafrog.My.piano.app.web.dto.comment.RegisterCommentDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonRegisterDto;
-import com.omegafrog.My.piano.app.web.dto.post.CommentDto;
+import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
 import com.omegafrog.My.piano.app.web.enums.*;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
@@ -36,7 +36,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -324,7 +323,7 @@ class LessonControllerTest {
         @DisplayName("로그인하고 댓글을 작성할 수 있다.")
         void addCommentTest() throws Exception {
             Lesson savedLesson = lessonRepository.save(lesson);
-            CommentDto comment = CommentDto.builder()
+            RegisterCommentDto comment = RegisterCommentDto.builder()
                     .content("comment")
                     .build();
             MvcResult mvcResult = mockMvc.perform(post("/lesson/" + savedLesson.getId() + "/comment")
@@ -362,7 +361,7 @@ class LessonControllerTest {
             // given
             Lesson savedLesson = lessonRepository.save(lesson);
 
-            CommentDto comment = CommentDto.builder()
+            RegisterCommentDto comment = RegisterCommentDto.builder()
                     .content("comment")
                     .build();
 
@@ -396,7 +395,7 @@ class LessonControllerTest {
         void deleteCommentAuthorizationTest() throws Exception {
             Lesson savedLesson = lessonRepository.save(lesson);
 
-            CommentDto comment = CommentDto.builder()
+            RegisterCommentDto comment = RegisterCommentDto.builder()
                     .content("comment")
                     .build();
 

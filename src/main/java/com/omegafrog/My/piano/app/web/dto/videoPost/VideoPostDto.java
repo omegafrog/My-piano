@@ -1,7 +1,7 @@
 package com.omegafrog.My.piano.app.web.dto.videoPost;
 
 import com.omegafrog.My.piano.app.web.dto.ArticleDto;
-import com.omegafrog.My.piano.app.web.dto.post.CommentDto;
+import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
 import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
 import lombok.*;
 import org.springframework.stereotype.Service;

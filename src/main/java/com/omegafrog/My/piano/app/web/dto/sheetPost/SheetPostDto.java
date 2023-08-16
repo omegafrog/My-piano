@@ -1,20 +1,12 @@
 package com.omegafrog.My.piano.app.web.dto.sheetPost;
 
-import com.omegafrog.My.piano.app.web.domain.article.Comment;
-import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
-import com.omegafrog.My.piano.app.web.domain.user.User;
-import com.omegafrog.My.piano.app.web.dto.ReturnCommentDto;
 import com.omegafrog.My.piano.app.web.dto.order.SellableItemDto;
-import com.omegafrog.My.piano.app.web.dto.post.CommentDto;
+import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
 import com.omegafrog.My.piano.app.web.dto.sheet.SheetInfoDto;
 import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @Data

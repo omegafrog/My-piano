@@ -1,15 +1,9 @@
 package com.omegafrog.My.piano.app.web.dto.sheetPost;
 
-import com.omegafrog.My.piano.app.web.dto.ReturnCommentDto;
-import com.omegafrog.My.piano.app.web.dto.post.CommentDto;
 import com.omegafrog.My.piano.app.web.dto.sheet.SheetDto;
-import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
-
-import java.time.LocalDateTime;
-import java.util.List;
 
 @Data
 @Setter

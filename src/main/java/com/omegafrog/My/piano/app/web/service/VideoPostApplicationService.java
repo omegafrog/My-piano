@@ -6,12 +6,14 @@ import com.omegafrog.My.piano.app.web.domain.post.VideoPost;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
-import com.omegafrog.My.piano.app.web.dto.post.CommentDto;
+import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
+import com.omegafrog.My.piano.app.web.dto.comment.RegisterCommentDto;
 import com.omegafrog.My.piano.app.web.dto.post.UpdateVideoPostDto;
 import com.omegafrog.My.piano.app.web.dto.videoPost.VideoPostDto;
 import com.omegafrog.My.piano.app.web.dto.videoPost.VideoPostRegisterDto;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -72,7 +74,7 @@ public class VideoPostApplicationService {
         return !videoPost.getAuthor().equals(user);
     }
 
-    public List<CommentDto> addComment(Long id, User loggedInUser, CommentDto dto) {
+    public List<CommentDto> addComment(Long id, User loggedInUser, RegisterCommentDto dto) {
         User user = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER));
         VideoPost videoPost = videoPostRepository.findById(id)
@@ -83,6 +85,7 @@ public class VideoPostApplicationService {
                 .author(user)
                 .build();
         videoPost.addComment(build);
+        videoPostRepository.save(videoPost);
         return videoPost.getComments().stream().map(Comment::toDto).toList();
     }
 
