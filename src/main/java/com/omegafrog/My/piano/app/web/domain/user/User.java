@@ -233,4 +233,9 @@ public class User {
     public int hashCode() {
         return id.hashCode();
     }
+
+    public void deleteUploadedVideoPost(VideoPost videoPost) {
+        if(!uploadedVideoPosts.remove(videoPost))
+            throw new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_VIDEO_POST);
+    }
 }

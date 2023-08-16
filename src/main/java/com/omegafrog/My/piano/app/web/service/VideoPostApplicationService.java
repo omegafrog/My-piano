@@ -64,7 +64,7 @@ public class VideoPostApplicationService {
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_VIDEO_POST));
         if(isAccessDeniedToVideoPost(user, videoPost))
             throw new AccessDeniedException("Cannot delete other user's video post.");
-
+        user.deleteUploadedVideoPost(videoPost);
         videoPostRepository.deleteById(id);
     }
 
