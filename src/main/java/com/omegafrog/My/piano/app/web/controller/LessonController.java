@@ -58,7 +58,7 @@ public class LessonController {
     @PostMapping("/lesson/{id}")
     public JsonAPIResponse updateLesson(
             @Validated @RequestBody UpdateLessonDto updateLessonDto, @PathVariable Long id)
-            throws JsonProcessingException, EntityNotFoundException, AccessDeniedException {
+            throws JsonProcessingException {
         User user = AuthenticationUtil.getLoggedInUser();
         LessonDto updated = lessonService.updateLesson(id, updateLessonDto, user);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("lesson", updated);
@@ -66,8 +66,7 @@ public class LessonController {
     }
 
     @DeleteMapping("/lesson/{id}")
-    public JsonAPIResponse deleteLesson(@PathVariable Long id)
-            throws EntityNotFoundException, AccessDeniedException {
+    public JsonAPIResponse deleteLesson(@PathVariable Long id) {
         User user = AuthenticationUtil.getLoggedInUser();
         lessonService.deleteLesson(id, user);
         return new APISuccessResponse("Lesson delete success");
