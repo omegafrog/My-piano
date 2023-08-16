@@ -94,8 +94,8 @@ class VideoPostRepositoryTest {
                 .content(changedContent)
                 .videoUrl(changedUrl)
                 .build();
-        VideoPost updated = saved.update(dto);
-        VideoPost updatedVideoPost = videoPostRepository.save(updated);
+        saved.update(dto);
+        VideoPost updatedVideoPost = videoPostRepository.save(saved);
         //then
         Assertions.assertThat(updatedVideoPost).isEqualTo(saved);
         Assertions.assertThat(updatedVideoPost.getTitle())

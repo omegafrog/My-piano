@@ -34,10 +34,10 @@ class VideoPostTest {
                 .content(content)
                 .videoUrl("none")
                 .build();
-        VideoPost updatedVideoPost = post.update(updated);
+        post.update(updated);
 
-        Assertions.assertThat(updatedVideoPost.getContent()).isEqualTo(content);
-        Assertions.assertThat(updatedVideoPost.getTitle()).isEqualTo(title);
+        Assertions.assertThat(post.getContent()).isEqualTo(content);
+        Assertions.assertThat(post.getTitle()).isEqualTo(title);
     }
 
     @Test
