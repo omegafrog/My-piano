@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.omegafrog.My.piano.app.utils.exception.payment.PaymentException;
 import com.omegafrog.My.piano.app.utils.response.APIBadRequestResponse;
 import com.omegafrog.My.piano.app.utils.response.APIInternalServerResponse;
+import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceException;
 import org.springframework.validation.BindException;
@@ -53,7 +54,7 @@ public class ExceptionAdvisor {
      * @return APIBadRequestResponse : exception의 메세지를 담아 리턴함.
      */
 
-    @ExceptionHandler({EntityNotFoundException.class, PaymentException.class})
+    @ExceptionHandler({EntityNotFoundException.class, EntityExistsException.class, PaymentException.class})
     public Object clientRequestError(EntityNotFoundException ex) {
         ex.printStackTrace();
         return new APIBadRequestResponse(ex.getMessage());
