@@ -119,5 +119,9 @@ public class VideoPostApplicationService {
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_VIDEO_POST));
         user.dislikeVideoPost(videoPost);
     }
+
+    public List<VideoPostDto> findAllVideoPosts(Pageable pageable) {
+        return videoPostRepository.findAll(pageable).getContent().stream().map(VideoPost::toDto).toList();
+    }
 }
 

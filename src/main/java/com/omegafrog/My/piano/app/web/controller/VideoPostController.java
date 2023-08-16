@@ -7,7 +7,8 @@ import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
 import com.omegafrog.My.piano.app.utils.response.JsonAPIResponse;
 import com.omegafrog.My.piano.app.utils.response.ResponseUtil;
 import com.omegafrog.My.piano.app.web.domain.user.User;
-import com.omegafrog.My.piano.app.web.dto.post.CommentDto;
+import com.omegafrog.My.piano.app.web.dto.comment.RegisterCommentDto;
+import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
 import com.omegafrog.My.piano.app.web.dto.post.UpdateVideoPostDto;
 import com.omegafrog.My.piano.app.web.dto.videoPost.VideoPostDto;
 import com.omegafrog.My.piano.app.web.dto.videoPost.VideoPostRegisterDto;
@@ -38,8 +39,14 @@ public class VideoPostController {
     public JsonAPIResponse findPost(@PathVariable Long id)
             throws JsonProcessingException {
         VideoPostDto postById = videoPostApplicationService.findPostById(id);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("post", postById);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("videoPost", postById);
         return new APISuccessResponse("Find videoPost success", data, objectMapper);
+    }
+    @GetMapping
+    public JsonAPIResponse findAllPosts(Pageable pageable) throws JsonProcessingException {
+        List<VideoPostDto> allVideoPosts = videoPostApplicationService.findAllVideoPosts(pageable);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("videoPosts", allVideoPosts);
+        return new APISuccessResponse("Find all videoPosts success", data, objectMapper);
     }
 
     @PostMapping("/{id}")
@@ -47,7 +54,7 @@ public class VideoPostController {
             throws JsonProcessingException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         VideoPostDto postDto = videoPostApplicationService.updatePost(id, post, loggedInUser);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("post", postDto);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("videoPost", postDto);
         return new APISuccessResponse("Update video post success", data, objectMapper);
     }
 
