@@ -1,5 +1,6 @@
 package com.omegafrog.My.piano.app.web.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
@@ -9,16 +10,15 @@ import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
-import com.omegafrog.My.piano.app.web.dto.RegisterUserDto;
 import com.omegafrog.My.piano.app.web.dto.SecurityUserDto;
 import com.omegafrog.My.piano.app.web.dto.UpdateSheetDto;
 import com.omegafrog.My.piano.app.web.dto.UpdateSheetPostDto;
+import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
+import com.omegafrog.My.piano.app.web.dto.comment.RegisterCommentDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.RegisterSheetPostDto;
 import com.omegafrog.My.piano.app.web.enums.Difficulty;
 import com.omegafrog.My.piano.app.web.enums.Genre;
 import com.omegafrog.My.piano.app.web.enums.Instrument;
-import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
-import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 import jakarta.servlet.http.Cookie;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -37,9 +37,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -68,7 +69,6 @@ class SheetPostControllerTest {
     private MockMvc mockMvc;
 
 
-    private User user;
     private User artist;
     private String accessToken;
     private Cookie refreshToken;
@@ -83,43 +83,20 @@ class SheetPostControllerTest {
         private Map<String, String> serializedData;
     }
 
-    @BeforeAll
+    @BeforeEach
     void login() throws Exception, UsernameAlreadyExistException {
-        securityUserRepository.deleteAll();
-        RegisterUserDto user1 = RegisterUserDto.builder()
-                .name("testUser1")
-                .phoneNum(PhoneNum.builder()
-                        .phoneNum("010-1111-2222")
-                        .isAuthorized(false)
-                        .build())
-                .profileSrc("src")
-                .loginMethod(LoginMethod.EMAIL)
-                .username("username")
-                .password("password")
-                .email("test@gmail.com")
-                .build();
-        SecurityUserDto securityUserDto1 = commonUserService.registerUser(user1);
-        user = ((SecurityUser) commonUserService.loadUserByUsername(securityUserDto1.getUsername()))
+        SecurityUserDto securityUserDto1 = commonUserService.registerUser(TestLoginUtil.user1);
+        User user = ((SecurityUser) commonUserService.loadUserByUsername(securityUserDto1.getUsername()))
                 .getUser();
         user.addCash(20000);
         userRepository.save(user);
-        RegisterUserDto user2 = RegisterUserDto.builder()
-                .name("artist1")
-                .email("test@gmail.com")
-                .username("username1")
-                .password("password")
-                .loginMethod(LoginMethod.EMAIL)
-                .phoneNum(PhoneNum.builder()
-                        .phoneNum("010-1111-2222")
-                        .isAuthorized(true)
-                        .build())
-                .build();
-        SecurityUserDto securityUserDto2 = commonUserService.registerUser(user2);
+
+        SecurityUserDto securityUserDto2 = commonUserService.registerUser(TestLoginUtil.user2);
         artist = ((SecurityUser) commonUserService.loadUserByUsername(securityUserDto2.getUsername()))
                 .getUser();
         MvcResult mvcResult = mockMvc.perform(post("/user/login")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                        .content("username=username&password=password"))
+                        .content("username=user1&password=password"))
                 .andReturn();
         String contentAsString = mvcResult.getResponse().getContentAsString();
         LoginResult loginResult = objectMapper.readValue(contentAsString, LoginResult.class);
@@ -307,12 +284,98 @@ class SheetPostControllerTest {
         Assertions.assertThat(id1).isEqualTo(id);
     }
 
-    @AfterAll
-    void deleteRepository() {
-        System.out.println("sheetPostRepository.count() = " + sheetPostRepository.count());
-        // transactional 걸으니까 sheet foreign key땜에 삭제못한다는 오류 없어짐. 왜일가
-        sheetPostRepository.deleteAll();
-        securityUserRepository.deleteAll();
+    @Test
+    @DisplayName("로그인한 유저는 댓글을 입력할 수 있다.")
+    void commentTest() throws Exception{
+        // given
+        MvcResult mvcResult = mockMvc.perform(post("/sheet/write")
+                        .header(HttpHeaders.AUTHORIZATION, accessToken)
+                        .cookie(refreshToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(build)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andReturn();
+
+        String contentAsString = mvcResult.getResponse().getContentAsString();
+        String serializedData = objectMapper.readTree(contentAsString).get("serializedData").asText();
+        Long id = objectMapper.readTree(serializedData).get("sheetPost").get("id").asLong();
+
+        RegisterCommentDto dto = RegisterCommentDto.builder()
+                .content("content")
+                .build();
+        String contentAsString1 = mockMvc.perform(post("/sheet/" + id + "/comment")
+                        .header(HttpHeaders.AUTHORIZATION, accessToken)
+                        .cookie(refreshToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andReturn().getResponse().getContentAsString();
+        String text = objectMapper.readTree(contentAsString1).get("serializedData").asText();
+        JsonNode jsonNode = objectMapper.readTree(text).get("comments");
+        List<CommentDto> commentList = new ArrayList<>();
+
+        jsonNode.forEach(node ->{
+            commentList.add(objectMapper.convertValue(node, CommentDto.class));
+        });
+
+        Assertions.assertThat(commentList).hasSize(1);
+        Assertions.assertThat(commentList.get(0).getContent()).isEqualTo("content");
+        User user1 = ((SecurityUser) commonUserService.loadUserByUsername("user1")).getUser();
+        Assertions.assertThat(user1.getWroteComments()).hasSize(1);
+        Assertions.assertThat(user1.getWroteComments().get(0).getContent()).isEqualTo("content");
     }
+
+    @Test
+    @DisplayName("댓글을 삭제할 수 있다.")
+    void deleteCommentTest() throws Exception{
+        MvcResult mvcResult = mockMvc.perform(post("/sheet/write")
+                        .header(HttpHeaders.AUTHORIZATION, accessToken)
+                        .cookie(refreshToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(build)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andReturn();
+
+        String contentAsString = mvcResult.getResponse().getContentAsString();
+        String serializedData = objectMapper.readTree(contentAsString).get("serializedData").asText();
+        Long id = objectMapper.readTree(serializedData).get("sheetPost").get("id").asLong();
+
+        RegisterCommentDto dto = RegisterCommentDto.builder()
+                .content("content")
+                .build();
+        String contentAsString1 = mockMvc.perform(post("/sheet/" + id + "/comment")
+                        .header(HttpHeaders.AUTHORIZATION, accessToken)
+                        .cookie(refreshToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andReturn().getResponse().getContentAsString();
+        String text = objectMapper.readTree(contentAsString1).get("serializedData").asText();
+        JsonNode jsonNode = objectMapper.readTree(text).get("comments");
+        List<CommentDto> commentList = new ArrayList<>();
+
+        jsonNode.forEach(node ->{
+            commentList.add(objectMapper.convertValue(node, CommentDto.class));
+        });
+        String contentAsString2 = mockMvc.perform(delete("/sheet/" + id + "/comment/" + commentList.get(0).getId())
+                        .header(HttpHeaders.AUTHORIZATION, accessToken)
+                        .cookie(refreshToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andReturn().getResponse().getContentAsString();
+        String text1 = objectMapper.readTree(contentAsString2).get("serializedData").asText();
+        JsonNode jsonNode1 = objectMapper.readTree(text1).get("comments");
+        List<CommentDto> commentDtoList = new ArrayList<>();
+        jsonNode1.forEach(element -> commentDtoList.add(objectMapper.convertValue(element, CommentDto.class)));
+
+        Assertions.assertThat(commentDtoList).isEmpty();
+        User user1 = ((SecurityUser) commonUserService.loadUserByUsername("user1")).getUser();
+        Assertions.assertThat(user1.getWroteComments()).isEmpty();
+    }
+
 
 }
