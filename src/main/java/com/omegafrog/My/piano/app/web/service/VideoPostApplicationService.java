@@ -97,10 +97,7 @@ public class VideoPostApplicationService implements CommentHandler {
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER));
         VideoPost videoPost = videoPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_VIDEO_POST));
-        Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_COMMENT));
-        videoPost.deleteComment(commentId, loggedInUser);
-        user.deleteWroteComments(comment, loggedInUser);
+        videoPost.deleteComment(commentId, user);
         return videoPost.getComments().stream().map(Comment::toDto).toList();
     }
 
@@ -108,48 +105,20 @@ public class VideoPostApplicationService implements CommentHandler {
     public void likeComment(Long id, Long commentId) {
         VideoPost videoPost = videoPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity : " + id));
-        videoPost.getComments().forEach(
-                comment -> {
-                    if(comment.getId().equals(commentId))
-                        comment.increaseLikeCount();
-                }
-        );
+        videoPost.increaseCommentLikeCount(commentId);
     }
     @Override
     public void dislikeComment(Long id, Long commentId) {
         VideoPost videoPost = videoPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity : " + id));
-        videoPost.getComments().forEach(
-                comment -> {
-                    if(comment.getId().equals(commentId))
-                        comment.decreaseLikeCount();
-                }
-        );
+        videoPost.decreaseCommentLikeCount(commentId);
     }
 
     @Override
     public List<CommentDto> getComments(Long articleId, Pageable pageable) {
         VideoPost videoPost = videoPostRepository.findById(articleId)
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_VIDEO_POST));
-        long offset = pageable.getOffset();
-        int pageSize = pageable.getPageSize();
-        int toIdx = (int) offset + pageSize;
-        if( toIdx > videoPost.getComments().size()) toIdx = videoPost.getComments().size();
-        try {
-            return videoPost.getComments()
-                    .subList((int) offset, toIdx).stream().map(Comment::toDto).toList();
-        }catch (IndexOutOfBoundsException e){
-            throw new CommentIndexOutOfBoundsException(e, "Comment index 범위를 벗어납니다.");
-        }
-    }
-
-    private static boolean isCommentRemoved(Long commentId, User loggedInUser, VideoPost post) {
-        return post.getComments().removeIf(comment -> {
-            if (comment.getId().equals(commentId)) {
-                if (comment.getAuthor().equals(loggedInUser)) return true;
-                else throw new AccessDeniedException("Cannot delete other user's comment.");
-            } else return false;
-        });
+        return videoPost.getComments(pageable).stream().map(Comment::toDto).toList();
     }
 
     public void likePost(Long id, User loggedInUser) {

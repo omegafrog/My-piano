@@ -69,8 +69,10 @@ public abstract class Article {
     public void deleteComment(Long id, User loggedInUser) throws AccessDeniedException, EntityNotFoundException{
         boolean isCommentRemoved = this.comments.removeIf(comment -> {
             if (comment.getId().equals(id)) {
-                if (comment.getAuthor().equals(loggedInUser))
+                if (comment.getAuthor().equals(loggedInUser)){
+                    comment.getAuthor().deleteWroteComments(comment, loggedInUser);
                     return true;
+                }
                 else throw new AccessDeniedException("Cannot delete other user's comment.");
             } else return false;
         });
@@ -90,7 +92,9 @@ public abstract class Article {
     public List<Comment> getComments(Pageable pageable){
         long offset = pageable.getOffset();
         int pageSize = pageable.getPageSize();
-        return comments.subList((int) offset, pageSize + (int) offset);
+        int toIdx = (int)offset+pageSize;
+        if (toIdx > comments.size()) toIdx = comments.size();
+        return comments.subList((int) offset, toIdx);
     }
 
     @Override

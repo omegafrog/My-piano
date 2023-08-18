@@ -102,9 +102,6 @@ public class SheetPostApplicationService implements CommentHandler {
                 .author(user)
                 .build());
         sheetPost.addComment(savedComment);
-        user.addWroteComments(savedComment);
-
-
         return sheetPost.getComments().stream().map(Comment::toDto).toList();
     }
 
