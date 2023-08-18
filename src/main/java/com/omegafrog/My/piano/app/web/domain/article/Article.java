@@ -1,5 +1,6 @@
 package com.omegafrog.My.piano.app.web.domain.article;
 
+import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;

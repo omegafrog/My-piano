@@ -1,7 +1,7 @@
 package com.omegafrog.My.piano.app.web.domain.post;
 
 import com.omegafrog.My.piano.app.web.domain.article.Article;
-import com.omegafrog.My.piano.app.web.domain.article.Comment;
+import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.dto.post.UpdateVideoPostDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.videoPost.VideoPostDto;
