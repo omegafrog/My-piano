@@ -301,6 +301,9 @@ class VideoPostControllerTest {
         jsonNode.forEach(comment -> commentDtos.add(objectMapper.convertValue(comment, CommentDto.class)));
         Assertions.assertThat(commentDtos).hasSize(1);
         Assertions.assertThat(commentDtos.get(0).getContent()).isEqualTo("content");
+        user = ((SecurityUser) commonUserService.loadUserByUsername(TestLoginUtil.user1.getUsername())).getUser();
+        Assertions.assertThat(user.getWroteComments()).hasSize(1);
+        Assertions.assertThat(user.getWroteComments().get(0).getContent()).isEqualTo("content");
     }
     @Test
     @DisplayName("로그인하지 않은 유저는 댓글을 달 수 없다.")
@@ -365,6 +368,9 @@ class VideoPostControllerTest {
                         .cookie(refreshToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()));
+        user = ((SecurityUser) commonUserService.loadUserByUsername(TestLoginUtil.user1.getUsername())).getUser();
+        Assertions.assertThat(user.getWroteComments()).isEmpty();
+
     }
 
     @Test

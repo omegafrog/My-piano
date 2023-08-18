@@ -3,6 +3,7 @@ package com.omegafrog.My.piano.app.web.service;
 import com.omegafrog.My.piano.app.utils.exception.CommentIndexOutOfBoundsException;
 import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
 import com.omegafrog.My.piano.app.web.domain.comment.Comment;
+import com.omegafrog.My.piano.app.web.domain.comment.CommentRepository;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPost;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
@@ -29,6 +30,7 @@ public class VideoPostApplicationService implements CommentHandler {
 
     private final UserRepository userRepository;
     private final VideoPostRepository videoPostRepository;
+    private final CommentRepository commentRepository;
 
     public VideoPostDto writePost(VideoPostRegisterDto post, User loggedInUser) {
         User user = userRepository.findById(loggedInUser.getId())
@@ -75,39 +77,30 @@ public class VideoPostApplicationService implements CommentHandler {
         return !videoPost.getAuthor().equals(user);
     }
 
-    public List<CommentDto> addComment(Long id, User loggedInUser, RegisterCommentDto dto) {
+    @Override
+    public List<CommentDto> addComment(Long articleId, RegisterCommentDto dto, User loggedInUser) {
         User user = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER));
-        VideoPost videoPost = videoPostRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_VIDEO_POST));
-
-        Comment build = Comment.builder()
+        VideoPost videoPost = videoPostRepository.findById(articleId)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + articleId));
+        Comment savedComment = commentRepository.save(Comment.builder()
                 .content(dto.getContent())
                 .author(user)
-                .build();
-        videoPost.addComment(build);
-        videoPostRepository.save(videoPost);
+                .build());
+        videoPost.addComment(savedComment);
         return videoPost.getComments().stream().map(Comment::toDto).toList();
     }
 
     @Override
-    public List<CommentDto> addComment(Long articleId, RegisterCommentDto dto, User loggedInUser) {
-        VideoPost videoPost = videoPostRepository.findById(articleId)
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + articleId));
-        videoPost.addComment(Comment.builder()
-                .content(dto.getContent())
-                .author(loggedInUser)
-                .build());
-        return videoPostRepository.save(videoPost).toDto().getComments();
-    }
-
     public List<CommentDto> deleteComment(Long id, Long commentId, User loggedInUser) {
         User user = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER));
         VideoPost videoPost = videoPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_VIDEO_POST));
-        if(!isCommentRemoved(commentId, user, videoPost))
-            throw new AccessDeniedException("Cannot delete other user's comment");
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_COMMENT));
+        videoPost.deleteComment(commentId, loggedInUser);
+        user.deleteWroteComments(comment, loggedInUser);
         return videoPost.getComments().stream().map(Comment::toDto).toList();
     }
 
