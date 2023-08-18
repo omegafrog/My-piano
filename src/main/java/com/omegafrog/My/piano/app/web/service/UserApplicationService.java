@@ -1,7 +1,7 @@
 package com.omegafrog.My.piano.app.web.service;
 
 import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
-import com.omegafrog.My.piano.app.web.domain.article.Comment;
+import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
 import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
@@ -46,7 +46,7 @@ public class UserApplicationService {
             throws PersistenceException {
         User user = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInUser.getId()));
-        return user.getWritedComments().stream().map(Comment::toReturnCommentDto).toList();
+        return user.getWroteComments().stream().map(Comment::toReturnCommentDto).toList();
     }
 
     public List<SheetInfoDto> getPurchasedSheets(User loggedInUser) {

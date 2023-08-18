@@ -2,30 +2,35 @@ package com.omegafrog.My.piano.app.web.service;
 
 
 import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
-import com.omegafrog.My.piano.app.web.domain.article.Comment;
+import com.omegafrog.My.piano.app.web.domain.comment.Comment;
+import com.omegafrog.My.piano.app.web.domain.comment.CommentRepository;
 import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.post.PostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
-import com.omegafrog.My.piano.app.web.dto.post.CommentDto;
+import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
+import com.omegafrog.My.piano.app.web.dto.comment.RegisterCommentDto;
 import com.omegafrog.My.piano.app.web.dto.post.PostDto;
 import com.omegafrog.My.piano.app.web.dto.post.PostRegisterDto;
 import com.omegafrog.My.piano.app.web.dto.post.UpdatePostDto;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class PostApplicationService {
+public class PostApplicationService implements CommentHandler {
 
     private final UserRepository userRepository;
     private final PostRepository postRepository;
+    private final CommentRepository commentRepository;
 
     public PostDto writePost(PostRegisterDto post, User author) {
         User user = userRepository.findById(author.getId())
@@ -36,7 +41,7 @@ public class PostApplicationService {
                 .author(user)
                 .build();
         Post saved = postRepository.save(build);
-        user.getUploadedPosts().add(saved);
+        user.addUploadedPost(saved);
         return saved.toDto();
     }
 
@@ -59,26 +64,43 @@ public class PostApplicationService {
             postRepository.deleteById(id);
         } else throw new AccessDeniedException("Cannot delete other user's post");
     }
-
-    public List<CommentDto> addComment(Long id, User loggedInUser, CommentDto dto) {
-        Comment build = Comment.builder().author(loggedInUser).content(dto.getContent()).build();
-        Post post = getPostById(id);
-        post.addComment(build);
-        Post saved = postRepository.save(post);
-        return saved.getComments().stream().map(Comment::toDto).toList();
-    }
-
     private Post getPostById(Long id) {
         return postRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_POST+ id));
     }
 
+    public void likePost(Long postId, User user) {
+        User byId = userRepository.findById(user.getId())
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + user.getId()));
+        Post post = getPostById(postId);
+        post.increaseLikedCount();
+        byId.addLikePost(post);
+    }
+    public void dislikePost(Long id, User loggedInUser){
+        getPostById(id);
+        if (!loggedInUser.dislikePost(id)) {
+            throw new EntityNotFoundException("Cannot find post entity that you liked.");
+        }
+    }
+
+    @Override
+    public List<CommentDto> addComment(Long id,  RegisterCommentDto dto,User loggedInUser) {
+        User user = userRepository.findById(loggedInUser.getId())
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER));
+        Comment build = Comment.builder().author(user).content(dto.getContent()).build();
+        Comment savedComment = commentRepository.save(build);
+        Post post = getPostById(id);
+        post.addComment(savedComment);
+        Post saved = postRepository.save(post);
+        return saved.getComments().stream().map(Comment::toDto).toList();
+    }
+
+    @Override
     public List<CommentDto> deleteComment(Long id, Long commentId, User loggedInUser) {
         Post post = getPostById(id);
         if (!isCommentRemoved(commentId, loggedInUser, post))
             throw new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_COMMENT + commentId);
-        Post saved = postRepository.save(post);
-        return saved.getComments().stream().map(Comment::toDto).toList();
+        return post.getComments().stream().map(Comment::toDto).toList();
     }
 
     private static boolean isCommentRemoved(Long commentId, User loggedInUser, Post post) {
@@ -90,18 +112,28 @@ public class PostApplicationService {
         });
     }
 
-    public void likePost(Long postId, User user) {
-        User byId = userRepository.findById(user.getId())
-                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + user.getId()));
-        Post post = getPostById(postId);
-        post.increaseLikedCount();
-        byId.addLikePost(post);
+    @Override
+    public void likeComment(Long articleId, Long commentId) {
+        Post post = postRepository.findById(articleId)
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_POST));
+        Comment foundedComment = post.getComments().stream().filter(comment -> comment.getId().equals(commentId)).findFirst()
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_COMMENT));
+        foundedComment.increaseLikeCount();
     }
 
-    public void dislikePost(Long id, User loggedInUser){
-        getPostById(id);
-        if (!loggedInUser.dislikePost(id)) {
-            throw new EntityNotFoundException("Cannot find post entity that you liked.");
-        }
+    @Override
+    public void dislikeComment(Long articleId, Long commentId) {
+        Post post = postRepository.findById(articleId)
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_POST));
+        Comment foundedComment = post.getComments().stream().filter(comment -> comment.getId().equals(commentId)).findFirst()
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_COMMENT));
+        foundedComment.decreaseLikeCount();
+    }
+
+    @Override
+    public List<CommentDto> getComments(Long articleId, Pageable pageable) {
+        Post post = postRepository.findById(articleId)
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_POST));
+        return post.getComments().stream().map(Comment::toDto).toList();
     }
 }

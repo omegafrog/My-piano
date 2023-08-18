@@ -1,11 +1,14 @@
 package com.omegafrog.My.piano.app.web.domain.article;
 
+import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
+import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 
 import java.time.LocalDateTime;
@@ -57,6 +60,8 @@ public abstract class Article {
      */
     public void addComment(Comment comment) {
         this.comments.add(comment);
+        if(!comment.getAuthor().getWroteComments().contains(comment))
+            comment.getAuthor().addWroteComments(comment);
     }
 
     /**
@@ -66,8 +71,10 @@ public abstract class Article {
     public void deleteComment(Long id, User loggedInUser) throws AccessDeniedException, EntityNotFoundException{
         boolean isCommentRemoved = this.comments.removeIf(comment -> {
             if (comment.getId().equals(id)) {
-                if (comment.getAuthor().equals(loggedInUser))
+                if (comment.getAuthor().equals(loggedInUser)){
+                    comment.getAuthor().deleteWroteComments(comment, loggedInUser);
                     return true;
+                }
                 else throw new AccessDeniedException("Cannot delete other user's comment.");
             } else return false;
         });
@@ -75,9 +82,23 @@ public abstract class Article {
             throw new EntityNotFoundException("Cannot find comment entity : " + id);
     }
 
-    public List<Comment> getComments(){
-        return this.comments;
+    public void increaseCommentLikeCount(Long commentId){
+        Comment foundedComment = this.comments.stream().filter(comment -> comment.getId().equals(commentId))
+                .findFirst().orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_COMMENT));
+        foundedComment.increaseLikeCount();
     }
+    public void decreaseCommentLikeCount(Long commentId){ Comment foundedComment = this.comments.stream().filter(comment -> comment.getId().equals(commentId))
+            .findFirst().orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_COMMENT));
+        foundedComment.decreaseLikeCount();
+    }
+    public List<Comment> getComments(Pageable pageable){
+        long offset = pageable.getOffset();
+        int pageSize = pageable.getPageSize();
+        int toIdx = (int)offset+pageSize;
+        if (toIdx > comments.size()) toIdx = comments.size();
+        return comments.subList((int) offset, toIdx);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

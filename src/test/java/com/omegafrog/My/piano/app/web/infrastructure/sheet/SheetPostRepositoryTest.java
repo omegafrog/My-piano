@@ -174,7 +174,6 @@ class SheetPostRepositoryTest {
     void clearAllReposiotry(){
         sheetPostRepository.deleteAll();
         userRepository.deleteAll();
-        System.out.println("sheetPostRepository.count() = " + sheetPostRepository.count());
     }
 
 }

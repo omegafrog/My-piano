@@ -1,36 +1,22 @@
 package com.omegafrog.My.piano.app.web.dto.post;
 
-import com.omegafrog.My.piano.app.web.domain.article.Comment;
+import com.omegafrog.My.piano.app.web.domain.comment.Comment;
+import com.omegafrog.My.piano.app.web.dto.ArticleDto;
 import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
 import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @Setter
 @Getter
 @NoArgsConstructor
-public class PostDto {
-    private Long id;
-    private String title;
-    private String content;
-    private LocalDateTime createdAt;
-    private UserProfile author;
-    private int likeCount;
-    private int viewCount;
-    private List<CommentDto> comments;
+public class PostDto extends ArticleDto {
 
     @Builder
     public PostDto(Long id, String title, String content, LocalDateTime createdAt, UserProfile author, int likeCount, int viewCount, List<Comment> comments) {
-
-        this.id = id;
-        this.title = title;
-        this.content = content;
-        this.createdAt = createdAt;
-        this.author = author;
-        this.likeCount = likeCount;
-        this.viewCount = viewCount;
-        this.comments = comments.stream().map(Comment::toDto).toList();
+        super(id, title, content, createdAt, author, likeCount, viewCount, comments.stream().map(Comment::toDto).toList());
     }
 }

@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.utils.response.ResponseUtil;
 import com.omegafrog.My.piano.app.web.domain.user.User;
-import com.omegafrog.My.piano.app.web.dto.post.CommentDto;
 import com.omegafrog.My.piano.app.web.dto.post.PostDto;
 import com.omegafrog.My.piano.app.web.dto.post.PostRegisterDto;
 import com.omegafrog.My.piano.app.web.dto.post.UpdatePostDto;
@@ -36,6 +35,8 @@ public class PostController {
         return new APISuccessResponse("Write post success", data, objectMapper);
     }
 
+    //TODO : 모든 post pagination해서 조회해야함
+
     @GetMapping("/{id}")
     public JsonAPIResponse findPost(@PathVariable Long id)
             throws JsonProcessingException {
@@ -60,36 +61,10 @@ public class PostController {
         return new APISuccessResponse("delete post success");
     }
 
-    @PostMapping("/{id}/comment")
-    public JsonAPIResponse addComment(@RequestBody CommentDto dto, @PathVariable Long id)
-            throws JsonProcessingException {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        List<CommentDto> commentDtos = postApplicationService.addComment(id, loggedInUser, dto);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", commentDtos);
-        return new APISuccessResponse("add comment success.", data, objectMapper);
-    }
-
-    @DeleteMapping("/{id}/comment/{comment-id}")
-    public JsonAPIResponse deleteComment(@PathVariable Long id, @PathVariable(name = "comment-id") Long commentId)
-            throws JsonProcessingException {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        List<CommentDto> commentDtos = postApplicationService.deleteComment(id, commentId, loggedInUser);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", commentDtos);
-        return new APISuccessResponse("delete comment success.", data, objectMapper);
-    }
-
     @GetMapping("/{id}/like")
-    public JsonAPIResponse likePost(@PathVariable Long id) {
+    public JsonAPIResponse likePost(@PathVariable Long id){
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         postApplicationService.likePost(id, loggedInUser);
-        return new APISuccessResponse("Like post success.");
+        return new APISuccessResponse("like post success");
     }
-
-    @DeleteMapping("/{id}/like")
-    public JsonAPIResponse dislikePost(@PathVariable Long id) {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        postApplicationService.dislikePost(id, loggedInUser);
-        return new APISuccessResponse("Dislike post success");
-    }
-
 }

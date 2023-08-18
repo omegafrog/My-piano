@@ -1,17 +1,16 @@
 package com.omegafrog.My.piano.app.web.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
 import com.omegafrog.My.piano.app.security.exception.UsernameAlreadyExistException;
 import com.omegafrog.My.piano.app.security.service.CommonUserService;
-import com.omegafrog.My.piano.app.web.domain.article.Comment;
+import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.dto.RegisterUserDto;
-import com.omegafrog.My.piano.app.web.dto.SecurityUserDto;
-import com.omegafrog.My.piano.app.web.dto.post.CommentDto;
+import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
+import com.omegafrog.My.piano.app.web.dto.comment.RegisterCommentDto;
 import com.omegafrog.My.piano.app.web.dto.post.PostRegisterDto;
 import com.omegafrog.My.piano.app.web.dto.post.UpdatePostDto;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
@@ -29,7 +28,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -47,6 +45,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @AutoConfigureMockMvc
+@Transactional
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PostControllerIntegrationTest {
 
@@ -58,9 +57,6 @@ class PostControllerIntegrationTest {
 
     @Autowired
     private ObjectMapper objectMapper;
-
-    private static RegisterUserDto user1;
-    private static RegisterUserDto user2;
 
     @Autowired
     private SecurityUserRepository securityUserRepository;
@@ -83,8 +79,7 @@ class PostControllerIntegrationTest {
      */
     @BeforeAll
     void getTokens() throws Exception, UsernameAlreadyExistException {
-        SecurityContextHolder.clearContext();
-        user1 = RegisterUserDto.builder()
+        RegisterUserDto user1 = RegisterUserDto.builder()
                 .name("user1")
                 .phoneNum(PhoneNum.builder()
                         .phoneNum("010-1111-2222")
@@ -96,7 +91,7 @@ class PostControllerIntegrationTest {
                 .username("user1")
                 .password("password")
                 .build();
-        user2 = RegisterUserDto.builder()
+        RegisterUserDto user2 = RegisterUserDto.builder()
                 .name("user2")
                 .phoneNum(PhoneNum.builder()
                         .phoneNum("010-1111-2222")
@@ -108,9 +103,8 @@ class PostControllerIntegrationTest {
                 .username("user2")
                 .password("password")
                 .build();
-        SecurityUserDto saved1 = commonUserService.registerUser(user1);
-        Optional<SecurityUser> byId = securityUserRepository.findById(saved1.getId());
-        SecurityUserDto saved2 = commonUserService.registerUser(user2);
+        commonUserService.registerUser(user1);
+        commonUserService.registerUser(user2);
         MvcResult mvcResult = mockMvc.perform(post("/user/login")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content("username=user1&password=password"))
@@ -268,7 +262,7 @@ class PostControllerIntegrationTest {
     @DisplayName("post에 comment를 추가할 수 있어야 한다.")
     void addCommentTest() throws Exception {
         //given
-        CommentDto commentDTO = CommentDto.builder()
+        RegisterCommentDto commentDTO = RegisterCommentDto.builder()
                 .content("test comment")
                 .build();
 
@@ -299,12 +293,16 @@ class PostControllerIntegrationTest {
         System.out.println("data = " + data);
 
         JsonNode comments = objectMapper.readTree(data).get("comments");
-        List<Comment> commentList = new ArrayList<>();
+        List<CommentDto> commentList = new ArrayList<>();
         for (JsonNode node : comments) {
-            commentList.add(objectMapper.readValue(node.toString(), Comment.class));
+            commentList.add(objectMapper.convertValue(node, CommentDto.class));
         }
         Assertions.assertThat(commentList.size()).isGreaterThan(0);
         Assertions.assertThat(commentList.get(0).getContent()).isEqualTo(commentDTO.getContent());
+
+        SecurityUser user = (SecurityUser) commonUserService.loadUserByUsername(TestLoginUtil.user1.getUsername());
+        Assertions.assertThat(user.getUser().getWroteComments()).hasSize(1);
+        Assertions.assertThat(user.getUser().getWroteComments().get(0).getId()).isEqualTo(commentList.get(0).getId());
     }
 
     @Test
@@ -312,7 +310,7 @@ class PostControllerIntegrationTest {
     @Transactional
     void addCommentAuthorizationTest() throws Exception {
         //given
-        CommentDto commentDTO = CommentDto.builder()
+        RegisterCommentDto commentDTO = RegisterCommentDto.builder()
                 .content("test comment")
                 .build();
 
@@ -343,7 +341,7 @@ class PostControllerIntegrationTest {
     @DisplayName("자신이 작성한 comment를 삭제할 수 있어야 한다.")
     void deleteCommentTest() throws Exception {
         //given
-        CommentDto commentDTO = CommentDto.builder()
+        RegisterCommentDto commentDTO = RegisterCommentDto.builder()
                 .content("test comment")
                 .build();
 
@@ -372,7 +370,7 @@ class PostControllerIntegrationTest {
                 .andReturn().getResponse().getContentAsString();
         data = objectMapper.readTree(data).get("serializedData").asText();
         JsonNode comments = objectMapper.readTree(data).get("comments");
-        Comment comment = objectMapper.readValue(comments.get(0).toString(), Comment.class);
+        CommentDto comment = objectMapper.convertValue(comments.get(0), CommentDto.class);
         Long commentId = comment.getId();
 
         //when
@@ -407,7 +405,7 @@ class PostControllerIntegrationTest {
         String wrongAccessToken = loginResult.getSerializedData().get("access token");
         Cookie wrongRefreshToken = result.getResponse().getCookie("refreshToken");
         //given
-        CommentDto commentDTO = CommentDto.builder()
+        RegisterCommentDto commentDTO = RegisterCommentDto.builder()
                 .content("test comment")
                 .build();
 
@@ -436,7 +434,7 @@ class PostControllerIntegrationTest {
                 .andReturn().getResponse().getContentAsString();
         data = objectMapper.readTree(data).get("serializedData").asText();
         JsonNode comments = objectMapper.readTree(data).get("comments");
-        Comment comment = objectMapper.readValue(comments.get(0).toString(), Comment.class);
+        CommentDto comment = objectMapper.readValue(comments.get(0).toString(), CommentDto.class);
         Long commentId = comment.getId();
         //when
         // 다른 사람이 작성한 comment를 삭제함.

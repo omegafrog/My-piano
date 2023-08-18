@@ -1,6 +1,7 @@
 package com.omegafrog.My.piano.app.web.service;
 
-import com.omegafrog.My.piano.app.web.domain.article.Comment;
+import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
+import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
@@ -9,9 +10,10 @@ import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.UpdateLessonDto;
+import com.omegafrog.My.piano.app.web.dto.comment.RegisterCommentDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonRegisterDto;
-import com.omegafrog.My.piano.app.web.dto.post.CommentDto;
+import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -23,7 +25,7 @@ import java.util.List;
 
 @Service
 @Transactional
-public class LessonService {
+public class LessonService implements CommentHandler {
 
     @Autowired
     private SheetPostRepository sheetPostRepository;
@@ -86,15 +88,19 @@ public class LessonService {
         lessonRepository.deleteById(lessonId);
     }
 
-    public List<CommentDto> addComment(Long lessonId, CommentDto dto, User loggedInUser) {
+    @Override
+    public List<CommentDto> addComment(Long lessonId, RegisterCommentDto dto, User loggedInUser) {
         Lesson lesson = getLesson(lessonId);
+        User user = userRepository.findById(loggedInUser.getId())
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER));
         lesson.addComment(Comment.builder()
                 .content(dto.getContent())
-                .author(loggedInUser)
+                .author(user)
                 .build());
         return lessonRepository.save(lesson).getComments().stream().map(Comment::toDto).toList();
     }
 
+    @Override
     public List<CommentDto> deleteComment(Long lessonId, Long commentId, User loggedInUser) {
         Lesson lesson = getLesson(lessonId);
 
@@ -114,10 +120,37 @@ public class LessonService {
         } else throw new EntityNotFoundException("Cannot find Comment entity : " + commentId);
     }
 
-    public List<CommentDto> getAllComments(Long id) {
+    @Override
+    public List<CommentDto> getComments(Long id, Pageable pageable) {
         Lesson lesson = lessonRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find Lesson entity : " + id));
-        return lesson.getComments().stream().map(Comment::toDto).toList();
+        int pageSize = pageable.getPageSize();
+        long offset = pageable.getOffset();
+        return lesson.getComments().subList((int) offset, (int) offset + pageSize).stream().map(Comment::toDto).toList();
+    }
+
+    @Override
+    public void likeComment(Long id, Long commentId) {
+        Lesson lesson = lessonRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson entity : " + id));
+        lesson.getComments().forEach(
+                comment -> {
+                    if (comment.getId().equals(commentId))
+                        comment.increaseLikeCount();
+                }
+        );
+    }
+
+    @Override
+    public void dislikeComment(Long id, Long commentId) {
+        Lesson lesson = lessonRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson entity : " + id));
+        lesson.getComments().forEach(
+                comment -> {
+                    if (comment.getId().equals(commentId))
+                        comment.decreaseLikeCount();
+                }
+        );
     }
 
     private static boolean isCommentAuthorEquals(User loggedInUser, Comment comment) {
@@ -132,29 +165,5 @@ public class LessonService {
     private Lesson getLesson(Long lessonId) {
         return lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson Entity : " + lessonId));
-    }
-
-    public List<CommentDto> likeComment(Long id, Long commentId) {
-        Lesson lesson = lessonRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson entity : " + id));
-        lesson.getComments().forEach(
-                comment -> {
-                    if (comment.getId().equals(commentId))
-                        comment.increaseLikeCount();
-                }
-        );
-        return lesson.getComments().stream().map(Comment::toDto).toList();
-    }
-
-    public List<CommentDto> dislikeComment(Long id, Long commentId) {
-        Lesson lesson = lessonRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson entity : " + id));
-        lesson.getComments().forEach(
-                comment -> {
-                    if (comment.getId().equals(commentId))
-                        comment.decreaseLikeCount();
-                }
-        );
-        return lesson.getComments().stream().map(Comment::toDto).toList();
     }
 }

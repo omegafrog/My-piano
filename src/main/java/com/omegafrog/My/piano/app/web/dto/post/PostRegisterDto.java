@@ -1,18 +1,16 @@
 package com.omegafrog.My.piano.app.web.dto.post;
 
+import com.omegafrog.My.piano.app.web.dto.RegisterArticleDto;
 import lombok.*;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @Setter
 @Getter
 @NoArgsConstructor
-public class PostRegisterDto {
-    private String title;
-    private String content;
-
+public class PostRegisterDto extends RegisterArticleDto {
     @Builder
     public PostRegisterDto(String title, String content) {
-        this.title = title;
-        this.content = content;
+        super(title,content);
     }
 }

@@ -1,10 +1,12 @@
 package com.omegafrog.My.piano.app.web.domain.user;
 
+import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
 import com.omegafrog.My.piano.app.web.domain.order.Order;
-import com.omegafrog.My.piano.app.web.domain.article.Comment;
+import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.post.Post;
+import com.omegafrog.My.piano.app.web.domain.post.VideoPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.dto.user.UpdateUserDto;
 import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
@@ -22,6 +24,7 @@ import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -95,13 +98,22 @@ public class User {
     @JoinColumn(name = "USER_ID")
     private List<Lesson> uploadedLessons = new ArrayList<>();
 
-    @OneToMany(mappedBy = "author", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
+    @OneToMany(mappedBy = "author", cascade = { CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     private List<Post> uploadedPosts = new ArrayList<>();
-
     public void addUploadedPost(Post post){
         uploadedPosts.add(post);
         if(post.getAuthor()!=this){
             post.setAuthor(this);
+        }
+    }
+
+    @OneToMany(mappedBy = "author")
+    private List<VideoPost> uploadedVideoPosts = new ArrayList<>();
+
+    public void addUploadedVideoPost(VideoPost videoPost){
+        uploadedVideoPosts.add(videoPost);
+        if(videoPost.getAuthor()!=this){
+            videoPost.setAuthor(this);
         }
     }
     public void deleteUploadedPost(Post post){
@@ -120,10 +132,45 @@ public class User {
             joinColumns = @JoinColumn(name = "USER_ID"),
             inverseJoinColumns = @JoinColumn(name = "POST_ID"))
     private List<Post> likedPosts = new ArrayList<>();
+    public void addLikePost(Post post){
+        likedPosts.add(post);
+    }
 
-    @OneToMany(mappedBy = "author", orphanRemoval = true, cascade = CascadeType.REMOVE)
-    private List<Comment> writedComments = new ArrayList<>();
+    @ManyToMany
+    @JoinTable(name = "liked_videoPost",
+            joinColumns = @JoinColumn(name = "USER_ID"),
+            inverseJoinColumns = @JoinColumn(name = "VIDEO_POST_ID"))
+    private List<VideoPost> likedVideoPosts = new ArrayList<>();
 
+    public void likeVideoPost(VideoPost videoPost){
+        if(likedVideoPosts.contains(videoPost))
+            throw new EntityExistsException(ExceptionMessage.ENTITY_EXISTS);
+        likedVideoPosts.add(videoPost);
+        videoPost.increaseLikedCount();
+    }
+    public void dislikeVideoPost(VideoPost videoPost){
+        if(!likedVideoPosts.removeIf(post->post.equals(videoPost)))
+            throw new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_VIDEO_POST);
+    }
+
+    @OneToMany(mappedBy = "author", orphanRemoval = true, cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    private List<Comment> wroteComments = new ArrayList<>();
+
+    public void addWroteComments(Comment comment){
+        wroteComments.add(comment);
+    }
+    public void deleteWroteComments(Comment comment, User loggedInUser){
+        boolean isCommentRemoved = wroteComments.removeIf(
+                element -> {
+                    if (element.equals(comment)) {
+                        if (element.getAuthor().equals(loggedInUser))
+                            return true;
+                        else throw new AccessDeniedException("Cannot delete other user's comment.");
+                    } else return false;
+                }
+        );
+        if(!isCommentRemoved) throw new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_COMMENT);
+    }
     @Builder
     public User(String name, String email, Cart cart, LoginMethod loginMethod, String profileSrc, PhoneNum phoneNum, int cash) {
 
@@ -144,9 +191,6 @@ public class User {
         return this;
     }
 
-    public void addLikePost(Post post){
-        likedPosts.add(post);
-    }
 
     public boolean dislikePost(Long postId){
         likedPosts.forEach(
@@ -188,10 +232,7 @@ public class User {
                 .build();
     }
 
-    public void addLikedPost(Post post){
-        post.increaseLikedCount();
-        likedPosts.add(post);
-    }
+
 
     @Override
     public boolean equals(Object o) {
@@ -206,5 +247,10 @@ public class User {
     @Override
     public int hashCode() {
         return id.hashCode();
+    }
+
+    public void deleteUploadedVideoPost(VideoPost videoPost) {
+        if(!uploadedVideoPosts.remove(videoPost))
+            throw new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_VIDEO_POST);
     }
 }

@@ -7,7 +7,6 @@ import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.UpdateLessonDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonRegisterDto;
-import com.omegafrog.My.piano.app.web.dto.post.CommentDto;
 import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
 import com.omegafrog.My.piano.app.utils.response.JsonAPIResponse;
 import com.omegafrog.My.piano.app.utils.response.ResponseUtil;
@@ -58,7 +57,7 @@ public class LessonController {
     @PostMapping("/lesson/{id}")
     public JsonAPIResponse updateLesson(
             @Validated @RequestBody UpdateLessonDto updateLessonDto, @PathVariable Long id)
-            throws JsonProcessingException, EntityNotFoundException, AccessDeniedException {
+            throws JsonProcessingException {
         User user = AuthenticationUtil.getLoggedInUser();
         LessonDto updated = lessonService.updateLesson(id, updateLessonDto, user);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("lesson", updated);
@@ -66,32 +65,10 @@ public class LessonController {
     }
 
     @DeleteMapping("/lesson/{id}")
-    public JsonAPIResponse deleteLesson(@PathVariable Long id)
-            throws EntityNotFoundException, AccessDeniedException {
+    public JsonAPIResponse deleteLesson(@PathVariable Long id) {
         User user = AuthenticationUtil.getLoggedInUser();
         lessonService.deleteLesson(id, user);
         return new APISuccessResponse("Lesson delete success");
     }
 
-    @PostMapping("/lesson/{id}/comment")
-    public JsonAPIResponse addComment(
-            @PathVariable Long id,
-            @Validated @RequestBody CommentDto dto
-    ) throws JsonProcessingException {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        List<CommentDto> commentDtos = lessonService.addComment(id, dto, loggedInUser);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", commentDtos);
-        return new APISuccessResponse("Add Comment success.", data, objectMapper);
-    }
-
-    @DeleteMapping("/lesson/{id}/comment/{comment-id}")
-    public JsonAPIResponse deleteComment(
-            @PathVariable Long id,
-            @PathVariable(name = "comment-id") Long commentId
-    ) throws JsonProcessingException {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        List<CommentDto> commentDtos = lessonService.deleteComment(id, commentId, loggedInUser);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", commentDtos);
-        return new APISuccessResponse("Delete Comment success.", data, objectMapper);
-    }
 }
