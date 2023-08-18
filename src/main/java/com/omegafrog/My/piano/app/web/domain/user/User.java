@@ -97,7 +97,7 @@ public class User {
     @JoinColumn(name = "USER_ID")
     private List<Lesson> uploadedLessons = new ArrayList<>();
 
-    @OneToMany(mappedBy = "author", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
+    @OneToMany(mappedBy = "author", cascade = { CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     private List<Post> uploadedPosts = new ArrayList<>();
     public void addUploadedPost(Post post){
         uploadedPosts.add(post);

@@ -3,6 +3,7 @@ package com.omegafrog.My.piano.app.web.service;
 
 import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
 import com.omegafrog.My.piano.app.web.domain.comment.Comment;
+import com.omegafrog.My.piano.app.web.domain.comment.CommentRepository;
 import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.post.PostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
@@ -29,6 +30,7 @@ public class PostApplicationService implements CommentHandler {
 
     private final UserRepository userRepository;
     private final PostRepository postRepository;
+    private final CommentRepository commentRepository;
 
     public PostDto writePost(PostRegisterDto post, User author) {
         User user = userRepository.findById(author.getId())
@@ -39,7 +41,7 @@ public class PostApplicationService implements CommentHandler {
                 .author(user)
                 .build();
         Post saved = postRepository.save(build);
-        user.getUploadedPosts().add(saved);
+        user.addUploadedPost(saved);
         return saved.toDto();
     }
 
@@ -67,34 +69,6 @@ public class PostApplicationService implements CommentHandler {
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_POST+ id));
     }
 
-    @Override
-    public List<CommentDto> addComment(Long id,  RegisterCommentDto dto,User loggedInUser) {
-        User user = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER));
-        Comment build = Comment.builder().author(user).content(dto.getContent()).build();
-        Post post = getPostById(id);
-        post.addComment(build);
-        Post saved = postRepository.save(post);
-        return saved.getComments().stream().map(Comment::toDto).toList();
-    }
-
-    @Override
-    public List<CommentDto> deleteComment(Long id, Long commentId, User loggedInUser) {
-        Post post = getPostById(id);
-        if (!isCommentRemoved(commentId, loggedInUser, post))
-            throw new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_COMMENT + commentId);
-        Post saved = postRepository.save(post);
-        return saved.getComments().stream().map(Comment::toDto).toList();
-    }
-
-    private static boolean isCommentRemoved(Long commentId, User loggedInUser, Post post) {
-        return post.getComments().removeIf(comment -> {
-            if (comment.getId().equals(commentId)) {
-                if (comment.getAuthor().equals(loggedInUser)) return true;
-                else throw new AccessDeniedException("Cannot delete other user's comment.");
-            } else return false;
-        });
-    }
     public void likePost(Long postId, User user) {
         User byId = userRepository.findById(user.getId())
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + user.getId()));
@@ -107,6 +81,35 @@ public class PostApplicationService implements CommentHandler {
         if (!loggedInUser.dislikePost(id)) {
             throw new EntityNotFoundException("Cannot find post entity that you liked.");
         }
+    }
+
+    @Override
+    public List<CommentDto> addComment(Long id,  RegisterCommentDto dto,User loggedInUser) {
+        User user = userRepository.findById(loggedInUser.getId())
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER));
+        Comment build = Comment.builder().author(user).content(dto.getContent()).build();
+        Comment savedComment = commentRepository.save(build);
+        Post post = getPostById(id);
+        post.addComment(savedComment);
+        Post saved = postRepository.save(post);
+        return saved.getComments().stream().map(Comment::toDto).toList();
+    }
+
+    @Override
+    public List<CommentDto> deleteComment(Long id, Long commentId, User loggedInUser) {
+        Post post = getPostById(id);
+        if (!isCommentRemoved(commentId, loggedInUser, post))
+            throw new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_COMMENT + commentId);
+        return post.getComments().stream().map(Comment::toDto).toList();
+    }
+
+    private static boolean isCommentRemoved(Long commentId, User loggedInUser, Post post) {
+        return post.getComments().removeIf(comment -> {
+            if (comment.getId().equals(commentId)) {
+                if (comment.getAuthor().equals(loggedInUser)) return true;
+                else throw new AccessDeniedException("Cannot delete other user's comment.");
+            } else return false;
+        });
     }
 
     @Override
