@@ -7,8 +7,6 @@ import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
 import com.omegafrog.My.piano.app.utils.response.JsonAPIResponse;
 import com.omegafrog.My.piano.app.utils.response.ResponseUtil;
 import com.omegafrog.My.piano.app.web.domain.user.User;
-import com.omegafrog.My.piano.app.web.dto.comment.RegisterCommentDto;
-import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
 import com.omegafrog.My.piano.app.web.dto.post.UpdateVideoPostDto;
 import com.omegafrog.My.piano.app.web.dto.videoPost.VideoPostDto;
 import com.omegafrog.My.piano.app.web.dto.videoPost.VideoPostRegisterDto;
@@ -64,24 +62,6 @@ public class VideoPostController {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         videoPostApplicationService.deletePost(id, loggedInUser);
         return new APISuccessResponse("delete video post success");
-    }
-
-    @PostMapping("/{id}/comment")
-    public JsonAPIResponse addComment(@RequestBody RegisterCommentDto dto, @PathVariable Long id)
-            throws JsonProcessingException {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        List<CommentDto> commentDtos = videoPostApplicationService.addComment(id, loggedInUser, dto);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", commentDtos);
-        return new APISuccessResponse("add comment success.", data, objectMapper);
-    }
-
-    @DeleteMapping("/{id}/comment/{comment-id}")
-    public JsonAPIResponse deleteComment(@PathVariable Long id, @PathVariable(name = "comment-id") Long commentId)
-            throws JsonProcessingException {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        List<CommentDto> commentDtos = videoPostApplicationService.deleteComment(id, commentId, loggedInUser);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", commentDtos);
-        return new APISuccessResponse("delete comment success.", data, objectMapper);
     }
 
     @GetMapping("/{id}/like")

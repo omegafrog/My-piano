@@ -5,10 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.UpdateLessonDto;
-import com.omegafrog.My.piano.app.web.dto.comment.RegisterCommentDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonRegisterDto;
-import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
 import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
 import com.omegafrog.My.piano.app.utils.response.JsonAPIResponse;
 import com.omegafrog.My.piano.app.utils.response.ResponseUtil;
@@ -73,25 +71,4 @@ public class LessonController {
         return new APISuccessResponse("Lesson delete success");
     }
 
-    @PostMapping("/lesson/{id}/comment")
-    public JsonAPIResponse addComment(
-            @PathVariable Long id,
-            @Validated @RequestBody RegisterCommentDto dto
-    ) throws JsonProcessingException {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        List<CommentDto> commentDtos = lessonService.addComment(id, dto, loggedInUser);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", commentDtos);
-        return new APISuccessResponse("Add Comment success.", data, objectMapper);
-    }
-
-    @DeleteMapping("/lesson/{id}/comment/{comment-id}")
-    public JsonAPIResponse deleteComment(
-            @PathVariable Long id,
-            @PathVariable(name = "comment-id") Long commentId
-    ) throws JsonProcessingException {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        List<CommentDto> commentDtos = lessonService.deleteComment(id, commentId, loggedInUser);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", commentDtos);
-        return new APISuccessResponse("Delete Comment success.", data, objectMapper);
-    }
 }
