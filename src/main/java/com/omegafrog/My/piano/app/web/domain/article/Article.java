@@ -1,5 +1,6 @@
 package com.omegafrog.My.piano.app.web.domain.article;
 
+import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
 import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import jakarta.persistence.*;
@@ -7,6 +8,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 
 import java.time.LocalDateTime;
@@ -76,9 +78,21 @@ public abstract class Article {
             throw new EntityNotFoundException("Cannot find comment entity : " + id);
     }
 
-    public List<Comment> getComments(){
-        return this.comments;
+    public void increaseCommentLikeCount(Long commentId){
+        Comment foundedComment = this.comments.stream().filter(comment -> comment.getId().equals(commentId))
+                .findFirst().orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_COMMENT));
+        foundedComment.increaseLikeCount();
     }
+    public void decreaseCommentLikeCount(Long commentId){ Comment foundedComment = this.comments.stream().filter(comment -> comment.getId().equals(commentId))
+            .findFirst().orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_COMMENT));
+        foundedComment.decreaseLikeCount();
+    }
+    public List<Comment> getComments(Pageable pageable){
+        long offset = pageable.getOffset();
+        int pageSize = pageable.getPageSize();
+        return comments.subList((int) offset, pageSize + (int) offset);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

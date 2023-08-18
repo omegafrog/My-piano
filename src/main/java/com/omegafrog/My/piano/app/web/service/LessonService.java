@@ -1,5 +1,6 @@
 package com.omegafrog.My.piano.app.web.service;
 
+import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
 import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
@@ -90,9 +91,11 @@ public class LessonService implements CommentHandler {
     @Override
     public List<CommentDto> addComment(Long lessonId, RegisterCommentDto dto, User loggedInUser) {
         Lesson lesson = getLesson(lessonId);
+        User user = userRepository.findById(loggedInUser.getId())
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER));
         lesson.addComment(Comment.builder()
                 .content(dto.getContent())
-                .author(loggedInUser)
+                .author(user)
                 .build());
         return lessonRepository.save(lesson).getComments().stream().map(Comment::toDto).toList();
     }
