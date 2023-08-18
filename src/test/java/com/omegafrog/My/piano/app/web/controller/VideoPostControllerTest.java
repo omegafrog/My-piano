@@ -18,6 +18,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.assertj.core.api.Assertions;
+import org.junit.Assert;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -364,5 +365,62 @@ class VideoPostControllerTest {
                         .cookie(refreshToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()));
+    }
+
+    @Test
+    @DisplayName("video post에 달린 모든 댓글을 조회할 수 있다.")
+    void getCommentsTest() throws Exception{
+        SecurityUser securityUser = (SecurityUser) commonUserService.loadUserByUsername(TestLoginUtil.user1.getUsername());
+        User user = securityUser.getUser();
+        VideoPost saved = videoPostRepository.save(VideoPost.builder()
+                .title("title")
+                .content("content")
+                .videoUrl("url")
+                .author(user)
+                .build());
+        RegisterCommentDto content = RegisterCommentDto.builder()
+                .content("content")
+                .build();
+        RegisterCommentDto content2 = RegisterCommentDto.builder()
+                .content("content2")
+                .build();
+
+        mockMvc.perform(post("/community/video-post/" + saved.getId() + "/comment")
+                        .header(HttpHeaders.AUTHORIZATION, accessToken)
+                        .cookie(refreshToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(content))
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()));
+        mockMvc.perform(post("/community/video-post/" + saved.getId() + "/comment")
+                        .header(HttpHeaders.AUTHORIZATION, accessToken)
+                        .cookie(refreshToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(content2))
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()));
+
+        String contentAsString = mockMvc.perform(get("/community/video-post/" + saved.getId() + "/comments")
+                        .header(HttpHeaders.AUTHORIZATION, accessToken)
+                        .cookie(refreshToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andReturn().getResponse().getContentAsString();
+        String text = objectMapper.readTree(contentAsString).get("serializedData").asText();
+        JsonNode jsonNode = objectMapper.readTree(text).get("comments");
+        List<CommentDto> comments = new ArrayList<>();
+        jsonNode.forEach(node -> comments.add(objectMapper.convertValue(node, CommentDto.class)));
+
+        Assertions.assertThat(comments).hasSize(2);
+        Assertions.assertThat(comments.get(0).getContent()).isEqualTo("content");
+        Assertions.assertThat(comments.get(1).getContent()).isEqualTo("content2");
+
+        user = ((SecurityUser) commonUserService.loadUserByUsername(TestLoginUtil.user1.getUsername())).getUser();
+        Assertions.assertThat(user.getWroteComments()).hasSize(2);
+        Assertions.assertThat(user.getWroteComments().get(0).getContent()).isEqualTo("content");
+        Assertions.assertThat(user.getWroteComments().get(1).getContent()).isEqualTo("content2");
+
     }
 }

@@ -1,5 +1,6 @@
 package com.omegafrog.My.piano.app.web.service;
 
+import com.omegafrog.My.piano.app.utils.exception.CommentIndexOutOfBoundsException;
 import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
 import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPost;
@@ -24,7 +25,7 @@ import java.util.List;
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class VideoPostApplicationService {
+public class VideoPostApplicationService implements CommentHandler {
 
     private final UserRepository userRepository;
     private final VideoPostRepository videoPostRepository;
@@ -89,6 +90,17 @@ public class VideoPostApplicationService {
         return videoPost.getComments().stream().map(Comment::toDto).toList();
     }
 
+    @Override
+    public List<CommentDto> addComment(Long articleId, RegisterCommentDto dto, User loggedInUser) {
+        VideoPost videoPost = videoPostRepository.findById(articleId)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + articleId));
+        videoPost.addComment(Comment.builder()
+                .content(dto.getContent())
+                .author(loggedInUser)
+                .build());
+        return videoPostRepository.save(videoPost).toDto().getComments();
+    }
+
     public List<CommentDto> deleteComment(Long id, Long commentId, User loggedInUser) {
         User user = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER));
@@ -98,6 +110,46 @@ public class VideoPostApplicationService {
             throw new AccessDeniedException("Cannot delete other user's comment");
         return videoPost.getComments().stream().map(Comment::toDto).toList();
     }
+
+    @Override
+    public void likeComment(Long id, Long commentId) {
+        VideoPost videoPost = videoPostRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity : " + id));
+        videoPost.getComments().forEach(
+                comment -> {
+                    if(comment.getId().equals(commentId))
+                        comment.increaseLikeCount();
+                }
+        );
+    }
+    @Override
+    public void dislikeComment(Long id, Long commentId) {
+        VideoPost videoPost = videoPostRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity : " + id));
+        videoPost.getComments().forEach(
+                comment -> {
+                    if(comment.getId().equals(commentId))
+                        comment.decreaseLikeCount();
+                }
+        );
+    }
+
+    @Override
+    public List<CommentDto> getComments(Long articleId, Pageable pageable) {
+        VideoPost videoPost = videoPostRepository.findById(articleId)
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_VIDEO_POST));
+        long offset = pageable.getOffset();
+        int pageSize = pageable.getPageSize();
+        int toIdx = (int) offset + pageSize;
+        if( toIdx > videoPost.getComments().size()) toIdx = videoPost.getComments().size();
+        try {
+            return videoPost.getComments()
+                    .subList((int) offset, toIdx).stream().map(Comment::toDto).toList();
+        }catch (IndexOutOfBoundsException e){
+            throw new CommentIndexOutOfBoundsException(e, "Comment index 범위를 벗어납니다.");
+        }
+    }
+
     private static boolean isCommentRemoved(Long commentId, User loggedInUser, VideoPost post) {
         return post.getComments().removeIf(comment -> {
             if (comment.getId().equals(commentId)) {

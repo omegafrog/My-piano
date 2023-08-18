@@ -7,6 +7,7 @@ import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.UpdateSheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
+import com.omegafrog.My.piano.app.web.dto.comment.RegisterCommentDto;
 import com.omegafrog.My.piano.app.web.dto.sheet.SheetDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.RegisterSheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
@@ -21,7 +22,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class SheetPostApplicationService {
+public class SheetPostApplicationService implements CommentHandler {
 
     private final SheetPostRepository sheetPostRepository;
 
@@ -79,14 +80,19 @@ public class SheetPostApplicationService {
         else throw new AccessDeniedException("Cannot delete other user's sheet post entity : " + id);
     }
 
-    public List<CommentDto> getComments(Long id)
+    @Override
+    public List<CommentDto> getComments(Long articleId, Pageable pageable)
             throws EntityNotFoundException {
-        SheetPost sheetPost = sheetPostRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
-        return sheetPost.getComments().stream().map(Comment::toDto).toList();
+        SheetPost sheetPost = sheetPostRepository.findById(articleId)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + articleId));
+        long offset = pageable.getOffset();
+        int pageSize = pageable.getPageSize();
+        return sheetPost.getComments()
+                .subList((int) offset, pageSize + (int) offset).stream().map(Comment::toDto).toList();
     }
 
-    public List<CommentDto> writeComment(Long id, CommentDto dto, User loggedInUser)
+    @Override
+    public List<CommentDto> addComment(Long id, RegisterCommentDto dto, User loggedInUser)
             throws PersistenceException {
         SheetPost sheetPost = sheetPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
@@ -97,14 +103,17 @@ public class SheetPostApplicationService {
         return sheetPostRepository.save(sheetPost).toDto().getComments();
     }
 
-    public void deleteComment(Long id, Long commentId, User loggedInUser)
+    @Override
+    public List<CommentDto> deleteComment(Long id, Long commentId, User loggedInUser)
     throws PersistenceException, AccessDeniedException{
         SheetPost sheetPost = sheetPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find Sheet post entity : " + id));
         sheetPost.deleteComment(commentId, loggedInUser);
+        return sheetPost.getComments().stream().map(Comment::toDto).toList();
     }
 
-    public List<CommentDto> likeComment(Long id, Long commentId) {
+    @Override
+    public void likeComment(Long id, Long commentId) {
         SheetPost sheetPost = sheetPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity : " + id));
         sheetPost.getComments().forEach(
@@ -113,11 +122,9 @@ public class SheetPostApplicationService {
                         comment.increaseLikeCount();
                 }
         );
-
-        return sheetPost.getComments().stream().map(Comment::toDto).toList();
     }
-
-    public List<CommentDto> dislikeComment(Long id, Long commentId) {
+    @Override
+    public void dislikeComment(Long id, Long commentId) {
         SheetPost sheetPost = sheetPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity : " + id));
         sheetPost.getComments().forEach(
@@ -126,6 +133,5 @@ public class SheetPostApplicationService {
                         comment.decreaseLikeCount();
                 }
         );
-        return sheetPost.getComments().stream().map(Comment::toDto).toList();
     }
 }

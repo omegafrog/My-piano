@@ -13,7 +13,10 @@ import com.omegafrog.My.piano.app.web.service.*;
 import jakarta.persistence.PersistenceException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -29,6 +32,15 @@ import java.util.Map;
 public class CommentController {
 
     private final ObjectMapper objectMapper;
+    @Autowired
+    private PostApplicationService postApplicationService;
+    @Autowired
+    private VideoPostApplicationService videoPostApplicationService;
+    @Autowired
+    private LessonService lessonService;
+    @Autowired
+    private SheetPostApplicationService sheetPostApplicationService;
+
 
     @PostMapping(value = {"/lesson/{id}/comment",
             "/community/post/{id}/comment",
@@ -40,7 +52,8 @@ public class CommentController {
             HttpServletRequest request
     ) throws JsonProcessingException, MalformedURLException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        CommentHandler commentHandler = getCommentHandler(request.getRequestURL());
+
+        CommentHandler commentHandler = getCommentHandler(request.getRequestURI());
         List<CommentDto> commentDtos = commentHandler.addComment(id, dto, loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", commentDtos);
         return new APISuccessResponse("Add Comment success.", data, objectMapper);
@@ -56,7 +69,7 @@ public class CommentController {
             HttpServletRequest request
     ) throws JsonProcessingException, MalformedURLException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        CommentHandler commentHandler = getCommentHandler(request.getRequestURL());
+        CommentHandler commentHandler = getCommentHandler(request.getRequestURI());
         List<CommentDto> commentDtos = commentHandler.deleteComment(id, commentId, loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", commentDtos);
         return new APISuccessResponse("Delete Comment success.", data, objectMapper);
@@ -71,7 +84,7 @@ public class CommentController {
             @PathVariable(name = "comment-id") Long commentId,
             HttpServletRequest request)
             throws  PersistenceException, MalformedURLException {
-        CommentHandler commentHandler = getCommentHandler(request.getRequestURL());
+        CommentHandler commentHandler = getCommentHandler(request.getRequestURI());
         commentHandler.likeComment(id, commentId);
         return new APISuccessResponse("Like comment success.");
     }
@@ -85,7 +98,7 @@ public class CommentController {
             @PathVariable(name = "comment-id") Long commentId,
             HttpServletRequest request)
             throws  PersistenceException, MalformedURLException {
-        CommentHandler commentHandler = getCommentHandler(request.getRequestURL());
+        CommentHandler commentHandler = getCommentHandler(request.getRequestURI());
         commentHandler.dislikeComment(id, commentId);
         return new APISuccessResponse("dislike comment success.");
     }
@@ -96,32 +109,30 @@ public class CommentController {
             "/sheet/{id}/comments"})
     public JsonAPIResponse getComments(
             @PathVariable Long id,
-            Pageable pageable,
+            @PageableDefault(size=10) Pageable pageable,
             HttpServletRequest request)
             throws PersistenceException, AccessDeniedException, JsonProcessingException, MalformedURLException {
-        CommentHandler commentHandler = getCommentHandler(request.getRequestURL());
+        CommentHandler commentHandler = getCommentHandler(request.getRequestURI());
         List<CommentDto> comments = commentHandler.getComments(id, pageable);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", comments);
         return new APISuccessResponse("Get all comments success.", data, objectMapper);
     }
 
-    private CommentHandler getCommentHandler(StringBuffer url) throws MalformedURLException {
-        WebApplicationContext context = ContextLoader.getCurrentWebApplicationContext();
-        String mainResource = url.subSequence(1, url.indexOf("/")).toString();
-        if (url.subSequence(1, url.indexOf("/")).equals("community")) {
-            int startIdx = url.indexOf("/", 1);
-            int endIdx = url.indexOf("/", startIdx + 1);
-            mainResource = url.substring(startIdx, endIdx);
+    private CommentHandler getCommentHandler(String url) throws MalformedURLException {
+        String mainResource = url.subSequence(1, url.indexOf("/",1)).toString();
+        if (mainResource.equals("community")) {
+            url = url.substring(url.indexOf("/", 1));
+            mainResource = url.substring(1, url.indexOf("/", 1));
         }
         switch (mainResource) {
             case "lesson":
-                return context.getBean(LessonService.class);
+                return lessonService;
             case "post":
-                return context.getBean(PostApplicationService.class);
+                return postApplicationService;
             case "video-post":
-                return context.getBean(VideoPostApplicationService.class);
+                return videoPostApplicationService;
             case "sheetPost":
-                return context.getBean(SheetPostApplicationService.class);
+                return sheetPostApplicationService;
             default:
                 throw new MalformedURLException("잘못된 mainResource입니다." + mainResource);
         }
