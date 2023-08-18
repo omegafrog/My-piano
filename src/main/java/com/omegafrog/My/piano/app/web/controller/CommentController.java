@@ -14,14 +14,11 @@ import jakarta.persistence.PersistenceException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.context.ContextLoader;
-import org.springframework.web.context.WebApplicationContext;
 
 import java.net.MalformedURLException;
 import java.util.List;
@@ -131,7 +128,7 @@ public class CommentController {
                 return postApplicationService;
             case "video-post":
                 return videoPostApplicationService;
-            case "sheetPost":
+            case "sheet":
                 return sheetPostApplicationService;
             default:
                 throw new MalformedURLException("잘못된 mainResource입니다." + mainResource);
