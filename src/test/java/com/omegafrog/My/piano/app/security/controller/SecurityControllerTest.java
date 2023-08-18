@@ -26,6 +26,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.transaction.annotation.Transactional;
 
 
 import java.util.List;
@@ -40,6 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @AutoConfigureMockMvc
+@Transactional
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SecurityControllerTest {
 
@@ -233,5 +235,7 @@ class SecurityControllerTest {
         private String message;
         private Map<String, String> serializedData;
     }
+    
+
 
 }
