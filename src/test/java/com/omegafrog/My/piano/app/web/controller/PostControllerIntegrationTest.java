@@ -295,10 +295,14 @@ class PostControllerIntegrationTest {
         JsonNode comments = objectMapper.readTree(data).get("comments");
         List<CommentDto> commentList = new ArrayList<>();
         for (JsonNode node : comments) {
-            commentList.add(objectMapper.readValue(node.toString(), CommentDto.class));
+            commentList.add(objectMapper.convertValue(node, CommentDto.class));
         }
         Assertions.assertThat(commentList.size()).isGreaterThan(0);
         Assertions.assertThat(commentList.get(0).getContent()).isEqualTo(commentDTO.getContent());
+
+        SecurityUser user = (SecurityUser) commonUserService.loadUserByUsername(TestLoginUtil.user1.getUsername());
+        Assertions.assertThat(user.getUser().getWroteComments()).hasSize(1);
+        Assertions.assertThat(user.getUser().getWroteComments().get(0).getId()).isEqualTo(commentList.get(0).getId());
     }
 
     @Test

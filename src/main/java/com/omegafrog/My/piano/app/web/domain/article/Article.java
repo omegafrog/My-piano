@@ -60,6 +60,8 @@ public abstract class Article {
      */
     public void addComment(Comment comment) {
         this.comments.add(comment);
+        if(!comment.getAuthor().getWroteComments().contains(comment))
+            comment.getAuthor().addWroteComments(comment);
     }
 
     /**

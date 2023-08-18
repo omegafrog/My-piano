@@ -46,7 +46,7 @@ public class UserApplicationService {
             throws PersistenceException {
         User user = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInUser.getId()));
-        return user.getWritedComments().stream().map(Comment::toReturnCommentDto).toList();
+        return user.getWroteComments().stream().map(Comment::toReturnCommentDto).toList();
     }
 
     public List<SheetInfoDto> getPurchasedSheets(User loggedInUser) {

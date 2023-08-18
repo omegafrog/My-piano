@@ -153,10 +153,24 @@ public class User {
             throw new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_VIDEO_POST);
     }
 
-    @OneToMany(mappedBy = "author", orphanRemoval = true, cascade = CascadeType.REMOVE)
-    private List<Comment> writedComments = new ArrayList<>();
+    @OneToMany(mappedBy = "author", orphanRemoval = true, cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    private List<Comment> wroteComments = new ArrayList<>();
 
-
+    public void addWroteComments(Comment comment){
+        wroteComments.add(comment);
+    }
+    public void deleteWroteComments(Comment comment, User loggedInUser){
+        boolean isCommentRemoved = wroteComments.removeIf(
+                element -> {
+                    if (element.equals(comment)) {
+                        if (element.getAuthor().equals(loggedInUser))
+                            return true;
+                        else throw new AccessDeniedException("Cannot delete other user's comment.");
+                    } else return false;
+                }
+        );
+        if(!isCommentRemoved) throw new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_COMMENT);
+    }
     @Builder
     public User(String name, String email, Cart cart, LoginMethod loginMethod, String profileSrc, PhoneNum phoneNum, int cash) {
 
