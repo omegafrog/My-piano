@@ -3,6 +3,7 @@ package com.omegafrog.My.piano.app.web.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
+import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
 import com.omegafrog.My.piano.app.security.exception.UsernameAlreadyExistException;
 import com.omegafrog.My.piano.app.security.service.CommonUserService;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPost;
@@ -19,10 +20,7 @@ import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.assertj.core.api.Assertions;
 import org.junit.Assert;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -63,6 +61,8 @@ class VideoPostControllerTest {
     Cookie wrongRefreshToken;
     @Autowired
     private VideoPostRepository videoPostRepository;
+    @Autowired
+    private SecurityUserRepository securityUserRepository;
 
     @NoArgsConstructor
     @Data
@@ -428,5 +428,9 @@ class VideoPostControllerTest {
         Assertions.assertThat(user.getWroteComments().get(0).getContent()).isEqualTo("content");
         Assertions.assertThat(user.getWroteComments().get(1).getContent()).isEqualTo("content2");
 
+    }
+    @AfterAll
+    void getsdfas(){
+        securityUserRepository.deleteAll();
     }
 }
