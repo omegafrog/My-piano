@@ -1,6 +1,6 @@
 package com.omegafrog.My.piano.app.security.exception;
 
-public class UsernameAlreadyExistException extends Throwable {
+public class UsernameAlreadyExistException extends RuntimeException {
     public UsernameAlreadyExistException(String message, Throwable cause) {
         super(message, cause);
     }
