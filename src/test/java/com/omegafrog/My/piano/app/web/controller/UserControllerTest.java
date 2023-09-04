@@ -125,7 +125,7 @@ class UserControllerTest {
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
         //then
         String result = mvcResult.getResponse().getContentAsString();

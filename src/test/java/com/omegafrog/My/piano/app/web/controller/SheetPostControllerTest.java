@@ -136,7 +136,7 @@ class SheetPostControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(build)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
 
         String contentAsString = mvcResult.getResponse().getContentAsString();
@@ -154,7 +154,7 @@ class SheetPostControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(build)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
         String contentAsString = mvcResult.getResponse().getContentAsString();
         String serializedData = objectMapper.readTree(contentAsString).get("serializedData").asText();
@@ -183,7 +183,7 @@ class SheetPostControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateBuild)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
         String contentAsString1 = mvcResult1.getResponse().getContentAsString();
         String text = objectMapper.readTree(contentAsString1).get("serializedData").asText();
@@ -202,7 +202,7 @@ class SheetPostControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(build)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
         String contentAsString = mvcResult.getResponse().getContentAsString();
         String serializedData = objectMapper.readTree(contentAsString).get("serializedData").asText();
@@ -212,12 +212,12 @@ class SheetPostControllerTest {
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
         //then
         mockMvc.perform(get("/sheet/" + id))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.BAD_REQUEST.toString()))
+                .andExpect(jsonPath("$.status").value(HttpStatus.BAD_REQUEST.value()))
                 .andDo(print());
     }
 
@@ -230,7 +230,7 @@ class SheetPostControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(build)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
         String contentAsString = mvcResult.getResponse().getContentAsString();
         String serializedData = objectMapper.readTree(contentAsString).get("serializedData").asText();
@@ -238,7 +238,7 @@ class SheetPostControllerTest {
 
         MvcResult mvcResult1 = mockMvc.perform(get("/sheet/" + id))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
         String contentAsString1 = mvcResult1.getResponse().getContentAsString();
         String text = objectMapper.readTree(contentAsString1).get("serializedData").asText();
@@ -255,7 +255,7 @@ class SheetPostControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(build)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
         String contentAsString1 = mvcResult1.getResponse().getContentAsString();
         String serializedData1 = objectMapper.readTree(contentAsString1).get("serializedData").asText();
@@ -267,7 +267,7 @@ class SheetPostControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(build)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
         String contentAsString2 = mvcResult2.getResponse().getContentAsString();
         String serializedData2 = objectMapper.readTree(contentAsString2).get("serializedData").asText();
@@ -276,7 +276,7 @@ class SheetPostControllerTest {
         //when
         MvcResult result = mockMvc.perform(get("/sheet"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
         String contentAsString = result.getResponse().getContentAsString();
         String text = objectMapper.readTree(contentAsString).get("serializedData").asText();
@@ -294,7 +294,7 @@ class SheetPostControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(build)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
 
         String contentAsString = mvcResult.getResponse().getContentAsString();
@@ -310,7 +310,7 @@ class SheetPostControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn().getResponse().getContentAsString();
         String text = objectMapper.readTree(contentAsString1).get("serializedData").asText();
         JsonNode jsonNode = objectMapper.readTree(text).get("comments");
@@ -336,7 +336,7 @@ class SheetPostControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(build)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
 
         String contentAsString = mvcResult.getResponse().getContentAsString();
@@ -352,7 +352,7 @@ class SheetPostControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn().getResponse().getContentAsString();
         String text = objectMapper.readTree(contentAsString1).get("serializedData").asText();
         JsonNode jsonNode = objectMapper.readTree(text).get("comments");
@@ -365,7 +365,7 @@ class SheetPostControllerTest {
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn().getResponse().getContentAsString();
         String text1 = objectMapper.readTree(contentAsString2).get("serializedData").asText();
         JsonNode jsonNode1 = objectMapper.readTree(text1).get("comments");

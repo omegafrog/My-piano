@@ -170,7 +170,7 @@ class PostControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(postDto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.toString()));
+                .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.value()));
     }
 
 
@@ -253,7 +253,7 @@ class PostControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.toString()));
+                .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.value()));
     }
 
     @Test
@@ -331,7 +331,7 @@ class PostControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(commentDTO)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.toString()));
+                .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.value()));
     }
 
     @Test
@@ -440,7 +440,7 @@ class PostControllerIntegrationTest {
                         .header(HttpHeaders.AUTHORIZATION, wrongAccessToken)
                         .cookie(wrongRefreshToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.toString()));
+                .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.value()));
     }
 
     @Test
@@ -540,6 +540,6 @@ class PostControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(postDto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.toString()));
+                .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.value()));
     }
 }

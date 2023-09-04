@@ -108,7 +108,7 @@ class VideoPostControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn().getResponse().getContentAsString();
         String text = objectMapper.readTree(contentAsString).get("serializedData").asText();
         JsonNode jsonNode = objectMapper.readTree(text).get("videoPost");
@@ -130,7 +130,7 @@ class VideoPostControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.toString()));
+                .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.value()));
     }
 
     @Test
@@ -160,7 +160,7 @@ class VideoPostControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn().getResponse().getContentAsString();
 
         // then
@@ -199,7 +199,7 @@ class VideoPostControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.toString()));
+                .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.value()));
     }
 
     @Test
@@ -220,7 +220,7 @@ class VideoPostControllerTest {
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()));
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()));
         Optional<VideoPost> byId = videoPostRepository.findById(saved.getId());
         securityUser = (SecurityUser) commonUserService.loadUserByUsername(TestLoginUtil.user1.getUsername());
         user = securityUser.getUser();
@@ -255,7 +255,7 @@ class VideoPostControllerTest {
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn().getResponse().getContentAsString();
 
         List<VideoPostDto> videoPostDtos = new ArrayList<>();
@@ -291,7 +291,7 @@ class VideoPostControllerTest {
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn().getResponse().getContentAsString();
 
         //then
@@ -327,7 +327,7 @@ class VideoPostControllerTest {
                         .content(objectMapper.writeValueAsString(content))
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.toString()));
+                .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.value()));
     }
 
     @Test
@@ -353,7 +353,7 @@ class VideoPostControllerTest {
                         .content(objectMapper.writeValueAsString(content))
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn().getResponse().getContentAsString();
 
         String text = objectMapper.readTree(contentAsString).get("serializedData").asText();
@@ -367,7 +367,7 @@ class VideoPostControllerTest {
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()));
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()));
         user = ((SecurityUser) commonUserService.loadUserByUsername(TestLoginUtil.user1.getUsername())).getUser();
         Assertions.assertThat(user.getWroteComments()).isEmpty();
 
@@ -398,7 +398,7 @@ class VideoPostControllerTest {
                         .content(objectMapper.writeValueAsString(content))
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()));
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()));
         mockMvc.perform(post("/community/video-post/" + saved.getId() + "/comment")
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken)
@@ -406,13 +406,13 @@ class VideoPostControllerTest {
                         .content(objectMapper.writeValueAsString(content2))
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()));
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()));
 
         String contentAsString = mockMvc.perform(get("/community/video-post/" + saved.getId() + "/comments")
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn().getResponse().getContentAsString();
         String text = objectMapper.readTree(contentAsString).get("serializedData").asText();
         JsonNode jsonNode = objectMapper.readTree(text).get("comments");

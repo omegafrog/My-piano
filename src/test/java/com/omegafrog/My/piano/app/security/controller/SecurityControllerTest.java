@@ -117,7 +117,7 @@ class SecurityControllerTest {
                         .content(s)
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("400 BAD_REQUEST"))
+                .andExpect(jsonPath("$.status").value("400"))
                 .andDo(print());
 
     }
@@ -131,7 +131,7 @@ class SecurityControllerTest {
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content("username=username&password=password"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("200 OK"))
+                .andExpect(jsonPath("$.status").value("200"))
                 .andDo(print());
     }
 
@@ -144,7 +144,7 @@ class SecurityControllerTest {
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content("username=username1&password=password"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("400 BAD_REQUEST"))
+                .andExpect(jsonPath("$.status").value("400"))
                 .andDo(print());
     }
 
@@ -158,7 +158,7 @@ class SecurityControllerTest {
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content("username=username&password=password"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("200 OK"))
+                .andExpect(jsonPath("$.status").value("200"))
                 .andReturn();
         Cookie refreshToken = mvcResult.getResponse().getCookie("refreshToken");
         String s2 = mvcResult.getResponse().getContentAsString();
@@ -176,7 +176,7 @@ class SecurityControllerTest {
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.toString()))
+                .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.value()))
                 .andDo(print());
     }
     @Test
@@ -196,7 +196,7 @@ class SecurityControllerTest {
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content("username=username&password=password"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("200 OK"))
+                .andExpect(jsonPath("$.status").value("200"))
                 .andReturn();
         Cookie refreshToken = mvcResult.getResponse().getCookie("refreshToken");
         String s2 = mvcResult.getResponse().getContentAsString();
@@ -207,7 +207,7 @@ class SecurityControllerTest {
         MvcResult mvcResult2 = mockMvc.perform(get("/user/signOut")
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken))
-                .andExpect(jsonPath("$.status").value("200 OK"))
+                .andExpect(jsonPath("$.status").value("200"))
                 .andDo(print())
                 .andReturn();
 
@@ -223,7 +223,7 @@ class SecurityControllerTest {
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content("username=username&password=password"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("400 BAD_REQUEST"))
+                .andExpect(jsonPath("$.status").value("400"))
                 .andDo(print());
     }
 

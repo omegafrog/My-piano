@@ -185,7 +185,7 @@ class CartControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(build1)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
 
         //then
@@ -200,7 +200,7 @@ class CartControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(build2)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
         String contentAsString = mvcResult2.getResponse().getContentAsString();
         String text1 = objectMapper.readTree(contentAsString).get("serializedData").asText();
@@ -221,7 +221,7 @@ class CartControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(build1)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
         String content = mvcResult.getResponse().getContentAsString();
         String text = objectMapper.readTree(content).get("serializedData").asText();
@@ -231,7 +231,7 @@ class CartControllerTest {
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
     }
 
@@ -249,14 +249,14 @@ class CartControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(build1)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
 
         MvcResult mvcResult = mockMvc.perform(get("/cart")
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andDo(print())
                 .andReturn();
 
@@ -288,7 +288,7 @@ class CartControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(build1)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
         mockMvc.perform(post("/cart/lesson")
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
@@ -296,14 +296,14 @@ class CartControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(build2)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
 
         mockMvc.perform(get("/cart/pay")
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()));
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()));
 
         Optional<User> byId = userRepository.findById(user.getUser().getId());
         System.out.println("byId.get().getCash() = " + byId.get().getCash());

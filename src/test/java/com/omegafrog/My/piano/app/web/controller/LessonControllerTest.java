@@ -210,7 +210,7 @@ class LessonControllerTest {
                             .header(HttpHeaders.AUTHORIZATION, accessToken)
                             .cookie(refreshToken))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                    .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                     .andDo(print());
         }
         @Test
@@ -231,7 +231,7 @@ class LessonControllerTest {
                             .content(body)
                             )
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.toString()))
+                    .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.value()))
                     .andDo(print());
         }
 
@@ -254,7 +254,7 @@ class LessonControllerTest {
                             .header(HttpHeaders.AUTHORIZATION, accessToken)
                             .cookie(refreshToken))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                    .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                     .andDo(print())
                     .andReturn();
             String contentAsString = mvcResult.getResponse().getContentAsString();
@@ -288,7 +288,7 @@ class LessonControllerTest {
                             .header(HttpHeaders.AUTHORIZATION, wrongAccessToken)
                             .cookie(wrongRefreshToken))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.toString()));
+                    .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.value()));
         }
 
         @Test
@@ -299,7 +299,7 @@ class LessonControllerTest {
                             .header(HttpHeaders.AUTHORIZATION, wrongAccessToken)
                             .cookie(wrongRefreshToken))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.toString()))
+                    .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.value()))
                     .andDo(print());
         }
 
@@ -312,7 +312,7 @@ class LessonControllerTest {
                             .header(HttpHeaders.AUTHORIZATION, accessToken)
                             .cookie(refreshToken))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                    .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                     .andDo(print());
         }
 
@@ -330,7 +330,7 @@ class LessonControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(comment)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                    .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                     .andDo(print())
                     .andReturn();
             String contentAsString = mvcResult.getResponse().getContentAsString();
@@ -350,7 +350,7 @@ class LessonControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(comment)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.toString()));
+                    .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.value()));
         }
         @Test
         @Transactional
@@ -369,7 +369,7 @@ class LessonControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(comment)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                    .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                     .andDo(print())
                     .andReturn();
             String contentAsString = mvcResult.getResponse().getContentAsString();
@@ -380,7 +380,7 @@ class LessonControllerTest {
                             .header(HttpHeaders.AUTHORIZATION, accessToken)
                             .cookie(refreshToken))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                    .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                     .andReturn();
 
             String responseBody = deleteCommentResult.getResponse().getContentAsString();
@@ -403,7 +403,7 @@ class LessonControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(comment)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                    .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                     .andDo(print())
                     .andReturn();
             String contentAsString = mvcResult.getResponse().getContentAsString();
@@ -414,7 +414,7 @@ class LessonControllerTest {
                             .header(HttpHeaders.AUTHORIZATION, wrongAccessToken)
                             .cookie(wrongRefreshToken))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.toString()));
+                    .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.value()));
         }
     }
 
@@ -426,7 +426,7 @@ class LessonControllerTest {
         Lesson saved1 = lessonRepository.save(lesson);
         MvcResult mvcResult = mockMvc.perform(get("/lesson/" + saved1.getId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
         String contentAsString = mvcResult.getResponse().getContentAsString();
         LessonDto lessonDto = objectMapper.convertValue(
@@ -445,7 +445,7 @@ class LessonControllerTest {
     void findLessonFailedTest() throws Exception {
         mockMvc.perform(get("/lesson/1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.BAD_REQUEST.toString()))
+                .andExpect(jsonPath("$.status").value(HttpStatus.BAD_REQUEST.value()))
                 .andDo(print());
     }
 
@@ -477,7 +477,7 @@ class LessonControllerTest {
                         .param("page","0")
                         .param("size","10"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
 
         String contentAsString = mvcResult.getResponse().getContentAsString();

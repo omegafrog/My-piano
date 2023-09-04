@@ -214,7 +214,7 @@ class OrderControllerTest {
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken))
                 .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("200 OK"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("200"))
                 .andDo(print());
 
         Optional<User> byId = userRepository.findById(testUser1Profile.getId());
@@ -237,7 +237,7 @@ class OrderControllerTest {
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken))
                 .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("200 OK"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("200"))
                 .andDo(print());
         Optional<User> byId = userRepository.findById(testUser1Profile.getId());
         Assertions.assertThat(byId.get().getPurchasedLessons().size()).isGreaterThan(0);
@@ -258,7 +258,7 @@ class OrderControllerTest {
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken))
                 .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("200 OK"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("200"))
                 .andDo(print())
                 .andReturn();
         String text = objectMapper.readTree(mvcResult.getResponse().getContentAsString()).get("serializedData").asText();
@@ -269,7 +269,7 @@ class OrderControllerTest {
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken))
                 .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("200 OK"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("200"))
                 .andDo(print());
 
         Assertions.assertThat(orderRepository.findById(1L)).isEmpty();
@@ -290,7 +290,7 @@ class OrderControllerTest {
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken))
                 .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("200 OK"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("200"))
                 .andDo(print());
         SecurityContext context = SecurityContextHolder.getContext();
         UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken("username", "password",
@@ -304,7 +304,7 @@ class OrderControllerTest {
                         .cookie(refreshToken)
                 )
                 .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("200 OK"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("200"))
                 .andDo(print())
                 .andReturn();
         String result = mvcResult.getResponse().getContentAsString();
@@ -323,7 +323,7 @@ class OrderControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(data))
                 .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.toString()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.value()))
                 .andDo(print());
     }
 }
