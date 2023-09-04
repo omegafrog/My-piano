@@ -4,10 +4,10 @@ import org.springframework.http.HttpStatus;
 
 public class APIUnauthorizedResponse extends JsonAPIResponse {
     public APIUnauthorizedResponse(String message) {
-        super(HttpStatus.UNAUTHORIZED.toString(), message);
+        super(HttpStatus.UNAUTHORIZED.value(), message);
     }
 
     public APIUnauthorizedResponse( String message, String serializedData) {
-        super(HttpStatus.UNAUTHORIZED.toString(), message, serializedData);
+        super(HttpStatus.UNAUTHORIZED.value(), message, serializedData);
     }
 }
