@@ -1,12 +1,14 @@
 package com.omegafrog.My.piano.app.web.controller.advisor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.omegafrog.My.piano.app.security.exception.UsernameAlreadyExistException;
 import com.omegafrog.My.piano.app.utils.exception.payment.PaymentException;
 import com.omegafrog.My.piano.app.utils.response.APIBadRequestResponse;
 import com.omegafrog.My.piano.app.utils.response.APIInternalServerResponse;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceException;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
@@ -16,16 +18,17 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.List;
 
-@RestControllerAdvice
+@RestControllerAdvice()
 public class ExceptionAdvisor {
 
     /**
      * validation exception을 처리하는 handler
+     *
      * @param ex 발생한 validation exception.
      * @return APIBadRequestResponse : exception에서 얻은 bindingResult의 message내용을 담아 리턴함.
      */
     @ExceptionHandler(BindException.class)
-    public Object processValidationError(BindException ex) {
+    public Object controllerViolationProcessing(BindException ex) {
         BindingResult bindingResult = ex.getBindingResult();
         StringBuilder builder = new StringBuilder();
         List<ObjectError> allErrors = bindingResult.getAllErrors();
@@ -36,8 +39,10 @@ public class ExceptionAdvisor {
         return new APIBadRequestResponse(builder.toString());
     }
 
+
     /**
      * 500 에러에 대한 handler
+     *
      * @param ex JsonProcessingException, PersistenceException
      * @return APIInternalServerResponse : exception의 메세지를 담아 리턴함.
      */
@@ -50,15 +55,29 @@ public class ExceptionAdvisor {
 
     /**
      * 400 에러에 대한 handler
+     *
      * @param ex EntityNotFoundException
      * @return APIBadRequestResponse : exception의 메세지를 담아 리턴함.
      */
 
-    @ExceptionHandler({EntityNotFoundException.class, EntityExistsException.class, PaymentException.class})
-    public Object clientRequestError(EntityNotFoundException ex) {
+    @ExceptionHandler({
+            EntityNotFoundException.class,
+            EntityExistsException.class, PaymentException.class,
+            UsernameAlreadyExistException.class})
+    public Object clientRequestError(RuntimeException ex) {
+
         ex.printStackTrace();
         return new APIBadRequestResponse(ex.getMessage());
     }
 
+    @ExceptionHandler({ConstraintViolationException.class })
+    public Object JDBCBindingViolationExceptionHandler(ConstraintViolationException ex) {
+        ex.printStackTrace();
+        StringBuilder builder = new StringBuilder();
+        ex.getConstraintViolations().forEach(
+                violation-> builder.append(violation.getMessage()).append("\n")
+        );
+        return new APIBadRequestResponse(builder.toString());
+    }
 
 }
