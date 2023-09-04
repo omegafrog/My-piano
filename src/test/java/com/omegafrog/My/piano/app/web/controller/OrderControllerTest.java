@@ -102,7 +102,6 @@ class OrderControllerTest {
                 .name("testUser1")
                 .phoneNum(PhoneNum.builder()
                         .phoneNum("010-1111-2222")
-                        .isAuthorized(false)
                         .build())
                 .profileSrc("src")
                 .loginMethod(LoginMethod.EMAIL)
@@ -123,7 +122,6 @@ class OrderControllerTest {
                 .loginMethod(LoginMethod.EMAIL)
                 .phoneNum(PhoneNum.builder()
                         .phoneNum("010-1111-2222")
-                        .isAuthorized(true)
                         .build())
                 .build();
         SecurityUserDto securityUserDto2 = commonUserService.registerUser(user2);

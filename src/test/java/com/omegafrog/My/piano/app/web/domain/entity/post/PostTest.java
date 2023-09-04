@@ -23,7 +23,6 @@ class PostTest {
                         .loginMethod(LoginMethod.EMAIL)
                         .phoneNum(PhoneNum.builder()
                                 .phoneNum("010-1111-1112")
-                                .isAuthorized(false)
                                 .build())
                         .build())
                 .build();
@@ -50,7 +49,6 @@ class PostTest {
                         .loginMethod(LoginMethod.EMAIL)
                         .phoneNum(PhoneNum.builder()
                                 .phoneNum("010-1111-1112")
-                                .isAuthorized(false)
                                 .build())
                         .build())
                 .build();
@@ -63,7 +61,6 @@ class PostTest {
                         .loginMethod(LoginMethod.EMAIL)
                         .phoneNum(PhoneNum.builder()
                                 .phoneNum("010-1111-1112")
-                                .isAuthorized(false)
                                 .build())
                         .build(),
                 content
@@ -83,7 +80,6 @@ class PostTest {
                         .loginMethod(LoginMethod.EMAIL)
                         .phoneNum(PhoneNum.builder()
                                 .phoneNum("010-1111-1112")
-                                .isAuthorized(false)
                                 .build())
                         .build())
                 .build();
@@ -94,7 +90,6 @@ class PostTest {
                 .loginMethod(LoginMethod.EMAIL)
                 .phoneNum(PhoneNum.builder()
                         .phoneNum("010-1111-1112")
-                        .isAuthorized(false)
                         .build())
                 .build();
         ReflectionTestUtils.setField(build, "id", 0L);

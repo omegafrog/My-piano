@@ -23,7 +23,6 @@ class VideoPostTest {
                         .loginMethod(LoginMethod.EMAIL)
                         .phoneNum(PhoneNum.builder()
                                 .phoneNum("010-1111-1112")
-                                .isAuthorized(false)
                                 .build())
                         .build())
                 .build();
@@ -51,7 +50,6 @@ class VideoPostTest {
                         .loginMethod(LoginMethod.EMAIL)
                         .phoneNum(PhoneNum.builder()
                                 .phoneNum("010-1111-1112")
-                                .isAuthorized(false)
                                 .build())
                         .build())
                 .videoUrl("url1")
@@ -65,7 +63,6 @@ class VideoPostTest {
                         .loginMethod(LoginMethod.EMAIL)
                         .phoneNum(PhoneNum.builder()
                                 .phoneNum("010-1111-1112")
-                                .isAuthorized(false)
                                 .build())
                         .build(),
                 content
@@ -85,7 +82,6 @@ class VideoPostTest {
                         .loginMethod(LoginMethod.EMAIL)
                         .phoneNum(PhoneNum.builder()
                                 .phoneNum("010-1111-1112")
-                                .isAuthorized(false)
                                 .build())
                         .build())
                 .videoUrl("url1")
@@ -97,7 +93,6 @@ class VideoPostTest {
                 .loginMethod(LoginMethod.EMAIL)
                 .phoneNum(PhoneNum.builder()
                         .phoneNum("010-1111-1112")
-                        .isAuthorized(false)
                         .build())
                 .build();
         ReflectionTestUtils.setField(build,"id",0L);

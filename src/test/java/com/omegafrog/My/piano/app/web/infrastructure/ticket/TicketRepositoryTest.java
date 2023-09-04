@@ -40,7 +40,6 @@ class TicketRepositoryTest {
                 .profileSrc("src1")
                 .phoneNum(PhoneNum.builder()
                         .phoneNum("010-1111-2222")
-                        .isAuthorized(false)
                         .build())
                 .loginMethod(LoginMethod.EMAIL)
                 .email("user1@gmail.com")

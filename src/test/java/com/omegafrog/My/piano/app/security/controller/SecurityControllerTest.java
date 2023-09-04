@@ -78,7 +78,6 @@ class SecurityControllerTest {
                 .loginMethod(LoginMethod.EMAIL)
                 .phoneNum(PhoneNum.builder().
                         phoneNum("010-1111-2222")
-                        .isAuthorized(false)
                         .build())
                 .build();
     }

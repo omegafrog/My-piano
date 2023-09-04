@@ -49,7 +49,6 @@ class UserRepositoryTest {
                 .loginMethod(LoginMethod.EMAIL)
                 .phoneNum(PhoneNum.builder()
                         .phoneNum("010-1111-1112")
-                        .isAuthorized(false)
                         .build())
                 .email("user1@gmail.com")
                 .cart(new Cart())
@@ -72,7 +71,6 @@ class UserRepositoryTest {
                 .loginMethod(LoginMethod.EMAIL)
                 .phoneNum(PhoneNum.builder()
                         .phoneNum("010-1111-1112")
-                        .isAuthorized(false)
                         .build())
                 .email("user1@gmail.com")
                 .cart(new Cart())
@@ -84,7 +82,6 @@ class UserRepositoryTest {
                 .profileSrc("updatedProfile")
                 .phoneNum(PhoneNum.builder()
                         .phoneNum("010-1234-1234")
-                        .isAuthorized(true)
                         .build())
                 .build();
 
@@ -104,7 +101,6 @@ class UserRepositoryTest {
                 .loginMethod(LoginMethod.EMAIL)
                 .phoneNum(PhoneNum.builder()
                         .phoneNum("010-1111-1112")
-                        .isAuthorized(false)
                         .build())
                 .email("user1@gmail.com")
                 .cart(new Cart())

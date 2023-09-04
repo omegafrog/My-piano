@@ -55,7 +55,6 @@ class LessonRepositoryTest {
                 .loginMethod(LoginMethod.EMAIL)
                 .phoneNum(PhoneNum.builder()
                         .phoneNum("010-1111-1112")
-                        .isAuthorized(false)
                         .build())
                 .cart(new Cart())
                 .email("user1@gmail.com")

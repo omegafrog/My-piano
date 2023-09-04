@@ -71,7 +71,7 @@ class PostControllerTest {
             author = User.builder()
                     .phoneNum(PhoneNum.builder()
                             .phoneNum("010-1111-2222")
-                            .isAuthorized(true).build())
+                            .build())
                     .profileSrc("src")
                     .cart(new Cart())
                     .build();
@@ -169,8 +169,8 @@ class PostControllerTest {
             //when
             JsonAPIResponse response = controller.deletePost(0L);
             Assertions.assertThat(response).isNotNull();
-            String status = response.getStatus();
-            Assertions.assertThat(status).isEqualTo(HttpStatus.OK.toString());
+            int status = response.getStatus();
+            Assertions.assertThat(status).isEqualTo(HttpStatus.OK.value());
         }
     }
     @Test
@@ -184,7 +184,7 @@ class PostControllerTest {
         User author = User.builder()
                 .phoneNum(PhoneNum.builder()
                         .phoneNum("010-1111-2222")
-                        .isAuthorized(true).build())
+                        .build())
                 .profileSrc("src")
                 .cart(new Cart())
                 .build();

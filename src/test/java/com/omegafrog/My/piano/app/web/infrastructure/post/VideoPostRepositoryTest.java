@@ -39,7 +39,6 @@ class VideoPostRepositoryTest {
                 .loginMethod(LoginMethod.EMAIL)
                 .phoneNum(PhoneNum.builder()
                         .phoneNum("010-1111-1112")
-                        .isAuthorized(false)
                         .build())
                 .email("user1@gmail.com")
                 .cart(new Cart())

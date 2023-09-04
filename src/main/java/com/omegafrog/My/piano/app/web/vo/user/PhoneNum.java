@@ -12,15 +12,14 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
-public class PhoneNum {
+public class PhoneNum  {
 
     @Pattern(regexp = "010-([0-9]{3,4})-([0-9]{4})")
     private String phoneNum;
-    private boolean isAuthorized;
+    private boolean isAuthorized=false;
 
     @Builder
-    public PhoneNum(String phoneNum, boolean isAuthorized) {
+    public PhoneNum(String phoneNum) {
         this.phoneNum = phoneNum;
-        this.isAuthorized = false;
     }
 }
