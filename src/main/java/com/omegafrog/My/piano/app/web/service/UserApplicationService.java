@@ -29,6 +29,13 @@ public class UserApplicationService {
     public static final String USER_ENTITY_NOT_FOUNT_ERROR_MSG = "Cannot find User entity : ";
     private final UserRepository userRepository;
 
+    public UserProfile getUserProfile(User loggedInUser){
+        User user = userRepository.findById(loggedInUser.getId())
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER));
+        return user.getUserProfile();
+    }
+
+
     public int chargeCash(int cash, User loggedInuser){
         User user = userRepository.findById(loggedInuser.getId())
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInuser.getId()));

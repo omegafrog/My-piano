@@ -116,4 +116,12 @@ public class UserController {
         return new APISuccessResponse("Update user success.", data, objectMapper);
     }
 
+    @GetMapping("")
+    public JsonAPIResponse getUserInformation() throws JsonProcessingException {
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+        UserProfile userProfile = userService.getUserProfile(loggedInUser);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("user", userProfile);
+        return new APISuccessResponse("Get user profile success.", data, objectMapper);
+    }
+
 }
