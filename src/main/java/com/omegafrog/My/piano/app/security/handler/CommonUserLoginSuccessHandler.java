@@ -39,14 +39,18 @@ public class CommonUserLoginSuccessHandler implements AuthenticationSuccessHandl
         SecurityUser user = (SecurityUser) authentication.getPrincipal();
         TokenInfo tokenInfo = TokenUtils.generateToken(String.valueOf(user.getId()), secret);
         RefreshToken savedRefreshToken = refreshTokenRepository.save(tokenInfo.getRefreshToken());
-        data.put("access token", tokenInfo.getGrantType()+" "+tokenInfo.getAccessToken());
-        response.addCookie(
-                new Cookie("refreshToken", savedRefreshToken.getRefreshToken())
-        );
+
+        data.put("access token", tokenInfo.getGrantType() + " " + tokenInfo.getAccessToken());
+        Cookie refreshToken = new Cookie("refreshToken", savedRefreshToken.getRefreshToken());
+        refreshToken.setPath("/");
+        refreshToken.setHttpOnly(true);
+        response.addCookie(refreshToken);
+
         APISuccessResponse loginSuccess = new APISuccessResponse("login success", data, objectMapper);
-        String s = objectMapper.writeValueAsString(loginSuccess).replaceAll("\\\\","");
-        s = s.replaceAll("\"\\{","{");
-        s = s.replaceAll("}\"","}");
+        String s = objectMapper.writeValueAsString(loginSuccess);
+        s = s.replaceAll("\"\\{", "{");
+        s = s.replaceAll("}\"", "}");
+        s = s.replaceAll("\\\\\"", "\"");
         writer.write(s);
         writer.flush();
     }
