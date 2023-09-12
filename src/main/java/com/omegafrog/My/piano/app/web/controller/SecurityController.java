@@ -1,4 +1,4 @@
-package com.omegafrog.My.piano.app.security.controller;
+package com.omegafrog.My.piano.app.web.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
