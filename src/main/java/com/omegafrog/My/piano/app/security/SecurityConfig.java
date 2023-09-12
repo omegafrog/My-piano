@@ -2,7 +2,6 @@ package com.omegafrog.My.piano.app.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
-import com.omegafrog.My.piano.app.security.entity.authorities.Authority;
 import com.omegafrog.My.piano.app.security.entity.authorities.Role;
 import com.omegafrog.My.piano.app.security.filter.JwtTokenExceptionFilter;
 import com.omegafrog.My.piano.app.security.filter.JwtTokenFilter;
@@ -12,7 +11,6 @@ import com.omegafrog.My.piano.app.security.provider.CommonUserAuthenticationProv
 import com.omegafrog.My.piano.app.security.reposiotry.InMemoryLogoutBlacklistRepository;
 import com.omegafrog.My.piano.app.security.service.CommonUserService;
 
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,8 +25,6 @@ import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.servlet.util.matcher.MvcRequestMatcher;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @EnableWebSecurity
 @Configuration
@@ -52,15 +48,14 @@ public class SecurityConfig {
 
     @Autowired
     private ObjectMapper objectMapper;
-
     @Bean
-    public CommonUserService commonUserService() {
+    public CommonUserService commonUserService(){
         return new CommonUserService(passwordEncoder(), securityUserRepository);
     }
 
 
     @Bean
-    public CommonUserAuthenticationProvider commonUserAuthenticationProvider() {
+    public CommonUserAuthenticationProvider commonUserAuthenticationProvider(){
         return new CommonUserAuthenticationProvider(commonUserService(), passwordEncoder());
     }
     @Bean
@@ -69,19 +64,18 @@ public class SecurityConfig {
     }
 
     @Bean
-    public LogoutBlacklistRepository inMemoryLogoutBlackListRepository() {
+    public LogoutBlacklistRepository inMemoryLogoutBlackListRepository(){
         return new InMemoryLogoutBlacklistRepository(jwtSecret);
     }
 
     @Bean
-    public JwtTokenFilter jwtTokenFilter() {
+    public JwtTokenFilter jwtTokenFilter(){
         return new JwtTokenFilter(objectMapper, securityUserRepository,
                 refreshTokenRepository);
     }
-
     @Bean
-    public CommonUserLogoutHandler commonUserLogoutHandler() {
-        return new CommonUserLogoutHandler(objectMapper, inMemoryLogoutBlackListRepository());
+    public CommonUserLogoutHandler commonUserLogoutHandler(){
+        return new CommonUserLogoutHandler(objectMapper, refreshTokenRepository);
     }
 
     @Bean
@@ -132,7 +126,6 @@ public class SecurityConfig {
                 .cors().disable();
         return http.build();
     }
-
     @Bean
     public SecurityFilterChain postAuthentication(HttpSecurity http) throws Exception {
         http
@@ -248,53 +241,12 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain OrderAuthentication(HttpSecurity http) throws Exception {
+    SecurityFilterChain h2console(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/order/**")
-                .authenticationProvider(commonUserAuthenticationProvider())
+                .securityMatcher("/h2-console/**")
                 .authorizeHttpRequests()
-                .requestMatchers(HttpMethod.GET, "/order")
-                .permitAll()
-                .requestMatchers(HttpMethod.GET, "/order/{id:[0-9]+}")
-                .permitAll()
-                .anyRequest().hasRole(Role.USER.authorityName)
-                .and()
-                .addFilterBefore(jwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
-                .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
-                .exceptionHandling()
-                .authenticationEntryPoint(UnAuthorizedEntryPoint())
-                .accessDeniedHandler(commonUserAccessDeniedHandler())
-                .and()
-                .cors().disable()
-                .csrf().disable();
+                .anyRequest().permitAll();
         return http.build();
     }
 
-    @SneakyThrows
-    @Bean
-    public SecurityFilterChain sheetPostAuthentication(HttpSecurity http){
-        http
-                .securityMatcher("/sheet/**")
-                .authenticationProvider(commonUserAuthenticationProvider())
-                .authorizeHttpRequests()
-                .requestMatchers(HttpMethod.GET, "/sheet/{id:[0-9]+}")
-                .permitAll()
-                .requestMatchers(HttpMethod.GET, "/sheet")
-                .permitAll()
-                .anyRequest().hasRole(Role.USER.authorityName)
-                .and()
-                .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
-                .addFilterBefore(jwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
-                .exceptionHandling()
-                .authenticationEntryPoint(UnAuthorizedEntryPoint())
-                .accessDeniedHandler(commonUserAccessDeniedHandler())
-                .and()
-                .csrf().disable()
-                .cors().disable();
-        return http.build();
-    }
 }

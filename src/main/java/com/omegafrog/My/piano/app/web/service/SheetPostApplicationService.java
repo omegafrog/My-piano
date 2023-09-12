@@ -14,14 +14,21 @@ import com.omegafrog.My.piano.app.web.dto.comment.RegisterCommentDto;
 import com.omegafrog.My.piano.app.web.dto.sheet.SheetDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.RegisterSheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
+import io.awspring.cloud.s3.ObjectMetadata;
+import io.awspring.cloud.s3.S3Resource;
+import io.awspring.cloud.s3.S3Template;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.persistence.PersistenceException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
+import java.io.IOException;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +38,35 @@ public class SheetPostApplicationService implements CommentHandler {
     private final SheetPostRepository sheetPostRepository;
     private final UserRepository userRepository;
     private final CommentRepository commentRepository;
+
+    private final S3Template s3Template;
+
+    @Value("${spring.cloud.aws.bucket.name}")
+    private String bucketName;
+
+    public Map<String, S3Resource> uploadSheetPost(List<MultipartFile> multipartFile) throws IOException {
+        Map<String, S3Resource> res = new HashMap<>();
+        for (MultipartFile file : multipartFile) {
+            List<String> filename = Arrays.stream(file.getOriginalFilename().split("\\.")).toList();
+            String key = "sheet-" + filename.get(0) + UUID.randomUUID() + "." + filename.get(1);
+
+            String contentType = "";
+            switch (filename.get(1)) {
+                case "jpg", "jpeg":
+                    contentType = MediaType.IMAGE_JPEG_VALUE;
+                    break;
+                case "png":
+                    contentType = MediaType.IMAGE_PNG_VALUE;
+                    break;
+                default:
+                    throw new IllegalArgumentException("Wrong image type.");
+            }
+            res.put(file.getOriginalFilename(),
+                    s3Template.upload(bucketName, key, file.getInputStream(), ObjectMetadata.builder()
+                    .contentType(contentType).build()));
+        }
+        return res;
+    }
 
     public SheetPostDto getSheetPost(Long id) {
         return sheetPostRepository.findById(id)
@@ -54,7 +90,6 @@ public class SheetPostApplicationService implements CommentHandler {
                         .lyrics(sheetDto.getLyrics())
                         .pageNum(sheetDto.getPageNum())
                         .isSolo(sheetDto.getIsSolo())
-                        .pageNum(sheetDto.getPageNum())
                         .instrument(sheetDto.getInstrument())
                         .user(loggedInUser)
                         .filePath(sheetDto.getFilePath())
