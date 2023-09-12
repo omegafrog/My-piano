@@ -6,11 +6,12 @@ import org.springframework.lang.NonNull;
 import java.util.Optional;
 
 public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long> {
+    Optional<RefreshToken> findByRefreshToken(String refreshToken);
 
     RefreshToken save(RefreshToken token);
 
     Optional<RefreshToken> findByUserId(@NonNull Long userId);
-
+    void deleteByUserId(@NonNull Long userId);
     void deleteById(Long id);
 
 }

@@ -3,17 +3,17 @@ package com.omegafrog.My.piano.app.security.filter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
-import com.omegafrog.My.piano.app.security.handler.LogoutBlacklistRepository;
-import com.omegafrog.My.piano.app.security.jwt.RefreshToken;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
+import com.omegafrog.My.piano.app.utils.response.APIUnauthorizedResponse;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -31,9 +31,10 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
     private final SecurityUserRepository securityUserRepository;
     private final RefreshTokenRepository refreshTokenRepository;
-    private final LogoutBlacklistRepository logoutBlacklistRepository;
 
-    private final String secret;
+    @Value("${security.jwt.secret}")
+    private String secret;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws AuthenticationException, ServletException, IOException {
@@ -46,7 +47,6 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         // token 추출
         try{
             String accessToken = TokenUtils.getAccessTokenStringFromHeaders(request);
-            String refreshToken = TokenUtils.getRefreshTokenStringFromCookies(request);
             //token으로부터 유저 추출
             Claims claims = TokenUtils.extractClaims(accessToken, secret);
             Long userId = Long.valueOf((String)claims.get("id"));
@@ -71,11 +71,24 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             );
             Authentication usernameToken = getAuthenticationToken(user);
             SecurityContextHolder.getContext().setAuthentication(usernameToken);
-        }catch (AuthenticationException e){
-            filterChain.doFilter(request, response);
+        } catch (ExpiredJwtException e) {
+            // 만료되었을 때
+            e.printStackTrace();
+            APIUnauthorizedResponse apiUnauthorizedResponse = new APIUnauthorizedResponse("Access token is expired.");
+            PrintWriter writer = response.getWriter();
+            writer.write(objectMapper.writeValueAsString(apiUnauthorizedResponse));
+            writer.flush();
             return;
         }
         filterChain.doFilter(request, response);
+    }
+
+    private SecurityUser getSecurityUserFromAccessToken(Long userId) {
+        SecurityUser user;
+        user = securityUserRepository.findById(userId).orElseThrow(
+                () -> new AuthenticationCredentialsNotFoundException("Invalid access token")
+        );
+        return user;
     }
 
     private static Authentication getAuthenticationToken(SecurityUser user) {
