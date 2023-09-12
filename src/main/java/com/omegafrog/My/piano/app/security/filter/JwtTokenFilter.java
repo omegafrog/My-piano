@@ -20,10 +20,13 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.session.SessionAuthenticationException;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 @RequiredArgsConstructor
 public class JwtTokenFilter extends OncePerRequestFilter {
@@ -40,36 +43,37 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws AuthenticationException, ServletException, IOException {
 
-        if (request.getRequestURI().contains("login") || request.getRequestURI().contains("register")) {
-            filterChain.doFilter(request,response);
-            return;
+        List<AntPathRequestMatcher> ignoredPatterns = new ArrayList<>(
+                Arrays.asList(
+                        AntPathRequestMatcher.antMatcher(HttpMethod.POST, "/user/login"),
+                        AntPathRequestMatcher.antMatcher(HttpMethod.POST, "/user/register"),
+                        AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/sheet"),
+                        AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/sheet/{regex:\\d+}"),
+                        AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/user/login/invalidate"),
+                        AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/lesson/{regex:\\d+}"),
+                        AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/lessons"),
+                        AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/community/video-post")
+                ));
+        for (AntPathRequestMatcher pathMatcher : ignoredPatterns) {
+            if (pathMatcher.matches(request)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
         }
-        SecurityUser user=null;
-        // token 추출
-        try{
+
+        try {
+            // token 추출
             String accessToken = TokenUtils.getAccessTokenStringFromHeaders(request);
             //token으로부터 유저 추출
             Claims claims = TokenUtils.extractClaims(accessToken, secret);
-            Long userId = Long.valueOf((String)claims.get("id"));
+            Long userId = Long.valueOf((String) claims.get("id"));
 
-            //Logout된 유저의 access token이면 빠져나오기
-            if(logoutBlacklistRepository.isPresent(accessToken)){
-                throw new SessionAuthenticationException("Already logged out user.");
+            // refresh token repository에 해당 유저의 refresh token이 없다면 로그아웃한 것.
+            if (refreshTokenRepository.findByUserId(userId).isEmpty()) {
+                throw new BadCredentialsException("Already logged out user.");
             }
-            // 토큰이 만료되어 재발급함
-            if (!TokenUtils.isNonExpired(accessToken, secret)){
-                RefreshToken founded = refreshTokenRepository.findByUserId(userId).orElseThrow(
-                        ()->new AuthenticationCredentialsNotFoundException("Invalid refresh token")
-                );
-                // 토큰이 동일하면 access token 재발급
-                if(founded.getRefreshToken().equals(refreshToken)){
-                    response.setHeader(HttpHeaders.AUTHORIZATION,
-                            TokenUtils.generateToken(userId.toString(),secret).getAccessToken());
-                }
-            }
-            user = securityUserRepository.findById(userId).orElseThrow(
-                            () -> new AuthenticationCredentialsNotFoundException("Invalid access token")
-            );
+            // token validation 진행
+            SecurityUser user = getSecurityUserFromAccessToken(userId);
             Authentication usernameToken = getAuthenticationToken(user);
             SecurityContextHolder.getContext().setAuthentication(usernameToken);
         } catch (ExpiredJwtException e) {
@@ -93,8 +97,6 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 user, null, user.getAuthorities()
         );
     }
-
-
 
 
 }
