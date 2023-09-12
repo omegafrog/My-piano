@@ -6,6 +6,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.AuthenticationException;
@@ -81,5 +82,11 @@ public class TokenUtils {
         return body.getExpiration().after(new Date());
     }
 
+    public static void setRefreshToken(HttpServletResponse response, TokenInfo tokenInfo) {
+        Cookie refreshToken = new Cookie("refreshToken", tokenInfo.getRefreshToken().getRefreshToken());
+        refreshToken.setPath("/");
+        refreshToken.setHttpOnly(true);
+        response.addCookie(refreshToken);
+    }
 
 }
