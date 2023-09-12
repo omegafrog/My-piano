@@ -25,6 +25,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class SheetPostApplicationService implements CommentHandler {
 
     private final SheetPostRepository sheetPostRepository;
@@ -98,9 +99,9 @@ public class SheetPostApplicationService implements CommentHandler {
 
         Comment savedComment = commentRepository.save(
                 Comment.builder()
-                .content(dto.getContent())
-                .author(user)
-                .build());
+                        .content(dto.getContent())
+                        .author(user)
+                        .build());
         sheetPost.addComment(savedComment);
         return sheetPost.getComments().stream().map(Comment::toDto).toList();
     }

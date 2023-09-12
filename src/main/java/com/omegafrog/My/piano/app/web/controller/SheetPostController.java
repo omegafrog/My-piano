@@ -11,24 +11,40 @@ import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
 import com.omegafrog.My.piano.app.utils.response.JsonAPIResponse;
 import com.omegafrog.My.piano.app.utils.response.ResponseUtil;
+import io.awspring.cloud.s3.S3Resource;
 import jakarta.persistence.PersistenceException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-import java.util.Map;
+import java.io.IOException;
+
+import java.util.*;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/sheet")
+@Slf4j
 public class SheetPostController {
 
     private final SheetPostApplicationService sheetPostService;
     @Autowired
     private ObjectMapper objectMapper;
+
+    @PostMapping("/file")
+    public JsonAPIResponse uploadSheetFile(@RequestParam List<MultipartFile> imgFiles) throws IOException {
+        Map<String, S3Resource> s3Resources = sheetPostService.uploadSheetPost(imgFiles);
+        Map<String, String> s3Url = new HashMap<>();
+        for(String originalFileName : s3Resources.keySet()){
+            s3Url.put(originalFileName, s3Resources.get(originalFileName).getURL().toString());
+        }
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("resources", s3Url);
+        return new APISuccessResponse("Upload sheetFile success.", data, objectMapper);
+    }
 
     @GetMapping("/{id}")
     public JsonAPIResponse getSheetPost(@PathVariable Long id)
