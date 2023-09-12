@@ -130,7 +130,7 @@ class VideoPostControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.value()));
+                .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.value()));
     }
 
     @Test
@@ -327,7 +327,7 @@ class VideoPostControllerTest {
                         .content(objectMapper.writeValueAsString(content))
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.value()));
+                .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.value()));
     }
 
     @Test

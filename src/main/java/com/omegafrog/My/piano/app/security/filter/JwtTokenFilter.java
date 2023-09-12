@@ -5,7 +5,6 @@ import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
-import com.omegafrog.My.piano.app.utils.response.APIUnauthorizedResponse;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
@@ -14,7 +13,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -74,11 +75,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         } catch (ExpiredJwtException e) {
             // 만료되었을 때
             e.printStackTrace();
-            APIUnauthorizedResponse apiUnauthorizedResponse = new APIUnauthorizedResponse("Access token is expired.");
-            PrintWriter writer = response.getWriter();
-            writer.write(objectMapper.writeValueAsString(apiUnauthorizedResponse));
-            writer.flush();
-            return;
+            throw new BadCredentialsException("Access token is expired.");
         }
         filterChain.doFilter(request, response);
     }

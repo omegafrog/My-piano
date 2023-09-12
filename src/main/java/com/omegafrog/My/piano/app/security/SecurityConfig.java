@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
 import com.omegafrog.My.piano.app.security.entity.authorities.Authority;
 import com.omegafrog.My.piano.app.security.entity.authorities.Role;
+import com.omegafrog.My.piano.app.security.filter.JwtTokenExceptionFilter;
 import com.omegafrog.My.piano.app.security.filter.JwtTokenFilter;
 import com.omegafrog.My.piano.app.security.handler.*;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
@@ -75,7 +76,7 @@ public class SecurityConfig {
     @Bean
     public JwtTokenFilter jwtTokenFilter() {
         return new JwtTokenFilter(objectMapper, securityUserRepository,
-                refreshTokenRepository, inMemoryLogoutBlackListRepository(), jwtSecret);
+                refreshTokenRepository);
     }
 
     @Bean
@@ -88,6 +89,11 @@ public class SecurityConfig {
         return new AuthenticationExceptionEntryPoint(objectMapper);
     }
 
+    @Bean
+    public JwtTokenExceptionFilter jwtTokenExceptionFilter(){
+        return new JwtTokenExceptionFilter();
+    }
+
 
     @Bean
     public SecurityFilterChain commonUserAuthentication(HttpSecurity http) throws Exception {
@@ -96,6 +102,8 @@ public class SecurityConfig {
                 .authenticationProvider(commonUserAuthenticationProvider())
                 .authorizeHttpRequests()
                 .requestMatchers("/user/register")
+                .permitAll()
+                .requestMatchers("/user/login/**")
                 .permitAll()
                 .anyRequest().hasRole(Role.USER.authorityName)
                 .and()
@@ -112,6 +120,7 @@ public class SecurityConfig {
                 .and()
                 .addFilterBefore(jwtTokenFilter(),
                         UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtTokenExceptionFilter(), JwtTokenFilter.class)
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
@@ -149,6 +158,7 @@ public class SecurityConfig {
                 .and()
                 .addFilterBefore(jwtTokenFilter(),
                         UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtTokenExceptionFilter(), JwtTokenFilter.class)
                 .csrf().disable()
                 .cors().disable();
         return http.build();
@@ -171,6 +181,63 @@ public class SecurityConfig {
                 .and()
                 .addFilterBefore(jwtTokenFilter(),
                         UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtTokenExceptionFilter(), JwtTokenFilter.class)
+                .exceptionHandling()
+                .authenticationEntryPoint(UnAuthorizedEntryPoint())
+                .accessDeniedHandler(commonUserAccessDeniedHandler())
+                .and()
+                .csrf().disable()
+                .cors().disable();
+        return http.build();
+    }
+
+    @Bean
+    public SecurityFilterChain OrderAuthentication(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/order/**")
+                .authenticationProvider(commonUserAuthenticationProvider())
+                .authorizeHttpRequests()
+                .requestMatchers(HttpMethod.GET, "/order")
+                .permitAll()
+                .requestMatchers(HttpMethod.GET, "/order/{id:[0-9]+}")
+                .permitAll()
+                .anyRequest().hasRole(Role.USER.authorityName)
+                .and()
+                .addFilterBefore(jwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtTokenExceptionFilter(), JwtTokenFilter.class)
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .exceptionHandling()
+                .authenticationEntryPoint(UnAuthorizedEntryPoint())
+                .accessDeniedHandler(commonUserAccessDeniedHandler())
+                .and()
+                .cors().disable()
+                .csrf().disable();
+        return http.build();
+    }
+
+    @Bean
+    public SecurityFilterChain sheetPostAuthentication(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/sheet/**")
+                .authenticationProvider(commonUserAuthenticationProvider())
+                .authorizeHttpRequests()
+                .requestMatchers(HttpMethod.GET, "/sheet/{id:[0-9]+}")
+                .permitAll()
+                .requestMatchers(HttpMethod.GET, "/sheet")
+                .permitAll()
+                .anyRequest().hasRole(Role.USER.authorityName)
+                .and()
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .addFilterBefore(jwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtTokenExceptionFilter(), JwtTokenFilter.class)
+                .exceptionHandling()
+                .authenticationEntryPoint(UnAuthorizedEntryPoint())
+                .accessDeniedHandler(commonUserAccessDeniedHandler())
+                .and()
                 .exceptionHandling()
                 .authenticationEntryPoint(UnAuthorizedEntryPoint())
                 .accessDeniedHandler(commonUserAccessDeniedHandler())

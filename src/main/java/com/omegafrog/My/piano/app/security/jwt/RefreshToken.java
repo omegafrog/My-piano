@@ -13,10 +13,7 @@ public class RefreshToken {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String refreshToken;
-
-
     private Long userId;
 
     @Builder

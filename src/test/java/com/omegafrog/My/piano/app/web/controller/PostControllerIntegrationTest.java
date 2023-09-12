@@ -66,7 +66,7 @@ class PostControllerIntegrationTest {
     @NoArgsConstructor
     @Data
     private static class LoginResult {
-        private String status;
+        private int status;
         private String message;
         private Map<String, String> serializedData;
     }
@@ -170,7 +170,7 @@ class PostControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(postDto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.value()));
+                .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.value()));
     }
 
 
@@ -331,7 +331,7 @@ class PostControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(commentDTO)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.value()));
+                .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.value()));
     }
 
     @Test

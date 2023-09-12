@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
 import com.omegafrog.My.piano.app.security.exception.UsernameAlreadyExistException;
+import com.omegafrog.My.piano.app.security.jwt.RefreshToken;
+import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.security.service.CommonUserService;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonInformation;
@@ -68,13 +70,16 @@ class LessonControllerTest {
     @Autowired
     private CommonUserService commonUserService;
 
+    @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
     User artist;
     Lesson lesson;
     SheetPost saved;
 
     @BeforeAll
-    void settings() throws UsernameAlreadyExistException {
+    void settings() throws Exception {
         securityUserRepository.deleteAll();
+        refreshTokenRepository.deleteAll();
         RegisterUserDto user1 = RegisterUserDto.builder()
                 .name("user1")
                 .phoneNum(PhoneNum.builder()
@@ -119,6 +124,25 @@ class LessonControllerTest {
                 .content("hihi this is content")
                 .build();
         saved = sheetPostRepository.save(sheetPost);
+
+        MvcResult mvcResult = mockMvc.perform(post("/user/login")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .content("username=user1&password=password"))
+                .andReturn();
+        String contentAsString = mvcResult.getResponse().getContentAsString();
+        System.out.println("contentAsString = " + contentAsString);
+        LoginResult loginResult = objectMapper.readValue(contentAsString, LoginResult.class);
+        accessToken = loginResult.getSerializedData().get("access token");
+        refreshToken = mvcResult.getResponse().getCookie("refreshToken");
+
+        MvcResult mvcResult2 = mockMvc.perform(post("/user/login")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .content("username=user2&password=password"))
+                .andReturn();
+        String contentAsString2 = mvcResult2.getResponse().getContentAsString();
+        LoginResult loginResult2 = objectMapper.readValue(contentAsString2, LoginResult.class);
+        wrongAccessToken = loginResult2.getSerializedData().get("access token");
+        wrongRefreshToken = mvcResult2.getResponse().getCookie("refreshToken");
     }
     @BeforeEach
     void setLesson() {
@@ -154,40 +178,20 @@ class LessonControllerTest {
         securityUserRepository.deleteAll();
     }
 
-    @Nested
-    class NeedLoginTest{
-        String accessToken;
-        Cookie refreshToken;
+    String accessToken;
+    Cookie refreshToken;
 
-        String wrongAccessToken;
-        Cookie wrongRefreshToken;
-        @NoArgsConstructor
-        @Data
-        private static class LoginResult {
-            private String status;
-            private String message;
-            private Map<String, String> serializedData;
-        }
-        @BeforeEach
-        void login() throws Exception {
-            MvcResult mvcResult = mockMvc.perform(post("/user/login")
-                            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                            .content("username=user1&password=password"))
-                    .andReturn();
-            String contentAsString = mvcResult.getResponse().getContentAsString();
-            LoginResult loginResult = objectMapper.readValue(contentAsString, LoginResult.class);
-            accessToken = loginResult.getSerializedData().get("access token");
-            refreshToken = mvcResult.getResponse().getCookie("refreshToken");
+    String wrongAccessToken;
+    Cookie wrongRefreshToken;
+    @NoArgsConstructor
+    @Data
+    private static class LoginResult {
+        private String status;
+        private String message;
+        private Map<String, String> serializedData;
+    }
 
-            MvcResult mvcResult2 = mockMvc.perform(post("/user/login")
-                            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                            .content("username=user2&password=password"))
-                    .andReturn();
-            String contentAsString2 = mvcResult2.getResponse().getContentAsString();
-            LoginResult loginResult2 = objectMapper.readValue(contentAsString2, LoginResult.class);
-            wrongAccessToken = loginResult2.getSerializedData().get("access token");
-            wrongRefreshToken = mvcResult2.getResponse().getCookie("refreshToken");
-        }
+
 
         @Test
         @Transactional
@@ -231,7 +235,7 @@ class LessonControllerTest {
                             .content(body)
                             )
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.value()))
+                    .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.value()))
                     .andDo(print());
         }
 
@@ -320,6 +324,8 @@ class LessonControllerTest {
         @Transactional
         @DisplayName("로그인하고 댓글을 작성할 수 있다.")
         void addCommentTest() throws Exception {
+            List<RefreshToken> all = refreshTokenRepository.findAll();
+            System.out.println("all = " + all);
             Lesson savedLesson = lessonRepository.save(lesson);
             RegisterCommentDto comment = RegisterCommentDto.builder()
                     .content("comment")
@@ -350,7 +356,7 @@ class LessonControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(comment)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.value()));
+                    .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.value()));
         }
         @Test
         @Transactional
@@ -416,9 +422,6 @@ class LessonControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.value()));
         }
-    }
-
-
 
     @Test
     @Transactional
