@@ -52,7 +52,8 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                         AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/user/login/invalidate"),
                         AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/lesson/{regex:\\d+}"),
                         AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/lessons"),
-                        AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/community/video-post")
+                        AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/community/video-post"),
+                        AntPathRequestMatcher.antMatcher("/h2-console/**")
                 ));
         for (AntPathRequestMatcher pathMatcher : ignoredPatterns) {
             if (pathMatcher.matches(request)) {
