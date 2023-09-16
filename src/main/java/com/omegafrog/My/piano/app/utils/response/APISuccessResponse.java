@@ -12,10 +12,7 @@ public class APISuccessResponse extends JsonAPIResponse {
 
     public APISuccessResponse(String message, @NotNull Map<String, Object> data, ObjectMapper objectMapper)
             throws JsonProcessingException, NullPointerException {
-        super(HttpStatus.OK.value(), message);
-        String s = objectMapper.writeValueAsString(data);
-        s = s.replaceAll("\\\\", "");
-        this.serializedData = s;
+        super(HttpStatus.OK.value(), message, data);
     }
 
     public APISuccessResponse(String message) {
