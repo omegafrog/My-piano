@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -38,19 +39,24 @@ public class CommonUserLoginSuccessHandler implements AuthenticationSuccessHandl
         Map<String, Object> data = new HashMap<>();
         SecurityUser user = (SecurityUser) authentication.getPrincipal();
         TokenInfo tokenInfo = TokenUtils.generateToken(String.valueOf(user.getId()), secret);
-        RefreshToken savedRefreshToken = refreshTokenRepository.save(tokenInfo.getRefreshToken());
+        Optional<RefreshToken> founded = refreshTokenRepository.findByUserId(user.getId());
+
+        if(founded.isPresent())
+            founded.get().updateRefreshToken(tokenInfo.getRefreshToken().getRefreshToken());
+        else
+            founded = Optional.of(refreshTokenRepository.save(tokenInfo.getRefreshToken()));
 
         data.put("access token", tokenInfo.getGrantType() + " " + tokenInfo.getAccessToken());
-        Cookie refreshToken = new Cookie("refreshToken", savedRefreshToken.getRefreshToken());
+        Cookie refreshToken = new Cookie("refreshToken", founded.get().getRefreshToken());
         refreshToken.setPath("/");
         refreshToken.setHttpOnly(true);
         response.addCookie(refreshToken);
 
         APISuccessResponse loginSuccess = new APISuccessResponse("login success", data, objectMapper);
         String s = objectMapper.writeValueAsString(loginSuccess);
-        s = s.replaceAll("\"\\{", "{");
-        s = s.replaceAll("}\"", "}");
-        s = s.replaceAll("\\\\\"", "\"");
+//        s = s.replaceAll("\"\\{", "{");
+//        s = s.replaceAll("}\"", "}");
+//        s = s.replaceAll("\\\\\"", "\"");
         writer.write(s);
         writer.flush();
     }

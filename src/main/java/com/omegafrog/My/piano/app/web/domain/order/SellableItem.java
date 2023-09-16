@@ -20,7 +20,7 @@ public class SellableItem extends Article {
 
     @Override
     public void setAuthor(User user) {
-
+        author = user;
     }
 
     public SellableItem(User author, String title, String content, int price) {
