@@ -22,6 +22,7 @@ public class SheetPost extends SellableItem {
     @JoinColumn(name = "SHEET_ID")
     private Sheet sheet;
 
+
     @Builder
     public SheetPost(String title, String content, User artist, Sheet sheet, int price) {
         super(artist, title, content, price);
@@ -38,7 +39,8 @@ public class SheetPost extends SellableItem {
             UpdateSheetDto sheetDto = dto.getSheetDto();
             this.sheet = Sheet.builder()
                     .title(sheetDto.getTitle())
-                    .genre(sheetDto.getGenre())
+                    .genre1(sheetDto.getGenre1())
+                    .genre2(sheetDto.getGenre2())
                     .filePath(sheetDto.getFilePath())
                     .pageNum(sheetDto.getPageNum())
                     .difficulty(sheetDto.getDifficulty())

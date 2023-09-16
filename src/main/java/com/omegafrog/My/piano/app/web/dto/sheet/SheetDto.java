@@ -9,6 +9,7 @@ import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Setter
@@ -25,7 +26,7 @@ public class SheetDto {
     @NotNull
     private Instrument instrument;
     @NotNull
-    private Genre genre;
+    private List<Genre> genres;
     @NotNull
     private Boolean isSolo;
     @NotNull
@@ -38,14 +39,14 @@ public class SheetDto {
     private UserProfile user;
 
     @Builder
-    public SheetDto(Long id, String title, int pageNum, Difficulty difficulty, Instrument instrument, Genre genre, Boolean isSolo, Boolean lyrics, String filePath, LocalDateTime createdAt, UserProfile user) {
+    public SheetDto(Long id, String title, int pageNum, Difficulty difficulty, List<Genre> genres,Instrument instrument, Boolean isSolo, Boolean lyrics, String filePath, LocalDateTime createdAt, UserProfile user) {
         this.id = id;
         this.title = title;
         this.pageNum = pageNum;
         this.difficulty = difficulty;
         this.instrument = instrument;
-        this.genre = genre;
         this.isSolo = isSolo;
+        this.genres = genres;
         this.lyrics = lyrics;
         this.filePath = filePath;
         this.createdAt = createdAt;
