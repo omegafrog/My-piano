@@ -1,15 +1,14 @@
 package com.omegafrog.My.piano.app.web.dto.sheet;
 
+import com.omegafrog.My.piano.app.web.domain.sheet.Genres;
 import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
 import com.omegafrog.My.piano.app.web.enums.Difficulty;
-import com.omegafrog.My.piano.app.web.enums.Genre;
 import com.omegafrog.My.piano.app.web.enums.Instrument;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Data
 @Setter
@@ -26,7 +25,7 @@ public class SheetDto {
     @NotNull
     private Instrument instrument;
     @NotNull
-    private List<Genre> genres;
+    private Genres genres;
     @NotNull
     private Boolean isSolo;
     @NotNull
@@ -39,7 +38,7 @@ public class SheetDto {
     private UserProfile user;
 
     @Builder
-    public SheetDto(Long id, String title, int pageNum, Difficulty difficulty, List<Genre> genres,Instrument instrument, Boolean isSolo, Boolean lyrics, String filePath, LocalDateTime createdAt, UserProfile user) {
+    public SheetDto(Long id, String title, int pageNum, Difficulty difficulty, Genres genres,Instrument instrument, Boolean isSolo, Boolean lyrics, String filePath, LocalDateTime createdAt, UserProfile user) {
         this.id = id;
         this.title = title;
         this.pageNum = pageNum;

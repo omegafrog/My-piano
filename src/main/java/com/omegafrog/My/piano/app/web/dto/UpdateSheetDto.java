@@ -1,5 +1,6 @@
 package com.omegafrog.My.piano.app.web.dto;
 
+import com.omegafrog.My.piano.app.web.domain.sheet.Genres;
 import com.omegafrog.My.piano.app.web.enums.Difficulty;
 import com.omegafrog.My.piano.app.web.enums.Genre;
 import com.omegafrog.My.piano.app.web.enums.Instrument;
@@ -16,20 +17,19 @@ public class UpdateSheetDto {
     private int pageNum;
     private Difficulty difficulty;
     private Instrument instrument;
-    private Genre genre1,genre2;
+    private Genres genres;
     private Boolean solo;
     private Boolean lyrics;
     private String filePath;
     private int price;
 
     @Builder
-    public UpdateSheetDto(String title, int pageNum, Difficulty difficulty, Instrument instrument, Genre genre1, Genre genre2, boolean isSolo, boolean lyrics, String filePath, int price) {
+    public UpdateSheetDto(String title, int pageNum, Difficulty difficulty, Instrument instrument, Genres genres, boolean isSolo, boolean lyrics, String filePath, int price) {
         this.title = title;
         this.pageNum = pageNum;
         this.difficulty = difficulty;
         this.instrument = instrument;
-        this.genre1 = genre1;
-        this.genre2 = genre2;
+        this.genres = genres;
         this.solo = isSolo;
         this.lyrics = lyrics;
         this.filePath = filePath;

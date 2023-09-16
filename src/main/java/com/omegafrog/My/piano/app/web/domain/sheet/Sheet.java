@@ -27,7 +27,8 @@ public class Sheet  {
     private int pageNum;
     private Difficulty difficulty;
     private Instrument instrument;
-    private Genre genre1,genre2;
+    @Embedded
+    private Genres genres;
     private boolean isSolo;
     private boolean lyrics;
     private String filePath;
@@ -39,13 +40,12 @@ public class Sheet  {
     private User user;
 
     @Builder
-    public Sheet(String title, int pageNum, Difficulty difficulty, Instrument instrument,Genre genre1,Genre genre2 , boolean isSolo, boolean lyrics, String filePath, User user) {
+    public Sheet(String title, int pageNum, Difficulty difficulty, Instrument instrument,Genres genres, boolean isSolo, boolean lyrics, String filePath, User user) {
         this.title = title;
         this.pageNum = pageNum;
         this.difficulty = difficulty;
         this.instrument = instrument;
-        this.genre1 = genre1;
-        this.genre2 = genre2;
+        this.genres = genres;
         this.isSolo = isSolo;
         this.lyrics = lyrics;
         this.filePath = filePath;
@@ -57,8 +57,7 @@ public class Sheet  {
         this.pageNum = dto.getPageNum();
         this.difficulty = dto.getDifficulty();
         this.instrument = dto.getInstrument();
-        this.genre1 = dto.getGenre1();
-        this.genre2 = dto.getGenre2();
+        this.genres = dto.getGenres();
         this.isSolo = dto.isSolo();
         this.lyrics = dto.isLyrics();
         this.filePath = dto.getFilePath();
@@ -70,7 +69,7 @@ public class Sheet  {
                 .id(id)
                 .createdAt(createdAt)
                 .difficulty(difficulty)
-                .genres(Arrays.asList(genre1, genre2))
+                .genres(genres)
                 .filePath(filePath)
                 .instrument(instrument)
                 .lyrics(lyrics)

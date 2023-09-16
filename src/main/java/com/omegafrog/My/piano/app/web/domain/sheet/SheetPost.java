@@ -39,8 +39,7 @@ public class SheetPost extends SellableItem {
             UpdateSheetDto sheetDto = dto.getSheetDto();
             this.sheet = Sheet.builder()
                     .title(sheetDto.getTitle())
-                    .genre1(sheetDto.getGenre1())
-                    .genre2(sheetDto.getGenre2())
+                    .genres(sheetDto.getGenres())
                     .filePath(sheetDto.getFilePath())
                     .pageNum(sheetDto.getPageNum())
                     .difficulty(sheetDto.getDifficulty())
