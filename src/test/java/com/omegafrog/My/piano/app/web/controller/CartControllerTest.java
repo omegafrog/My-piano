@@ -11,6 +11,7 @@ import com.omegafrog.My.piano.app.web.domain.lesson.LessonInformation;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
 import com.omegafrog.My.piano.app.web.domain.lesson.VideoInformation;
 import com.omegafrog.My.piano.app.web.domain.order.OrderRepository;
+import com.omegafrog.My.piano.app.web.domain.sheet.Genres;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
@@ -129,7 +130,7 @@ class CartControllerTest {
                 .sheet(Sheet.builder()
                         .title("title")
                         .filePath("path1")
-                        .genre(Genre.BGM)
+                        .genres(Genres.builder().genre1(Genre.BGM).build())
                         .user(user.getUser())
                         .difficulty(Difficulty.MEDIUM)
                         .instrument(Instrument.GUITAR_ACOUSTIC)
@@ -190,8 +191,7 @@ class CartControllerTest {
 
         //then
         String content = mvcResult.getResponse().getContentAsString();
-        String text = objectMapper.readTree(content).get("serializedData").asText();
-        String title = objectMapper.readTree(text).get("contents").get(0).get("item").get("title").asText();
+        String title = objectMapper.readTree(content).get("serializedData").get("contents").get(0).get("item").get("title").asText();
         Assertions.assertThat(title).isEqualTo("SheetPostTitle1");
 
         MvcResult mvcResult2 = mockMvc.perform(post("/cart/lesson")
@@ -203,8 +203,7 @@ class CartControllerTest {
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
         String contentAsString = mvcResult2.getResponse().getContentAsString();
-        String text1 = objectMapper.readTree(contentAsString).get("serializedData").asText();
-        String title2 = objectMapper.readTree(text1).get("contents").get(1).get("item").get("title").asText();
+        String title2 = objectMapper.readTree(contentAsString).get("serializedData").get("contents").get(1).get("item").get("title").asText();
         Assertions.assertThat(title2).isEqualTo("lesson1");
     }
 
@@ -224,8 +223,7 @@ class CartControllerTest {
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
         String content = mvcResult.getResponse().getContentAsString();
-        String text = objectMapper.readTree(content).get("serializedData").asText();
-        Long id = objectMapper.readTree(text).get("contents").get(0).get("id").asLong();
+        Long id = objectMapper.readTree(content).get("serializedData").get("contents").get(0).get("id").asLong();
 
         mockMvc.perform(delete("/cart/" + id)
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
@@ -261,8 +259,7 @@ class CartControllerTest {
                 .andReturn();
 
         String content = mvcResult.getResponse().getContentAsString();
-        String text = objectMapper.readTree(content).get("serializedData").asText();
-        Long id = objectMapper.readTree(text).get("contents").get(0).get("item").get("id").asLong();
+        Long id = objectMapper.readTree(content).get("serializedData").get("contents").get(0).get("item").get("id").asLong();
         Assertions.assertThat(id).isEqualTo(savedSheetPost.getId());
     }
 

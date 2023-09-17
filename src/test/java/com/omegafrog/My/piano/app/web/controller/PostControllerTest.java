@@ -12,6 +12,7 @@ import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.post.PostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
+import com.omegafrog.My.piano.app.web.dto.post.PostDto;
 import com.omegafrog.My.piano.app.web.dto.post.PostRegisterDto;
 import com.omegafrog.My.piano.app.web.dto.post.UpdatePostDto;
 import com.omegafrog.My.piano.app.utils.response.JsonAPIResponse;
@@ -117,10 +118,9 @@ class PostControllerTest {
             JsonAPIResponse apiResponse = controller.writePost( postDto);
             //then
             Assertions.assertThat(apiResponse).isNotNull();
-            String serializedData = apiResponse.getSerializedData();
-            JsonNode jsonNode = objectMapper.readTree(serializedData);
-            String id = jsonNode.get("post").get("id").asText();
-            Assertions.assertThat(id).isEqualTo("0");
+            PostDto postDto1 = (PostDto) apiResponse.getSerializedData().get("post");
+
+            Assertions.assertThat(postDto1.getId()).isEqualTo(0L);
         }
         @Test
         @DisplayName("post를 수정할 수 있어야 한다.")
@@ -148,10 +148,10 @@ class PostControllerTest {
 
 
             Assertions.assertThat(response).isNotNull();
-            JsonNode jsonNode = objectMapper.readTree(response.getSerializedData());
-            String id = jsonNode.get("post").get("id").asText();
-            Assertions.assertThat(id).isEqualTo("0");
-            String updatedContent = jsonNode.get("post").get("content").asText();
+            PostDto postDto1 = (PostDto) response.getSerializedData().get("post");
+            Long id = postDto1.getId();
+            Assertions.assertThat(id).isEqualTo(0);
+            String updatedContent = postDto1.getContent();
             Assertions.assertThat(updatedContent).isEqualTo("updatedContent");
         }
         @Test
@@ -202,9 +202,9 @@ class PostControllerTest {
         JsonAPIResponse response = controller.findPost(0L);
         //then
         Assertions.assertThat(response).isNotNull();
-        String data=response.getSerializedData();
-        long id = objectMapper.readTree(data).get("post").get("id").asLong();
-        String text = objectMapper.readTree(data).get("post").get("title").asText();
+        PostDto postDto1 = (PostDto) response.getSerializedData().get("post");
+        long id = postDto1.getId();
+        String text = postDto1.getTitle();
         Assertions.assertThat(id).isEqualTo(0L);
         Assertions.assertThat(text).isEqualTo("title");
     }

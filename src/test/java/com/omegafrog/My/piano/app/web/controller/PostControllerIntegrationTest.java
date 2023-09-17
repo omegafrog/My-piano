@@ -11,6 +11,7 @@ import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.dto.RegisterUserDto;
 import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
 import com.omegafrog.My.piano.app.web.dto.comment.RegisterCommentDto;
+import com.omegafrog.My.piano.app.web.dto.post.PostDto;
 import com.omegafrog.My.piano.app.web.dto.post.PostRegisterDto;
 import com.omegafrog.My.piano.app.web.dto.post.UpdatePostDto;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
@@ -140,8 +141,7 @@ class PostControllerIntegrationTest {
                         .content(objectMapper.writeValueAsString(postDto)))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        String data = objectMapper.readTree(string).get("serializedData").asText();
-        Long postId = objectMapper.readTree(data).get("post").get("id").asLong();
+        Long postId = objectMapper.readTree(string).get("serializedData").get("post").get("id").asLong();
         System.out.println("postId = " + postId);
         //when
         MvcResult mvcResult2 = mockMvc.perform(get("/community/post/" + postId)
@@ -152,9 +152,9 @@ class PostControllerIntegrationTest {
         //then
         String contentAsString2 = mvcResult2.getResponse().getContentAsString();
         JsonNode jsonNode = objectMapper.readTree(contentAsString2);
-        String serializedData = jsonNode.get("serializedData").asText();
-        String id = objectMapper.readTree(serializedData).get("post").get("id").asText();
-        String content = objectMapper.readTree(serializedData).get("post").get("content").asText();
+        JsonNode post = jsonNode.get("serializedData").get("post");
+        String id = post.get("id").asText();
+        String content = post.get("content").asText();
         Assertions.assertThat(id).isEqualTo(postId.toString());
         Assertions.assertThat(content).isEqualTo("content");
     }
@@ -189,8 +189,7 @@ class PostControllerIntegrationTest {
                         .content(objectMapper.writeValueAsString(postDto)))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        String data = objectMapper.readTree(string).get("serializedData").asText();
-        Long postId = objectMapper.readTree(data).get("post").get("id").asLong();
+        Long postId = objectMapper.readTree(string).get("serializedData").get("post").get("id").asLong();
         System.out.println("postId = " + postId);
 
         UpdatePostDto updateDto = UpdatePostDto.builder()
@@ -208,9 +207,9 @@ class PostControllerIntegrationTest {
                 .andReturn();
         //then
         String s = mvcResult.getResponse().getContentAsString();
-        data = objectMapper.readTree(s).get("serializedData").asText();
-        Long updatedId = objectMapper.readTree(data).get("post").get("id").asLong();
-        String content = objectMapper.readTree(data).get("post").get("content").asText();
+        JsonNode postDto1 =  objectMapper.readTree(s).get("serializedData").get("post");
+        Long updatedId = postDto1.get("id").asLong();
+        String content = postDto1.get("content").asText();
         Assertions.assertThat(updatedId).isEqualTo(postId);
         Assertions.assertThat(content).isEqualTo("changedContent");
     }
@@ -237,8 +236,7 @@ class PostControllerIntegrationTest {
                         .content(objectMapper.writeValueAsString(postDto)))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        String data = objectMapper.readTree(string).get("serializedData").asText();
-        Long postId = objectMapper.readTree(data).get("post").get("id").asLong();
+        Long postId = objectMapper.readTree(string).get("serializedData").get("post").get("id").asLong();
         System.out.println("postId = " + postId);
 
         UpdatePostDto updateDto = UpdatePostDto.builder()
@@ -275,8 +273,7 @@ class PostControllerIntegrationTest {
                         .content(objectMapper.writeValueAsString(postDto)))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        String data = objectMapper.readTree(string).get("serializedData").asText();
-        Long postId = objectMapper.readTree(data).get("post").get("id").asLong();
+        Long postId = objectMapper.readTree(string).get("serializedData").get("post").get("id").asLong();
         System.out.println("postId = " + postId);
         //when
         String contentAsString = mockMvc.perform(post("/community/post/" + postId + "/comment")
@@ -287,10 +284,8 @@ class PostControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         //then
-        data = objectMapper.readTree(contentAsString).get("serializedData").asText();
-        System.out.println("data = " + data);
+        JsonNode comments = objectMapper.readTree(contentAsString).get("serializedData").get("comments");
 
-        JsonNode comments = objectMapper.readTree(data).get("comments");
         List<CommentDto> commentList = new ArrayList<>();
         for (JsonNode node : comments) {
             commentList.add(objectMapper.convertValue(node, CommentDto.class));
@@ -323,8 +318,7 @@ class PostControllerIntegrationTest {
                         .content(objectMapper.writeValueAsString(postDto)))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        String data = objectMapper.readTree(string).get("serializedData").asText();
-        Long postId = objectMapper.readTree(data).get("post").get("id").asLong();
+        Long postId = objectMapper.readTree(string).get("serializedData").get("post").get("id").asLong();
         System.out.println("postId = " + postId);
         //when
         mockMvc.perform(post("/community/post/" + postId + "/comment")
@@ -355,19 +349,17 @@ class PostControllerIntegrationTest {
                         .content(objectMapper.writeValueAsString(postDto)))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        String data = objectMapper.readTree(string).get("serializedData").asText();
-        Long postId = objectMapper.readTree(data).get("post").get("id").asLong();
+        Long postId = objectMapper.readTree(string).get("serializedData").get("post").get("id").asLong();
         System.out.println("postId = " + postId);
         // post에 comment 등록
-        data = mockMvc.perform(post("/community/post/" + postId + "/comment")
+        String contentAsString1 = mockMvc.perform(post("/community/post/" + postId + "/comment")
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(commentDTO)))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        data = objectMapper.readTree(data).get("serializedData").asText();
-        JsonNode comments = objectMapper.readTree(data).get("comments");
+        JsonNode comments = objectMapper.readTree(contentAsString1).get("serializedData").get("comments");
         CommentDto comment = objectMapper.convertValue(comments.get(0), CommentDto.class);
         Long commentId = comment.getId();
 
@@ -378,8 +370,7 @@ class PostControllerIntegrationTest {
                         .cookie(refreshToken))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        JsonNode jsonNode = objectMapper.readTree(objectMapper.readTree(contentAsString).get("serializedData").asText())
-                .get("comments");
+        JsonNode jsonNode = objectMapper.readTree(contentAsString).get("serializedData").get("comments");
         List<Comment> commentList = new ArrayList<>();
         for (JsonNode node : jsonNode) {
             commentList.add(objectMapper.readValue(node.toString(), Comment.class));
@@ -419,19 +410,16 @@ class PostControllerIntegrationTest {
                         .content(objectMapper.writeValueAsString(postDto)))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        String data = objectMapper.readTree(string).get("serializedData").asText();
-        Long postId = objectMapper.readTree(data).get("post").get("id").asLong();
-        System.out.println("postId = " + postId);
+        Long postId = objectMapper.readTree(string).get("serializedData").get("post").get("id").asLong();
         // post에 comment 등록
-        data = mockMvc.perform(post("/community/post/" + postId + "/comment")
+        String contentAsString1 = mockMvc.perform(post("/community/post/" + postId + "/comment")
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(commentDTO)))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        data = objectMapper.readTree(data).get("serializedData").asText();
-        JsonNode comments = objectMapper.readTree(data).get("comments");
+        JsonNode comments = objectMapper.readTree(contentAsString1).get("serializedData").get("comments");
         CommentDto comment = objectMapper.readValue(comments.get(0).toString(), CommentDto.class);
         Long commentId = comment.getId();
         //when
@@ -458,8 +446,7 @@ class PostControllerIntegrationTest {
                         .content(objectMapper.writeValueAsString(postDto)))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        String data = objectMapper.readTree(string).get("serializedData").asText();
-        Long postId = objectMapper.readTree(data).get("post").get("id").asLong();
+        Long postId = objectMapper.readTree(string).get("serializedData").get("post").get("id").asLong();
         //when
         mockMvc.perform(get("/community/post/" + postId + "/like")
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
@@ -472,9 +459,9 @@ class PostControllerIntegrationTest {
                         .cookie(refreshToken))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        Post post = objectMapper.readValue(objectMapper.readTree(objectMapper.readTree(contentAsString).get("serializedData").asText())
-                .get("post").toString(), Post.class);
-        Assertions.assertThat(post.getLikeCount()).isGreaterThan(0);
+        int likeCount = objectMapper.readTree(contentAsString).get("serializedData").get("post").get("likeCount").asInt();
+
+        Assertions.assertThat(likeCount).isGreaterThan(0);
     }
 
     @Test
@@ -493,8 +480,7 @@ class PostControllerIntegrationTest {
                         .content(objectMapper.writeValueAsString(postDto)))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        String data = objectMapper.readTree(string).get("serializedData").asText();
-        Long postId = objectMapper.readTree(data).get("post").get("id").asLong();
+        Long postId = objectMapper.readTree(string).get("serializedData").get("post").get("id").asLong();
         //when
         String s = mockMvc.perform(delete("/community/post/" + postId)
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
@@ -531,8 +517,7 @@ class PostControllerIntegrationTest {
                         .content(objectMapper.writeValueAsString(postDto)))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        String data = objectMapper.readTree(string).get("serializedData").asText();
-        Long postId = objectMapper.readTree(data).get("post").get("id").asLong();
+        Long postId = objectMapper.readTree(string).get("serializedData").get("post").get("id").asLong();
         //when
         mockMvc.perform(delete("/community/post/" + postId)
                         .header(HttpHeaders.AUTHORIZATION, wrongAccessToken)

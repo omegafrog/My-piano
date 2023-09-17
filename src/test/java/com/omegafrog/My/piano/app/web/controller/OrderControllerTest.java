@@ -140,45 +140,8 @@ class OrderControllerTest {
     @BeforeAll
     @Transactional
     void saveEntity() {
-        SheetPost sheetPost = SheetPost.builder()
-                .sheet(Sheet.builder()
-                        .title("title")
-                        .filePath("path1")
-                        .genre(Genre.BGM)
-                        .user(testUser1Profile)
-                        .difficulty(Difficulty.MEDIUM)
-                        .instrument(Instrument.GUITAR_ACOUSTIC)
-                        .isSolo(true)
-                        .lyrics(false)
-                        .pageNum(3)
-                        .build())
-                .title("SheetPostTItle1")
-                .price(12000)
-                .artist(artist)
-                .content("hihi this is content")
-                .build();
-
-        savedSheetPost = sheetPostRepository.save(sheetPost);
-        Lesson lesson = Lesson.builder()
-                .sheet(savedSheetPost.getSheet())
-                .title("lesson1")
-                .price(2000)
-                .lessonInformation(LessonInformation.builder()
-                        .instrument(Instrument.GUITAR_ACOUSTIC)
-                        .lessonDescription("hoho")
-                        .category(Category.ACCOMPANIMENT)
-                        .artistDescription("god")
-                        .policy(RefundPolicy.REFUND_IN_7DAYS)
-                        .build())
-                .lessonProvider(artist)
-                .subTitle("this is subtitle")
-                .videoInformation(
-                        VideoInformation.builder()
-                                .videoUrl("url")
-                                .runningTime(LocalTime.of(0, 20))
-                                .build())
-                .build();
-
+        savedSheetPost = sheetPostRepository.save(DummyData.sheetPost(testUser1Profile));
+        Lesson lesson = DummyData.lesson(savedSheetPost.getSheet(), artist);
         savedLesson = lessonRepository.save(lesson);
     }
 
@@ -192,11 +155,7 @@ class OrderControllerTest {
         lessonRepository.deleteAll();
         sheetPostRepository.deleteAll();
         securityUserRepository.deleteAll();
-        System.out.println("lesson : " + lessonRepository.count());
-        System.out.println("sheetPost : " + sheetPostRepository.count());
-        System.out.println("user : " + userRepository.count());
     }
-
 
     @Test
     @Transactional
@@ -252,7 +211,7 @@ class OrderControllerTest {
                 .buyerId(testUser1Profile.getId())
                 .build();
         String data = objectMapper.writeValueAsString(orderDto);
-        MvcResult mvcResult = mockMvc.perform(post("/sheet/buy")
+        String response = mockMvc.perform(post("/sheet/buy")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(data)
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
@@ -260,10 +219,8 @@ class OrderControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("200"))
                 .andDo(print())
-                .andReturn();
-        String text = objectMapper.readTree(mvcResult.getResponse().getContentAsString()).get("serializedData").asText();
-        Long id = objectMapper.readTree(text).get("order").get("id").asLong();
-
+                .andReturn().getResponse().getContentAsString();
+        Long id = objectMapper.readTree(response).get("serializedData").get("order").get("id").asLong();
 
         mockMvc.perform(get("/order/" + id + "/cancel")
                         .header(HttpHeaders.AUTHORIZATION, accessToken)

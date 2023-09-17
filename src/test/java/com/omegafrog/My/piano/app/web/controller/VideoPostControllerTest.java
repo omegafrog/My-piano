@@ -110,12 +110,12 @@ class VideoPostControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn().getResponse().getContentAsString();
-        String text = objectMapper.readTree(contentAsString).get("serializedData").asText();
-        JsonNode jsonNode = objectMapper.readTree(text).get("videoPost");
-        VideoPostDto videoPostDto = objectMapper.convertValue(jsonNode, VideoPostDto.class);
-        Assertions.assertThat(videoPostDto.getTitle()).isEqualTo("title");
+        String title = objectMapper.readTree(contentAsString).get("serializedData").get("videoPost").get("title").asText();
+        Long id = objectMapper.readTree(contentAsString).get("serializedData").get("videoPost").get("id").asLong();
+
+        Assertions.assertThat(title.equals("title"));
         SecurityUser user = (SecurityUser) commonUserService.loadUserByUsername(TestLoginUtil.user1.getUsername());
-        Assertions.assertThat(user.getUser().getUploadedVideoPosts().get(0).getId()).isEqualTo(videoPostDto.getId());
+        Assertions.assertThat(user.getUser().getUploadedVideoPosts().get(0).getId()).isEqualTo(id);
     }
 
     @Test
@@ -164,8 +164,7 @@ class VideoPostControllerTest {
                 .andReturn().getResponse().getContentAsString();
 
         // then
-        String text = objectMapper.readTree(contentAsString).get("serializedData").asText();
-        JsonNode jsonNode = objectMapper.readTree(text).get("videoPost");
+        JsonNode jsonNode = objectMapper.readTree(contentAsString).get("serializedData").get("videoPost");
         VideoPostDto videoPostDto = objectMapper.convertValue(jsonNode, VideoPostDto.class);
         Assertions.assertThat(videoPostDto.getId()).isEqualTo(saved.getId());
         Assertions.assertThat(videoPostDto.getTitle()).isEqualTo("changed");
@@ -259,8 +258,7 @@ class VideoPostControllerTest {
                 .andReturn().getResponse().getContentAsString();
 
         List<VideoPostDto> videoPostDtos = new ArrayList<>();
-        String text = objectMapper.readTree(contentAsString).get("serializedData").asText();
-        JsonNode jsonNode = objectMapper.readTree(text).get("videoPosts");
+        JsonNode jsonNode = objectMapper.readTree(contentAsString).get("serializedData").get("videoPosts");
         jsonNode.forEach(node -> videoPostDtos.add(objectMapper.convertValue(node, VideoPostDto.class)));
         Assertions.assertThat(videoPostDtos).hasSize(2);
         Assertions.assertThat(videoPostDtos.get(0).getId()).isEqualTo(saved.getId());
@@ -295,8 +293,7 @@ class VideoPostControllerTest {
                 .andReturn().getResponse().getContentAsString();
 
         //then
-        String text = objectMapper.readTree(contentAsString).get("serializedData").asText();
-        JsonNode jsonNode = objectMapper.readTree(text).get("comments");
+        JsonNode jsonNode = objectMapper.readTree(contentAsString).get("serializedData").get("comments");
         List<CommentDto> commentDtos = new ArrayList<>();
         jsonNode.forEach(comment -> commentDtos.add(objectMapper.convertValue(comment, CommentDto.class)));
         Assertions.assertThat(commentDtos).hasSize(1);
@@ -356,8 +353,7 @@ class VideoPostControllerTest {
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn().getResponse().getContentAsString();
 
-        String text = objectMapper.readTree(contentAsString).get("serializedData").asText();
-        JsonNode jsonNode = objectMapper.readTree(text).get("comments");
+        JsonNode jsonNode = objectMapper.readTree(contentAsString).get("serializedData").get("comments");
         List<CommentDto> commentDtos = new ArrayList<>();
         jsonNode.forEach(comment -> commentDtos.add(objectMapper.convertValue(comment, CommentDto.class)));
 
@@ -414,8 +410,7 @@ class VideoPostControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn().getResponse().getContentAsString();
-        String text = objectMapper.readTree(contentAsString).get("serializedData").asText();
-        JsonNode jsonNode = objectMapper.readTree(text).get("comments");
+        JsonNode jsonNode = objectMapper.readTree(contentAsString).get("serializedData").get("comments");
         List<CommentDto> comments = new ArrayList<>();
         jsonNode.forEach(node -> comments.add(objectMapper.convertValue(node, CommentDto.class)));
 

@@ -1,6 +1,8 @@
 package com.omegafrog.My.piano.app.web.infrastructure.sheet;
 
+import com.omegafrog.My.piano.app.web.controller.DummyData;
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
+import com.omegafrog.My.piano.app.web.domain.sheet.Genres;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.UpdateSheetDto;
 import com.omegafrog.My.piano.app.web.enums.Difficulty;
@@ -79,23 +81,9 @@ class SheetPostRepositoryTest {
     @Transactional
     void saveNFindTest() {
         //given
-        SheetPost sheetPost = SheetPost.builder()
-                .title("title")
-                .content("content")
-                .sheet(Sheet.builder()
-                        .genre(Genre.BGM)
-                        .lyrics(false)
-                        .isSolo(false)
-                        .difficulty(Difficulty.EASY)
-                        .filePath("path")
-                        .instrument(Instrument.GUITAR_ACOUSTIC)
-                        .pageNum(12)
-                        .user(user)
-                        .build())
-                .artist(author)
-                .build();
+
         //when
-        SheetPost saved = sheetPostRepository.save(sheetPost);
+        SheetPost saved = sheetPostRepository.save(DummyData.sheetPost(user));
         Optional<SheetPost> founded = sheetPostRepository.findById(saved.getId());
         //then
         Assertions.assertThat(founded).isPresent();
@@ -106,26 +94,12 @@ class SheetPostRepositoryTest {
     @DisplayName("악보 판매글을 수정할 수 있어야 한다.")
     void updateTest() {
         //given
-        SheetPost sheetPost = SheetPost.builder()
-                .title("title")
-                .content("content")
-                .sheet(Sheet.builder()
-                        .genre(Genre.BGM)
-                        .lyrics(false)
-                        .isSolo(false)
-                        .difficulty(Difficulty.EASY)
-                        .filePath("path")
-                        .instrument(Instrument.GUITAR_ACOUSTIC)
-                        .pageNum(12)
-                        .user(user)
-                        .build())
-                .artist(author)
-                .build();
-        SheetPost saved = sheetPostRepository.save(sheetPost);
+
+        SheetPost saved = sheetPostRepository.save(DummyData.sheetPost(user));
         //when
         UpdateSheetPostDto updated = UpdateSheetPostDto.builder()
                 .sheetDto(UpdateSheetDto.builder()
-                        .genre(Genre.CAROL)
+                        .genres(Genres.builder().genre1(Genre.BGM).build())
                         .isSolo(false)
                         .difficulty(Difficulty.MEDIUM)
                         .lyrics(false)
@@ -146,22 +120,8 @@ class SheetPostRepositoryTest {
     @DisplayName("악보 판매글을 삭제할 수 있어야 한다.")
     void deleteTest() {
         //given
-        SheetPost sheetPost = SheetPost.builder()
-                .title("title")
-                .content("content")
-                .sheet(Sheet.builder()
-                        .genre(Genre.BGM)
-                        .lyrics(false)
-                        .isSolo(false)
-                        .difficulty(Difficulty.EASY)
-                        .filePath("path")
-                        .instrument(Instrument.GUITAR_ACOUSTIC)
-                        .pageNum(12)
-                        .user(user)
-                        .build())
-                .artist(author)
-                .build();
-        SheetPost saved = sheetPostRepository.save(sheetPost);
+
+        SheetPost saved = sheetPostRepository.save(DummyData.sheetPost(user));
         //when
         sheetPostRepository.deleteById(saved.getId());
         Optional<SheetPost> founded = sheetPostRepository.findById(saved.getId());

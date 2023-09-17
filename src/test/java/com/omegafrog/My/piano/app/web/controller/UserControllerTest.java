@@ -1,14 +1,11 @@
 package com.omegafrog.My.piano.app.web.controller;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
 import com.omegafrog.My.piano.app.web.domain.post.PostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.RegisterUserDto;
-import com.omegafrog.My.piano.app.web.dto.post.PostDto;
 import com.omegafrog.My.piano.app.web.dto.post.PostRegisterDto;
 import com.omegafrog.My.piano.app.web.service.PostApplicationService;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
@@ -28,8 +25,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
-
-import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -95,7 +90,6 @@ class UserControllerTest {
     }
 
 
-
     @AfterEach
     void clearRepository(){
         securityUserRepository.deleteAll();
@@ -117,8 +111,7 @@ class UserControllerTest {
                         .content(objectMapper.writeValueAsString(postDto)))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        String data = objectMapper.readTree(string).get("serializedData").asText();
-        Long postId = objectMapper.readTree(data).get("post").get("id").asLong();
+        long postId = objectMapper.readTree(string).get("serializedData").get("post").get("id").asLong();
 
         // when
         MvcResult mvcResult = mockMvc.perform(get("/user/community/posts")
@@ -129,8 +122,7 @@ class UserControllerTest {
                 .andReturn();
         //then
         String result = mvcResult.getResponse().getContentAsString();
-        String text = objectMapper.readTree(result).get("serializedData").asText();
-        Long id = objectMapper.readTree(text).get("posts").get(0).get("id").asLong();
+        Long id = objectMapper.readTree(result).get("serializedData").get("posts").get(0).get("id").asLong();
         Assertions.assertThat(id).isEqualTo(postId);
     }
 
