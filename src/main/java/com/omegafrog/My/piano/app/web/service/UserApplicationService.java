@@ -46,7 +46,7 @@ public class UserApplicationService {
             throws PersistenceException {
         User user = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInUser.getId()));
-        return user.getUploadedPosts().stream().map(Post::toDto).toList();
+        return user.getUploadedPosts().stream().map(post -> ((Post)post).toDto()).toList();
     }
 
     public List<ReturnCommentDto> getMyComments(User loggedInUser)
@@ -59,20 +59,20 @@ public class UserApplicationService {
     public List<SheetInfoDto> getPurchasedSheets(User loggedInUser) {
         User user = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER+ loggedInUser.getId()));
-        return user.getPurchasedSheets().stream().map(SheetPost::toInfoDto).toList();
+        return user.getPurchasedSheets().stream().map(sheetPost->((SheetPost)sheetPost).toInfoDto()).toList();
 
     }
 
     public List<SheetInfoDto> uploadedSheets(User loggedInUser) {
         User user = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInUser.getId()));
-        return user.getUploadedSheets().stream().map(SheetPost::toInfoDto).toList();
+        return user.getUploadedSheets().stream().map(sheetPost->((SheetPost)sheetPost).toInfoDto()).toList();
     }
 
     public List<SheetInfoDto> getScrappedSheets(User loggedInUser) {
         User user = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInUser.getId()));
-        return user.getScrappedSheets().stream().map(SheetPost::toInfoDto).toList();
+        return user.getScrappedSheets().stream().map(sheetPost->((SheetPost)sheetPost).toInfoDto()).toList();
     }
 
     public List<com.omegafrog.My.piano.app.web.dto.user.UserProfile> getFollowingFollower(User loggedInUser) {
@@ -84,7 +84,7 @@ public class UserApplicationService {
     public List<LessonDto> getPurchasedLessons(User loggedInUserProfile) {
         User userProfile = userRepository.findById(loggedInUserProfile.getId())
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInUserProfile.getId()));
-       return userProfile.getPurchasedLessons().stream().map(Lesson::toDto).toList();
+       return userProfile.getPurchasedLessons().stream().map(lesson->((Lesson)lesson).toDto()).toList();
     }
 
     public UserProfile updateUser(User loggedInUser, UpdateUserDto userDto) {

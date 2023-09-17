@@ -1,10 +1,12 @@
 package com.omegafrog.My.piano.app.web.domain.user;
 
 import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
+import com.omegafrog.My.piano.app.web.domain.article.Article;
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
 import com.omegafrog.My.piano.app.web.domain.order.Order;
 import com.omegafrog.My.piano.app.web.domain.comment.Comment;
+import com.omegafrog.My.piano.app.web.domain.order.SellableItem;
 import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
@@ -57,11 +59,6 @@ public class User {
     @PositiveOrZero
     private int cash;
 
-    public int chargeCash(int cash){
-        this.cash += cash;
-        return this.cash;
-    }
-
     @NotNull
     private PhoneNum phoneNum;
     @NotNull
@@ -74,51 +71,35 @@ public class User {
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "purchased_sheet",
-            joinColumns = @JoinColumn(name = "USER_ID"),
+            joinColumns = @JoinColumn(name = "AUTHOR_ID"),
             inverseJoinColumns = @JoinColumn(name = "SHEET_ID"))
-    private List<SheetPost> purchasedSheets = new ArrayList<>();
+    private List<SellableItem> purchasedSheets = new ArrayList<>();
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "purchased_lesson",
-            joinColumns = @JoinColumn(name = "USER_ID"),
+            joinColumns = @JoinColumn(name = "AUTHOR_ID"),
             inverseJoinColumns = @JoinColumn(name = "LESSON_ID"))
-    private List<Lesson> purchasedLessons = new ArrayList<>();
+    private List<SellableItem> purchasedLessons = new ArrayList<>();
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "scrapped_sheet",
-            joinColumns = @JoinColumn(name = "USER_ID"),
+            joinColumns = @JoinColumn(name = "AUTHOR_ID"),
             inverseJoinColumns = @JoinColumn(name = "SHEET_ID"))
-    private List<SheetPost> scrappedSheets = new ArrayList<>();
+    private List<SellableItem> scrappedSheets = new ArrayList<>();
 
     @OneToMany(cascade = { CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
-    @JoinColumn(name = "USER_ID")
-    private List<SheetPost> uploadedSheets = new ArrayList<>();
+    @JoinColumn(name = "AUTHOR_ID")
+    private List<SellableItem> uploadedSheets = new ArrayList<>();
 
     @OneToMany(cascade = { CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
-    @JoinColumn(name = "USER_ID")
-    private List<Lesson> uploadedLessons = new ArrayList<>();
+    @JoinColumn(name = "AUTHOR_ID")
+    private List<SellableItem> uploadedLessons = new ArrayList<>();
 
     @OneToMany(mappedBy = "author", cascade = { CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     private List<Post> uploadedPosts = new ArrayList<>();
-    public void addUploadedPost(Post post){
-        uploadedPosts.add(post);
-        if(post.getAuthor()!=this){
-            post.setAuthor(this);
-        }
-    }
 
     @OneToMany(mappedBy = "author")
     private List<VideoPost> uploadedVideoPosts = new ArrayList<>();
-
-    public void addUploadedVideoPost(VideoPost videoPost){
-        uploadedVideoPosts.add(videoPost);
-        if(videoPost.getAuthor()!=this){
-            videoPost.setAuthor(this);
-        }
-    }
-    public void deleteUploadedPost(Post post){
-        uploadedPosts.remove(post);
-    }
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "followed",
@@ -132,15 +113,38 @@ public class User {
             joinColumns = @JoinColumn(name = "USER_ID"),
             inverseJoinColumns = @JoinColumn(name = "POST_ID"))
     private List<Post> likedPosts = new ArrayList<>();
-    public void addLikePost(Post post){
-        likedPosts.add(post);
-    }
 
     @ManyToMany
     @JoinTable(name = "liked_videoPost",
             joinColumns = @JoinColumn(name = "USER_ID"),
             inverseJoinColumns = @JoinColumn(name = "VIDEO_POST_ID"))
     private List<VideoPost> likedVideoPosts = new ArrayList<>();
+
+
+    @OneToMany(mappedBy = "author", orphanRemoval = true, cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    private List<Comment> wroteComments = new ArrayList<>();
+    public int chargeCash(int cash){
+        this.cash += cash;
+        return this.cash;
+    }
+    public void addUploadedPost(Post post){
+        uploadedPosts.add(post);
+        if(post.getAuthor()!=this){
+            post.setAuthor(this);
+        }
+    }
+    public void addUploadedVideoPost(VideoPost videoPost){
+        uploadedVideoPosts.add(videoPost);
+        if(videoPost.getAuthor()!=this){
+            videoPost.setAuthor(this);
+        }
+    }
+    public void deleteUploadedPost(Post post){
+        uploadedPosts.remove(post);
+    }
+    public void addLikePost(Post post){
+        likedPosts.add(post);
+    }
 
     public void likeVideoPost(VideoPost videoPost){
         if(likedVideoPosts.contains(videoPost))
@@ -152,10 +156,6 @@ public class User {
         if(!likedVideoPosts.removeIf(post->post.equals(videoPost)))
             throw new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_VIDEO_POST);
     }
-
-    @OneToMany(mappedBy = "author", orphanRemoval = true, cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-    private List<Comment> wroteComments = new ArrayList<>();
-
     public void addWroteComments(Comment comment){
         wroteComments.add(comment);
     }
@@ -212,9 +212,9 @@ public class User {
             cash -= order.getTotalPrice();
             order.setStatus(OrderStatus.PROGRESSING);
             if (order.getItem() instanceof Lesson)
-                purchasedLessons.add((Lesson) order.getItem());
+                purchasedLessons.add(order.getItem());
             else if (order.getItem() instanceof SheetPost)
-                purchasedSheets.add((SheetPost) (order.getItem()));
+                purchasedSheets.add( (order.getItem()));
             else
                 throw new ClassCastException("Cannot cast this class to child class.");
         }
