@@ -1,7 +1,7 @@
 pipeline {
   agent none
   stages {
-    stage('') {
+    stage('error') {
       steps {
         sh './gradlew build'
       }
