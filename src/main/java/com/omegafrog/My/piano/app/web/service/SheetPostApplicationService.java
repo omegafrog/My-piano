@@ -48,7 +48,6 @@ public class SheetPostApplicationService implements CommentHandler {
         Map<String, S3Resource> res = new HashMap<>();
         for (MultipartFile file : multipartFile) {
             List<String> filename = Arrays.stream(file.getOriginalFilename().split("\\.")).toList();
-            String key = "sheet-" + filename.get(0) + UUID.randomUUID() + "." + filename.get(1);
 
             String contentType = "";
             switch (filename.get(1)) {
@@ -62,15 +61,18 @@ public class SheetPostApplicationService implements CommentHandler {
                     throw new IllegalArgumentException("Wrong image type.");
             }
             res.put(file.getOriginalFilename(),
-                    s3Template.upload(bucketName, key, file.getInputStream(), ObjectMetadata.builder()
+                    s3Template.upload(bucketName, file.getOriginalFilename(), file.getInputStream(), ObjectMetadata.builder()
                     .contentType(contentType).build()));
         }
         return res;
     }
 
+    @Transactional
     public SheetPostDto getSheetPost(Long id) {
-        return sheetPostRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find SheetPost entity : " + id)).toDto();
+        SheetPost sheetPost = sheetPostRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find SheetPost entity : " + id));
+        sheetPost.increaseViewCount();
+        return sheetPost.toDto();
     }
 
 
