@@ -11,6 +11,8 @@ pipeline {
         sh '''chmod 777 gradlew
 '''
         sh './gradlew clean'
+        sh '''echo "copy application.properties"
+cp /home/ubuntu/application.properties src/main/resources/application.properties'''
         sh './gradlew build'
       }
     }
