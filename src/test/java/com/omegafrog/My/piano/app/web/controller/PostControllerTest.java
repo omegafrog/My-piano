@@ -182,9 +182,7 @@ class PostControllerTest {
                 .content("content")
                 .build();
         User author = User.builder()
-                .phoneNum(PhoneNum.builder()
-                        .phoneNum("010-1111-2222")
-                        .build())
+                .phoneNum(new PhoneNum("010-1111-2222"))
                 .profileSrc("src")
                 .cart(new Cart())
                 .build();

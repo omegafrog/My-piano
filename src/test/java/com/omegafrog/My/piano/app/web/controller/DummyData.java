@@ -17,29 +17,6 @@ import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 import java.time.LocalTime;
 
 public class DummyData {
-    public static final RegisterUserDto user1 = RegisterUserDto.builder()
-            .name("user1")
-            .phoneNum(PhoneNum.builder()
-                    .phoneNum("010-1111-2222")
-                    .build())
-            .profileSrc("src")
-            .loginMethod(LoginMethod.EMAIL)
-            .username("user1")
-            .password("password")
-            .email("user1@gmail.com")
-            .build();
-
-    public static final RegisterUserDto user2 = RegisterUserDto.builder()
-            .name("user2")
-            .phoneNum(PhoneNum.builder()
-                    .phoneNum("010-1111-2222")
-                    .build())
-            .profileSrc("src")
-            .loginMethod(LoginMethod.EMAIL)
-            .username("user2")
-            .password("password")
-            .email("user1@gmail.com")
-            .build();
 
     public static SheetPost sheetPost(User artist){
         return SheetPost.builder()

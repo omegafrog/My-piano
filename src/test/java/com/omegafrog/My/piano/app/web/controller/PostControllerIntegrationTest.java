@@ -80,30 +80,9 @@ class PostControllerIntegrationTest {
      */
     @BeforeAll
     void getTokens() throws Exception, UsernameAlreadyExistException {
-        RegisterUserDto user1 = RegisterUserDto.builder()
-                .name("user1")
-                .phoneNum(PhoneNum.builder()
-                        .phoneNum("010-1111-2222")
-                        .build())
-                .profileSrc("src")
-                .loginMethod(LoginMethod.EMAIL)
-                .email("email@email.com")
-                .username("user1")
-                .password("password")
-                .build();
-        RegisterUserDto user2 = RegisterUserDto.builder()
-                .name("user2")
-                .phoneNum(PhoneNum.builder()
-                        .phoneNum("010-1111-2222")
-                        .build())
-                .profileSrc("src")
-                .email("email@email.com")
-                .loginMethod(LoginMethod.EMAIL)
-                .username("user2")
-                .password("password")
-                .build();
-        commonUserService.registerUser(user1);
-        commonUserService.registerUser(user2);
+
+        commonUserService.registerUser(TestLoginUtil.user1);
+        commonUserService.registerUser(TestLoginUtil.user2);
         MvcResult mvcResult = mockMvc.perform(post("/user/login")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content("username=user1&password=password"))

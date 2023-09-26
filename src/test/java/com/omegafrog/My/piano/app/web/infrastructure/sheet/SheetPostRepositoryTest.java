@@ -41,16 +41,15 @@ class SheetPostRepositoryTest {
 
     private User user;
     private User author;
+
     @BeforeAll
-    void setRepository(){
+    void setRepository() {
         sheetPostRepository = new JpaSheetPostRepositoryImpl(jpaRepository);
         userRepository = new JpaUserRepositoryImpl(jpaUserRepository);
         User a = User.builder()
                 .name("user")
-                .phoneNum(PhoneNum.builder()
-                        .phoneNum("010-1111-2222")
-                        .build())
-                .email("artist@gmail.com")
+                .phoneNum(new PhoneNum("010-1111-2222"))
+                .email("artist1@gmail.com")
                 .loginMethod(LoginMethod.EMAIL)
                 .cart(new Cart())
                 .profileSrc("profileSrc")
@@ -61,17 +60,15 @@ class SheetPostRepositoryTest {
                 .name("uploader")
                 .profileSrc("none")
                 .loginMethod(LoginMethod.EMAIL)
-                .phoneNum(PhoneNum.builder()
-                        .phoneNum("010-1111-2222")
-                        .build())
-                .email("artist@gmail.com")
+                .phoneNum(new PhoneNum("010-1111-2222"))
+                .email("artist2@gmail.com")
                 .cart(new Cart())
                 .build();
         author = userRepository.save(b);
     }
 
     @AfterEach
-    void clearRepository(){
+    void clearRepository() {
         sheetPostRepository.deleteAll();
     }
 
@@ -129,7 +126,7 @@ class SheetPostRepositoryTest {
     }
 
     @AfterAll
-    void clearAllReposiotry(){
+    void clearAllReposiotry() {
         sheetPostRepository.deleteAll();
         userRepository.deleteAll();
     }

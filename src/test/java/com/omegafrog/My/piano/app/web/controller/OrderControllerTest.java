@@ -98,42 +98,23 @@ class OrderControllerTest {
     @BeforeAll
     void register() throws Exception, UsernameAlreadyExistException {
         securityUserRepository.deleteAll();
-        RegisterUserDto user1 = RegisterUserDto.builder()
-                .name("testUser1")
-                .phoneNum(PhoneNum.builder()
-                        .phoneNum("010-1111-2222")
-                        .build())
-                .profileSrc("src")
-                .loginMethod(LoginMethod.EMAIL)
-                .username("username")
-                .password("password")
-                .email("test@gmail.com")
-                .build();
+        RegisterUserDto user1 = TestLoginUtil.user1;
         SecurityUserDto securityUserDto1 = commonUserService.registerUser(user1);
         testUser1Profile = ((SecurityUser) commonUserService.loadUserByUsername(securityUserDto1.getUsername()))
                 .getUser();
         testUser1Profile.addCash(20000);
         userRepository.save(testUser1Profile);
-        RegisterUserDto user2 = RegisterUserDto.builder()
-                .name("artist1")
-                .email("test@gmail.com")
-                .username("username1")
-                .password("password")
-                .loginMethod(LoginMethod.EMAIL)
-                .phoneNum(PhoneNum.builder()
-                        .phoneNum("010-1111-2222")
-                        .build())
-                .build();
+        RegisterUserDto user2 = TestLoginUtil.user2;
         SecurityUserDto securityUserDto2 = commonUserService.registerUser(user2);
         artist = ((SecurityUser) commonUserService.loadUserByUsername(securityUserDto2.getUsername()))
                 .getUser();
         MvcResult mvcResult = mockMvc.perform(post("/user/login")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                        .content("username=username&password=password"))
+                        .content("username=user1&password=password"))
                 .andReturn();
         String contentAsString = mvcResult.getResponse().getContentAsString();
-        LoginResult loginResult = objectMapper.readValue(contentAsString, LoginResult.class);
-        accessToken = loginResult.getSerializedData().get("access token");
+        System.out.println("contentAsString = " + contentAsString);
+        accessToken = objectMapper.readTree(contentAsString).get("serializedData").get("access token").asText();
         refreshToken = mvcResult.getResponse().getCookie("refreshToken");
     }
 

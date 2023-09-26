@@ -99,9 +99,7 @@ class CartControllerTest {
                 .email("email@email.com")
                 .profileSrc("src")
                 .loginMethod(LoginMethod.EMAIL)
-                .phoneNum(PhoneNum.builder().
-                        phoneNum("010-1111-2222")
-                        .build())
+                .phoneNum("010-1111-2222")
                 .build();
 
         mockMvc.perform(post("/user/register")

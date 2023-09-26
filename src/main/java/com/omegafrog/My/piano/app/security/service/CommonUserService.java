@@ -93,7 +93,7 @@ public class CommonUserService implements UserDetailsService {
                 .user(user);
         if (dto.getLoginMethod().equals(LoginMethod.EMAIL) && dto.getPassword()==null)
             throw new IllegalArgumentException("Password cannot be null.");
-        SecurityUser securityUser = builder.password(dto.getPassword()).build();
+        SecurityUser securityUser = builder.password(passwordEncoder.encode(dto.getPassword())).build();
         Optional<SecurityUser> founded = securityUserRepository.findByUsername(securityUser.getUsername());
         if (founded.isEmpty()) {
             SecurityUser saved = securityUserRepository.save(securityUser);
