@@ -28,6 +28,7 @@ import jakarta.persistence.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.AccessDeniedException;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -60,6 +61,7 @@ public class User {
     @PositiveOrZero
     private int cash;
 
+    @Nullable
     private PhoneNum phoneNum;
     @NotNull
     private AlarmProperties alarmProperties;
