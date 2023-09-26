@@ -47,19 +47,19 @@ public class User {
 
     @Email
     @NotBlank(message = "email cannot be null")
+    @Column(unique = true)
     private String email;
 
     @NotNull
     private LoginMethod loginMethod;
 
-    @Value("{user.baseProfileSrc}")
+    @Value("${user.baseProfileSrc}")
     private String profileSrc;
     @PositiveOrZero
     private int point;
     @PositiveOrZero
     private int cash;
 
-    @NotNull
     private PhoneNum phoneNum;
     @NotNull
     private AlarmProperties alarmProperties;
