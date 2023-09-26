@@ -53,6 +53,7 @@ public abstract class Article {
         likeCount--;
     }
 
+    public void increaseViewCount(){viewCount++;}
 
     /**
      * 댓글을 추가한다.
