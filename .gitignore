@@ -37,3 +37,6 @@ out/
 .vscode/
 
 /resources/application.properties
+/src/main/resources/application.properties
+*.puml
+*.xml
