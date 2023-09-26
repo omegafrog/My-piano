@@ -28,6 +28,7 @@ public class SecurityUser implements UserDetails {
     @Getter
     private Long id;
 
+    @Column(unique = true)
     private String username;
     private String password;
     private Role role;
