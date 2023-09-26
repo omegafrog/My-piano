@@ -43,7 +43,7 @@ public class SheetPostController {
             s3Url.put(originalFileName, s3Resources.get(originalFileName).getURL().toString());
         }
         Map<String, Object> data = ResponseUtil.getStringObjectMap("resources", s3Url);
-        return new APISuccessResponse("Upload sheetFile success.", data, objectMapper);
+        return new APISuccessResponse("Upload sheetFile success.", data);
     }
 
     @GetMapping("/{id}")
@@ -51,7 +51,7 @@ public class SheetPostController {
             throws JsonProcessingException, PersistenceException, AccessDeniedException {
         SheetPostDto sheetPost = sheetPostService.getSheetPost(id);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("sheetPost", sheetPost);
-        return new APISuccessResponse("Get Sheet post success.", data, objectMapper);
+        return new APISuccessResponse("Get Sheet post success.", data);
     }
 
     @GetMapping("")
@@ -59,7 +59,7 @@ public class SheetPostController {
             throws AccessDeniedException, PersistenceException, JsonProcessingException {
         List<SheetPostDto> sheetPosts = sheetPostService.getSheetPosts(pageable);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("sheetPosts", sheetPosts);
-        return new APISuccessResponse("Get all sheet post success.", data, objectMapper);
+        return new APISuccessResponse("Get all sheet post success.", data);
     }
 
     @PostMapping("write")
@@ -68,7 +68,7 @@ public class SheetPostController {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         SheetPostDto sheetPostDto = sheetPostService.writeSheetPost(dto, loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("sheetPost", sheetPostDto);
-        return new APISuccessResponse("Write sheet post success.", data, objectMapper);
+        return new APISuccessResponse("Write sheet post success.", data);
     }
 
     @PostMapping("{id}")
@@ -77,7 +77,7 @@ public class SheetPostController {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         SheetPostDto update = sheetPostService.update(id, dto, loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("sheetPost", update);
-        return new APISuccessResponse("Update sheet post success.", data, objectMapper);
+        return new APISuccessResponse("Update sheet post success.", data);
     }
 
     @DeleteMapping("{id}")

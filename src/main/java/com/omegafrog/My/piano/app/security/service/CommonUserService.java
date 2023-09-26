@@ -1,5 +1,15 @@
 package com.omegafrog.My.piano.app.security.service;
 
+import com.google.api.client.auth.openidconnect.IdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.omegafrog.My.piano.app.security.exception.AlreadyRegisteredUserException;
+import com.omegafrog.My.piano.app.security.jwt.RefreshToken;
+import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
+import com.omegafrog.My.piano.app.security.jwt.TokenInfo;
+import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
+import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
+import com.omegafrog.My.piano.app.web.domain.cart.Cart;
+import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.RegisterUserDto;
 import com.omegafrog.My.piano.app.web.dto.SecurityUserDto;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
@@ -7,8 +17,12 @@ import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
 import com.omegafrog.My.piano.app.security.entity.authorities.Role;
 import com.omegafrog.My.piano.app.security.exception.UsernameAlreadyExistException;
 import com.omegafrog.My.piano.app.web.domain.user.User;
+import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
+import jakarta.servlet.http.Cookie;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -25,6 +39,13 @@ public class CommonUserService implements UserDetailsService {
     private final PasswordEncoder passwordEncoder;
 
     private final SecurityUserRepository securityUserRepository;
+
+    @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
+
+    @Autowired
+    private  UserRepository userRepository;
+
 
     /**
      * Username으로 SecurityUser 객체를 검색해 반환하는 메소드
@@ -43,14 +64,36 @@ public class CommonUserService implements UserDetailsService {
         }
     }
 
+
+
+    public SecurityUserDto registerUser(GoogleIdToken token){
+
+        SecurityUser securityUser = SecurityUser.builder()
+                .username(token.getPayload().getEmail())
+                .role(Role.USER)
+                .user(User.builder()
+                        .email(token.getPayload().getEmail())
+                        .name((String) token.getPayload().get("name"))
+                        .loginMethod(LoginMethod.GOOGLE)
+                        .profileSrc((String) token.getPayload().get("picture"))
+                        .cart(new Cart())
+                        .build()
+                )
+                .build();
+        SecurityUser saved = securityUserRepository.save(securityUser);
+        return saved.toDto();
+
+    }
+
     public SecurityUserDto registerUser(RegisterUserDto dto) throws UsernameAlreadyExistException {
         User user = dto.toEntity();
-        SecurityUser securityUser = SecurityUser.builder()
+        SecurityUser.SecurityUserBuilder builder = SecurityUser.builder()
                 .username(dto.getUsername())
-                .password(passwordEncoder.encode(dto.getPassword()))
                 .role(Role.USER)
-                .user(user)
-                .build();
+                .user(user);
+        if (dto.getLoginMethod().equals(LoginMethod.EMAIL) && dto.getPassword()==null)
+            throw new IllegalArgumentException("Password cannot be null.");
+        SecurityUser securityUser = builder.password(dto.getPassword()).build();
         Optional<SecurityUser> founded = securityUserRepository.findByUsername(securityUser.getUsername());
         if (founded.isEmpty()) {
             SecurityUser saved = securityUserRepository.save(securityUser);

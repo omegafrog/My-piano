@@ -35,7 +35,7 @@ public class OrderController {
         OrderDto createdOrder = createMainResourceOrder(order, mainResource);
         OrderDto processedOrder = orderService.makePayment(createdOrder);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("order", processedOrder);
-        return new APISuccessResponse("Buy " + mainResource + " success.", data, objectMapper);
+        return new APISuccessResponse("Buy " + mainResource + " success.", data);
     }
 
     private OrderDto createMainResourceOrder(OrderRegisterDto order, String mainResource) {
@@ -58,6 +58,6 @@ public class OrderController {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         List<OrderDto> allOrders = orderService.getAllOrders(loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("orders", allOrders);
-        return new APISuccessResponse("Success get all orders.", data, objectMapper);
+        return new APISuccessResponse("Success get all orders.", data);
     }
 }

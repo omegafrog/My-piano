@@ -31,7 +31,7 @@ public class VideoPostController {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         VideoPostDto videoPostDto = videoPostApplicationService.writePost(videoPost, loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("videoPost", videoPostDto);
-        return new APISuccessResponse("Write videoPost success", data, objectMapper);
+        return new APISuccessResponse("Write videoPost success", data);
     }
 
     @GetMapping("/{id}")
@@ -39,13 +39,13 @@ public class VideoPostController {
             throws JsonProcessingException {
         VideoPostDto postById = videoPostApplicationService.findPostById(id);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("videoPost", postById);
-        return new APISuccessResponse("Find videoPost success", data, objectMapper);
+        return new APISuccessResponse("Find videoPost success", data);
     }
     @GetMapping
     public JsonAPIResponse findAllPosts(Pageable pageable) throws JsonProcessingException {
         List<VideoPostDto> allVideoPosts = videoPostApplicationService.findAllVideoPosts(pageable);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("videoPosts", allVideoPosts);
-        return new APISuccessResponse("Find all videoPosts success", data, objectMapper);
+        return new APISuccessResponse("Find all videoPosts success", data);
     }
 
     @PostMapping("/{id}")
@@ -54,7 +54,7 @@ public class VideoPostController {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         VideoPostDto postDto = videoPostApplicationService.updatePost(id, post, loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("videoPost", postDto);
-        return new APISuccessResponse("Update video post success", data, objectMapper);
+        return new APISuccessResponse("Update video post success", data);
     }
 
     @DeleteMapping("/{id}")

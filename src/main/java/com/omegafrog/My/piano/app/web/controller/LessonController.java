@@ -37,21 +37,21 @@ public class LessonController {
         User user = AuthenticationUtil.getLoggedInUser();
         LessonDto lessonDto = lessonService.createLesson(lessonRegisterDto, user);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("lesson", lessonDto);
-        return new APISuccessResponse("Create new Lesson success", data, objectMapper);
+        return new APISuccessResponse("Create new Lesson success", data);
     }
 
     @GetMapping("/lessons")
     public JsonAPIResponse getLessons(Pageable pageable) throws JsonProcessingException {
         List<LessonDto> allLessons = lessonService.getAllLessons(pageable);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("lessons", allLessons);
-        return new APISuccessResponse("Success load all lessons.", data, objectMapper);
+        return new APISuccessResponse("Success load all lessons.", data);
     }
 
     @GetMapping("/lesson/{id}")
     public JsonAPIResponse getLesson(@PathVariable Long id) throws JsonProcessingException {
         LessonDto lessonById = lessonService.getLessonById(id);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("lesson", lessonById);
-        return new APISuccessResponse("Success load lesson" + id + ".", data, objectMapper);
+        return new APISuccessResponse("Success load lesson" + id + ".", data);
     }
 
     @PostMapping("/lesson/{id}")
@@ -61,7 +61,7 @@ public class LessonController {
         User user = AuthenticationUtil.getLoggedInUser();
         LessonDto updated = lessonService.updateLesson(id, updateLessonDto, user);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("lesson", updated);
-        return new APISuccessResponse("Lesson update success", data, objectMapper);
+        return new APISuccessResponse("Lesson update success", data);
     }
 
     @DeleteMapping("/lesson/{id}")

@@ -39,7 +39,7 @@ public class UserController {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         int chargedCash = userService.chargeCash(cash, loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("chargedCash", chargedCash);
-        return new APISuccessResponse("Charge cash " + cash + " success.", data, objectMapper);
+        return new APISuccessResponse("Charge cash " + cash + " success.", data);
     }
     @GetMapping("/community/posts")
     public JsonAPIResponse getMyCommunityPosts()
@@ -48,7 +48,7 @@ public class UserController {
         List<PostDto> myCommunityPosts = userService.getMyCommunityPosts(loggedInUser);
         Map<String, Object> data =
                 ResponseUtil.getStringObjectMap(ResponseKeyName.UPLOADED_COMMUNITY_POSTS.keyName, myCommunityPosts);
-        return new APISuccessResponse("Get community posts success.", data, objectMapper);
+        return new APISuccessResponse("Get community posts success.", data);
     }
 
     @GetMapping("/lesson")
@@ -58,7 +58,7 @@ public class UserController {
         List<LessonDto> purchasedLessons = userService.getPurchasedLessons(loggedInUser);
         Map<String, Object> data =
                 ResponseUtil.getStringObjectMap(ResponseKeyName.PURCHASED_LESSONS.keyName, purchasedLessons);
-        return new APISuccessResponse("Get purchased lessons success.", data, objectMapper);
+        return new APISuccessResponse("Get purchased lessons success.", data);
     }
 
     @GetMapping("/comments")
@@ -68,7 +68,7 @@ public class UserController {
         List<ReturnCommentDto> myComments = userService.getMyComments(loggedInUser);
         Map<String, Object> data =
                 ResponseUtil.getStringObjectMap(ResponseKeyName.UPLOADED_COMMENTS.keyName, myComments);
-        return new APISuccessResponse("Get all comments success.", data, objectMapper);
+        return new APISuccessResponse("Get all comments success.", data);
     }
 
     @GetMapping("/purchasedSheets")
@@ -77,7 +77,7 @@ public class UserController {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         List<SheetInfoDto> purchasedSheets = userService.getPurchasedSheets(loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap(ResponseKeyName.PURCHASED_SHEETS.keyName, purchasedSheets);
-        return new APISuccessResponse("Get all purchased sheets success.", data, objectMapper);
+        return new APISuccessResponse("Get all purchased sheets success.", data);
     }
 
     @GetMapping("/uploadedSheets")
@@ -86,7 +86,7 @@ public class UserController {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         List<SheetInfoDto> sheetInfoDtos = userService.uploadedSheets(loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap(ResponseKeyName.UPLOADED_SHEETS.keyName, sheetInfoDtos);
-        return new APISuccessResponse("Get all uploaded sheets success.", data, objectMapper);
+        return new APISuccessResponse("Get all uploaded sheets success.", data);
     }
 
     @GetMapping("/scrappedSheets")
@@ -95,7 +95,7 @@ public class UserController {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         List<SheetInfoDto> scrappedSheets = userService.getScrappedSheets(loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap(ResponseKeyName.SCRAPPED_SHEETS.keyName, scrappedSheets);
-        return new APISuccessResponse("Get all scrapped sheets success.", data, objectMapper);
+        return new APISuccessResponse("Get all scrapped sheets success.", data);
     }
 
     @GetMapping("/follow")
@@ -104,7 +104,7 @@ public class UserController {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         List<UserProfile> followingFollower = userService.getFollowingFollower(loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap(ResponseKeyName.FOLLOWED_USERS.keyName, followingFollower);
-        return new APISuccessResponse("Get all follower success.", data, objectMapper);
+        return new APISuccessResponse("Get all follower success.", data);
     }
 
     @PostMapping("/update")
@@ -113,7 +113,7 @@ public class UserController {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         UserProfile userProfile = userService.updateUser(loggedInUser, userDto);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("user", userProfile);
-        return new APISuccessResponse("Update user success.", data, objectMapper);
+        return new APISuccessResponse("Update user success.", data);
     }
 
     @GetMapping("")
@@ -121,7 +121,7 @@ public class UserController {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         UserProfile userProfile = userService.getUserProfile(loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("user", userProfile);
-        return new APISuccessResponse("Get user profile success.", data, objectMapper);
+        return new APISuccessResponse("Get user profile success.", data);
     }
 
 }

@@ -10,6 +10,10 @@ import java.util.Optional;
 @Repository
 @RequiredArgsConstructor
 public class JpaUserRepositoryImpl implements UserRepository {
+    @Override
+    public Optional<User> findByEmail(String email) {
+        return jpaRepository.findByEmail(email);
+    }
 
     private final SimpleJpaUserRepository jpaRepository;
 

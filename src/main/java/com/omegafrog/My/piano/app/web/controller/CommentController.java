@@ -53,7 +53,7 @@ public class CommentController {
         CommentHandler commentHandler = getCommentHandler(request.getRequestURI());
         List<CommentDto> commentDtos = commentHandler.addComment(id, dto, loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", commentDtos);
-        return new APISuccessResponse("Add Comment success.", data, objectMapper);
+        return new APISuccessResponse("Add Comment success.", data);
     }
 
     @DeleteMapping(value = {"/lesson/{id}/comment/{comment-id}",
@@ -69,7 +69,7 @@ public class CommentController {
         CommentHandler commentHandler = getCommentHandler(request.getRequestURI());
         List<CommentDto> commentDtos = commentHandler.deleteComment(id, commentId, loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", commentDtos);
-        return new APISuccessResponse("Delete Comment success.", data, objectMapper);
+        return new APISuccessResponse("Delete Comment success.", data);
     }
 
     @GetMapping(value = {"/lesson/{id}/comment/{comment-id}/like",
@@ -112,7 +112,7 @@ public class CommentController {
         CommentHandler commentHandler = getCommentHandler(request.getRequestURI());
         List<CommentDto> comments = commentHandler.getComments(id, pageable);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", comments);
-        return new APISuccessResponse("Get all comments success.", data, objectMapper);
+        return new APISuccessResponse("Get all comments success.", data);
     }
 
     private CommentHandler getCommentHandler(String url) throws MalformedURLException {

@@ -47,12 +47,8 @@ public class CommonUserLoginSuccessHandler implements AuthenticationSuccessHandl
             founded = Optional.of(refreshTokenRepository.save(tokenInfo.getRefreshToken()));
 
         data.put("access token", tokenInfo.getGrantType() + " " + tokenInfo.getAccessToken());
-        Cookie refreshToken = new Cookie("refreshToken", founded.get().getRefreshToken());
-        refreshToken.setPath("/");
-        refreshToken.setHttpOnly(true);
-        response.addCookie(refreshToken);
-
-        APISuccessResponse loginSuccess = new APISuccessResponse("login success", data, objectMapper);
+        TokenUtils.setRefreshToken(response, tokenInfo);
+        APISuccessResponse loginSuccess = new APISuccessResponse("login success", data);
         String s = objectMapper.writeValueAsString(loginSuccess);
 //        s = s.replaceAll("\"\\{", "{");
 //        s = s.replaceAll("}\"", "}");

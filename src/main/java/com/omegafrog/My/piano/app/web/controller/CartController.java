@@ -44,7 +44,7 @@ public class CartController {
                         ? orderService.createSheetOrder(dto) : orderService.createLessonOrder(dto);
         List<OrderDto> orderDtos = cartService.addToCart(createdOrder, loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("contents", orderDtos);
-        return new APISuccessResponse("Add order to cart success.", data, objectMapper);
+        return new APISuccessResponse("Add order to cart success.", data);
     }
 
     @DeleteMapping("/{id}")
@@ -67,6 +67,6 @@ public class CartController {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         List<OrderDto> allContentFromCart = cartService.getAllContentFromCart(loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("contents", allContentFromCart);
-        return new APISuccessResponse("Get all cart contents success.", data, objectMapper);
+        return new APISuccessResponse("Get all cart contents success.", data);
     }
 }

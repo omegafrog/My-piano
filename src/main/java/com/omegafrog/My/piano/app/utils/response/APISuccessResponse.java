@@ -10,7 +10,7 @@ import java.util.Map;
 public class APISuccessResponse extends JsonAPIResponse {
 
 
-    public APISuccessResponse(String message, @NotNull Map<String, Object> data, ObjectMapper objectMapper)
+    public APISuccessResponse(String message, @NotNull Map<String, Object> data)
             throws JsonProcessingException, NullPointerException {
         super(HttpStatus.OK.value(), message, data);
     }
