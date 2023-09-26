@@ -38,6 +38,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 import java.util.HashMap;
 import java.util.Map;
@@ -72,11 +74,7 @@ public class SecurityController {
     @Value("${spring.security.oauth2.client.registration.google.client-secret}")
     private String googleClientSecret;
 
-    @Value("${frontend.server.host}")
-    private String frontHostName;
 
-    @Value("${frontend.server.port}")
-    private String frontHostPort;
 
     @Autowired
     private GooglePublicKeysManager googlePublicKeysManager;
@@ -123,7 +121,7 @@ public class SecurityController {
 
 
     @PostMapping("/oauth2/google")
-    public JsonAPIResponse registerOrLoginGoogleUser(HttpServletRequest request, HttpServletResponse response, @RequestBody String code) throws GeneralSecurityException, IOException {
+    public JsonAPIResponse registerOrLoginGoogleUser(HttpServletRequest request, HttpServletResponse response, @RequestBody String code) throws GeneralSecurityException, IOException, URISyntaxException {
         String parsedCode = objectMapper.readTree(code).get("code").asText();
         GoogleIdToken parsed = GoogleIdToken.parse(GsonFactory.getDefaultInstance(), parsedCode);
         if (!parsed.verify(new GoogleIdTokenVerifier(googlePublicKeysManager)))
@@ -151,7 +149,10 @@ public class SecurityController {
                     .name(String.valueOf(parsed.getPayload().get("name")))
                     .build();
             Map<String, Object> data = ResponseUtil.getStringObjectMap("userInfo", build);
-            return new APIRedirectResponse("You need to register first.", "http://" + frontHostName + ":" + frontHostPort + "/user/register", data);
+            URI uri = new URI(request.getRequestURL().toString());
+            String host = uri.getHost();
+            int port = uri.getPort();
+            return new APIRedirectResponse("You need to register first.",  host + ":" + port + "/user/register", data);
         }
     }
 
