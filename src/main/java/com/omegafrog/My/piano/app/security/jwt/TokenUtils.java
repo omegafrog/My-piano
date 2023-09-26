@@ -7,6 +7,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.AuthenticationException;
@@ -15,6 +16,7 @@ import java.util.Arrays;
 import java.util.Date;
 
 public class TokenUtils {
+
     //토큰 생성
     public static TokenInfo generateToken(String securityUserId, String secret) {
         int accessTokenExpirationPeriod = 1000 * 60 * 10;

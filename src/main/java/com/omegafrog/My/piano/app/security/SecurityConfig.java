@@ -7,6 +7,7 @@ import com.omegafrog.My.piano.app.security.filter.JwtTokenExceptionFilter;
 import com.omegafrog.My.piano.app.security.filter.JwtTokenFilter;
 import com.omegafrog.My.piano.app.security.handler.*;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
+import com.omegafrog.My.piano.app.security.oauth2.CustomOAuth2UserService;
 import com.omegafrog.My.piano.app.security.provider.CommonUserAuthenticationProvider;
 import com.omegafrog.My.piano.app.security.reposiotry.InMemoryLogoutBlacklistRepository;
 import com.omegafrog.My.piano.app.security.service.CommonUserService;
@@ -87,6 +88,21 @@ public class SecurityConfig {
     public JwtTokenExceptionFilter jwtTokenExceptionFilter(){
         return new JwtTokenExceptionFilter();
     }
+
+
+    @Bean
+    public SecurityFilterChain oauth2Authentication(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/oauth2/**")
+                .authorizeHttpRequests()
+                .requestMatchers("/oauth2/**")
+                .permitAll()
+                .and()
+                .csrf().disable()
+                .cors().disable();
+        return http.build();
+    }
+
 
 
     @Bean
@@ -239,6 +255,8 @@ public class SecurityConfig {
                 .cors().disable();
         return http.build();
     }
+
+
 
     @Bean
     SecurityFilterChain h2console(HttpSecurity http) throws Exception {

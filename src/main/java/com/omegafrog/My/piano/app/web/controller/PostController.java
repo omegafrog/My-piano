@@ -32,7 +32,7 @@ public class PostController {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         PostDto postDto = postApplicationService.writePost(post, loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("post", postDto);
-        return new APISuccessResponse("Write post success", data, objectMapper);
+        return new APISuccessResponse("Write post success", data);
     }
 
     //TODO : 모든 post pagination해서 조회해야함
@@ -42,7 +42,7 @@ public class PostController {
             throws JsonProcessingException {
         PostDto postById = postApplicationService.findPostById(id);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("post", postById);
-        return new APISuccessResponse("Find post success", data, objectMapper);
+        return new APISuccessResponse("Find post success", data);
     }
 
     @PostMapping("/{id}")
@@ -51,7 +51,7 @@ public class PostController {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         PostDto postDto = postApplicationService.updatePost(id, post, loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("post", postDto);
-        return new APISuccessResponse("update post success", data, objectMapper);
+        return new APISuccessResponse("update post success", data);
     }
 
     @DeleteMapping("/{id}")
