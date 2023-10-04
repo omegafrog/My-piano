@@ -27,8 +27,10 @@ sudo docker build -t server ./ --build-arg PWD=`pwd`'''
 
     stage('deploy') {
       steps {
-        sh 'sudo docker tag server jiwoo2211/mypiano:$VERSION'
-        sh 'sudo docker push jiwoo2211/mypiano:0.0.1'
+        sh '''sudo docker tag server jiwoo2211/mypiano:$VERSION
+sudo docker tag server jiwoo2211/mypiano:latest'''
+        sh '''sudo docker push jiwoo2211/mypiano:0.0.1
+sudo docker push jiwoo2211/mypiano:latest'''
         sh 'sudo docker rmi server'
       }
     }
