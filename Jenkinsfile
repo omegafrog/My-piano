@@ -24,5 +24,11 @@ sudo cp /home/ubuntu/application.properties ./src/main/resources/application.pro
       }
     }
 
+    stage('clean') {
+      steps {
+        cleanWs(cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenNotBuilt: true, deleteDirs: true)
+      }
+    }
+
   }
 }
