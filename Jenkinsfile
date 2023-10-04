@@ -19,8 +19,8 @@ sudo cp /home/ubuntu/application.properties ./src/main/resources/application.pro
 
     stage('make image') {
       steps {
-        sh 'docker build -t server /home/ubuntu'
-        sh 'docker image list'
+        sh 'sudo docker build -t server /home/ubuntu'
+        sh 'sudo docker image list'
       }
     }
 
