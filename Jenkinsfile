@@ -8,12 +8,12 @@ pipeline {
   stages {
     stage('build') {
       steps {
+        sh '''java --version
+'''
         sh '''chmod 777 gradlew
 '''
         sh './gradlew clean'
         sh './gradlew build'
-        sh '''java --version
-'''
       }
     }
 
