@@ -10,7 +10,8 @@ pipeline {
       steps {
         sh '''ls -al
 pwd
-who'''
+who
+java --version'''
         sh '''chmod 777 gradlew
 '''
         sh './gradlew clean'
