@@ -8,7 +8,7 @@ pipeline {
   stages {
     stage('build') {
       steps {
-        sh 'cp /home/ubuntu/application.properties ./src/main/resources'
+        sh 'sudo cp /home/ubuntu/application.properties ./src/main/resources'
         sh '''chmod 777 gradlew
 '''
         sh './gradlew clean'
