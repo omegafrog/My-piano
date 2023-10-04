@@ -19,7 +19,7 @@ sudo cp /home/ubuntu/application.properties ./src/main/resources/application.pro
 
     stage('make image') {
       steps {
-        sh 'sudo docker build -t server /home/ubuntu'
+        sh 'sudo docker build -t server /home/ubuntu --build-arg PWD=`pwd`'
         sh 'sudo docker image list'
       }
     }
