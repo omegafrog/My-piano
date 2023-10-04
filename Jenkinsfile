@@ -25,11 +25,21 @@ sudo docker build -t server ./ --build-arg PWD=`pwd`'''
       }
     }
 
-    stage('clean') {
+    stage('deploy') {
       steps {
-        cleanWs(cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenNotBuilt: true, deleteDirs: true)
+        sh '''sudo docker tag server jiwoo2211/mypiano:${env.VERSION}
+sudo docker push jiwoo2211/mypiano:${env.VERSION}'''
       }
     }
 
+    stage('clean') {
+      steps {
+        cleanWs(cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenNotBuilt: true, cleanWhenSuccess: true)
+      }
+    }
+
+  }
+  environment {
+    VERSION = '0.0.1'
   }
 }
