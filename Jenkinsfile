@@ -29,7 +29,7 @@ sudo docker build -t server ./ --build-arg PWD=`pwd`'''
       steps {
         sh 'sudo docker tag server jiwoo2211/mypiano:$VERSION'
         sh 'sudo docker push jiwoo2211/mypiano:0.0.1'
-        sh 'sudo docker rmi $(docker images -q) '
+        sh 'sudo docker rmi server'
       }
     }
 
