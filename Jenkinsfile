@@ -8,10 +8,7 @@ pipeline {
   stages {
     stage('build') {
       steps {
-        sh '''ls -al
-pwd
-who
-java --version'''
+        sh 'sdk use java 17.0.8.1-tem'
         sh '''chmod 777 gradlew
 '''
         sh './gradlew clean'
