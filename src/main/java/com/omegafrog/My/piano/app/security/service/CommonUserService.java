@@ -38,6 +38,11 @@ public class CommonUserService implements UserDetailsService {
     @Autowired
     private  UserRepository userRepository;
 
+    @Autowired
+    private S3Template s3Template;
+    @Value("${spring.cloud.aws.bucket.name}")
+    private String bucketName;
+
 
     /**
      * Username으로 SecurityUser 객체를 검색해 반환하는 메소드
@@ -94,6 +99,29 @@ public class CommonUserService implements UserDetailsService {
             throw new UsernameAlreadyExistException("중복된 ID가 존재합니다.");
         }
     }
+
+    public SecurityUserDto registerUser(RegisterUserDto dto, MultipartFile profileImg) throws UsernameAlreadyExistException, IOException {
+        SecurityUserDto securityUserDto = registerUser(dto);
+        List<String> nameList = Arrays.asList(profileImg.getOriginalFilename().split("\\."));
+        if (nameList.size() <2) throw new IllegalArgumentException("Wrong image type.");
+        String contentType;
+        switch (nameList.get(nameList.size()-1)) {
+            case "jpg", "jpeg":
+                contentType = MediaType.IMAGE_JPEG_VALUE;
+                break;
+            case "png":
+                contentType = MediaType.IMAGE_PNG_VALUE;
+                break;
+            default:
+                throw new IllegalArgumentException("Wrong image type.");
+        }
+
+        s3Template.upload(bucketName, profileImg.getOriginalFilename(), profileImg.getInputStream(), ObjectMetadata.builder()
+                .contentType(contentType).build());
+        return securityUserDto;
+    }
+
+
     public void signOutUser(String username){
         SecurityUser securityUser = securityUserRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("그런 유저는 없습니다."));

@@ -111,6 +111,11 @@ public class SecurityController {
         return tokenInfo;
     }
 
+    @ExceptionHandler(S3Exception.class)
+    public APIBadRequestResponse S3ExceptionHandler(S3Exception ex) {
+        return new APIBadRequestResponse(ex.getMessage());
+    }
+
     @PostMapping("/user/register")
     public JsonAPIResponse registerCommonUser(@Valid @RequestBody RegisterUserDto dto) throws JsonProcessingException, UsernameAlreadyExistException {
         SecurityUserDto securityUserDto = commonUserService.registerUser(dto);

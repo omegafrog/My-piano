@@ -111,7 +111,7 @@ public class SecurityConfig {
                 .securityMatcher("/user/**")
                 .authenticationProvider(commonUserAuthenticationProvider())
                 .authorizeHttpRequests()
-                .requestMatchers("/user/register")
+                .requestMatchers("/user/register", "/user/profile/register")
                 .permitAll()
                 .requestMatchers("/user/login/**")
                 .permitAll()

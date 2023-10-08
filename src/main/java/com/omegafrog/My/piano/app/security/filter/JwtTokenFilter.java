@@ -47,6 +47,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 Arrays.asList(
                         AntPathRequestMatcher.antMatcher("/user/login/**"),
                         AntPathRequestMatcher.antMatcher("/user/register"),
+                        AntPathRequestMatcher.antMatcher("/user/profile/register"),
                         AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/sheet"),
                         AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/sheet/{regex:\\d+}"),
                         AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/lesson/{regex:\\d+}"),
