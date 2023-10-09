@@ -6,8 +6,8 @@ import com.omegafrog.My.piano.app.security.entity.authorities.Role;
 import com.omegafrog.My.piano.app.security.filter.JwtTokenExceptionFilter;
 import com.omegafrog.My.piano.app.security.filter.JwtTokenFilter;
 import com.omegafrog.My.piano.app.security.handler.*;
+import com.omegafrog.My.piano.app.security.infrastructure.JpaRepositoryTokenRepositoryImpl;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
-import com.omegafrog.My.piano.app.security.oauth2.CustomOAuth2UserService;
 import com.omegafrog.My.piano.app.security.provider.CommonUserAuthenticationProvider;
 import com.omegafrog.My.piano.app.security.reposiotry.InMemoryLogoutBlacklistRepository;
 import com.omegafrog.My.piano.app.security.service.CommonUserService;
@@ -31,8 +31,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @Slf4j
 public class SecurityConfig {
-    @Autowired
-    private RefreshTokenRepository refreshTokenRepository;
+
+    @Bean
+    public RefreshTokenRepository refreshTokenRepository(){
+        return new JpaRepositoryTokenRepositoryImpl();
+    }
     @Autowired
     private SecurityUserRepository securityUserRepository;
     @Value("${security.passwordEncoder.secret}")
@@ -49,34 +52,36 @@ public class SecurityConfig {
 
     @Autowired
     private ObjectMapper objectMapper;
+
     @Bean
-    public CommonUserService commonUserService(){
-        return new CommonUserService(passwordEncoder(), securityUserRepository);
+    public CommonUserService commonUserService() {
+        return new CommonUserService(passwordEncoder(), securityUserRepository, refreshTokenRepository());
     }
 
 
     @Bean
-    public CommonUserAuthenticationProvider commonUserAuthenticationProvider(){
+    public CommonUserAuthenticationProvider commonUserAuthenticationProvider() {
         return new CommonUserAuthenticationProvider(commonUserService(), passwordEncoder());
     }
+
     @Bean
-    public CommonUserAccessDeniedHandler commonUserAccessDeniedHandler(){
+    public CommonUserAccessDeniedHandler commonUserAccessDeniedHandler() {
         return new CommonUserAccessDeniedHandler(objectMapper);
     }
 
     @Bean
-    public LogoutBlacklistRepository inMemoryLogoutBlackListRepository(){
+    public LogoutBlacklistRepository inMemoryLogoutBlackListRepository() {
         return new InMemoryLogoutBlacklistRepository(jwtSecret);
     }
 
     @Bean
-    public JwtTokenFilter jwtTokenFilter(){
-        return new JwtTokenFilter(objectMapper, securityUserRepository,
-                refreshTokenRepository);
+    public JwtTokenFilter jwtTokenFilter() {
+        return new JwtTokenFilter(objectMapper, securityUserRepository, refreshTokenRepository());
     }
+
     @Bean
-    public CommonUserLogoutHandler commonUserLogoutHandler(){
-        return new CommonUserLogoutHandler(objectMapper, refreshTokenRepository);
+    public CommonUserLogoutHandler commonUserLogoutHandler() {
+        return new CommonUserLogoutHandler(objectMapper, refreshTokenRepository());
     }
 
     @Bean
@@ -85,7 +90,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public JwtTokenExceptionFilter jwtTokenExceptionFilter(){
+    public JwtTokenExceptionFilter jwtTokenExceptionFilter() {
         return new JwtTokenExceptionFilter();
     }
 
@@ -104,7 +109,6 @@ public class SecurityConfig {
     }
 
 
-
     @Bean
     public SecurityFilterChain commonUserAuthentication(HttpSecurity http) throws Exception {
         http
@@ -113,7 +117,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests()
                 .requestMatchers("/user/register", "/user/profile/register")
                 .permitAll()
-                .requestMatchers("/user/login/**")
+                .requestMatchers("/user/login/**", "/user/logout/**")
                 .permitAll()
                 .anyRequest().hasRole(Role.USER.authorityName)
                 .and()
@@ -121,7 +125,7 @@ public class SecurityConfig {
                 .loginProcessingUrl("/user/login")
                 .usernameParameter("username")
                 .passwordParameter("password")
-                .successHandler(new CommonUserLoginSuccessHandler(objectMapper, refreshTokenRepository, jwtSecret))
+                .successHandler(new CommonUserLoginSuccessHandler(objectMapper, refreshTokenRepository(),jwtSecret))
                 .failureHandler(new CommonUserLoginFailureHandler(objectMapper))
                 .and()
                 .logout()
@@ -142,6 +146,7 @@ public class SecurityConfig {
                 .cors().disable();
         return http.build();
     }
+
     @Bean
     public SecurityFilterChain postAuthentication(HttpSecurity http) throws Exception {
         http
@@ -255,7 +260,6 @@ public class SecurityConfig {
                 .cors().disable();
         return http.build();
     }
-
 
 
     @Bean
