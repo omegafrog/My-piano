@@ -117,16 +117,41 @@ public class SecurityController {
     }
 
     @PostMapping("/user/register")
-    public JsonAPIResponse registerCommonUser(@Valid @RequestBody RegisterUserDto dto) throws JsonProcessingException, UsernameAlreadyExistException {
-        SecurityUserDto securityUserDto = commonUserService.registerUser(dto);
-        Map<String, Object> body = new HashMap<>();
-        body.put("user", securityUserDto);
-        return new APISuccessResponse("회원가입 성공.", body);
+    public JsonAPIResponse registerCommonUser(@RequestParam(name = "profileImg") @Nullable MultipartFile profileImg, @RequestParam String registerInfo) throws IOException, UsernameAlreadyExistException {
+        RegisterUserDto dto = parseRegisterUserInfo(registerInfo);
+        SecurityUserDto securityUserDto;
+        if (profileImg == null)
+            securityUserDto = commonUserService.registerUser(dto);
+        else
+            securityUserDto = commonUserService.registerUser(dto, profileImg);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("user", securityUserDto);
+        return new APISuccessResponse("회원가입 성공.", data);
+    }
+
+    private RegisterUserDto parseRegisterUserInfo(String registerInfo) throws JsonProcessingException {
+        JsonNode registerNodeInfo = objectMapper.readTree(registerInfo);
+        String username = registerNodeInfo.get("username").asText();
+        String password = registerNodeInfo.get("password").asText();
+        String name = registerNodeInfo.get("name").asText();
+        String email = registerNodeInfo.get("email").asText();
+        String phoneNum = registerNodeInfo.get("phoneNum").asText();
+        String loginMethod = registerNodeInfo.get("loginMethod").asText();
+        String profileSrc = registerNodeInfo.get("profileSrc").asText();
+        return RegisterUserDto.builder()
+                .username(username)
+                .password(password)
+                .name(name)
+                .email(email)
+                .phoneNum(phoneNum)
+                .loginMethod(LoginMethod.valueOf(loginMethod))
+                .profileSrc(profileSrc)
+                .build();
     }
 
 
     @PostMapping("/oauth2/google")
-    public JsonAPIResponse registerOrLoginGoogleUser(HttpServletRequest request, HttpServletResponse response, @RequestBody String code) throws GeneralSecurityException, IOException, URISyntaxException {
+    public JsonAPIResponse registerOrLoginGoogleUser(HttpServletRequest request, HttpServletResponse
+            response, @RequestBody String code) throws GeneralSecurityException, IOException, URISyntaxException {
         String parsedCode = objectMapper.readTree(code).get("code").asText();
         GoogleIdToken parsed = GoogleIdToken.parse(GsonFactory.getDefaultInstance(), parsedCode);
         if (!parsed.verify(new GoogleIdTokenVerifier(googlePublicKeysManager)))
@@ -136,11 +161,11 @@ public class SecurityController {
             SecurityUser user = (SecurityUser) commonUserService.loadUserByUsername(parsed.getPayload().getEmail());
             TokenInfo tokenInfo = TokenUtils.generateToken(String.valueOf(user.getId()), secret);
             Optional<RefreshToken> foundedRefreshToken = refreshTokenRepository.findByUserId(user.getId());
-            if(foundedRefreshToken.isPresent()){
+            if (foundedRefreshToken.isPresent()) {
                 foundedRefreshToken.get().updateRefreshToken(tokenInfo.getRefreshToken().getRefreshToken());
-            }else
+            } else
                 refreshTokenRepository.save(tokenInfo.getRefreshToken());
-            Map<String, Object> data = ResponseUtil.getStringObjectMap("access token", tokenInfo.getGrantType()+" "+tokenInfo.getAccessToken());
+            Map<String, Object> data = ResponseUtil.getStringObjectMap("access token", tokenInfo.getGrantType() + " " + tokenInfo.getAccessToken());
             TokenUtils.setRefreshToken(response, tokenInfo);
             return new APISuccessResponse("Google OAuth login success.", data);
             // token만들어반환
@@ -157,7 +182,7 @@ public class SecurityController {
             URI uri = new URI(request.getRequestURL().toString());
             String host = uri.getHost();
             int port = uri.getPort();
-            return new APIRedirectResponse("You need to register first.",  host + ":" + port + "/user/register", data);
+            return new APIRedirectResponse("You need to register first.", host + ":" + port + "/user/register", data);
         }
     }
 
@@ -167,6 +192,7 @@ public class SecurityController {
         commonUserService.signOutUser(user.getUsername());
         return new APISuccessResponse("회원탈퇴 성공.");
     }
+}
 
 //    @PostMapping("/user/checkPassword")
 //    public JsonAPIResponse validateCurrentPassword(@RequestBody String password, Authentication authentication) {
