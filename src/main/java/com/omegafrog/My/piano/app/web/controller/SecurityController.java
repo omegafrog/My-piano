@@ -1,6 +1,7 @@
 package com.omegafrog.My.piano.app.web.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
@@ -18,11 +19,11 @@ import com.omegafrog.My.piano.app.web.dto.SecurityUserDto;
 import com.omegafrog.My.piano.app.security.exception.UsernameAlreadyExistException;
 import com.omegafrog.My.piano.app.security.service.CommonUserService;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
+import io.awspring.cloud.s3.S3Exception;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,16 +33,14 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -75,14 +74,12 @@ public class SecurityController {
     private String googleClientSecret;
 
 
-
     @Autowired
     private GooglePublicKeysManager googlePublicKeysManager;
 
 
-
-    @GetMapping("/user/login/invalidate")
-    public JsonAPIResponse invalidateToken(HttpServletRequest request, HttpServletResponse response) throws JsonProcessingException {
+    @GetMapping("/user/login/revalidate")
+    public JsonAPIResponse revalidateToken(HttpServletRequest request, HttpServletResponse response) throws JsonProcessingException {
         String accessToken = TokenUtils.getAccessTokenStringFromHeaders(request);
         try {
             Claims claims = TokenUtils.extractClaims(accessToken, secret);
@@ -204,9 +201,3 @@ public class SecurityController {
 //        }
 //    }
 
-    @GetMapping("/user/someMethod")
-    public String someMethod() {
-        return "hi";
-    }
-
-}
