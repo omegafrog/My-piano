@@ -15,8 +15,10 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class AuthenticationExceptionEntryPoint implements AuthenticationEntryPoint {
     private final ObjectMapper objectMapper;
+
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
+        authException.printStackTrace();
         response.setCharacterEncoding("utf-8");
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.getWriter().write(
