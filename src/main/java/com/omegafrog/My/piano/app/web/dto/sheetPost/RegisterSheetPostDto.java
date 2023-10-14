@@ -1,6 +1,6 @@
 package com.omegafrog.My.piano.app.web.dto.sheetPost;
 
-import com.omegafrog.My.piano.app.web.dto.sheet.SheetDto;
+import com.omegafrog.My.piano.app.web.dto.RegisterSheetDto;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -19,10 +19,10 @@ public class RegisterSheetPostDto {
     @NotNull
     private Long artistId;
     @NotNull
-    private SheetDto sheetDto;
+    private RegisterSheetDto sheetDto;
 
     @Builder
-    public RegisterSheetPostDto(String title, String content, int price, Double discountRate, Long artistId, SheetDto sheetDto) {
+    public RegisterSheetPostDto(String title, String content, int price, Double discountRate, Long artistId, RegisterSheetDto sheetDto) {
         this.title = title;
         this.content = content;
         this.price = price;

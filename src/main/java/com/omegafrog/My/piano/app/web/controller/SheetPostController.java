@@ -1,8 +1,10 @@
 package com.omegafrog.My.piano.app.web.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.web.domain.user.User;
+import com.omegafrog.My.piano.app.web.dto.RegisterSheetDto;
 import com.omegafrog.My.piano.app.web.dto.UpdateSheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.RegisterSheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
@@ -35,16 +37,7 @@ public class SheetPostController {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @PostMapping("/file")
-    public JsonAPIResponse uploadSheetFile(@RequestParam List<MultipartFile> imgFiles) throws IOException {
-        Map<String, S3Resource> s3Resources = sheetPostService.uploadSheetPost(imgFiles);
-        Map<String, String> s3Url = new HashMap<>();
-        for(String originalFileName : s3Resources.keySet()){
-            s3Url.put(originalFileName, s3Resources.get(originalFileName).getURL().toString());
-        }
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("resources", s3Url);
-        return new APISuccessResponse("Upload sheetFile success.", data);
-    }
+
 
     @GetMapping("/{id}")
     public JsonAPIResponse getSheetPost(@PathVariable Long id)
@@ -63,10 +56,21 @@ public class SheetPostController {
     }
 
     @PostMapping("write")
-    public JsonAPIResponse writeSheetPost(@RequestBody RegisterSheetPostDto dto)
-            throws JsonProcessingException, PersistenceException, AccessDeniedException {
+    public JsonAPIResponse writeSheetPost(@RequestPart(name = "sheetFiles") List<MultipartFile> file,
+                                          @RequestPart(name = "sheetInfo") String registerSheetInfo)
+            throws IOException, PersistenceException, AccessDeniedException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        SheetPostDto sheetPostDto = sheetPostService.writeSheetPost(dto, loggedInUser);
+        JsonNode node = objectMapper.readTree(registerSheetInfo);
+        RegisterSheetPostDto dto = RegisterSheetPostDto.builder()
+                .title(node.get("title").asText())
+                .content(node.get("content").asText())
+                .price(node.get("price").asInt())
+                .discountRate(node.get("discountRate").asDouble())
+                .artistId(loggedInUser.getId())
+                .sheetDto(objectMapper.convertValue(node.get("sheetDto"), RegisterSheetDto.class))
+                .build();
+        SheetPostDto sheetPostDto = sheetPostService.writeSheetPost(dto, file, loggedInUser);
+
         Map<String, Object> data = ResponseUtil.getStringObjectMap("sheetPost", sheetPostDto);
         return new APISuccessResponse("Write sheet post success.", data);
     }

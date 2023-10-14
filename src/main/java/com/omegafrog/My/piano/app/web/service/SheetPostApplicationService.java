@@ -44,28 +44,6 @@ public class SheetPostApplicationService implements CommentHandler {
     @Value("${spring.cloud.aws.bucket.name}")
     private String bucketName;
 
-    public Map<String, S3Resource> uploadSheetPost(List<MultipartFile> multipartFile) throws IOException {
-        Map<String, S3Resource> res = new HashMap<>();
-        for (MultipartFile file : multipartFile) {
-            List<String> filename = Arrays.stream(file.getOriginalFilename().split("\\.")).toList();
-
-            String contentType = "";
-            switch (filename.get(1)) {
-                case "jpg", "jpeg":
-                    contentType = MediaType.IMAGE_JPEG_VALUE;
-                    break;
-                case "png":
-                    contentType = MediaType.IMAGE_PNG_VALUE;
-                    break;
-                default:
-                    throw new IllegalArgumentException("Wrong image type.");
-            }
-            res.put(file.getOriginalFilename(),
-                    s3Template.upload(bucketName, file.getOriginalFilename(), file.getInputStream(), ObjectMetadata.builder()
-                    .contentType(contentType).build()));
-        }
-        return res;
-    }
 
     @Transactional
     public SheetPostDto getSheetPost(Long id) {
@@ -81,26 +59,36 @@ public class SheetPostApplicationService implements CommentHandler {
                 .map(SheetPost::toDto).toList();
     }
 
-    public SheetPostDto writeSheetPost(RegisterSheetPostDto dto, User loggedInUser) {
-        SheetDto sheetDto = dto.getSheetDto();
+    public SheetPostDto writeSheetPost(RegisterSheetPostDto dto, List<MultipartFile> files, User loggedInUser) throws IOException {
+        Sheet sheet = dto.getSheetDto().getEntityBuilderWithoutAuthor()
+                .user(loggedInUser).build();
         SheetPost sheetPost = SheetPost.builder()
                 .title(dto.getTitle())
-                .sheet(Sheet.builder()
-                        .title(sheetDto.getTitle())
-                        .genres(dto.getSheetDto().getGenres())
-                        .difficulty(sheetDto.getDifficulty())
-                        .lyrics(sheetDto.getLyrics())
-                        .pageNum(sheetDto.getPageNum())
-                        .isSolo(sheetDto.getIsSolo())
-                        .instrument(sheetDto.getInstrument())
-                        .user(loggedInUser)
-                        .filePath(sheetDto.getFilePath())
-                        .difficulty(sheetDto.getDifficulty())
-                        .build())
+                .sheet(sheet)
                 .artist(loggedInUser)
                 .price(dto.getPrice())
                 .content(dto.getContent())
                 .build();
+
+        Map<String, S3Resource> res = new HashMap<>();
+        for (MultipartFile file : files) {
+            List<String> filename = Arrays.stream(file.getOriginalFilename().split("\\.")).toList();
+
+            String contentType = "";
+            switch (filename.get(1)) {
+                case "jpg", "jpeg":
+                    contentType = MediaType.IMAGE_JPEG_VALUE;
+                    break;
+                case "png":
+                    contentType = MediaType.IMAGE_PNG_VALUE;
+                    break;
+                default:
+                    throw new IllegalArgumentException("Wrong image type.");
+            }
+            res.put(file.getOriginalFilename(),
+                    s3Template.upload(bucketName, file.getOriginalFilename(), file.getInputStream(), ObjectMetadata.builder()
+                            .contentType(contentType).build()));
+        }
         return sheetPostRepository.save(sheetPost).toDto();
     }
 

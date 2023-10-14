@@ -2,7 +2,6 @@ package com.omegafrog.My.piano.app.web.domain.sheet;
 
 import com.omegafrog.My.piano.app.web.dto.sheet.SheetDto;
 import com.omegafrog.My.piano.app.web.enums.Difficulty;
-import com.omegafrog.My.piano.app.web.enums.Genre;
 import com.omegafrog.My.piano.app.web.enums.Instrument;
 import com.omegafrog.My.piano.app.web.dto.UpdateSheetDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
@@ -12,13 +11,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
 
 @Entity
 @NoArgsConstructor
 @Getter
 public class Sheet  {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
