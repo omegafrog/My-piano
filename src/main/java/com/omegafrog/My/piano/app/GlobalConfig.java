@@ -9,6 +9,7 @@ import com.google.api.client.http.apache.v2.ApacheHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.omegafrog.My.piano.app.web.domain.post.PostRepository;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPostRepository;
+import com.omegafrog.My.piano.app.web.domain.search.ElasticSearchInstance;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.service.LessonService;
@@ -21,6 +22,7 @@ import io.awspring.cloud.s3.S3Template;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestTemplate;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
@@ -49,6 +51,14 @@ public class GlobalConfig {
 
     @Value("${spring.cloud.aws.region.static}")
     private String region;
+    @Bean
+    public RestTemplate restTemplate(){
+        return new RestTemplate();
+    }
+    @Bean
+    public ElasticSearchInstance elasticSearchInstance(){
+        return new ElasticSearchInstance();
+    }
 
 
     @Bean
