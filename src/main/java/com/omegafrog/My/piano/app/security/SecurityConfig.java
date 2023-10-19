@@ -26,6 +26,9 @@ import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @EnableWebSecurity
 @Configuration
@@ -104,7 +107,7 @@ public class SecurityConfig {
                 .permitAll()
                 .and()
                 .csrf().disable()
-                .cors().disable();
+                .cors().configurationSource(corsConfigurationSource());
         return http.build();
     }
 
@@ -143,7 +146,7 @@ public class SecurityConfig {
                 .accessDeniedHandler(commonUserAccessDeniedHandler())
                 .and()
                 .csrf().disable()
-                .cors().disable();
+                .cors().configurationSource(corsConfigurationSource());
         return http.build();
     }
 
@@ -174,7 +177,7 @@ public class SecurityConfig {
                         UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtTokenExceptionFilter(), JwtTokenFilter.class)
                 .csrf().disable()
-                .cors().disable();
+                .cors().configurationSource(corsConfigurationSource());
         return http.build();
     }
 
@@ -201,7 +204,7 @@ public class SecurityConfig {
                 .accessDeniedHandler(commonUserAccessDeniedHandler())
                 .and()
                 .csrf().disable()
-                .cors().disable();
+                .cors().configurationSource(corsConfigurationSource());
         return http.build();
     }
 
@@ -227,7 +230,7 @@ public class SecurityConfig {
                 .accessDeniedHandler(commonUserAccessDeniedHandler())
                 .and()
                 .cors().disable()
-                .csrf().disable();
+                .cors().configurationSource(corsConfigurationSource());
         return http.build();
     }
 
@@ -257,7 +260,7 @@ public class SecurityConfig {
                 .accessDeniedHandler(commonUserAccessDeniedHandler())
                 .and()
                 .csrf().disable()
-                .cors().disable();
+                .cors().configurationSource(corsConfigurationSource());
         return http.build();
     }
 
@@ -269,6 +272,20 @@ public class SecurityConfig {
                 .authorizeHttpRequests()
                 .anyRequest().permitAll();
         return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        configuration.addAllowedOriginPattern("*");
+        configuration.addAllowedHeader("*");
+        configuration.addAllowedMethod("*");
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 
 }
