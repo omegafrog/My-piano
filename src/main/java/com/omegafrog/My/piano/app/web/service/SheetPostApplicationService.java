@@ -3,6 +3,7 @@ package com.omegafrog.My.piano.app.web.service;
 import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
 import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.comment.CommentRepository;
+import com.omegafrog.My.piano.app.web.domain.search.ElasticSearchInstance;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
@@ -11,7 +12,6 @@ import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.UpdateSheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
 import com.omegafrog.My.piano.app.web.dto.comment.RegisterCommentDto;
-import com.omegafrog.My.piano.app.web.dto.sheet.SheetDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.RegisterSheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
 import io.awspring.cloud.s3.ObjectMetadata;
@@ -40,6 +40,8 @@ public class SheetPostApplicationService implements CommentHandler {
     private final CommentRepository commentRepository;
 
     private final S3Template s3Template;
+
+    private final ElasticSearchInstance elasticSearchInstance;
 
     @Value("${spring.cloud.aws.bucket.name}")
     private String bucketName;
@@ -70,6 +72,8 @@ public class SheetPostApplicationService implements CommentHandler {
                 .content(dto.getContent())
                 .build();
 
+        SheetPost saved = sheetPostRepository.save(sheetPost);
+
         Map<String, S3Resource> res = new HashMap<>();
         for (MultipartFile file : files) {
             List<String> filename = Arrays.stream(file.getOriginalFilename().split("\\.")).toList();
@@ -89,7 +93,8 @@ public class SheetPostApplicationService implements CommentHandler {
                     s3Template.upload(bucketName, file.getOriginalFilename(), file.getInputStream(), ObjectMetadata.builder()
                             .contentType(contentType).build()));
         }
-        return sheetPostRepository.save(sheetPost).toDto();
+        elasticSearchInstance.invertIndexingSheetPost(saved);
+        return saved.toDto();
     }
 
     public SheetPostDto update(Long id, UpdateSheetPostDto dto, User loggedInUser) {
