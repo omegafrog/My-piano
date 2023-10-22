@@ -13,7 +13,6 @@ import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
 import com.omegafrog.My.piano.app.utils.response.JsonAPIResponse;
 import com.omegafrog.My.piano.app.utils.response.ResponseUtil;
-import io.awspring.cloud.s3.S3Resource;
 import jakarta.persistence.PersistenceException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -89,10 +88,21 @@ public class SheetPostController {
         return new APISuccessResponse("Write sheet post success.", data);
     }
 
-    @GetMapping("/{id}/scrap")
+    @PutMapping("/{id}/scrap")
     public JsonAPIResponse scrapSheetPost(@PathVariable Long id){
-
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+        sheetPostService.scrapSheetPost(id, loggedInUser);
+        return new APISuccessResponse("Scrap sheet post success.");
     }
+
+    @GetMapping("/{id}/scrap")
+    public JsonAPIResponse isScrappedSheetPost(@PathVariable Long id) throws JsonProcessingException {
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+        boolean isScrapped = sheetPostService.isScrappedSheetPost(id, loggedInUser);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("isScrapped", isScrapped);
+        return new APISuccessResponse("Check sheet post scrap success.", data);
+    }
+
 
     @PostMapping("{id}")
     public JsonAPIResponse updateSheetPost(@PathVariable Long id, @RequestBody UpdateSheetPostDto dto)

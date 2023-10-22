@@ -147,6 +147,11 @@ public class User {
             videoPost.setAuthor(this);
         }
     }
+
+    public void addScrappedSheetPost(SheetPost sheetPost){
+        scrappedSheets.add(sheetPost);
+    }
+
     public void addLikedSheetPost(SheetPost sheetPost){
         likedSheetPosts.add(sheetPost);
         sheetPost.increaseLikedCount();
