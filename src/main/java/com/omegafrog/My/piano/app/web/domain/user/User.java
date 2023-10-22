@@ -117,6 +117,12 @@ public class User {
     private List<Post> likedPosts = new ArrayList<>();
 
     @ManyToMany
+    @JoinTable(name = "liked_sheet_post",
+            joinColumns = @JoinColumn(name = "USER_ID"),
+            inverseJoinColumns = @JoinColumn(name = "SHEET_POST_ID"))
+    private List<SheetPost> likedSheetPosts = new ArrayList<>();
+
+    @ManyToMany
     @JoinTable(name = "liked_videoPost",
             joinColumns = @JoinColumn(name = "USER_ID"),
             inverseJoinColumns = @JoinColumn(name = "VIDEO_POST_ID"))
@@ -140,6 +146,14 @@ public class User {
         if(videoPost.getAuthor()!=this){
             videoPost.setAuthor(this);
         }
+    }
+    public void addLikedSheetPost(SheetPost sheetPost){
+        likedSheetPosts.add(sheetPost);
+        sheetPost.increaseLikedCount();
+    }
+    public void deleteLikedSheetPost(SheetPost sheetPost){
+        likedSheetPosts.remove(sheetPost);
+        sheetPost.decreaseLikedCount();
     }
     public void deleteUploadedPost(Post post){
         uploadedPosts.remove(post);
