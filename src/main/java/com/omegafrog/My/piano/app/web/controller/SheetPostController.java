@@ -47,12 +47,26 @@ public class SheetPostController {
         return new APISuccessResponse("Get Sheet post success.", data);
     }
 
+
     @GetMapping("")
     public JsonAPIResponse getSheetPosts(Pageable pageable)
             throws AccessDeniedException, PersistenceException, JsonProcessingException {
         List<SheetPostDto> sheetPosts = sheetPostService.getSheetPosts(pageable);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("sheetPosts", sheetPosts);
         return new APISuccessResponse("Get all sheet post success.", data);
+    }
+    @PutMapping("/{id}/like")
+    public JsonAPIResponse likePost(@PathVariable Long id){
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+        sheetPostService.likePost(id, loggedInUser);
+        return new APISuccessResponse("Increase like count success.");
+    }
+    @GetMapping("/{id}/like")
+    public JsonAPIResponse isLikePost(@PathVariable Long id) throws JsonProcessingException {
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+        boolean isLikedPost = sheetPostService.isLikedPost(id, loggedInUser);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("isLikedPost", isLikedPost);
+        return new APISuccessResponse("Check liked sheet post success.", data);
     }
 
     @PostMapping("write")
@@ -73,6 +87,11 @@ public class SheetPostController {
 
         Map<String, Object> data = ResponseUtil.getStringObjectMap("sheetPost", sheetPostDto);
         return new APISuccessResponse("Write sheet post success.", data);
+    }
+
+    @GetMapping("/{id}/scrap")
+    public JsonAPIResponse scrapSheetPost(@PathVariable Long id){
+
     }
 
     @PostMapping("{id}")
