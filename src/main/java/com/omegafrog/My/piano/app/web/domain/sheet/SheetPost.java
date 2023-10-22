@@ -73,6 +73,7 @@ public class SheetPost extends SellableItem {
         return SheetInfoDto.builder()
                 .id(id)
                 .title(sheet.getTitle())
+                .content(content)
                 .genres(sheet.getGenres())
                 .instrument(sheet.getInstrument())
                 .isSolo(sheet.isSolo())
