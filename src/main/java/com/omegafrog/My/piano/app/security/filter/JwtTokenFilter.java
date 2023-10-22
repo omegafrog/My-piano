@@ -99,6 +99,4 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 user, null, user.getAuthorities()
         );
     }
-
-
 }

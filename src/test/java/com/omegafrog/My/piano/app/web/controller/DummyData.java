@@ -7,6 +7,7 @@ import com.omegafrog.My.piano.app.web.domain.sheet.Genres;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.user.User;
+import com.omegafrog.My.piano.app.web.dto.RegisterSheetDto;
 import com.omegafrog.My.piano.app.web.dto.RegisterUserDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonRegisterDto;
 import com.omegafrog.My.piano.app.web.dto.sheet.SheetDto;
@@ -71,6 +72,18 @@ public class DummyData {
                 .isSolo(true)
                 .lyrics(false)
                 .pageNum(3)
+                .build();
+    }
+
+    public static RegisterSheetDto registerSheetDto(Sheet sheet){
+        return RegisterSheetDto.builder()
+                .title(sheet.getTitle())
+                .instrument(sheet.getInstrument().ordinal())
+                .lyrics(sheet.isLyrics())
+                .filePath(sheet.getFilePath())
+                .difficulty(sheet.getDifficulty().ordinal())
+                .genres(sheet.getGenres())
+                .isSolo(sheet.isSolo())
                 .build();
     }
 
