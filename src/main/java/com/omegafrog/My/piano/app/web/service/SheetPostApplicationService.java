@@ -1,6 +1,7 @@
 package com.omegafrog.My.piano.app.web.service;
 
 import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
+import com.omegafrog.My.piano.app.web.domain.S3UploadFileExecutor;
 import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.comment.CommentRepository;
 import com.omegafrog.My.piano.app.web.domain.search.ElasticSearchInstance;
@@ -15,11 +16,9 @@ import com.omegafrog.My.piano.app.web.dto.comment.RegisterCommentDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.RegisterSheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
 import io.awspring.cloud.s3.ObjectMetadata;
-import io.awspring.cloud.s3.S3Resource;
-import io.awspring.cloud.s3.S3Template;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
@@ -27,24 +26,25 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
+import java.io.*;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
 import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class SheetPostApplicationService implements CommentHandler {
 
     private final SheetPostRepository sheetPostRepository;
     private final UserRepository userRepository;
     private final CommentRepository commentRepository;
 
-    private final S3Template s3Template;
 
     private final ElasticSearchInstance elasticSearchInstance;
+    private final S3UploadFileExecutor uploadFileExecutor;
 
-    @Value("${spring.cloud.aws.bucket.name}")
-    private String bucketName;
 
 
     @Transactional
@@ -73,26 +73,28 @@ public class SheetPostApplicationService implements CommentHandler {
                 .build();
 
         SheetPost saved = sheetPostRepository.save(sheetPost);
-
-        Map<String, S3Resource> res = new HashMap<>();
-        for (MultipartFile file : files) {
-            List<String> filename = Arrays.stream(file.getOriginalFilename().split("\\.")).toList();
-
-            String contentType = "";
-            switch (filename.get(1)) {
-                case "jpg", "jpeg":
-                    contentType = MediaType.IMAGE_JPEG_VALUE;
-                    break;
-                case "png":
-                    contentType = MediaType.IMAGE_PNG_VALUE;
-                    break;
-                default:
-                    throw new IllegalArgumentException("Wrong image type.");
+        try{
+            for(MultipartFile file : files){
+                List<String> filename = Arrays.stream(file.getOriginalFilename().split("\\.")).toList();
+                log.info("filename:{}", filename);
+                String contentType = switch (filename.get(1)) {
+                    case "jpg", "jpeg" -> MediaType.IMAGE_JPEG_VALUE;
+                    case "png" -> MediaType.IMAGE_PNG_VALUE;
+                    default -> throw new IllegalArgumentException("Wrong image type.");
+                };
+                ObjectMetadata metadata = ObjectMetadata.builder().contentType(contentType).build();
+                File temp = File.createTempFile("temp", ".data");
+                temp.deleteOnExit();
+                ReadableByteChannel src = file.getResource().readableChannel();
+                FileChannel dest = new FileOutputStream(temp).getChannel();
+                dest.transferFrom(src,0, file.getSize());
+                uploadFileExecutor.uploadSheet(temp, file.getOriginalFilename(), metadata);
             }
-            res.put(file.getOriginalFilename(),
-                    s3Template.upload(bucketName, file.getOriginalFilename(), file.getInputStream(), ObjectMetadata.builder()
-                            .contentType(contentType).build()));
+        }catch (IOException e){
+            e.printStackTrace();
+            throw e;
         }
+
         elasticSearchInstance.invertIndexingSheetPost(saved);
         return saved.toDto();
     }
