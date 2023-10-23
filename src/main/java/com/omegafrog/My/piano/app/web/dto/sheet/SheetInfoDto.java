@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 public class SheetInfoDto extends SellableItemDto {
     private Long id;
     private String title;
+    private String content;
     private LocalDateTime createdAt;
     private UserProfile artist;
     private Genres genres;
@@ -27,7 +28,9 @@ public class SheetInfoDto extends SellableItemDto {
     private String sheetUrl;
 
     @Builder
-    public SheetInfoDto(Long id, String title, LocalDateTime createdAt, UserProfile artist, Genres genres, int pageNum, Difficulty difficulty, Instrument instrument, boolean isSolo, boolean lyrics, String sheetUrl) {
+    public SheetInfoDto(Long id, String title, String content,LocalDateTime createdAt, UserProfile artist,
+                        Genres genres, int pageNum, Difficulty difficulty, Instrument instrument, boolean isSolo,
+                        boolean lyrics, String sheetUrl) {
         this.id = id;
         this.title = title;
         this.createdAt = createdAt;
@@ -39,5 +42,6 @@ public class SheetInfoDto extends SellableItemDto {
         this.isSolo = isSolo;
         this.lyrics = lyrics;
         this.sheetUrl = sheetUrl;
+        this.content = content;
     }
 }

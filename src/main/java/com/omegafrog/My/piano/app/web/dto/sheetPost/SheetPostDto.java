@@ -25,9 +25,12 @@ public class SheetPostDto extends SellableItemDto {
     private LocalDateTime createdAt;
     private SheetInfoDto sheet;
     private int price;
+    private boolean likePost;
 
     @Builder
-    public SheetPostDto(Long id, SheetInfoDto sheet, int price, Double discountRate, String title, String content, int viewCount, int likeCount, UserProfile author, LocalDateTime createdAt, List<CommentDto> comments) {
+    public SheetPostDto(Long id, SheetInfoDto sheet, int price, Double discountRate, String title, String content,
+                        int viewCount, int likeCount, UserProfile author, LocalDateTime createdAt, List<CommentDto> comments,
+                        boolean likePost) {
         this.id = id;
         this.sheet = sheet;
         this.price = price;
@@ -39,5 +42,7 @@ public class SheetPostDto extends SellableItemDto {
         this.author = author;
         this.createdAt = createdAt;
         this.comments = comments;
+        this.likePost = likePost;
+
     }
 }

@@ -13,7 +13,6 @@ import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
 import com.omegafrog.My.piano.app.utils.response.JsonAPIResponse;
 import com.omegafrog.My.piano.app.utils.response.ResponseUtil;
-import io.awspring.cloud.s3.S3Resource;
 import jakarta.persistence.PersistenceException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,12 +46,26 @@ public class SheetPostController {
         return new APISuccessResponse("Get Sheet post success.", data);
     }
 
+
     @GetMapping("")
     public JsonAPIResponse getSheetPosts(Pageable pageable)
             throws AccessDeniedException, PersistenceException, JsonProcessingException {
         List<SheetPostDto> sheetPosts = sheetPostService.getSheetPosts(pageable);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("sheetPosts", sheetPosts);
         return new APISuccessResponse("Get all sheet post success.", data);
+    }
+    @PutMapping("/{id}/like")
+    public JsonAPIResponse likePost(@PathVariable Long id){
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+        sheetPostService.likePost(id, loggedInUser);
+        return new APISuccessResponse("Increase like count success.");
+    }
+    @GetMapping("/{id}/like")
+    public JsonAPIResponse isLikePost(@PathVariable Long id) throws JsonProcessingException {
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+        boolean isLikedPost = sheetPostService.isLikedPost(id, loggedInUser);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("isLikedPost", isLikedPost);
+        return new APISuccessResponse("Check liked sheet post success.", data);
     }
 
     @PostMapping("write")
@@ -74,6 +87,22 @@ public class SheetPostController {
         Map<String, Object> data = ResponseUtil.getStringObjectMap("sheetPost", sheetPostDto);
         return new APISuccessResponse("Write sheet post success.", data);
     }
+
+    @PutMapping("/{id}/scrap")
+    public JsonAPIResponse scrapSheetPost(@PathVariable Long id){
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+        sheetPostService.scrapSheetPost(id, loggedInUser);
+        return new APISuccessResponse("Scrap sheet post success.");
+    }
+
+    @GetMapping("/{id}/scrap")
+    public JsonAPIResponse isScrappedSheetPost(@PathVariable Long id) throws JsonProcessingException {
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+        boolean isScrapped = sheetPostService.isScrappedSheetPost(id, loggedInUser);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("isScrapped", isScrapped);
+        return new APISuccessResponse("Check sheet post scrap success.", data);
+    }
+
 
     @PostMapping("{id}")
     public JsonAPIResponse updateSheetPost(@PathVariable Long id, @RequestBody UpdateSheetPostDto dto)
