@@ -185,4 +185,12 @@ public class SheetPostApplicationService implements CommentHandler {
         User user = userRepository.findById(loggedInUser.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
         return user.getScrappedSheets().stream().anyMatch(item -> item.equals(targetSheetPost));
     }
+
+    public void dislikePost(Long id, User loggedInUser) {
+        SheetPost sheetPost = sheetPostRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
+        User user = userRepository.findById(loggedInUser.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
+        boolean isRemoved = user.getLikedSheetPosts().remove(sheetPost);
+        if(!isRemoved) throw new IllegalArgumentException("Cannot find liked sheet post:"+id);
+        sheetPost.decreaseLikedCount();
+    }
 }

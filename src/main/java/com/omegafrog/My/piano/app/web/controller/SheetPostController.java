@@ -67,6 +67,12 @@ public class SheetPostController {
         Map<String, Object> data = ResponseUtil.getStringObjectMap("isLikedPost", isLikedPost);
         return new APISuccessResponse("Check liked sheet post success.", data);
     }
+    @DeleteMapping("/{id}/like")
+    public JsonAPIResponse dislikePost(@PathVariable Long id){
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+        sheetPostService.dislikePost(id, loggedInUser);
+        return new APISuccessResponse("Dislike this sheet post success.");
+    }
 
     @PostMapping("write")
     public JsonAPIResponse writeSheetPost(@RequestPart(name = "sheetFiles") List<MultipartFile> file,
