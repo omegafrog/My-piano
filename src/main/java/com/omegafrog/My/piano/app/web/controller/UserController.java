@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.utils.response.ResponseKeyName;
 import com.omegafrog.My.piano.app.utils.response.ResponseUtil;
+import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.ReturnCommentDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
@@ -87,6 +88,14 @@ public class UserController {
         List<SheetInfoDto> sheetInfoDtos = userService.uploadedSheets(loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap(ResponseKeyName.UPLOADED_SHEETS.keyName, sheetInfoDtos);
         return new APISuccessResponse("Get all uploaded sheets success.", data);
+    }
+
+    @GetMapping("/likedSheets")
+    public JsonAPIResponse getLikedSheets() throws JsonProcessingException {
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+        List<SheetPost> likedSheets = userService.getLikedSheets(loggedInUser);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("likedSheetPost", likedSheets);
+        return new APISuccessResponse("Get liked sheet post success.", data);
     }
 
     @GetMapping("/scrappedSheets")

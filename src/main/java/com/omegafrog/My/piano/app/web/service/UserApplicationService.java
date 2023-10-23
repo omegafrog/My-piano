@@ -93,4 +93,9 @@ public class UserApplicationService {
         return user.update(userDto).getUserProfile();
 
     }
+
+    public List<SheetPost> getLikedSheets(User loggedInUser) {
+        User user = userRepository.findById(loggedInUser.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find user entity:" + loggedInUser.getId()));
+        return user.getLikedSheetPosts();
+    }
 }
