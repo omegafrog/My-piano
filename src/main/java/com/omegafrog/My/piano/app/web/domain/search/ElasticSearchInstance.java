@@ -44,9 +44,8 @@ public class ElasticSearchInstance {
         MultiValueMap<String, Object> params = new LinkedMultiValueMap<>();
         params.add("title", sheetPost.getTitle());
         params.add("name", sheetPost.getSheet().getTitle());
-        StringBuilder genreBuilder = new StringBuilder();
-        sheetPost.getSheet().getGenres().getAll().forEach(genre -> genreBuilder.append(genre.toString()).append(" "));
-        params.add("genre", genreBuilder.toString());
+        List<Genre> all = sheetPost.getSheet().getGenres().getAll();
+        params.add("genre", all.stream().map(Genre::toString).toList());
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.AUTHORIZATION, "Basic "+esSecret );
         headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);

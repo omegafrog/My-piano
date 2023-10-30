@@ -272,17 +272,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests()
                 .anyRequest().permitAll()
                 .and()
-                .cors().configurationSource(corsConfigurationSource());
-        return http.build();
-    }
-
-    @Bean
-    SecurityFilterChain defaultSecurityConfig(HttpSecurity http) throws Exception {
-        http.securityMatcher("/**")
-                .authorizeHttpRequests()
-                .anyRequest().permitAll()
-                .and()
-                .cors().configurationSource(corsConfigurationSource());
+                .csrf().disable()
+                .cors().disable();
         return http.build();
     }
 
