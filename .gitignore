@@ -36,7 +36,5 @@ out/
 ### VS Code ###
 .vscode/
 
-/resources/application.properties
-/src/main/resources/application.properties
 *.puml
 *.xml
