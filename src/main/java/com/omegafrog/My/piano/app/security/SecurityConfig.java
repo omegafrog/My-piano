@@ -270,7 +270,19 @@ public class SecurityConfig {
         http
                 .securityMatcher("/h2-console/**")
                 .authorizeHttpRequests()
-                .anyRequest().permitAll();
+                .anyRequest().permitAll()
+                .and()
+                .cors().configurationSource(corsConfigurationSource());
+        return http.build();
+    }
+
+    @Bean
+    SecurityFilterChain defaultSecurityConfig(HttpSecurity http) throws Exception {
+        http.securityMatcher("/**")
+                .authorizeHttpRequests()
+                .anyRequest().permitAll()
+                .and()
+                .cors().configurationSource(corsConfigurationSource());
         return http.build();
     }
 

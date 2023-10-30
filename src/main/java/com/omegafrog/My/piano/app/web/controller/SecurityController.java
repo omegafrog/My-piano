@@ -78,7 +78,12 @@ public class SecurityController {
     private GooglePublicKeysManager googlePublicKeysManager;
 
 
-    @GetMapping("/user/login/revalidate")
+    @GetMapping("/validate")
+    public JsonAPIResponse validateToken(){
+        return new APISuccessResponse("validate success.");
+    }
+
+    @GetMapping("/revalidate")
     public JsonAPIResponse revalidateToken(HttpServletRequest request, HttpServletResponse response) throws JsonProcessingException {
         String accessToken = TokenUtils.getAccessTokenStringFromHeaders(request);
         try {

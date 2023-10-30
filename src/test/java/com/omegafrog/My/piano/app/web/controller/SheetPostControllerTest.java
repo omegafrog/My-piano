@@ -7,7 +7,6 @@ import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
 import com.omegafrog.My.piano.app.security.exception.UsernameAlreadyExistException;
 import com.omegafrog.My.piano.app.security.service.CommonUserService;
 import com.omegafrog.My.piano.app.web.domain.sheet.Genres;
-import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
@@ -107,7 +106,7 @@ class SheetPostControllerTest {
                 .title("title")
                 .content("content")
                 .price(12000)
-                .sheetDto(DummyData.sheet(artist).toSheetDto())
+                .sheetDto(DummyData.registerSheetDto(DummyData.sheet(artist)))
                 .artistId(artist.getId())
                 .discountRate(0d)
                 .build();
