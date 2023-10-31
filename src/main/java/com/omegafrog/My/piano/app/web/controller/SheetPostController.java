@@ -13,7 +13,6 @@ import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
 import com.omegafrog.My.piano.app.utils.response.JsonAPIResponse;
 import com.omegafrog.My.piano.app.utils.response.ResponseUtil;
-import io.awspring.cloud.s3.S3Resource;
 import jakarta.persistence.PersistenceException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,14 +44,6 @@ public class SheetPostController {
         SheetPostDto sheetPost = sheetPostService.getSheetPost(id);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("sheetPost", sheetPost);
         return new APISuccessResponse("Get Sheet post success.", data);
-    }
-
-    @GetMapping("")
-    public JsonAPIResponse getSheetPosts(Pageable pageable)
-            throws AccessDeniedException, PersistenceException, JsonProcessingException {
-        List<SheetPostDto> sheetPosts = sheetPostService.getSheetPosts(pageable);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("sheetPosts", sheetPosts);
-        return new APISuccessResponse("Get all sheet post success.", data);
     }
 
     @PostMapping("write")
