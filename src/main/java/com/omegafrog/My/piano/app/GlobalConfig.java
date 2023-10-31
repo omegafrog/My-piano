@@ -1,24 +1,22 @@
 package com.omegafrog.My.piano.app;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.json.jackson.JacksonJsonpMapper;
+import co.elastic.clients.transport.ElasticsearchTransport;
+import co.elastic.clients.transport.rest_client.RestClientTransport;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.apache.v2.ApacheHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
-import com.omegafrog.My.piano.app.web.domain.post.PostRepository;
-import com.omegafrog.My.piano.app.web.domain.post.VideoPostRepository;
-import com.omegafrog.My.piano.app.web.domain.search.ElasticSearchInstance;
-import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
-import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
-import com.omegafrog.My.piano.app.web.service.LessonService;
-import com.omegafrog.My.piano.app.web.service.PostApplicationService;
-import com.omegafrog.My.piano.app.web.service.SheetPostApplicationService;
-import com.omegafrog.My.piano.app.web.service.VideoPostApplicationService;
+import com.omegafrog.My.piano.app.external.elasticsearch.ElasticSearchInstance;
 import io.awspring.cloud.s3.InMemoryBufferingS3OutputStreamProvider;
 import io.awspring.cloud.s3.Jackson2JsonS3ObjectConverter;
 import io.awspring.cloud.s3.S3Template;
+import org.apache.http.Header;
+import org.apache.http.HttpHost;
+import org.apache.http.message.BasicHeader;
+import org.elasticsearch.client.RestClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,12 +26,6 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
-
-import java.io.IOException;
-import java.lang.reflect.Array;
-import java.security.GeneralSecurityException;
-import java.util.ArrayList;
-import java.util.Arrays;
 
 @Configuration
 public class GlobalConfig {
@@ -51,12 +43,41 @@ public class GlobalConfig {
 
     @Value("${spring.cloud.aws.region.static}")
     private String region;
+
+    @Value("${elasticsearch.host}")
+    private String host;
+    @Value("${elasticsearch.port}")
+    private String port;
+    @Value("${elasticsearch.apiKey}")
+    private String apiKey;
+
     @Bean
-    public RestTemplate restTemplate(){
+    public ElasticsearchClient elasticsearchClient() {
+        String serverUrl = "https://" + host + ":" +port;
+
+        // Create the low-level client
+        RestClient restClient = RestClient
+                .builder(HttpHost.create(serverUrl))
+                .setDefaultHeaders(new Header[]{
+                        new BasicHeader("Authorization", "ApiKey " + apiKey)
+                })
+                .build();
+
+        // Create the transport with a Jackson mapper
+        ElasticsearchTransport transport = new RestClientTransport(
+                restClient, new JacksonJsonpMapper());
+
+        // And create the API client
+        return new ElasticsearchClient(transport);
+    }
+
+    @Bean
+    public RestTemplate restTemplate() {
         return new RestTemplate();
     }
+
     @Bean
-    public ElasticSearchInstance elasticSearchInstance(){
+    public ElasticSearchInstance elasticSearchInstance() {
         return new ElasticSearchInstance();
     }
 
@@ -86,7 +107,7 @@ public class GlobalConfig {
 
 
     @Bean
-    public GooglePublicKeysManager googlePublicKeysManager(){
+    public GooglePublicKeysManager googlePublicKeysManager() {
         return new GooglePublicKeysManager(new ApacheHttpTransport(), GsonFactory.getDefaultInstance());
     }
 
