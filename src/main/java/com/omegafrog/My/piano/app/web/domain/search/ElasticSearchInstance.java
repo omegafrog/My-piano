@@ -45,7 +45,7 @@ public class ElasticSearchInstance {
         params.add("title", sheetPost.getTitle());
         params.add("name", sheetPost.getSheet().getTitle());
         List<Genre> all = sheetPost.getSheet().getGenres().getAll();
-        params.add("genre", all.stream().map(Genre::toString).toList());
+        params.add("genre", all.stream().map(Genre::name).toList());
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.AUTHORIZATION, "Basic "+esSecret );
         headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
