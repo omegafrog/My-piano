@@ -17,11 +17,11 @@ import jakarta.persistence.PersistenceException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 
 import java.util.*;
@@ -44,6 +44,14 @@ public class SheetPostController {
         SheetPostDto sheetPost = sheetPostService.getSheetPost(id);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("sheetPost", sheetPost);
         return new APISuccessResponse("Get Sheet post success.", data);
+    }
+    @GetMapping("")
+    public JsonAPIResponse getSheetPosts(@RequestParam Integer page, @Nullable @RequestParam List<String> instrument,
+                                         @Nullable @RequestParam List<String> difficulty,
+                                         @Nullable @RequestParam List<String> genre) throws IOException {
+        List<SheetPostDto> sheetPosts = sheetPostService.getSheetPosts(page, instrument, difficulty, genre);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("sheetPosts", sheetPosts);
+        return new APISuccessResponse("Get sheet posts success.", data);
     }
 
     @PostMapping("write")
