@@ -1,5 +1,6 @@
 package com.omegafrog.My.piano.app.web.domain.user;
 
+import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
 
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
@@ -65,6 +66,9 @@ public class User {
     private PhoneNum phoneNum;
     @NotNull
     private AlarmProperties alarmProperties;
+
+    @OneToOne(mappedBy = "user")
+    private SecurityUser securityUser;
 
     @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
     @JoinColumn(name = "USER_ID")
@@ -251,6 +255,7 @@ public class User {
                 .name(name)
                 .profileSrc(profileSrc)
                 .loginMethod(loginMethod)
+                .role(securityUser.getRole())
                 .build();
     }
 
