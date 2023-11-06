@@ -99,7 +99,7 @@ public class User {
 
     @OneToMany(cascade = { CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "AUTHOR_ID")
-    private List<SellableItem> uploadedLessons = new ArrayList<>();
+    private List<Lesson> uploadedLessons = new ArrayList<>();
 
     @OneToMany(mappedBy = "author", cascade = { CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     private List<Post> uploadedPosts = new ArrayList<>();
