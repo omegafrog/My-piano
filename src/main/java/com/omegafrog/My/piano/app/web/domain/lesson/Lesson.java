@@ -59,6 +59,9 @@ public class Lesson extends SellableItem {
                 .videoInformation(this.videoInformation)
                 .lessonProvider(author.getUserProfile())
                 .viewCount(viewCount)
+                .likeCount(likeCount)
+                .createdAt(createdAt)
+                .price(price)
                 .build();
     }
 }

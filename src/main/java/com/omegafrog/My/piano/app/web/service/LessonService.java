@@ -62,9 +62,10 @@ public class LessonService implements CommentHandler {
     }
 
     public LessonDto getLessonById(Long id) {
-        return lessonRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson entity : " + id))
-                .toDto();
+        Lesson lesson = lessonRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson entity : " + id));
+        lesson.increaseViewCount();
+        return lesson.toDto();
     }
 
     public LessonDto updateLesson(Long lessonId, UpdateLessonDto updateLessonDto, User user) {
