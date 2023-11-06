@@ -1,5 +1,6 @@
 package com.omegafrog.My.piano.app.web.domain.lesson;
 
+import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.order.SellableItem;
 import com.omegafrog.My.piano.app.web.dto.UpdateLessonDto;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
@@ -61,7 +62,9 @@ public class Lesson extends SellableItem {
                 .viewCount(viewCount)
                 .likeCount(likeCount)
                 .createdAt(createdAt)
+                .comments(comments.stream().map(Comment::toDto).toList())
                 .price(price)
                 .build();
     }
+
 }

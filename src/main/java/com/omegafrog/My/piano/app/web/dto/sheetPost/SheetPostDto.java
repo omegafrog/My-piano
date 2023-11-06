@@ -18,7 +18,6 @@ import java.util.List;
 public class SheetPostDto extends SellableItemDto {
     private String content;
     private Double discountRate = 0d;
-    private List<CommentDto> comments;
     private UserProfile author;
     private SheetInfoDto sheet;
     private boolean likePost;

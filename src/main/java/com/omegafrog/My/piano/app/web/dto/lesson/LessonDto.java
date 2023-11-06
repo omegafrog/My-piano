@@ -19,5 +19,4 @@ public class LessonDto extends SellableItemDto {
     private UserProfile lessonProvider;
     private SheetDto sheet;
     private LessonInformation lessonInformation;
-
 }
