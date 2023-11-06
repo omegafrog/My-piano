@@ -71,4 +71,26 @@ public class LessonController {
         return new APISuccessResponse("Lesson delete success");
     }
 
+    @PutMapping("/lesson/{id}/like")
+    public JsonAPIResponse likeLesson(@PathVariable Long id){
+        User user = AuthenticationUtil.getLoggedInUser();
+        lessonService.likeLesson(id, user);
+        return new APISuccessResponse("Like lesson success");
+    }
+
+    @GetMapping("/lesson/{id}/like")
+    public JsonAPIResponse isLikeLesson(@PathVariable Long id) throws JsonProcessingException {
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+        boolean isLiked = lessonService.isLikedLesson(id, loggedInUser);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("isLiked", isLiked);
+        return new APISuccessResponse("Check Lesson is liked success.", data);
+    }
+
+    @DeleteMapping("/lesson/{id}/like")
+    public JsonAPIResponse dislikeLesson(@PathVariable Long id){
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+        lessonService.dislikeLesson(id, loggedInUser);
+        return new APISuccessResponse("Dislike lesson success.");
+    }
+
 }

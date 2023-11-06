@@ -132,6 +132,12 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "VIDEO_POST_ID"))
     private List<VideoPost> likedVideoPosts = new ArrayList<>();
 
+    @ManyToMany
+    @JoinTable(name = "liked_lesson",
+            joinColumns = @JoinColumn(name = "USER_ID"),
+            inverseJoinColumns = @JoinColumn(name = "LESSON_ID"))
+    private List<Lesson> likedLessons = new ArrayList<>();
+
 
     @OneToMany(mappedBy = "author", orphanRemoval = true, cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     private List<Comment> wroteComments = new ArrayList<>();
@@ -279,5 +285,19 @@ public class User {
     public void deleteUploadedVideoPost(VideoPost videoPost) {
         if(!uploadedVideoPosts.remove(videoPost))
             throw new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_VIDEO_POST);
+    }
+
+    public void addLikedLesson(Lesson lesson) {
+        if(likedLessons.stream().anyMatch(item->item.equals(lesson)))
+            throw new EntityExistsException("이미 좋아요를 누른 글입니다.");
+        likedLessons.add(lesson);
+    }
+
+    public boolean isLikedLesson(Lesson lesson) {
+        return likedLessons.stream().anyMatch(item -> item.equals(lesson));
+    }
+
+    public void dislikeLesson(Lesson lesson) {
+        likedLessons.remove(lesson);
     }
 }

@@ -167,4 +167,27 @@ public class LessonService implements CommentHandler {
         return lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson Entity : " + lessonId));
     }
+
+    public void likeLesson(Long id, User user) {
+        Lesson lesson = lessonRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson Entity : " + id));
+        lesson.increaseLikedCount();
+        User loggedUser = userRepository.findById(user.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + user.getId()));
+        loggedUser.addLikedLesson(lesson);
+    }
+    public void dislikeLesson(Long id, User user){
+        Lesson lesson = lessonRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson Entity : " + id));
+        User loggedUser = userRepository.findById(user.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + user.getId()));
+        if(!loggedUser.isLikedLesson(lesson)) throw new IllegalArgumentException("이 글에 좋아요를 누르지 않았습니다.");
+        lesson.decreaseLikedCount();
+        loggedUser.dislikeLesson(lesson);
+    }
+
+    public boolean isLikedLesson(Long id, User loggedInUser) {
+        Lesson lesson = lessonRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson Entity : " + id));
+        User loggedUser = userRepository.findById(loggedInUser.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
+        return loggedUser.isLikedLesson(lesson);
+    }
 }
