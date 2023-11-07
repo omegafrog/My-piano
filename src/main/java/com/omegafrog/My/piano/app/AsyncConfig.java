@@ -1,5 +1,6 @@
 package com.omegafrog.My.piano.app;
 
+import com.omegafrog.My.piano.app.web.domain.S3UploadFileExecutor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,4 +30,6 @@ public class AsyncConfig {
         taskExecutor.setThreadNamePrefix("ElasticSearchAPIExecutor:");
         return taskExecutor;
     }
+
+
 }
