@@ -1,7 +1,12 @@
 package com.omegafrog.My.piano.app.security.service;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.omegafrog.My.piano.app.security.jwt.RefreshToken;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
+import com.omegafrog.My.piano.app.security.jwt.TokenInfo;
+import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
+import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
+import com.omegafrog.My.piano.app.utils.response.ResponseUtil;
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.RegisterUserDto;
@@ -14,12 +19,15 @@ import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import io.awspring.cloud.s3.ObjectMetadata;
 import io.awspring.cloud.s3.S3Template;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -29,6 +37,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RequiredArgsConstructor
@@ -49,6 +58,9 @@ public class CommonUserService implements UserDetailsService {
     private S3Template s3Template;
     @Value("${spring.cloud.aws.bucket.name}")
     private String bucketName;
+
+    @Value("${security.jwt.secret}")
+    private String jwtSecret;
 
 
     /**
@@ -133,4 +145,18 @@ public class CommonUserService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("그런 유저는 없습니다."));
         securityUserRepository.deleteById(securityUser.getId());
     }
+
+
+    public TokenInfo getTokenInfo(ExpiredJwtException e) {
+        Long userId = Long.valueOf((String) e.getClaims().get("id"));
+        Optional<SecurityUser> founded = securityUserRepository.findById(userId);
+        if (founded.isEmpty()) throw new AccessDeniedException("Unauthorized access token.");
+
+        RefreshToken refreshToken = refreshTokenRepository.findByUserId(userId).orElseThrow(() -> new AccessDeniedException("로그인이 만료되었습니다."));
+
+        TokenInfo tokenInfo = TokenUtils.generateToken(String.valueOf(userId), jwtSecret);
+        refreshToken.updateRefreshToken(tokenInfo.getRefreshToken().getRefreshToken());
+        return tokenInfo;
+    }
+
 }

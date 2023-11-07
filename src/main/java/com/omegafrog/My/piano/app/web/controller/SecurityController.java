@@ -67,12 +67,6 @@ public class SecurityController {
     @Value("${security.jwt.secret}")
     private String secret;
 
-    @Value("${spring.security.oauth2.client.registration.google.client-id}")
-    private String googleClientId;
-
-    @Value("${spring.security.oauth2.client.registration.google.client-secret}")
-    private String googleClientSecret;
-
 
     @Autowired
     private GooglePublicKeysManager googlePublicKeysManager;
@@ -89,29 +83,17 @@ public class SecurityController {
         try {
             Claims claims = TokenUtils.extractClaims(accessToken, secret);
         } catch (ExpiredJwtException e) {
-
-            TokenInfo tokenInfo = getTokenInfo(e);
-
+            TokenInfo tokenInfo = commonUserService.getTokenInfo(e);
             Map<String, Object> data = ResponseUtil.getStringObjectMap(
                     "access token", tokenInfo.getGrantType() + " " + tokenInfo.getAccessToken());
             TokenUtils.setRefreshToken(response, tokenInfo);
-
             return new APISuccessResponse("Token invalidating success.", data);
         }
         return new APIBadRequestResponse("Token is not expired yet.");
     }
 
-    private TokenInfo getTokenInfo(ExpiredJwtException e) {
-        Long userId = Long.valueOf((String) e.getClaims().get("id"));
-        Optional<SecurityUser> founded = securityUserRepository.findById(userId);
-        if (founded.isEmpty()) throw new AccessDeniedException("Unauthorized access token.");
 
-        RefreshToken refreshToken = refreshTokenRepository.findByUserId(userId).orElseThrow(() -> new AccessDeniedException("로그인이 만료되었습니다."));
 
-        TokenInfo tokenInfo = TokenUtils.generateToken(String.valueOf(userId), secret);
-        refreshToken.updateRefreshToken(tokenInfo.getRefreshToken().getRefreshToken());
-        return tokenInfo;
-    }
 
     @ExceptionHandler(S3Exception.class)
     public APIBadRequestResponse S3ExceptionHandler(S3Exception ex) {
