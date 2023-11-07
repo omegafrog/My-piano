@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @Setter
 @Getter
 @NoArgsConstructor
-public class SheetInfoDto extends SellableItemDto {
+public class SheetInfoDto {
     private Long id;
     private String title;
     private String content;

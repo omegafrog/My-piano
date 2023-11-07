@@ -71,4 +71,47 @@ public class LessonController {
         return new APISuccessResponse("Lesson delete success");
     }
 
+    @PutMapping("/lesson/{id}/like")
+    public JsonAPIResponse likeLesson(@PathVariable Long id){
+        User user = AuthenticationUtil.getLoggedInUser();
+        lessonService.likeLesson(id, user);
+        return new APISuccessResponse("Like lesson success");
+    }
+
+    @GetMapping("/lesson/{id}/like")
+    public JsonAPIResponse isLikeLesson(@PathVariable Long id) throws JsonProcessingException {
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+        boolean isLiked = lessonService.isLikedLesson(id, loggedInUser);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("isLiked", isLiked);
+        return new APISuccessResponse("Check Lesson is liked success.", data);
+    }
+
+    @DeleteMapping("/lesson/{id}/like")
+    public JsonAPIResponse dislikeLesson(@PathVariable Long id){
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+        lessonService.dislikeLesson(id, loggedInUser);
+        return new APISuccessResponse("Dislike lesson success.");
+    }
+
+    @GetMapping("/lesson/{id}/scrap")
+    public JsonAPIResponse isScrappedLesson(@PathVariable Long id) throws JsonProcessingException {
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+        boolean scrappedLesson = lessonService.isScrappedLesson(id, loggedInUser);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("isScrapped", scrappedLesson);
+        return new APISuccessResponse("Check lesson is scrapped success.", data);
+    }
+
+    @PutMapping("/lesson/{id}/scrap")
+    public JsonAPIResponse scrapLesson(@PathVariable Long id){
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+        lessonService.scrapLesson(id, loggedInUser);
+        return new APISuccessResponse("Scrap lesson success.");
+    }
+
+    @DeleteMapping("/lesson/{id}/scrap")
+    public JsonAPIResponse unScrapLesson(@PathVariable Long id){
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+        lessonService.unScrapLesson(id, loggedInUser);
+        return new APISuccessResponse("Cancel scrap lesson success.");
+    }
 }

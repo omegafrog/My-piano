@@ -122,7 +122,7 @@ public class SecurityConfig {
                 .permitAll()
                 .requestMatchers("/user/login/**", "/user/logout/**")
                 .permitAll()
-                .anyRequest().hasRole(Role.USER.authorityName)
+                .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value)
                 .and()
                 .formLogin().permitAll()
                 .loginProcessingUrl("/user/login")
@@ -164,7 +164,7 @@ public class SecurityConfig {
                 .permitAll()
                 .requestMatchers(HttpMethod.GET, "/community/video-post/{id:[0-9]+}")
                 .permitAll()
-                .anyRequest().hasRole(Role.USER.authorityName)
+                .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value)
                 .and()
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -191,7 +191,7 @@ public class SecurityConfig {
                 .permitAll()
                 .requestMatchers(HttpMethod.GET, "/lesson")
                 .permitAll()
-                .anyRequest().hasRole(Role.USER.authorityName)
+                .anyRequest().hasRole(Role.CREATOR.value)
                 .and()
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -218,7 +218,7 @@ public class SecurityConfig {
                 .permitAll()
                 .requestMatchers(HttpMethod.GET, "/order/{id:[0-9]+}")
                 .permitAll()
-                .anyRequest().hasRole(Role.USER.authorityName)
+                .anyRequest().hasRole(Role.USER.value)
                 .and()
                 .addFilterBefore(jwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtTokenExceptionFilter(), JwtTokenFilter.class)
@@ -229,7 +229,6 @@ public class SecurityConfig {
                 .authenticationEntryPoint(UnAuthorizedEntryPoint())
                 .accessDeniedHandler(commonUserAccessDeniedHandler())
                 .and()
-                .cors().disable()
                 .cors().configurationSource(corsConfigurationSource());
         return http.build();
     }
@@ -244,7 +243,7 @@ public class SecurityConfig {
                 .permitAll()
                 .requestMatchers(HttpMethod.GET, "/sheet")
                 .permitAll()
-                .anyRequest().hasRole(Role.USER.authorityName)
+                .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value)
                 .and()
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -260,7 +259,6 @@ public class SecurityConfig {
         return http.build();
     }
 
-
     @Bean
     SecurityFilterChain h2console(HttpSecurity http) throws Exception {
         http
@@ -268,21 +266,24 @@ public class SecurityConfig {
                 .authorizeHttpRequests()
                 .anyRequest().permitAll()
                 .and()
-                .cors().configurationSource(corsConfigurationSource());
+                .csrf().disable()
+                .cors().disable();
         return http.build();
     }
 
     @Bean
-    SecurityFilterChain defaultSecurityConfig(HttpSecurity http) throws Exception {
-        http.securityMatcher("/**")
+    public SecurityFilterChain defaultConfig(HttpSecurity http) throws Exception {
+        http.
+                securityMatcher("/**")
                 .authorizeHttpRequests()
                 .anyRequest().permitAll()
                 .and()
-                .exceptionHandling()
-                .authenticationEntryPoint(UnAuthorizedEntryPoint())
-                .accessDeniedHandler(commonUserAccessDeniedHandler())
+                .csrf().disable()
+                .cors().configurationSource(corsConfigurationSource())
                 .and()
-                .cors().configurationSource(corsConfigurationSource());
+                .headers()
+                .frameOptions()
+                .sameOrigin();
         return http.build();
     }
 

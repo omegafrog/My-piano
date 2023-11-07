@@ -18,6 +18,7 @@ import java.util.List;
 
 @Entity
 @NoArgsConstructor
+@Getter
 public class SecurityUser implements UserDetails {
 
     @Transient
@@ -70,12 +71,12 @@ public class SecurityUser implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         List<GrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new Authority(role.authorityName));
+        authorities.add(new Authority(role.value));
         if(role == Role.ADMIN){
-            authorities.add(new Authority(Role.USER.authorityName));
+            authorities.add(new Authority(Role.USER.value));
         }
-        if(role == Role.SUPER_ADMIN){
-            authorities.add(new Authority(Role.SUPER_ADMIN.authorityName));
+        if(role == Role.CREATOR){
+            authorities.add(new Authority(Role.CREATOR.value));
         }
         return authorities;
     }
