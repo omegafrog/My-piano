@@ -1,21 +1,24 @@
 package com.omegafrog.My.piano.app.security.jwt;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtBuilder;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import com.omegafrog.My.piano.app.security.entity.SecurityUser;
+import io.jsonwebtoken.*;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.AuthenticationException;
 
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Optional;
 
 public class TokenUtils {
+
 
     //토큰 생성
     public static TokenInfo generateToken(String securityUserId, String secret) {
@@ -44,6 +47,8 @@ public class TokenUtils {
                 .signWith(SignatureAlgorithm.HS512, secret);
         return jwtBuilder.compact();
     }
+
+
 
     public static String getAccessTokenStringFromHeaders(HttpServletRequest request) throws AuthenticationException {
         String tokenString = request.getHeader(HttpHeaders.AUTHORIZATION);
@@ -80,8 +85,12 @@ public class TokenUtils {
 
     //토큰 유효성 검증
     public static boolean isNonExpired(String token, String secret) {
-        Claims body = extractClaims(token, secret);
-        return body.getExpiration().after(new Date());
+        try{
+            Claims body = extractClaims(token, secret);
+            return body.getExpiration().after(new Date());
+        }catch (JwtException e){
+            return false;
+        }
     }
 
     public static void setRefreshToken(HttpServletResponse response, TokenInfo tokenInfo) {
