@@ -4,7 +4,7 @@ import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
 import com.omegafrog.My.piano.app.web.domain.S3UploadFileExecutor;
 import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.comment.CommentRepository;
-import com.omegafrog.My.piano.app.web.domain.search.ElasticSearchInstance;
+import com.omegafrog.My.piano.app.external.elasticsearch.ElasticSearchInstance;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
@@ -186,5 +186,14 @@ public class SheetPostApplicationService implements CommentHandler {
         SheetPost targetSheetPost = sheetPostRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
         User user = userRepository.findById(loggedInUser.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
         return user.getScrappedSheets().stream().anyMatch(item -> item.equals(targetSheetPost));
+    }
+
+    public List<SheetPostDto> getSheetPosts(Integer page, List<String> instrument, List<String> difficulty, List<String> genre) throws IOException {
+        instrument = instrument==null ? new ArrayList<>() : instrument;
+        difficulty = difficulty==null ? new ArrayList<>() : difficulty;
+        genre = genre==null ? new ArrayList<>() : genre;
+        List<Long> sheetPostIds = elasticSearchInstance.searchingSheetPost(page, instrument, difficulty, genre);
+        return sheetPostIds.stream().map(id -> sheetPostRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity:" + id)).toDto()).toList();
     }
 }

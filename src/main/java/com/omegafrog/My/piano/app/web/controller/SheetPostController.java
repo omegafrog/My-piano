@@ -17,11 +17,11 @@ import jakarta.persistence.PersistenceException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 
 import java.util.*;
@@ -48,11 +48,12 @@ public class SheetPostController {
 
 
     @GetMapping("")
-    public JsonAPIResponse getSheetPosts(Pageable pageable)
-            throws AccessDeniedException, PersistenceException, JsonProcessingException {
-        List<SheetPostDto> sheetPosts = sheetPostService.getSheetPosts(pageable);
+    public JsonAPIResponse getSheetPosts(@RequestParam Integer page, @Nullable @RequestParam List<String> instrument,
+                                         @Nullable @RequestParam List<String> difficulty,
+                                         @Nullable @RequestParam List<String> genre) throws IOException {
+        List<SheetPostDto> sheetPosts = sheetPostService.getSheetPosts(page, instrument, difficulty, genre);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("sheetPosts", sheetPosts);
-        return new APISuccessResponse("Get all sheet post success.", data);
+        return new APISuccessResponse("Get sheet posts success.", data);
     }
     @PutMapping("/{id}/like")
     public JsonAPIResponse likePost(@PathVariable Long id){
