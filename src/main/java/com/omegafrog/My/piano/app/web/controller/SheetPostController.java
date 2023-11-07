@@ -64,7 +64,7 @@ public class SheetPostController {
     public JsonAPIResponse isLikePost(@PathVariable Long id) throws JsonProcessingException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         boolean isLikedPost = sheetPostService.isLikedPost(id, loggedInUser);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("isLikedPost", isLikedPost);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("isLiked", isLikedPost);
         return new APISuccessResponse("Check liked sheet post success.", data);
     }
     @DeleteMapping("/{id}/like")

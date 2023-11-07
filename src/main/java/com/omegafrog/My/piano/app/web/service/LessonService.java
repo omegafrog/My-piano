@@ -1,6 +1,9 @@
 package com.omegafrog.My.piano.app.web.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
+import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
+import com.omegafrog.My.piano.app.utils.response.ResponseUtil;
 import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
@@ -22,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Transactional
@@ -189,5 +193,26 @@ public class LessonService implements CommentHandler {
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson Entity : " + id));
         User loggedUser = userRepository.findById(loggedInUser.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
         return loggedUser.isLikedLesson(lesson);
+    }
+
+    public boolean isScrappedLesson(Long id, User loggedInUser) {
+        Lesson lesson = lessonRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson Entity : " + id));
+        User loggedUser = userRepository.findById(loggedInUser.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
+        return loggedUser.isScrappedLesson(lesson);
+    }
+
+    public void scrapLesson(Long id, User loggedInUser) {
+        Lesson lesson = lessonRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson Entity : " + id));
+        User loggedUser = userRepository.findById(loggedInUser.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
+        loggedUser.scrapLesson(lesson);
+    }
+
+    public void unScrapLesson(Long id, User loggedInUser) {
+        Lesson lesson = lessonRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson Entity : " + id));
+        User loggedUser = userRepository.findById(loggedInUser.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
+        loggedUser.unScrapLesson(lesson);
     }
 }

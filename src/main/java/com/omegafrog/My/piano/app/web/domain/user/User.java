@@ -1,5 +1,6 @@
 package com.omegafrog.My.piano.app.web.domain.user;
 
+import com.nimbusds.jose.crypto.impl.AAD;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
 
@@ -93,15 +94,21 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "SHEET_ID"))
     private List<SellableItem> scrappedSheets = new ArrayList<>();
 
-    @OneToMany(cascade = { CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
+    @ManyToMany
+    @JoinTable(name = "scrapped_lesson",
+            joinColumns = @JoinColumn(name = "USER_ID"),
+            inverseJoinColumns = @JoinColumn(name = "LESSON_ID"))
+    private List<Lesson> scrappedLesson = new ArrayList<>();
+
+    @OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "AUTHOR_ID")
     private List<SellableItem> uploadedSheets = new ArrayList<>();
 
-    @OneToMany(cascade = { CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
+    @OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "AUTHOR_ID")
     private List<Lesson> uploadedLessons = new ArrayList<>();
 
-    @OneToMany(mappedBy = "author", cascade = { CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
+    @OneToMany(mappedBy = "author", cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     private List<Post> uploadedPosts = new ArrayList<>();
 
     @OneToMany(mappedBy = "author")
@@ -141,56 +148,75 @@ public class User {
 
     @OneToMany(mappedBy = "author", orphanRemoval = true, cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     private List<Comment> wroteComments = new ArrayList<>();
-    public int chargeCash(int cash){
+
+    public int chargeCash(int cash) {
         this.cash += cash;
         return this.cash;
     }
-    public void addUploadedPost(Post post){
+
+    public void addUploadedPost(Post post) {
         uploadedPosts.add(post);
-        if(post.getAuthor()!=this){
+        if (post.getAuthor() != this) {
             post.setAuthor(this);
         }
     }
-    public void addUploadedVideoPost(VideoPost videoPost){
+
+    public void addUploadedVideoPost(VideoPost videoPost) {
         uploadedVideoPosts.add(videoPost);
-        if(videoPost.getAuthor()!=this){
+        if (videoPost.getAuthor() != this) {
             videoPost.setAuthor(this);
         }
     }
 
-    public void addScrappedSheetPost(SheetPost sheetPost){
+    public boolean isScrappedLesson(Lesson lesson) {
+        return scrappedLesson.stream().anyMatch(item -> item.equals(lesson));
+    }
+
+    public void scrapLesson(Lesson lesson) {
+        if (isScrappedLesson(lesson))
+            throw new EntityExistsException("이미 스크랩한 레슨입니다. id:" + lesson.getId());
+        scrappedLesson.add(lesson);
+    }
+
+    public void addScrappedSheetPost(SheetPost sheetPost) {
         scrappedSheets.add(sheetPost);
     }
 
-    public void addLikedSheetPost(SheetPost sheetPost){
+    public void addLikedSheetPost(SheetPost sheetPost) {
         likedSheetPosts.add(sheetPost);
         sheetPost.increaseLikedCount();
     }
-    public void deleteLikedSheetPost(SheetPost sheetPost){
+
+    public void deleteLikedSheetPost(SheetPost sheetPost) {
         likedSheetPosts.remove(sheetPost);
         sheetPost.decreaseLikedCount();
     }
-    public void deleteUploadedPost(Post post){
+
+    public void deleteUploadedPost(Post post) {
         uploadedPosts.remove(post);
     }
-    public void addLikePost(Post post){
+
+    public void addLikePost(Post post) {
         likedPosts.add(post);
     }
 
-    public void likeVideoPost(VideoPost videoPost){
-        if(likedVideoPosts.contains(videoPost))
+    public void likeVideoPost(VideoPost videoPost) {
+        if (likedVideoPosts.contains(videoPost))
             throw new EntityExistsException(ExceptionMessage.ENTITY_EXISTS);
         likedVideoPosts.add(videoPost);
         videoPost.increaseLikedCount();
     }
-    public void dislikeVideoPost(VideoPost videoPost){
-        if(!likedVideoPosts.removeIf(post->post.equals(videoPost)))
+
+    public void dislikeVideoPost(VideoPost videoPost) {
+        if (!likedVideoPosts.removeIf(post -> post.equals(videoPost)))
             throw new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_VIDEO_POST);
     }
-    public void addWroteComments(Comment comment){
+
+    public void addWroteComments(Comment comment) {
         wroteComments.add(comment);
     }
-    public void deleteWroteComments(Comment comment, User loggedInUser){
+
+    public void deleteWroteComments(Comment comment, User loggedInUser) {
         boolean isCommentRemoved = wroteComments.removeIf(
                 element -> {
                     if (element.equals(comment)) {
@@ -200,8 +226,9 @@ public class User {
                     } else return false;
                 }
         );
-        if(!isCommentRemoved) throw new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_COMMENT);
+        if (!isCommentRemoved) throw new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_COMMENT);
     }
+
     @Builder
     public User(String name, String email, Cart cart, LoginMethod loginMethod, String profileSrc, PhoneNum phoneNum, int cash) {
 
@@ -223,14 +250,16 @@ public class User {
     }
 
 
-    public boolean dislikePost(Long postId){
+    public boolean dislikePost(Long postId) {
         likedPosts.forEach(
-                post -> { if( post.getId().equals(postId)) post.decreaseLikedCount();}
+                post -> {
+                    if (post.getId().equals(postId)) post.decreaseLikedCount();
+                }
         );
         return likedPosts.removeIf(post -> post.getId().equals(postId));
     }
 
-    public void addCash(int cash){
+    public void addCash(int cash) {
         this.cash += cash;
     }
 
@@ -245,7 +274,7 @@ public class User {
             if (order.getItem() instanceof Lesson)
                 purchasedLessons.add(order.getItem());
             else if (order.getItem() instanceof SheetPost)
-                purchasedSheets.add( (order.getItem()));
+                purchasedSheets.add((order.getItem()));
             else
                 throw new ClassCastException("Cannot cast this class to child class.");
         }
@@ -266,7 +295,6 @@ public class User {
     }
 
 
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -283,12 +311,12 @@ public class User {
     }
 
     public void deleteUploadedVideoPost(VideoPost videoPost) {
-        if(!uploadedVideoPosts.remove(videoPost))
+        if (!uploadedVideoPosts.remove(videoPost))
             throw new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_VIDEO_POST);
     }
 
     public void addLikedLesson(Lesson lesson) {
-        if(likedLessons.stream().anyMatch(item->item.equals(lesson)))
+        if (likedLessons.stream().anyMatch(item -> item.equals(lesson)))
             throw new EntityExistsException("이미 좋아요를 누른 글입니다.");
         likedLessons.add(lesson);
     }
@@ -299,5 +327,12 @@ public class User {
 
     public void dislikeLesson(Lesson lesson) {
         likedLessons.remove(lesson);
+    }
+
+    public void unScrapLesson(Lesson lesson) {
+        if (!isScrappedLesson(lesson))
+            throw new EntityNotFoundException("스크랩하지 않은 레슨을 취소하려고 합니다." + lesson.getId());
+        scrappedLesson.remove(lesson);
+
     }
 }

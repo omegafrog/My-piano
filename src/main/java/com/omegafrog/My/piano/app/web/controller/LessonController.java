@@ -93,4 +93,25 @@ public class LessonController {
         return new APISuccessResponse("Dislike lesson success.");
     }
 
+    @GetMapping("/lesson/{id}/scrap")
+    public JsonAPIResponse isScrappedLesson(@PathVariable Long id) throws JsonProcessingException {
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+        boolean scrappedLesson = lessonService.isScrappedLesson(id, loggedInUser);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("isScrapped", scrappedLesson);
+        return new APISuccessResponse("Check lesson is scrapped success.", data);
+    }
+
+    @PutMapping("/lesson/{id}/scrap")
+    public JsonAPIResponse scrapLesson(@PathVariable Long id){
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+        lessonService.scrapLesson(id, loggedInUser);
+        return new APISuccessResponse("Scrap lesson success.");
+    }
+
+    @DeleteMapping("/lesson/{id}/scrap")
+    public JsonAPIResponse unScrapLesson(@PathVariable Long id){
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+        lessonService.unScrapLesson(id, loggedInUser);
+        return new APISuccessResponse("Cancel scrap lesson success.");
+    }
 }
