@@ -83,15 +83,21 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "LESSON_ID"))
     private List<SellableItem> purchasedLessons = new ArrayList<>();
 
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @ManyToMany
     @JoinTable(name = "scrapped_sheet",
             joinColumns = @JoinColumn(name = "AUTHOR_ID"),
-            inverseJoinColumns = @JoinColumn(name = "SHEET_ID"))
-    private List<SellableItem> scrappedSheets = new ArrayList<>();
+            inverseJoinColumns = @JoinColumn(name = "SHEET_POST_ID"))
+    private List<SheetPost> scrappedSheetPosts = new ArrayList<>();
+
+    @ManyToMany
+    @JoinTable(name = "scrapped_sheet",
+            joinColumns = @JoinColumn(name = "AUTHOR_ID"),
+            inverseJoinColumns = @JoinColumn(name = "LESSON_ID"))
+    private List<Lesson> scrappedLessons = new ArrayList<>();
 
     @OneToMany(cascade = { CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "AUTHOR_ID")
-    private List<SellableItem> uploadedSheets = new ArrayList<>();
+    private List<SheetPost> uploadedSheetPosts = new ArrayList<>();
 
     @OneToMany(cascade = { CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "AUTHOR_ID")
@@ -148,15 +154,31 @@ public class User {
         }
     }
 
-    public void addScrappedSheetPost(SheetPost sheetPost){
-        scrappedSheets.add(sheetPost);
+    public boolean isScrappedSheetPost(SheetPost sheetPost) {
+        return scrappedSheetPosts.stream().anyMatch(item -> item.equals(sheetPost));
     }
 
-    public void addLikedSheetPost(SheetPost sheetPost){
+    public void scrapSheetPost(SheetPost sheetPost){
+        if(isScrappedSheetPost(sheetPost)) throw new EntityExistsException("이미 스크랩한 글입니다.");
+        scrappedSheetPosts.add(sheetPost);
+    }
+
+    public void unScrapSheetPost(SheetPost sheetPost) {
+        if(!isScrappedSheetPost(sheetPost)) throw new EntityNotFoundException("스크랩하지 않은 글입니다");
+        scrappedSheetPosts.remove(sheetPost);
+    }
+
+    public boolean isLikedSheetPost(SheetPost sheetPost){
+        return likedSheetPosts.stream().anyMatch(item -> item.equals(sheetPost));
+    }
+
+    public void likeSheetPost(SheetPost sheetPost){
+        if(isLikedSheetPost(sheetPost)) throw new EntityExistsException("이미 좋아요를 누른 글입니다.");
         likedSheetPosts.add(sheetPost);
         sheetPost.increaseLikedCount();
     }
-    public void deleteLikedSheetPost(SheetPost sheetPost){
+    public void dislikeSheetPost(SheetPost sheetPost){
+        if(!isLikedSheetPost(sheetPost)) throw new EntityNotFoundException("좋아요를 누르지 않은 글입니다.");
         likedSheetPosts.remove(sheetPost);
         sheetPost.decreaseLikedCount();
     }

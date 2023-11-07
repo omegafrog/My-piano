@@ -66,13 +66,13 @@ public class UserApplicationService {
     public List<SheetInfoDto> uploadedSheets(User loggedInUser) {
         User user = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInUser.getId()));
-        return user.getUploadedSheets().stream().map(sheetPost->((SheetPost)sheetPost).toInfoDto()).toList();
+        return user.getUploadedSheetPosts().stream().map(sheetPost->((SheetPost)sheetPost).toInfoDto()).toList();
     }
 
     public List<SheetInfoDto> getScrappedSheets(User loggedInUser) {
         User user = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInUser.getId()));
-        return user.getScrappedSheets().stream().map(sheetPost->((SheetPost)sheetPost).toInfoDto()).toList();
+        return user.getScrappedSheetPosts().stream().map(sheetPost->((SheetPost)sheetPost).toInfoDto()).toList();
     }
 
     public List<com.omegafrog.My.piano.app.web.dto.user.UserProfile> getFollowingFollower(User loggedInUser) {

@@ -95,6 +95,13 @@ public class SheetPostController {
         return new APISuccessResponse("Scrap sheet post success.");
     }
 
+    @DeleteMapping("/{id}/scrap")
+    public JsonAPIResponse unScrapSheetPost(@PathVariable Long id){
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+        sheetPostService.unScrapSheetPost(id, loggedInUser);
+        return new APISuccessResponse("Unscrap sheet post success.");
+    }
+
     @GetMapping("/{id}/scrap")
     public JsonAPIResponse isScrappedSheetPost(@PathVariable Long id) throws JsonProcessingException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();

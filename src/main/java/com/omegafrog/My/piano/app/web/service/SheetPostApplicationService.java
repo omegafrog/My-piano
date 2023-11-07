@@ -166,7 +166,7 @@ public class SheetPostApplicationService implements CommentHandler {
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity:" + id));
         User user = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find user entity:" + id));
-        user.addLikedSheetPost(sheetPost);
+        user.likeSheetPost(sheetPost);
     }
 
     public boolean isLikedPost(Long id, User loggedInUser) {
@@ -178,11 +178,17 @@ public class SheetPostApplicationService implements CommentHandler {
     public void scrapSheetPost(Long id, User loggedInUser) {
         SheetPost sheetPost = sheetPostRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity:"+ id));
         User user = userRepository.findById(loggedInUser.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
-        user.addScrappedSheetPost(sheetPost);
+        user.scrapSheetPost(sheetPost);
     }
     public boolean isScrappedSheetPost(Long id, User loggedInUser){
         SheetPost targetSheetPost = sheetPostRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
         User user = userRepository.findById(loggedInUser.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
-        return user.getScrappedSheets().stream().anyMatch(item -> item.equals(targetSheetPost));
+        return user.isScrappedSheetPost(targetSheetPost);
+    }
+
+    public void unScrapSheetPost(Long id, User loggedInUser) {
+        SheetPost targetSheetPost = sheetPostRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
+        User user = userRepository.findById(loggedInUser.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
+        user.unScrapSheetPost(targetSheetPost);
     }
 }
