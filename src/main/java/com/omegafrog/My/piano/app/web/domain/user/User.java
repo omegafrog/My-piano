@@ -1,6 +1,5 @@
 package com.omegafrog.My.piano.app.web.domain.user;
 
-import com.nimbusds.jose.crypto.impl.AAD;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
 

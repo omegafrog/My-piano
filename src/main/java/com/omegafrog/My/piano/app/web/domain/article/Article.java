@@ -40,10 +40,11 @@ public abstract class Article {
     public abstract void setAuthor(User user);
     @Temporal(TemporalType.TIMESTAMP)
     protected LocalDateTime createdAt = LocalDateTime.now();
+    @Temporal(TemporalType.TIMESTAMP)
+    protected LocalDateTime modifiedAt = LocalDateTime.now();
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     protected List<Comment> comments = new ArrayList<>();
-
 
     public void increaseLikedCount(){
         likeCount++;
