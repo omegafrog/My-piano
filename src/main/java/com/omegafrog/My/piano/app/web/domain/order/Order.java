@@ -15,6 +15,8 @@ import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
 
+import javax.annotation.Nullable;
+
 @Entity
 @Table(name = "orders")
 @Builder
@@ -50,26 +52,25 @@ public class Order {
     private OrderStatus orderStatus=OrderStatus.CREATED;
 
     @Builder.Default
-    private Long discountRate=0L;
+    private Double discountRate=0d;
 
     @OneToOne
     @JoinColumn(name = "COUPON_ID")
+    @Nullable
     private Coupon coupon;
 
-    @Builder
-    public Order(User seller, User buyer, SellableItem item, int initialPrice, Long discountRate, Coupon coupon) {
+    public Order(User seller, User buyer, SellableItem item, Coupon coupon) {
         this.seller = seller;
         this.buyer = buyer;
         this.item = item;
-        this.initialPrice = initialPrice;
-        this.discountRate = discountRate;
+        this.initialPrice = item.price;
+        this.discountRate = item.discountRate;
         this.coupon = coupon;
     }
 
     public void setStatus(OrderStatus status){
         this.orderStatus = status;
     }
-
 
     public Order update(Order order){
         this.seller = order.getSeller();
@@ -84,8 +85,8 @@ public class Order {
 
 
     public void calculateTotalPrice(){
-        Long couponDiscountRate = (coupon != null) ? coupon.getDiscountRate() : 0L;
-        Long totalDiscountRate = couponDiscountRate + discountRate;
+        Double couponDiscountRate = (coupon != null) ? coupon.getDiscountRate() : 0f;
+        Double totalDiscountRate = couponDiscountRate + discountRate;
         double tmp = (double) initialPrice*(1-totalDiscountRate);
         totalPrice =  (int) Math.floor(tmp);
     }

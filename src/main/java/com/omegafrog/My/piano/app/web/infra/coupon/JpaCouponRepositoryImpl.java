@@ -19,12 +19,12 @@ public class JpaCouponRepositoryImpl implements CouponRepository {
     }
 
     @Override
-    public Optional<Coupon> findById(Long id) {
+    public Optional<Coupon> findById(String id) {
         return jpaRepository.findById(id);
     }
 
     @Override
-    public void deleteById(Long id) {
+    public void deleteById(String id) {
         jpaRepository.deleteById(id);
     }
 }
