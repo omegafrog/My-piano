@@ -32,15 +32,10 @@ public class OrderController {
     public JsonAPIResponse orderItem(@Validated @RequestBody OrderRegisterDto order, HttpServletRequest request)
             throws JsonProcessingException{
         String mainResource = getMainResourceName(request);
-        OrderDto createdOrder = createMainResourceOrder(order, mainResource);
+        OrderDto createdOrder = orderService.makeOrder(mainResource, order);
         OrderDto processedOrder = orderService.makePayment(createdOrder);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("order", processedOrder);
         return new APISuccessResponse("Buy " + mainResource + " success.", data);
-    }
-
-    private OrderDto createMainResourceOrder(OrderRegisterDto order, String mainResource) {
-        return (mainResource.equals("sheet"))
-                ? orderService.createSheetOrder(order) : orderService.createLessonOrder(order);
     }
 
     private static String getMainResourceName(HttpServletRequest request) {
