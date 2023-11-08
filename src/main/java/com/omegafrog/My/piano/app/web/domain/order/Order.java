@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "`Order`")
+@Table(name = "orders")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

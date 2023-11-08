@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @Entity
-@Table(name = "`USER`")
+@Table(name = "person")
 @NoArgsConstructor
 @Getter
 public class User {

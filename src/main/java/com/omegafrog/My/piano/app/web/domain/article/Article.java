@@ -15,10 +15,12 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-@MappedSuperclass
 @NoArgsConstructor
 @Getter
-public abstract class Article {
+@Entity
+@Inheritance(strategy = InheritanceType.JOINED)
+@DiscriminatorColumn(name = "DTYPE")
+public class Article {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,13 +39,15 @@ public abstract class Article {
     @JoinColumn(name="AUTHOR_ID")
     protected User author;
 
-    public abstract void setAuthor(User user);
+    public void setAuthor(User user){
+        author=user;
+    }
     @Temporal(TemporalType.TIMESTAMP)
     protected LocalDateTime createdAt = LocalDateTime.now();
     @Temporal(TemporalType.TIMESTAMP)
     protected LocalDateTime modifiedAt = LocalDateTime.now();
 
-    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
+    @OneToMany(mappedBy = "target",cascade = {CascadeType.PERSIST,CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     protected List<Comment> comments = new ArrayList<>();
 
     public void increaseLikedCount(){
