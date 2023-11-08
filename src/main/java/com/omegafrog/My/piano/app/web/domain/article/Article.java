@@ -61,6 +61,7 @@ public abstract class Article {
      * @param comment  추가할 comment entity
      */
     public void addComment(Comment comment) {
+        comment.setTarget(this);
         this.comments.add(comment);
         if(!comment.getAuthor().getWroteComments().contains(comment))
             comment.getAuthor().addWroteComments(comment);
