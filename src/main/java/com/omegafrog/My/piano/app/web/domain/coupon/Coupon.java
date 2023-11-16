@@ -28,7 +28,8 @@ public class Coupon {
     private Double discountRate;
 
     private LocalDateTime expireDate;
-    private final LocalDateTime createdAt=LocalDateTime.now();
+
+    private LocalDateTime createdAt=LocalDateTime.now();
 
     /**
      *
