@@ -60,9 +60,18 @@ public class OrderService {
                 .orElseThrow(() -> new EntityNotFoundException(USER_ENTITY_NOT_FOUNT_ERROR_MSG
                         + dto.getBuyerId()));
 
-        SellableItem item = sellableItemFactory.getDetailedItem(mainResourceName, dto.getItemId());
+        SellableItem item = sellableItemFactory.createDetailedItem(mainResourceName, dto.getItemId());
 
-        // TODO : SheetPost의 sheet, artist property는 non-null로 validation 해야함.
+        if (buyer.equals(item.getAuthor()))
+            throw new IllegalArgumentException("구매자와 판매자가 같을 수 없습니다.");
+        if(buyer.isPurchased(item)) throw new IllegalArgumentException("이미 구매한 상품입니다.");
+
+        Order order = buildOrder(dto, buyer, item);
+        order.calculateTotalPrice();
+        return orderRepository.save(order).toDto();
+    }
+
+    private Order buildOrder(OrderRegisterDto dto, User buyer, SellableItem item) {
         Order.OrderBuilder orderBuilder = Order.builder()
                 .item(item)
                 .buyer(buyer)
@@ -76,8 +85,6 @@ public class OrderService {
             coupon.validate(buyer);
             orderBuilder = orderBuilder.coupon(coupon);
         }
-        Order order = orderBuilder.build();
-        order.calculateTotalPrice();
-        return orderRepository.save(order).toDto();
+        return orderBuilder.build();
     }
 }
