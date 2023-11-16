@@ -11,6 +11,7 @@ import com.omegafrog.My.piano.app.web.dto.ReturnCommentDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
 import com.omegafrog.My.piano.app.web.dto.post.PostDto;
 import com.omegafrog.My.piano.app.web.dto.sheet.SheetInfoDto;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.user.UpdateUserDto;
 import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
 import jakarta.persistence.EntityNotFoundException;
@@ -56,10 +57,10 @@ public class UserApplicationService {
         return user.getWroteComments().stream().map(Comment::toReturnCommentDto).toList();
     }
 
-    public List<SheetInfoDto> getPurchasedSheets(User loggedInUser) {
+    public List<SheetPostDto> getPurchasedSheets(User loggedInUser) {
         User user = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER+ loggedInUser.getId()));
-        return user.getPurchasedSheets().stream().map(sheetPost->((SheetPost)sheetPost).toInfoDto()).toList();
+        return user.getPurchasedSheets().stream().map(SheetPost::toDto).toList();
 
     }
 

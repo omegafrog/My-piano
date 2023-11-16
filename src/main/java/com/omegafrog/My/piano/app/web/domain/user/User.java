@@ -83,7 +83,7 @@ public class User {
     @JoinTable(name = "purchased_sheet",
             joinColumns = @JoinColumn(name = "AUTHOR_ID"),
             inverseJoinColumns = @JoinColumn(name = "SHEET_ID"))
-    private List<SellableItem> purchasedSheets = new ArrayList<>();
+    private List<SheetPost> purchasedSheets = new ArrayList<>();
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "purchased_lesson",
@@ -277,7 +277,7 @@ public class User {
             if (order.getItem() instanceof Lesson)
                 purchasedLessons.add(order.getItem());
             else if (order.getItem() instanceof SheetPost)
-                purchasedSheets.add((order.getItem()));
+                purchasedSheets.add((SheetPost)order.getItem());
             else
                 throw new ClassCastException("Cannot cast this class to child class.");
         }
@@ -285,6 +285,22 @@ public class User {
 
     public void receiveCash(int totalPrice) {
         cash += totalPrice;
+    }
+
+    /**
+     * 유저 엔티티가 이미 구매한 상품인지 확인하는 함수
+     * @param item 구매 여부를 확인할 상품 엔티티. SellableItem의 서브클래스의 인스턴스.
+     * @return 구매한 상품이라면 true, 구매하지 않은 상품이라면 false
+     */
+    public boolean isPurchased(SellableItem item){
+        List<? extends SellableItem> purchasedItemList;
+        if (item instanceof SheetPost)
+            purchasedItemList = purchasedSheets;
+        else if (item instanceof Lesson)
+            purchasedItemList = purchasedLessons;
+        else throw new ClassCastException("Cannot find SellableItem collection");
+
+        return purchasedItemList.stream().anyMatch(purchasedItem -> purchasedItem.equals(item));
     }
 
     public UserProfile getUserProfile() {
@@ -298,21 +314,6 @@ public class User {
                 .build();
     }
 
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        User user = (User) o;
-
-        return id.equals(user.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return id.hashCode();
-    }
 
     public void deleteUploadedVideoPost(VideoPost videoPost) {
         if (!uploadedVideoPosts.remove(videoPost))
@@ -338,5 +339,20 @@ public class User {
             throw new EntityNotFoundException("스크랩하지 않은 레슨을 취소하려고 합니다." + lesson.getId());
         scrappedLesson.remove(lesson);
 
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        User user = (User) o;
+
+        return id.equals(user.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return id.hashCode();
     }
 }
