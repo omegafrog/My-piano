@@ -31,8 +31,7 @@ public class CommonUserLoginSuccessHandler implements AuthenticationSuccessHandl
     private final RefreshTokenRepository refreshTokenRepository;
 
     private final String secret;
-    @Autowired
-    private TokenUtils tokenUtils;
+    private final TokenUtils tokenUtils;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {

@@ -58,10 +58,7 @@ public class GlobalConfig {
     public SellableItemFactory sellableItemFactory(){
         return new SellableItemFactory();
     }
-    @Bean
-    public TokenUtils tokenUtils(){
-        return new TokenUtils();
-    }
+
 
     @Bean
     public ElasticsearchClient elasticsearchClient() {
