@@ -101,7 +101,7 @@ public class Order {
         return OrderDto.builder()
                 .discountRate(discountRate)
                 .buyer(buyer.getUserProfile())
-                .seller(buyer.getUserProfile())
+                .seller(seller.getUserProfile())
                 .id(id)
                 .item(dto)
                 .coupon(coupon)
