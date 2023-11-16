@@ -38,8 +38,12 @@ public class OrderController {
         return new APISuccessResponse("Buy " + mainResource + " success.", data);
     }
 
-    private static String getMainResourceName(HttpServletRequest request) {
-        return Arrays.asList(request.getRequestURI().split("/")).get(1);
+    @GetMapping("/order/{mainResource}/{id}")
+    public JsonAPIResponse isOrderedItem(@PathVariable String mainResource, @PathVariable Long id, HttpServletRequest request) throws JsonProcessingException {
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+        boolean isOrdered = orderService.isOrderedItem(mainResource, id, loggedInUser);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("isOrdered", isOrdered);
+        return new APISuccessResponse("Check isOrdered " + mainResource + "success.", data);
     }
 
     @GetMapping(path = "/order/{id}/cancel")

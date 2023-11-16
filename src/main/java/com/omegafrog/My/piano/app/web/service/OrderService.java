@@ -87,4 +87,10 @@ public class OrderService {
         }
         return orderBuilder.build();
     }
+
+    public boolean isOrderedItem(String mainResource, Long id, User loggedInUser) {
+        SellableItem item = sellableItemFactory.createDetailedItem(mainResource, id);
+        User user = userRepository.findById(loggedInUser.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find User entity : " + loggedInUser.getId()));
+        return user.isPurchased(item);
+    }
 }
