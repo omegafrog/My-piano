@@ -89,13 +89,13 @@ public class User {
     @JoinTable(name = "purchased_lesson",
             joinColumns = @JoinColumn(name = "AUTHOR_ID"),
             inverseJoinColumns = @JoinColumn(name = "LESSON_ID"))
-    private List<SellableItem> purchasedLessons = new ArrayList<>();
+    private List<Lesson> purchasedLessons = new ArrayList<>();
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "scrapped_sheet",
             joinColumns = @JoinColumn(name = "AUTHOR_ID"),
             inverseJoinColumns = @JoinColumn(name = "SHEET_ID"))
-    private List<SellableItem> scrappedSheets = new ArrayList<>();
+    private List<SheetPost> scrappedSheets = new ArrayList<>();
 
     @ManyToMany
     @JoinTable(name = "scrapped_lesson",
@@ -103,12 +103,10 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "LESSON_ID"))
     private List<Lesson> scrappedLesson = new ArrayList<>();
 
-    @OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
-    @JoinColumn(name = "AUTHOR_ID")
-    private List<SellableItem> uploadedSheets = new ArrayList<>();
+    @OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "author")
+    private List<SheetPost> uploadedSheets = new ArrayList<>();
 
-    @OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
-    @JoinColumn(name = "AUTHOR_ID")
+    @OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "author")
     private List<Lesson> uploadedLessons = new ArrayList<>();
 
     @OneToMany(mappedBy = "author", cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
@@ -274,10 +272,10 @@ public class User {
         } else {
             cash -= order.getTotalPrice();
             order.setStatus(OrderStatus.PROGRESSING);
-            if (order.getItem() instanceof Lesson)
-                purchasedLessons.add(order.getItem());
-            else if (order.getItem() instanceof SheetPost)
-                purchasedSheets.add((SheetPost)order.getItem());
+            if (order.getItem() instanceof Lesson item)
+                purchasedLessons.add(item);
+            else if (order.getItem() instanceof SheetPost item)
+                purchasedSheets.add(item);
             else
                 throw new ClassCastException("Cannot cast this class to child class.");
         }
