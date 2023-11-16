@@ -67,7 +67,7 @@ public class UserApplicationService {
     public List<SheetInfoDto> uploadedSheets(User loggedInUser) {
         User user = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInUser.getId()));
-        return user.getUploadedSheets().stream().map(sheetPost->((SheetPost)sheetPost).toInfoDto()).toList();
+        return user.getUploadedSheets().stream().map(SheetPost::toInfoDto).toList();
     }
 
     public List<SheetInfoDto> getScrappedSheets(User loggedInUser) {

@@ -16,7 +16,7 @@ import lombok.experimental.SuperBuilder;
 public class LessonDto extends SellableItemDto {
     private String subTitle;
     private VideoInformation videoInformation;
-    private UserProfile lessonProvider;
+    private UserProfile artist;
     private SheetDto sheet;
     private LessonInformation lessonInformation;
 }
