@@ -8,11 +8,11 @@ import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.security.jwt.TokenInfo;
 import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
@@ -31,6 +31,8 @@ public class CommonUserLoginSuccessHandler implements AuthenticationSuccessHandl
     private final RefreshTokenRepository refreshTokenRepository;
 
     private final String secret;
+    @Autowired
+    private TokenUtils tokenUtils;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
@@ -38,7 +40,7 @@ public class CommonUserLoginSuccessHandler implements AuthenticationSuccessHandl
         PrintWriter writer = response.getWriter();
         Map<String, Object> data = new HashMap<>();
         SecurityUser user = (SecurityUser) authentication.getPrincipal();
-        TokenInfo tokenInfo = TokenUtils.generateToken(String.valueOf(user.getId()), secret);
+        TokenInfo tokenInfo = tokenUtils.generateToken(String.valueOf(user.getId()));
         Optional<RefreshToken> founded = refreshTokenRepository.findByUserId(user.getId());
 
         if(founded.isPresent())
@@ -47,7 +49,7 @@ public class CommonUserLoginSuccessHandler implements AuthenticationSuccessHandl
             founded = Optional.of(refreshTokenRepository.save(tokenInfo.getRefreshToken()));
 
         data.put("access token", tokenInfo.getGrantType() + " " + tokenInfo.getAccessToken());
-        TokenUtils.setRefreshToken(response, tokenInfo);
+        tokenUtils.setRefreshToken(response, tokenInfo);
         APISuccessResponse loginSuccess = new APISuccessResponse("login success", data);
         String s = objectMapper.writeValueAsString(loginSuccess);
 //        s = s.replaceAll("\"\\{", "{");
