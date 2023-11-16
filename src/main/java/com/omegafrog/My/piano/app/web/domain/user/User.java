@@ -294,6 +294,7 @@ public class User {
                 .profileSrc(profileSrc)
                 .loginMethod(loginMethod)
                 .role(securityUser.getRole())
+                .cash(cash)
                 .build();
     }
 
