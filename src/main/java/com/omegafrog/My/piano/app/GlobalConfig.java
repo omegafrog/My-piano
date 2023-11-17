@@ -7,6 +7,7 @@ import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.apache.v2.ApacheHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
+import com.omegafrog.My.piano.app.web.domain.S3UploadFileExecutor;
 import com.omegafrog.My.piano.app.web.domain.post.PostRepository;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPostRepository;
 import com.omegafrog.My.piano.app.web.domain.search.ElasticSearchInstance;
@@ -58,6 +59,10 @@ public class GlobalConfig {
     @Bean
     public ElasticSearchInstance elasticSearchInstance(){
         return new ElasticSearchInstance();
+    }
+    @Bean
+    public S3UploadFileExecutor uploadFileExecutor(){
+        return new S3UploadFileExecutor(s3Template());
     }
 
 

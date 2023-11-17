@@ -255,10 +255,6 @@ public class SecurityConfig {
                 .authenticationEntryPoint(UnAuthorizedEntryPoint())
                 .accessDeniedHandler(commonUserAccessDeniedHandler())
                 .and()
-                .exceptionHandling()
-                .authenticationEntryPoint(UnAuthorizedEntryPoint())
-                .accessDeniedHandler(commonUserAccessDeniedHandler())
-                .and()
                 .csrf().disable()
                 .cors().configurationSource(corsConfigurationSource());
         return http.build();
@@ -281,6 +277,10 @@ public class SecurityConfig {
         http.securityMatcher("/**")
                 .authorizeHttpRequests()
                 .anyRequest().permitAll()
+                .and()
+                .exceptionHandling()
+                .authenticationEntryPoint(UnAuthorizedEntryPoint())
+                .accessDeniedHandler(commonUserAccessDeniedHandler())
                 .and()
                 .cors().configurationSource(corsConfigurationSource());
         return http.build();
