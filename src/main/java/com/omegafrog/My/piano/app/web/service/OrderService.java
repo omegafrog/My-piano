@@ -62,6 +62,9 @@ public class OrderService {
 
         SellableItem item = sellableItemFactory.createDetailedItem(mainResourceName, dto.getItemId());
 
+        if(buyer.getCart().itemIsInCart(item.getId()))
+            throw new IllegalArgumentException("이미 카트에 추가한 상품입니다.");
+
         if (buyer.equals(item.getAuthor()))
             throw new IllegalArgumentException("구매자와 판매자가 같을 수 없습니다.");
         if(buyer.isPurchased(item)) throw new IllegalArgumentException("이미 구매한 상품입니다.");

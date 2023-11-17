@@ -6,8 +6,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @Entity
 @NoArgsConstructor
@@ -40,4 +39,22 @@ public class Cart {
     public void payContents() throws PaymentException {
         contents.forEach(content -> content.getBuyer().pay(content));
     }
+    public int payContents(Set<Long> orderIds){
+        List<Order> ordersToPay = new ArrayList<>();
+
+        orderIds.forEach(orderId ->{
+                    Order orderToPay = contents.stream().filter(order -> order.getId().equals(orderId)).findFirst()
+                            .orElseThrow(() -> new EntityNotFoundException("Cannot find Order entity in cart. id : " + orderId));
+                    ordersToPay.add(orderToPay);
+                    contents.remove(orderToPay);
+                }
+        );
+        ordersToPay.forEach(order -> order.getBuyer().pay(order));
+        return ordersToPay.size();
+    }
+
+    public boolean itemIsInCart(Long id) {
+        return contents.stream().anyMatch(order -> order.getId().equals(id));
+    }
+
 }

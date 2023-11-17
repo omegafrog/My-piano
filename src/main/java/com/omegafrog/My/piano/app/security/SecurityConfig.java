@@ -267,6 +267,31 @@ public class SecurityConfig {
     }
 
     @Bean
+    public  SecurityFilterChain cartAuthentication(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/cart/**")
+                .authenticationProvider(commonUserAuthenticationProvider())
+                .authorizeHttpRequests()
+                .requestMatchers("/cart")
+                .permitAll()
+                .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value)
+                .and()
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .addFilterBefore(jwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtTokenExceptionFilter(), JwtTokenFilter.class)
+                .exceptionHandling()
+                .authenticationEntryPoint(UnAuthorizedEntryPoint())
+                .accessDeniedHandler(commonUserAccessDeniedHandler())
+                .and()
+                .csrf().disable()
+                .cors().configurationSource(corsConfigurationSource());
+
+        return http.build();
+    }
+
+    @Bean
     SecurityFilterChain h2console(HttpSecurity http) throws Exception {
         http
                 .securityMatcher("/h2-console/**")
