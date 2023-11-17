@@ -1,4 +1,4 @@
-package com.omegafrog.My.piano.app.web.util.response;
+package com.omegafrog.My.piano.app.utils.response;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,15 +10,12 @@ import java.util.Map;
 public class APISuccessResponse extends JsonAPIResponse {
 
 
-    public APISuccessResponse(String message, @NotNull Map<String, Object> data, ObjectMapper objectMapper)
+    public APISuccessResponse(String message, @NotNull Map<String, Object> data)
             throws JsonProcessingException, NullPointerException {
-        super(String.valueOf(HttpStatus.OK), message);
-        String s = objectMapper.writeValueAsString(data);
-        s = s.replaceAll("\\\\", "");
-        this.serializedData = s;
+        super(HttpStatus.OK.value(), message, data);
     }
 
     public APISuccessResponse(String message) {
-        super(String.valueOf(HttpStatus.OK), message);
+        super(HttpStatus.OK.value(), message);
     }
 }

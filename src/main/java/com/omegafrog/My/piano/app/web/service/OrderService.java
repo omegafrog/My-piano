@@ -1,5 +1,6 @@
 package com.omegafrog.My.piano.app.web.service;
 
+import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
 import com.omegafrog.My.piano.app.web.domain.coupon.Coupon;
 import com.omegafrog.My.piano.app.web.domain.coupon.CouponRepository;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
@@ -31,6 +32,7 @@ public class OrderService {
     private final CouponRepository couponRepository;
     private final OrderRepository orderRepository;
     private final String USER_ENTITY_NOT_FOUNT_ERROR_MSG = "Cannot find User entity : ";
+
     public OrderDto createSheetOrder(OrderRegisterDto orderRegisterDto)
             throws PersistenceException {
         SheetPost item = sheetPostRepository.findById(orderRegisterDto.getItemId())
@@ -47,7 +49,7 @@ public class OrderService {
                 .seller(item.getAuthor())
                 .initialPrice(item.getPrice());
 
-        if (orderRegisterDto.getCouponId() != null){
+        if (orderRegisterDto.getCouponId() != null) {
             Coupon coupon = couponRepository.findById(orderRegisterDto.getCouponId())
                     .orElseThrow(() -> new EntityNotFoundException("Cannot find Coupon entity : "
                             + orderRegisterDto.getCouponId()));
@@ -75,7 +77,7 @@ public class OrderService {
                 .seller(item.getAuthor())
                 .initialPrice(item.getPrice());
 
-        if (lessonOrderDto.getCouponId() != null){
+        if (lessonOrderDto.getCouponId() != null) {
             Coupon coupon = couponRepository.findById(lessonOrderDto.getCouponId())
                     .orElseThrow(() -> new EntityNotFoundException("Cannot find Coupon entity : "
                             + lessonOrderDto.getCouponId()));
@@ -86,14 +88,14 @@ public class OrderService {
         return orderRepository.save(order).toDto();
     }
 
-    public OrderDto makePayment(OrderDto orderDto) throws PersistenceException{
+    public OrderDto makePayment(OrderDto orderDto) throws PersistenceException {
         Order order = orderRepository.findById(orderDto.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find Order entity : " + orderDto.getId()));
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_ORDER + orderDto.getId()));
         User buyer = userRepository.findById(orderDto.getBuyer().getId())
-                .orElseThrow(() -> new EntityNotFoundException(USER_ENTITY_NOT_FOUNT_ERROR_MSG +
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER +
                         orderDto.getBuyer().getId()));
         User seller = userRepository.findById(orderDto.getSeller().getId())
-                .orElseThrow(() -> new EntityNotFoundException(USER_ENTITY_NOT_FOUNT_ERROR_MSG +
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER +
                         orderDto.getSeller().getId()));
 
         buyer.pay(order);
@@ -103,11 +105,11 @@ public class OrderService {
         return orderDto;
     }
 
-    public void deleteOrder(Long orderId) throws PersistenceException{
+    public void deleteOrder(Long orderId) throws PersistenceException {
         orderRepository.deleteById(orderId);
     }
 
-    public List<OrderDto> getAllOrders(User user){
+    public List<OrderDto> getAllOrders(User user) {
         List<Order> byBuyerId = orderRepository.findByBuyer_id(user.getId());
         return byBuyerId.stream().map(Order::toDto).toList();
     }

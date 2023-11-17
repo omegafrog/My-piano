@@ -1,19 +1,21 @@
-package com.omegafrog.My.piano.app.web.util.response;
+package com.omegafrog.My.piano.app.utils.response;
 
 import lombok.Getter;
 
+import java.util.Map;
+
 @Getter
 public abstract class JsonAPIResponse {
-    protected String status;
+    protected int status;
     protected String message;
-    protected String serializedData;
+    protected Map<String, Object> serializedData;
 
-    public JsonAPIResponse(String status, String message, String serializedData) {
+    public JsonAPIResponse(int status, String message, Map<String, Object> serializedData) {
         this.status = status;
         this.message = message;
         this.serializedData = serializedData;
     }
-    public JsonAPIResponse(String status, String message) {
+    public JsonAPIResponse(int status, String message) {
         this.status = status;
         this.message = message;
         this.serializedData = null;

@@ -20,14 +20,14 @@ public class RegisterUserDto {
     private PhoneNum phoneNum;
 
     @Builder
-    public RegisterUserDto(String username, String password, String name, String email, LoginMethod loginMethod, String profileSrc, PhoneNum phoneNum) {
+    public RegisterUserDto(String username, String password, String name, String email, LoginMethod loginMethod, String profileSrc, String phoneNum) {
         this.username = username;
         this.password = password;
         this.email = email;
         this.name = name;
         this.loginMethod = loginMethod;
         this.profileSrc = profileSrc;
-        this.phoneNum = phoneNum;
+        this.phoneNum = new PhoneNum(phoneNum);
     }
 
 

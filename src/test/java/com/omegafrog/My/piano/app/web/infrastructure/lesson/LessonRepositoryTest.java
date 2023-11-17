@@ -1,5 +1,6 @@
 package com.omegafrog.My.piano.app.web.infrastructure.lesson;
 
+import com.omegafrog.My.piano.app.web.controller.DummyData;
 import com.omegafrog.My.piano.app.web.infra.user.JpaUserRepositoryImpl;
 import com.omegafrog.My.piano.app.web.infra.user.SimpleJpaUserRepository;
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
@@ -45,8 +46,9 @@ class LessonRepositoryTest {
     private User author;
 
     private SheetPost savedSheetPost;
+
     @BeforeAll
-    void settings(){
+    void settings() {
         userRepository = new JpaUserRepositoryImpl(jpaUserRepository);
         SheetPostRepository sheetPostRepository = new JpaSheetPostRepositoryImpl(jpaSheetPostRepository);
         User build = User.builder()
@@ -55,86 +57,35 @@ class LessonRepositoryTest {
                 .loginMethod(LoginMethod.EMAIL)
                 .phoneNum(PhoneNum.builder()
                         .phoneNum("010-1111-1112")
-                        .isAuthorized(false)
                         .build())
                 .cart(new Cart())
                 .email("user1@gmail.com")
                 .build();
         author = userRepository.save(build);
-        SheetPost sheetPost = SheetPost.builder()
-                .title("title")
-                .content("content")
-                .sheet(Sheet.builder()
-                        .genre(Genre.BGM)
-                        .lyrics(false)
-                        .isSolo(false)
-                        .difficulty(Difficulty.EASY)
-                        .filePath("path")
-                        .instrument(Instrument.GUITAR_ACOUSTIC)
-                        .pageNum(12)
-                        .user(author)
-                        .build())
-                .artist(author)
-                .build();
-         savedSheetPost = sheetPostRepository.save(sheetPost);
+        savedSheetPost = sheetPostRepository.save(DummyData.sheetPost(author));
     }
+
     @AfterEach
-    void deleteAll(){
+    void deleteAll() {
         lessonRepository.deleteAll();
     }
 
 
     @Test
     @DisplayName("lesson을 추가하고 조회할 수 있어야 한다.")
-    void addNFindTest(){
-        Lesson lesson = Lesson.builder()
-                .title("lesson1")
-                .subTitle("good lesson 1")
-                .price(12000)
-                .lessonProvider(author)
-                .lessonInformation(LessonInformation.builder()
-                        .lessonDescription("lessonDesc")
-                        .artistDescription("artistDesc")
-                        .instrument(Instrument.PIANO_KEY_61)
-                        .artistDescription("HIHI")
-                        .policy(RefundPolicy.REFUND_IN_7DAYS)
-                        .category(Category.ACCOMPANIMENT)
-                        .build())
-                .videoInformation(VideoInformation.builder()
-                        .videoUrl("videoUrl1")
-                        .runningTime(LocalTime.of(1, 10))
-                        .build())
-                .sheet(savedSheetPost.getSheet())
-                .build();
-        Lesson saved = lessonRepository.save(lesson);
+    void addNFindTest() {
+
+        Lesson saved = lessonRepository.save(DummyData.lesson(savedSheetPost.getSheet(), author));
         Optional<Lesson> founded = lessonRepository.findById(saved.getId());
         Assertions.assertThat(saved).isEqualTo(founded.get());
     }
 
     @Test
     @DisplayName("레슨을 수정할 수 있어야 한다.")
-    void updateTest(){
+    void updateTest() {
         //given
-        Lesson lesson = Lesson.builder()
-                .title("lesson1")
-                .subTitle("good lesson 1")
-                .price(12000)
-                .lessonProvider(author)
-                .lessonInformation(LessonInformation.builder()
-                        .lessonDescription("lessonDesc")
-                        .artistDescription("artistDesc")
-                        .instrument(Instrument.PIANO_KEY_61)
-                        .artistDescription("HIHI")
-                        .policy(RefundPolicy.REFUND_IN_7DAYS)
-                        .category(Category.ACCOMPANIMENT)
-                        .build())
-                .videoInformation(VideoInformation.builder()
-                        .videoUrl("videoUrl1")
-                        .runningTime(LocalTime.of(1, 10))
-                        .build())
-                .sheet(savedSheetPost.getSheet())
-                .build();
-        Lesson saved = lessonRepository.save(lesson);
+
+        Lesson saved = lessonRepository.save(DummyData.lesson(savedSheetPost.getSheet(), author));
         //when
         saved.update(UpdateLessonDto.builder()
                 .title("changedTitle")
@@ -161,28 +112,10 @@ class LessonRepositoryTest {
 
     @Test
     @DisplayName("레슨을 삭제할 수 있어야 한다.")
-    void deleteTest(){
+    void deleteTest() {
         //given
-        Lesson lesson = Lesson.builder()
-                .title("lesson1")
-                .subTitle("good lesson 1")
-                .price(12000)
-                .lessonProvider(author)
-                .lessonInformation(LessonInformation.builder()
-                        .lessonDescription("lessonDesc")
-                        .artistDescription("artistDesc")
-                        .instrument(Instrument.PIANO_KEY_61)
-                        .artistDescription("HIHI")
-                        .policy(RefundPolicy.REFUND_IN_7DAYS)
-                        .category(Category.ACCOMPANIMENT)
-                        .build())
-                .videoInformation(VideoInformation.builder()
-                        .videoUrl("videoUrl1")
-                        .runningTime(LocalTime.of(1, 10))
-                        .build())
-                .sheet(savedSheetPost.getSheet())
-                .build();
-        Lesson saved = lessonRepository.save(lesson);
+
+        Lesson saved = lessonRepository.save(DummyData.lesson(savedSheetPost.getSheet(), author));
         //when
         lessonRepository.deleteById(saved.getId());
         //then
@@ -192,7 +125,7 @@ class LessonRepositoryTest {
     }
 
     @AfterAll
-    void clearRepository(){
+    void clearRepository() {
         jpaSheetPostRepository.deleteAll();
         userRepository.deleteAll();
     }

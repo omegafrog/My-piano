@@ -1,9 +1,7 @@
 package com.omegafrog.My.piano.app.web.domain.sheet;
 
 import com.omegafrog.My.piano.app.web.dto.sheet.SheetDto;
-import com.omegafrog.My.piano.app.web.dto.sheet.SheetInfoDto;
 import com.omegafrog.My.piano.app.web.enums.Difficulty;
-import com.omegafrog.My.piano.app.web.enums.Genre;
 import com.omegafrog.My.piano.app.web.enums.Instrument;
 import com.omegafrog.My.piano.app.web.dto.UpdateSheetDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
@@ -13,11 +11,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+
 @Entity
 @NoArgsConstructor
 @Getter
 public class Sheet  {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -26,24 +24,25 @@ public class Sheet  {
     private int pageNum;
     private Difficulty difficulty;
     private Instrument instrument;
-    private Genre genre;
+    @Embedded
+    private Genres genres;
     private boolean isSolo;
     private boolean lyrics;
     private String filePath;
 
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt=LocalDateTime.now();
 
     @OneToOne(cascade = { CascadeType.MERGE})
-    @JoinColumn(name = "USER_ID")
+    @JoinColumn(name = "CREATOR_ID")
     private User user;
 
     @Builder
-    public Sheet(String title, int pageNum, Difficulty difficulty, Instrument instrument, Genre genre, boolean isSolo, boolean lyrics, String filePath, User user) {
+    public Sheet(String title, int pageNum, Difficulty difficulty, Instrument instrument,Genres genres, boolean isSolo, boolean lyrics, String filePath, User user) {
         this.title = title;
         this.pageNum = pageNum;
         this.difficulty = difficulty;
         this.instrument = instrument;
-        this.genre = genre;
+        this.genres = genres;
         this.isSolo = isSolo;
         this.lyrics = lyrics;
         this.filePath = filePath;
@@ -55,7 +54,7 @@ public class Sheet  {
         this.pageNum = dto.getPageNum();
         this.difficulty = dto.getDifficulty();
         this.instrument = dto.getInstrument();
-        this.genre = dto.getGenre();
+        this.genres = dto.getGenres();
         this.isSolo = dto.isSolo();
         this.lyrics = dto.isLyrics();
         this.filePath = dto.getFilePath();
@@ -67,7 +66,7 @@ public class Sheet  {
                 .id(id)
                 .createdAt(createdAt)
                 .difficulty(difficulty)
-                .genre(genre)
+                .genres(genres)
                 .filePath(filePath)
                 .instrument(instrument)
                 .lyrics(lyrics)

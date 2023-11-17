@@ -8,7 +8,7 @@ import com.omegafrog.My.piano.app.web.infra.user.JpaUserRepositoryImpl;
 import com.omegafrog.My.piano.app.web.infra.user.SimpleJpaUserRepository;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
-import com.omegafrog.My.piano.app.web.domain.article.Comment;
+import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPost;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPostRepository;
 import org.assertj.core.api.Assertions;
@@ -39,7 +39,6 @@ class VideoPostRepositoryTest {
                 .loginMethod(LoginMethod.EMAIL)
                 .phoneNum(PhoneNum.builder()
                         .phoneNum("010-1111-1112")
-                        .isAuthorized(false)
                         .build())
                 .email("user1@gmail.com")
                 .cart(new Cart())
@@ -94,8 +93,8 @@ class VideoPostRepositoryTest {
                 .content(changedContent)
                 .videoUrl(changedUrl)
                 .build();
-        VideoPost updated = saved.update(dto);
-        VideoPost updatedVideoPost = videoPostRepository.save(updated);
+        saved.update(dto);
+        VideoPost updatedVideoPost = videoPostRepository.save(saved);
         //then
         Assertions.assertThat(updatedVideoPost).isEqualTo(saved);
         Assertions.assertThat(updatedVideoPost.getTitle())

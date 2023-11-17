@@ -1,15 +1,19 @@
 package com.omegafrog.My.piano.app.security.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.omegafrog.My.piano.app.web.util.response.APISuccessResponse;
-import com.omegafrog.My.piano.app.web.util.response.ResponseUtil;
+import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
+import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
+import com.omegafrog.My.piano.app.utils.response.ResponseUtil;
 import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 
@@ -18,18 +22,19 @@ import java.io.IOException;
 public class CommonUserLogoutHandler implements LogoutHandler {
 
     private final ObjectMapper objectMapper;
-    private final LogoutBlacklistRepository logoutBlacklistRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
+
+    @Value("${security.jwt.secret}")
+    private String secret;
 
     @Override
+    @Transactional
     public void logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
-        // 임시로 accessToken의 만료시간을 0으로 해서 로그아웃시켰지만, 클라이언트에서 Token을 변조할 수
-        // 있으므로 로그아웃한 access token이 들어오면 블랙리스트에 추가시켜 놓고 만료시간까지 로그인하지 못하게
-        // 해야 한다.
+        // refreshTokenRepository에서 로그아웃한 유저의 refresh token을 삭제하면 됨.
         String accessToken = TokenUtils.getAccessTokenStringFromHeaders(request);
-        if(logoutBlacklistRepository.isPresent(accessToken))
-            return;
-
-        logoutBlacklistRepository.save(accessToken);
+        Claims claims = TokenUtils.extractClaims(accessToken, secret);
+        Long userId = Long.valueOf((String) claims.get("id"));
+        refreshTokenRepository.deleteByUserId(userId);
         try {
             ResponseUtil.writeResponse(new APISuccessResponse("logout success"), response, objectMapper);
         } catch (IOException e) {

@@ -12,9 +12,10 @@ import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.post.PostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
+import com.omegafrog.My.piano.app.web.dto.post.PostDto;
 import com.omegafrog.My.piano.app.web.dto.post.PostRegisterDto;
 import com.omegafrog.My.piano.app.web.dto.post.UpdatePostDto;
-import com.omegafrog.My.piano.app.web.util.response.JsonAPIResponse;
+import com.omegafrog.My.piano.app.utils.response.JsonAPIResponse;
 import com.omegafrog.My.piano.app.web.service.PostApplicationService;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 import org.assertj.core.api.Assertions;
@@ -71,7 +72,7 @@ class PostControllerTest {
             author = User.builder()
                     .phoneNum(PhoneNum.builder()
                             .phoneNum("010-1111-2222")
-                            .isAuthorized(true).build())
+                            .build())
                     .profileSrc("src")
                     .cart(new Cart())
                     .build();
@@ -113,13 +114,13 @@ class PostControllerTest {
                     .build();
             ReflectionTestUtils.setField(build,"id", 0L);
             Mockito.when(postRepository.save(any(Post.class))).thenReturn(build);
+            Mockito.when(userRepository.findById(0L)).thenReturn(Optional.of(author));
             JsonAPIResponse apiResponse = controller.writePost( postDto);
             //then
             Assertions.assertThat(apiResponse).isNotNull();
-            String serializedData = apiResponse.getSerializedData();
-            JsonNode jsonNode = objectMapper.readTree(serializedData);
-            String id = jsonNode.get("post").get("id").asText();
-            Assertions.assertThat(id).isEqualTo("0");
+            PostDto postDto1 = (PostDto) apiResponse.getSerializedData().get("post");
+
+            Assertions.assertThat(postDto1.getId()).isEqualTo(0L);
         }
         @Test
         @DisplayName("post를 수정할 수 있어야 한다.")
@@ -142,17 +143,15 @@ class PostControllerTest {
             ReflectionTestUtils.setField(build, "title", updateDto.getTitle());
             ReflectionTestUtils.setField(build, "content", updateDto.getContent());
 
-            Mockito.when(postRepository.save(build)).thenReturn(build);
-
 
             JsonAPIResponse response = controller.updatePost(0L, updateDto);
 
 
             Assertions.assertThat(response).isNotNull();
-            JsonNode jsonNode = objectMapper.readTree(response.getSerializedData());
-            String id = jsonNode.get("post").get("id").asText();
-            Assertions.assertThat(id).isEqualTo("0");
-            String updatedContent = jsonNode.get("post").get("content").asText();
+            PostDto postDto1 = (PostDto) response.getSerializedData().get("post");
+            Long id = postDto1.getId();
+            Assertions.assertThat(id).isEqualTo(0);
+            String updatedContent = postDto1.getContent();
             Assertions.assertThat(updatedContent).isEqualTo("updatedContent");
         }
         @Test
@@ -170,8 +169,8 @@ class PostControllerTest {
             //when
             JsonAPIResponse response = controller.deletePost(0L);
             Assertions.assertThat(response).isNotNull();
-            String status = response.getStatus();
-            Assertions.assertThat(status).isEqualTo(HttpStatus.OK.toString());
+            int status = response.getStatus();
+            Assertions.assertThat(status).isEqualTo(HttpStatus.OK.value());
         }
     }
     @Test
@@ -183,9 +182,7 @@ class PostControllerTest {
                 .content("content")
                 .build();
         User author = User.builder()
-                .phoneNum(PhoneNum.builder()
-                        .phoneNum("010-1111-2222")
-                        .isAuthorized(true).build())
+                .phoneNum(new PhoneNum("010-1111-2222"))
                 .profileSrc("src")
                 .cart(new Cart())
                 .build();
@@ -203,9 +200,9 @@ class PostControllerTest {
         JsonAPIResponse response = controller.findPost(0L);
         //then
         Assertions.assertThat(response).isNotNull();
-        String data=response.getSerializedData();
-        long id = objectMapper.readTree(data).get("post").get("id").asLong();
-        String text = objectMapper.readTree(data).get("post").get("title").asText();
+        PostDto postDto1 = (PostDto) response.getSerializedData().get("post");
+        long id = postDto1.getId();
+        String text = postDto1.getTitle();
         Assertions.assertThat(id).isEqualTo(0L);
         Assertions.assertThat(text).isEqualTo("title");
     }

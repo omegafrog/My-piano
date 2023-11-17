@@ -1,20 +1,19 @@
 package com.omegafrog.My.piano.app.web.dto.user;
 
+import com.omegafrog.My.piano.app.security.entity.authorities.Role;
+import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import lombok.*;
 
 @Data
 @Setter
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class UserProfile {
     private Long id;
     private String name;
     private String profileSrc;
-
-    @Builder
-    public UserProfile(Long id, String name, String profileSrc) {
-        this.id = id;
-        this.name = name;
-        this.profileSrc = profileSrc;
-    }
+    private LoginMethod loginMethod;
+    private Role role;
 }

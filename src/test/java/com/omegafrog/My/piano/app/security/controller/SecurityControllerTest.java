@@ -19,12 +19,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.transaction.annotation.Transactional;
 
 
 import java.util.List;
@@ -39,6 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @AutoConfigureMockMvc
+@Transactional
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SecurityControllerTest {
 
@@ -73,10 +76,7 @@ class SecurityControllerTest {
                 .email("email@email.com")
                 .profileSrc("src")
                 .loginMethod(LoginMethod.EMAIL)
-                .phoneNum(PhoneNum.builder().
-                        phoneNum("010-1111-2222")
-                        .isAuthorized(false)
-                        .build())
+                .phoneNum("010-1111-2222")
                 .build();
     }
     @AfterEach
@@ -115,7 +115,7 @@ class SecurityControllerTest {
                         .content(s)
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("400 BAD_REQUEST"))
+                .andExpect(jsonPath("$.status").value("400"))
                 .andDo(print());
 
     }
@@ -129,7 +129,7 @@ class SecurityControllerTest {
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content("username=username&password=password"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("200 OK"))
+                .andExpect(jsonPath("$.status").value("200"))
                 .andDo(print());
     }
 
@@ -142,7 +142,7 @@ class SecurityControllerTest {
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content("username=username1&password=password"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("400 BAD_REQUEST"))
+                .andExpect(jsonPath("$.status").value("400"))
                 .andDo(print());
     }
 
@@ -156,7 +156,7 @@ class SecurityControllerTest {
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content("username=username&password=password"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("200 OK"))
+                .andExpect(jsonPath("$.status").value("200"))
                 .andReturn();
         Cookie refreshToken = mvcResult.getResponse().getCookie("refreshToken");
         String s2 = mvcResult.getResponse().getContentAsString();
@@ -174,7 +174,7 @@ class SecurityControllerTest {
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("400 BAD_REQUEST"))
+                .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.value()))
                 .andDo(print());
     }
     @Test
@@ -194,7 +194,7 @@ class SecurityControllerTest {
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content("username=username&password=password"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("200 OK"))
+                .andExpect(jsonPath("$.status").value("200"))
                 .andReturn();
         Cookie refreshToken = mvcResult.getResponse().getCookie("refreshToken");
         String s2 = mvcResult.getResponse().getContentAsString();
@@ -205,7 +205,7 @@ class SecurityControllerTest {
         MvcResult mvcResult2 = mockMvc.perform(get("/user/signOut")
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken))
-                .andExpect(jsonPath("$.status").value("200 OK"))
+                .andExpect(jsonPath("$.status").value("200"))
                 .andDo(print())
                 .andReturn();
 
@@ -221,7 +221,7 @@ class SecurityControllerTest {
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content("username=username&password=password"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("400 BAD_REQUEST"))
+                .andExpect(jsonPath("$.status").value("400"))
                 .andDo(print());
     }
 
@@ -232,5 +232,7 @@ class SecurityControllerTest {
         private String message;
         private Map<String, String> serializedData;
     }
+    
+
 
 }

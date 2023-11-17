@@ -23,7 +23,7 @@ class UserTest {
                 .build();
         User updated = user.update(UpdateUserDto.builder()
                 .name("hihi")
-                .phoneNum(new PhoneNum("111-222-333", true))
+                .phoneNum(new PhoneNum("111-222-333"))
                 .profileSrc("changed")
                 .build());
         Assertions.assertThat(updated).isEqualTo(user);

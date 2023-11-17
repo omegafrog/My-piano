@@ -1,8 +1,7 @@
-package com.omegafrog.My.piano.app.web.util;
+package com.omegafrog.My.piano.app.utils;
 
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.web.domain.user.User;
-import com.omegafrog.My.piano.app.web.util.response.APIInternalServerResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;

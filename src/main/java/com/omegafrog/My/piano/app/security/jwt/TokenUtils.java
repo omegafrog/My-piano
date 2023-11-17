@@ -1,23 +1,29 @@
 package com.omegafrog.My.piano.app.security.jwt;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtBuilder;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import com.omegafrog.My.piano.app.security.entity.SecurityUser;
+import io.jsonwebtoken.*;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.AuthenticationException;
 
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Optional;
 
 public class TokenUtils {
+
+
     //토큰 생성
-    public static TokenInfo generateToken(String securityUserId, String secret){
-        int accessTokenExpirationPeriod = 1000*60*10;
-        int refreshTokenExpirationPeriod = 1000*60*60;
+    public static TokenInfo generateToken(String securityUserId, String secret) {
+        int accessTokenExpirationPeriod = 1000 * 60 * 10;
+        int refreshTokenExpirationPeriod = 1000 * 60 * 60;
         String accessToken = getToken(securityUserId, accessTokenExpirationPeriod, secret);
         String refreshToken = getToken(null, refreshTokenExpirationPeriod, secret);
         return TokenInfo.builder()
@@ -28,12 +34,6 @@ public class TokenUtils {
                         .refreshToken(refreshToken)
                         .build())
                 .build();
-    }
-
-    public static String expireToken(String accessToken, String secret){
-        String userId = extractClaims(accessToken,secret).getId();
-        return getToken(userId, 0, secret);
-
     }
 
     private static String getToken(String payload, int expirationPeriod, String secret) {
@@ -48,20 +48,13 @@ public class TokenUtils {
         return jwtBuilder.compact();
     }
 
-    public static String getAccessTokenString(String tokenString){
-        if (tokenString != null){
-            String[] tokenSplit = tokenString.split(" ");
-            if(verifyAccessTokenString(tokenSplit))
-                return tokenSplit[1];
-        }
-        throw new AuthenticationCredentialsNotFoundException("Invalid Access token");
-    }
 
-    public static String getAccessTokenStringFromHeaders(HttpServletRequest request)throws AuthenticationException {
+
+    public static String getAccessTokenStringFromHeaders(HttpServletRequest request) throws AuthenticationException {
         String tokenString = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (tokenString != null){
+        if (tokenString != null) {
             String[] tokenSplit = tokenString.split(" ");
-            if(verifyAccessTokenString(tokenSplit))
+            if (verifyAccessTokenString(tokenSplit))
                 return tokenSplit[1];
         }
         throw new AuthenticationCredentialsNotFoundException("Invalid Access token");
@@ -72,30 +65,39 @@ public class TokenUtils {
         return Arrays.stream(cookies).filter(cookie ->
                 cookie.getName().equals("refreshToken")
         ).findFirst().orElseThrow(
-                ()-> new AuthenticationCredentialsNotFoundException("Invalid refresh token")
+                () -> new AuthenticationCredentialsNotFoundException("Invalid refresh token")
         ).getValue();
     }
 
-    private static boolean verifyAccessTokenString(String[] accessToken) throws AuthenticationException{
-        if(accessToken.length==2){
+    private static boolean verifyAccessTokenString(String[] accessToken) throws AuthenticationException {
+        if (accessToken.length == 2) {
             String[] splitted = accessToken[1].split("\\.");
-            return  accessToken[0].equals("Bearer") && splitted.length==3 ;
-        }else {
+            return accessToken[0].equals("Bearer") && splitted.length == 3;
+        } else {
             throw new AuthenticationCredentialsNotFoundException("Invalid access token");
         }
     }
 
-    public static Claims extractClaims(String token, String secret){
+    public static Claims extractClaims(String token, String secret) {
         return Jwts.parser().setSigningKey(secret).parseClaimsJws(token).getBody();
     }
 
 
     //토큰 유효성 검증
-
-    public static boolean isNonExpired(String token, String secret ){
-        Claims body = extractClaims(token, secret);
-        return body.getExpiration().after(new Date());
+    public static boolean isNonExpired(String token, String secret) {
+        try{
+            Claims body = extractClaims(token, secret);
+            return body.getExpiration().after(new Date());
+        }catch (JwtException e){
+            return false;
+        }
     }
 
+    public static void setRefreshToken(HttpServletResponse response, TokenInfo tokenInfo) {
+        Cookie refreshToken = new Cookie("refreshToken", tokenInfo.getRefreshToken().getRefreshToken());
+        refreshToken.setPath("/");
+        refreshToken.setHttpOnly(true);
+        response.addCookie(refreshToken);
+    }
 
 }

@@ -4,12 +4,16 @@ import com.omegafrog.My.piano.app.web.enums.Category;
 import com.omegafrog.My.piano.app.web.enums.Instrument;
 import com.omegafrog.My.piano.app.web.enums.RefundPolicy;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import jakarta.persistence.Embeddable;
+import lombok.Setter;
 
 @Embeddable
 @NoArgsConstructor
+@Setter
+@Getter
 public class LessonInformation {
     private String artistDescription;
     private String lessonDescription;

@@ -9,7 +9,7 @@ import jakarta.persistence.*;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
-@DiscriminatorColumn
+@DiscriminatorColumn(name = "DTYPE")
 @NoArgsConstructor
 @Getter
 public class SellableItem extends Article {
@@ -17,6 +17,11 @@ public class SellableItem extends Article {
     protected int price;
 
     protected Double discountRate = 0d;
+
+    @Override
+    public void setAuthor(User user) {
+        author = user;
+    }
 
     public SellableItem(User author, String title, String content, int price) {
         this.author = author;

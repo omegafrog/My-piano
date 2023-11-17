@@ -1,6 +1,6 @@
 package com.omegafrog.My.piano.app.web.domain.sheet;
 
-import com.omegafrog.My.piano.app.web.domain.article.Comment;
+import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.order.SellableItem;
 import com.omegafrog.My.piano.app.web.dto.UpdateSheetDto;
 import com.omegafrog.My.piano.app.web.dto.UpdateSheetPostDto;
@@ -22,6 +22,7 @@ public class SheetPost extends SellableItem {
     @JoinColumn(name = "SHEET_ID")
     private Sheet sheet;
 
+
     @Builder
     public SheetPost(String title, String content, User artist, Sheet sheet, int price) {
         super(artist, title, content, price);
@@ -38,7 +39,7 @@ public class SheetPost extends SellableItem {
             UpdateSheetDto sheetDto = dto.getSheetDto();
             this.sheet = Sheet.builder()
                     .title(sheetDto.getTitle())
-                    .genre(sheetDto.getGenre())
+                    .genres(sheetDto.getGenres())
                     .filePath(sheetDto.getFilePath())
                     .pageNum(sheetDto.getPageNum())
                     .difficulty(sheetDto.getDifficulty())
@@ -71,8 +72,16 @@ public class SheetPost extends SellableItem {
     public SheetInfoDto toInfoDto(){
         return SheetInfoDto.builder()
                 .id(id)
+                .title(sheet.getTitle())
+                .content(content)
+                .genres(sheet.getGenres())
+                .instrument(sheet.getInstrument())
+                .isSolo(sheet.isSolo())
+                .lyrics(sheet.isLyrics())
+                .difficulty(sheet.getDifficulty())
                 .sheetUrl(sheet.getFilePath())
                 .artist(author.getUserProfile())
+                .pageNum(sheet.getPageNum())
                 .createdAt(createdAt)
                 .build();
     }

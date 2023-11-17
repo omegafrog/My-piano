@@ -4,7 +4,7 @@ import com.omegafrog.My.piano.app.web.dto.post.UpdateVideoPostDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
-import com.omegafrog.My.piano.app.web.domain.article.Comment;
+import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPost;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -23,7 +23,6 @@ class VideoPostTest {
                         .loginMethod(LoginMethod.EMAIL)
                         .phoneNum(PhoneNum.builder()
                                 .phoneNum("010-1111-1112")
-                                .isAuthorized(false)
                                 .build())
                         .build())
                 .build();
@@ -34,10 +33,10 @@ class VideoPostTest {
                 .content(content)
                 .videoUrl("none")
                 .build();
-        VideoPost updatedVideoPost = post.update(updated);
+        post.update(updated);
 
-        Assertions.assertThat(updatedVideoPost.getContent()).isEqualTo(content);
-        Assertions.assertThat(updatedVideoPost.getTitle()).isEqualTo(title);
+        Assertions.assertThat(post.getContent()).isEqualTo(content);
+        Assertions.assertThat(post.getTitle()).isEqualTo(title);
     }
 
     @Test
@@ -51,7 +50,6 @@ class VideoPostTest {
                         .loginMethod(LoginMethod.EMAIL)
                         .phoneNum(PhoneNum.builder()
                                 .phoneNum("010-1111-1112")
-                                .isAuthorized(false)
                                 .build())
                         .build())
                 .videoUrl("url1")
@@ -65,7 +63,6 @@ class VideoPostTest {
                         .loginMethod(LoginMethod.EMAIL)
                         .phoneNum(PhoneNum.builder()
                                 .phoneNum("010-1111-1112")
-                                .isAuthorized(false)
                                 .build())
                         .build(),
                 content
@@ -85,7 +82,6 @@ class VideoPostTest {
                         .loginMethod(LoginMethod.EMAIL)
                         .phoneNum(PhoneNum.builder()
                                 .phoneNum("010-1111-1112")
-                                .isAuthorized(false)
                                 .build())
                         .build())
                 .videoUrl("url1")
@@ -97,7 +93,6 @@ class VideoPostTest {
                 .loginMethod(LoginMethod.EMAIL)
                 .phoneNum(PhoneNum.builder()
                         .phoneNum("010-1111-1112")
-                        .isAuthorized(false)
                         .build())
                 .build();
         ReflectionTestUtils.setField(build,"id",0L);

@@ -2,7 +2,7 @@ package com.omegafrog.My.piano.app.security.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
-import com.omegafrog.My.piano.app.web.util.response.APISuccessResponse;
+import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
 import com.omegafrog.My.piano.app.security.jwt.RefreshToken;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.security.jwt.TokenInfo;
@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -38,15 +39,20 @@ public class CommonUserLoginSuccessHandler implements AuthenticationSuccessHandl
         Map<String, Object> data = new HashMap<>();
         SecurityUser user = (SecurityUser) authentication.getPrincipal();
         TokenInfo tokenInfo = TokenUtils.generateToken(String.valueOf(user.getId()), secret);
-        RefreshToken savedRefreshToken = refreshTokenRepository.save(tokenInfo.getRefreshToken());
-        data.put("access token", tokenInfo.getGrantType()+" "+tokenInfo.getAccessToken());
-        response.addCookie(
-                new Cookie("refreshToken", savedRefreshToken.getRefreshToken())
-        );
-        APISuccessResponse loginSuccess = new APISuccessResponse("login success", data, objectMapper);
-        String s = objectMapper.writeValueAsString(loginSuccess).replaceAll("\\\\","");
-        s = s.replaceAll("\"\\{","{");
-        s = s.replaceAll("}\"","}");
+        Optional<RefreshToken> founded = refreshTokenRepository.findByUserId(user.getId());
+
+        if(founded.isPresent())
+            founded.get().updateRefreshToken(tokenInfo.getRefreshToken().getRefreshToken());
+        else
+            founded = Optional.of(refreshTokenRepository.save(tokenInfo.getRefreshToken()));
+
+        data.put("access token", tokenInfo.getGrantType() + " " + tokenInfo.getAccessToken());
+        TokenUtils.setRefreshToken(response, tokenInfo);
+        APISuccessResponse loginSuccess = new APISuccessResponse("login success", data);
+        String s = objectMapper.writeValueAsString(loginSuccess);
+//        s = s.replaceAll("\"\\{", "{");
+//        s = s.replaceAll("}\"", "}");
+//        s = s.replaceAll("\\\\\"", "\"");
         writer.write(s);
         writer.flush();
     }

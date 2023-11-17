@@ -1,8 +1,9 @@
-package com.omegafrog.My.piano.app.web.domain.article;
+package com.omegafrog.My.piano.app.web.domain.comment;
 
 import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.user.User;
-import com.omegafrog.My.piano.app.web.dto.post.CommentDto;
+import com.omegafrog.My.piano.app.web.dto.ReturnCommentDto;
+import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -39,6 +40,12 @@ public class Comment {
     @ManyToOne
     private Post target;
 
+    public void increaseLikeCount(){
+        likeCount++;
+    }
+    public void decreaseLikeCount(){
+        likeCount--;
+    }
 
     @Builder
     public Comment(Long id, User author, String content) {
@@ -56,6 +63,17 @@ public class Comment {
                 .createdAt(createdAt)
                 .likeCount(likeCount)
                 .replies(replies.stream().map(Comment::toDto).toList())
+                .build();
+    }
+
+    public ReturnCommentDto toReturnCommentDto(){
+        return ReturnCommentDto.builder()
+                .id(id)
+                .content(content)
+                .targetId(target.getId())
+                .likeCount(likeCount)
+                .author(author.getUserProfile())
+                .createdAt(createdAt)
                 .build();
     }
 
