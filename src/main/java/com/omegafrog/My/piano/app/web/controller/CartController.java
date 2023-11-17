@@ -34,18 +34,7 @@ public class CartController {
 
     private final OrderService orderService;
 
-    @PostMapping(value = {"/sheet", "/lesson"})
-    public JsonAPIResponse addToCart(@RequestBody OrderRegisterDto dto, HttpServletRequest request)
-            throws JsonProcessingException {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        String resourceName = request.getRequestURI().split("/")[2];
-        OrderDto createdOrder =
-                (resourceName.equals("sheet"))
-                        ? orderService.createSheetOrder(dto) : orderService.createLessonOrder(dto);
-        List<OrderDto> orderDtos = cartService.addToCart(createdOrder, loggedInUser);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("contents", orderDtos);
-        return new APISuccessResponse("Add order to cart success.", data);
-    }
+
 
     @DeleteMapping("/{id}")
     public JsonAPIResponse deleteFromCart(@PathVariable Long id)
