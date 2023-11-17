@@ -36,8 +36,6 @@ public class SheetPostController {
     @Autowired
     private ObjectMapper objectMapper;
 
-
-
     @GetMapping("/{id}")
     public JsonAPIResponse getSheetPost(@PathVariable Long id)
             throws JsonProcessingException, PersistenceException, AccessDeniedException {

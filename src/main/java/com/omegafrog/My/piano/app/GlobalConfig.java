@@ -10,6 +10,9 @@ import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
 import com.google.api.client.http.apache.v2.ApacheHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.omegafrog.My.piano.app.external.elasticsearch.ElasticSearchInstance;
+import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
+import com.omegafrog.My.piano.app.web.domain.S3UploadFileExecutor;
+import com.omegafrog.My.piano.app.web.domain.order.SellableItemFactory;
 import io.awspring.cloud.s3.InMemoryBufferingS3OutputStreamProvider;
 import io.awspring.cloud.s3.Jackson2JsonS3ObjectConverter;
 import io.awspring.cloud.s3.S3Template;
@@ -52,6 +55,12 @@ public class GlobalConfig {
     private String apiKey;
 
     @Bean
+    public SellableItemFactory sellableItemFactory(){
+        return new SellableItemFactory();
+    }
+
+
+    @Bean
     public ElasticsearchClient elasticsearchClient() {
         String serverUrl = "https://" + host + ":" +port;
 
@@ -81,6 +90,10 @@ public class GlobalConfig {
         return new ElasticSearchInstance();
     }
 
+    @Bean
+    public S3UploadFileExecutor s3UploadFileExecutor(){
+        return new S3UploadFileExecutor(s3Template());
+    }
 
     @Bean
     public ObjectMapper objectMapper() {

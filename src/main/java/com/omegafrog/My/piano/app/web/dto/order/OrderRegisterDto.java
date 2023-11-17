@@ -14,5 +14,5 @@ public class OrderRegisterDto {
     private Long itemId;
     @NotNull
     private Long buyerId;
-    private Long couponId;
+    private String couponId;
 }

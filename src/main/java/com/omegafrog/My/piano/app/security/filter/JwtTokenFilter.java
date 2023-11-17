@@ -12,7 +12,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -36,8 +36,9 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     private final SecurityUserRepository securityUserRepository;
     private final RefreshTokenRepository refreshTokenRepository;
 
-    @Value("${security.jwt.secret}")
-    private String secret;
+
+    @Autowired
+    private TokenUtils tokenUtils;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -66,9 +67,9 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
         try {
             // token 추출
-            String accessToken = TokenUtils.getAccessTokenStringFromHeaders(request);
+            String accessToken = tokenUtils.getAccessTokenStringFromHeaders(request);
             //token으로부터 유저 추출
-            Claims claims = TokenUtils.extractClaims(accessToken, secret);
+            Claims claims = tokenUtils.extractClaims(accessToken);
             Long userId = Long.valueOf((String) claims.get("id"));
 
             // refresh token repository에 해당 유저의 refresh token이 없다면 로그아웃한 것.

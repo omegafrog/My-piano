@@ -28,33 +28,31 @@ public class OrderController {
     private ObjectMapper objectMapper;
     private final OrderService orderService;
 
-    @PostMapping(path = {"/sheet/buy", "/lesson/buy"})
-    public JsonAPIResponse orderItem(@Validated @RequestBody OrderRegisterDto order, HttpServletRequest request)
-            throws JsonProcessingException{
-        String mainResource = getMainResourceName(request);
-        OrderDto createdOrder = createMainResourceOrder(order, mainResource);
+    @PostMapping("/order/{mainResource}")
+    public JsonAPIResponse orderItem(@PathVariable String mainResource, @Validated @RequestBody OrderRegisterDto order, HttpServletRequest request)
+            throws JsonProcessingException {
+        OrderDto createdOrder = orderService.makeOrder(mainResource, order);
         OrderDto processedOrder = orderService.makePayment(createdOrder);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("order", processedOrder);
         return new APISuccessResponse("Buy " + mainResource + " success.", data);
     }
 
-    private OrderDto createMainResourceOrder(OrderRegisterDto order, String mainResource) {
-        return (mainResource.equals("sheet"))
-                ? orderService.createSheetOrder(order) : orderService.createLessonOrder(order);
-    }
-
-    private static String getMainResourceName(HttpServletRequest request) {
-        return Arrays.asList(request.getRequestURI().split("/")).get(1);
+    @GetMapping("/order/{mainResource}/{id}")
+    public JsonAPIResponse isOrderedItem(@PathVariable String mainResource, @PathVariable Long id, HttpServletRequest request) throws JsonProcessingException {
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+        boolean isOrdered = orderService.isOrderedItem(mainResource, id, loggedInUser);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("isOrdered", isOrdered);
+        return new APISuccessResponse("Check isOrdered " + mainResource + "success.", data);
     }
 
     @GetMapping(path = "/order/{id}/cancel")
-    public JsonAPIResponse cancelOrder(@PathVariable Long id){
+    public JsonAPIResponse cancelOrder(@PathVariable Long id) {
         orderService.deleteOrder(id);
         return new APISuccessResponse("Cancel order success.");
     }
 
     @GetMapping(path = "/order")
-    public JsonAPIResponse getOrders() throws JsonProcessingException{
+    public JsonAPIResponse getOrders() throws JsonProcessingException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         List<OrderDto> allOrders = orderService.getAllOrders(loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("orders", allOrders);
