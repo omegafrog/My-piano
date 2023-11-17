@@ -11,6 +11,7 @@ import com.omegafrog.My.piano.app.web.dto.ReturnCommentDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
 import com.omegafrog.My.piano.app.web.dto.post.PostDto;
 import com.omegafrog.My.piano.app.web.dto.sheet.SheetInfoDto;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.user.UpdateUserDto;
 import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
 import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
@@ -76,7 +77,7 @@ public class UserController {
     public JsonAPIResponse getPurchasedSheets()
             throws JsonProcessingException{
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        List<SheetInfoDto> purchasedSheets = userService.getPurchasedSheets(loggedInUser);
+        List<SheetPostDto> purchasedSheets = userService.getPurchasedSheets(loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap(ResponseKeyName.PURCHASED_SHEETS.keyName, purchasedSheets);
         return new APISuccessResponse("Get all purchased sheets success.", data);
     }

@@ -1,10 +1,10 @@
 package com.omegafrog.My.piano.app.web.domain.user;
 
-import com.nimbusds.jose.crypto.impl.AAD;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
 
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
+import com.omegafrog.My.piano.app.web.domain.coupon.Coupon;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
 import com.omegafrog.My.piano.app.web.domain.order.Order;
 import com.omegafrog.My.piano.app.web.domain.comment.Comment;
@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @Entity
-@Table(name = "`USER`")
+@Table(name = "person")
 @NoArgsConstructor
 @Getter
 public class User {
@@ -76,23 +76,26 @@ public class User {
     @NotNull
     private Cart cart;
 
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "owner")
+    private List<Coupon> coupons;
+
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "purchased_sheet",
             joinColumns = @JoinColumn(name = "AUTHOR_ID"),
             inverseJoinColumns = @JoinColumn(name = "SHEET_ID"))
-    private List<SellableItem> purchasedSheets = new ArrayList<>();
+    private List<SheetPost> purchasedSheets = new ArrayList<>();
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "purchased_lesson",
             joinColumns = @JoinColumn(name = "AUTHOR_ID"),
             inverseJoinColumns = @JoinColumn(name = "LESSON_ID"))
-    private List<SellableItem> purchasedLessons = new ArrayList<>();
+    private List<Lesson> purchasedLessons = new ArrayList<>();
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "scrapped_sheet",
             joinColumns = @JoinColumn(name = "AUTHOR_ID"),
             inverseJoinColumns = @JoinColumn(name = "SHEET_ID"))
-    private List<SellableItem> scrappedSheets = new ArrayList<>();
+    private List<SheetPost> scrappedSheets = new ArrayList<>();
 
     @ManyToMany
     @JoinTable(name = "scrapped_lesson",
@@ -100,12 +103,10 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "LESSON_ID"))
     private List<Lesson> scrappedLesson = new ArrayList<>();
 
-    @OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
-    @JoinColumn(name = "AUTHOR_ID")
-    private List<SellableItem> uploadedSheets = new ArrayList<>();
+    @OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "author")
+    private List<SheetPost> uploadedSheets = new ArrayList<>();
 
-    @OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
-    @JoinColumn(name = "AUTHOR_ID")
+    @OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "author")
     private List<Lesson> uploadedLessons = new ArrayList<>();
 
     @OneToMany(mappedBy = "author", cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
@@ -271,10 +272,10 @@ public class User {
         } else {
             cash -= order.getTotalPrice();
             order.setStatus(OrderStatus.PROGRESSING);
-            if (order.getItem() instanceof Lesson)
-                purchasedLessons.add(order.getItem());
-            else if (order.getItem() instanceof SheetPost)
-                purchasedSheets.add((order.getItem()));
+            if (order.getItem() instanceof Lesson item)
+                purchasedLessons.add(item);
+            else if (order.getItem() instanceof SheetPost item)
+                purchasedSheets.add(item);
             else
                 throw new ClassCastException("Cannot cast this class to child class.");
         }
@@ -284,6 +285,22 @@ public class User {
         cash += totalPrice;
     }
 
+    /**
+     * 유저 엔티티가 이미 구매한 상품인지 확인하는 함수
+     * @param item 구매 여부를 확인할 상품 엔티티. SellableItem의 서브클래스의 인스턴스.
+     * @return 구매한 상품이라면 true, 구매하지 않은 상품이라면 false
+     */
+    public boolean isPurchased(SellableItem item){
+        List<? extends SellableItem> purchasedItemList;
+        if (item instanceof SheetPost)
+            purchasedItemList = purchasedSheets;
+        else if (item instanceof Lesson)
+            purchasedItemList = purchasedLessons;
+        else throw new ClassCastException("Cannot find SellableItem collection");
+
+        return purchasedItemList.stream().anyMatch(purchasedItem -> purchasedItem.equals(item));
+    }
+
     public UserProfile getUserProfile() {
         return UserProfile.builder()
                 .id(id)
@@ -291,24 +308,10 @@ public class User {
                 .profileSrc(profileSrc)
                 .loginMethod(loginMethod)
                 .role(securityUser.getRole())
+                .cash(cash)
                 .build();
     }
 
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        User user = (User) o;
-
-        return id.equals(user.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return id.hashCode();
-    }
 
     public void deleteUploadedVideoPost(VideoPost videoPost) {
         if (!uploadedVideoPosts.remove(videoPost))
@@ -334,5 +337,20 @@ public class User {
             throw new EntityNotFoundException("스크랩하지 않은 레슨을 취소하려고 합니다." + lesson.getId());
         scrappedLesson.remove(lesson);
 
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        User user = (User) o;
+
+        return id.equals(user.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return id.hashCode();
     }
 }

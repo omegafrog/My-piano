@@ -15,7 +15,7 @@ public class OrderDto {
     private UserProfile buyer;
     private int initialPrice;
     private int totalPrice;
-    private Long discountRate;
+    private Double discountRate;
     private Coupon coupon;
 
     @Builder
@@ -24,7 +24,7 @@ public class OrderDto {
             SellableItemDto item,
             UserProfile seller,
             UserProfile buyer,
-            Long discountRate,
+            Double discountRate,
             Coupon coupon,
             int initialPrice,
             int totalPrice) {

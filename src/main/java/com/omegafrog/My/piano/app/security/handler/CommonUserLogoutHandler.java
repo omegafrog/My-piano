@@ -9,7 +9,7 @@ import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
@@ -24,15 +24,15 @@ public class CommonUserLogoutHandler implements LogoutHandler {
     private final ObjectMapper objectMapper;
     private final RefreshTokenRepository refreshTokenRepository;
 
-    @Value("${security.jwt.secret}")
-    private String secret;
+    @Autowired
+    private TokenUtils tokenUtils;
 
     @Override
     @Transactional
     public void logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
         // refreshTokenRepository에서 로그아웃한 유저의 refresh token을 삭제하면 됨.
-        String accessToken = TokenUtils.getAccessTokenStringFromHeaders(request);
-        Claims claims = TokenUtils.extractClaims(accessToken, secret);
+        String accessToken = tokenUtils.getAccessTokenStringFromHeaders(request);
+        Claims claims = tokenUtils.extractClaims(accessToken);
         Long userId = Long.valueOf((String) claims.get("id"));
         refreshTokenRepository.deleteByUserId(userId);
         try {

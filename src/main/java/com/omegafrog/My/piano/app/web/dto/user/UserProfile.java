@@ -16,4 +16,5 @@ public class UserProfile {
     private String profileSrc;
     private LoginMethod loginMethod;
     private Role role;
+    private int cash;
 }
