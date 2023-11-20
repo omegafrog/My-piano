@@ -29,8 +29,8 @@ public class TokenUtils {
 
     //토큰 생성
     public TokenInfo generateToken(String securityUserId) {
-        String accessToken = getToken(securityUserId, Integer.parseInt(accessTokenExpirationPeriod));
-        String refreshToken = getToken(null, Integer.parseInt(refreshTokenExpirationPeriod));
+        String accessToken = getToken(securityUserId, Long.parseLong(accessTokenExpirationPeriod));
+        String refreshToken = getToken(null, Long.parseLong(refreshTokenExpirationPeriod));
         return TokenInfo.builder()
                 .grantType("Bearer")
                 .accessToken(accessToken)
@@ -41,7 +41,7 @@ public class TokenUtils {
                 .build();
     }
 
-    private  String getToken(String payload, int expirationPeriod) {
+    private  String getToken(String payload, Long expirationPeriod) {
         Claims claims = Jwts.claims();
         claims.put("id", payload);
         Long curTime = System.currentTimeMillis();
