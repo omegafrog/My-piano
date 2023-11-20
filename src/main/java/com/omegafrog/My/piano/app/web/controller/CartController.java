@@ -46,13 +46,11 @@ public class CartController {
     }
 
     @DeleteMapping("/{id}")
-    public JsonAPIResponse deleteFromCart(@PathVariable Long id)
-             {
+    public JsonAPIResponse deleteFromCart(@PathVariable Long id){
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         cartService.deleteFromCart(id, loggedInUser);
         return new APISuccessResponse("Delete order from cart success.");
     }
-
 
     @GetMapping("")
     public JsonAPIResponse getAllContentFromCart() throws JsonProcessingException , PersistenceException {
@@ -60,5 +58,12 @@ public class CartController {
         List<OrderDto> allContentFromCart = cartService.getAllContentFromCart(loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("contents", allContentFromCart);
         return new APISuccessResponse("Get all cart contents success.", data);
+    }
+    @GetMapping("{mainResource}/{id}")
+    public JsonAPIResponse isItemInCart(@PathVariable String mainResource, @PathVariable Long id) throws JsonProcessingException {
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+        boolean isInCart = cartService.isItemInCart(mainResource, id, loggedInUser);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("isInCart", isInCart);
+        return new APISuccessResponse("Check item is in cart success.", data);
     }
 }
