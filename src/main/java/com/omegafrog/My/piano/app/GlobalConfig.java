@@ -10,6 +10,7 @@ import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
 import com.google.api.client.http.apache.v2.ApacheHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.omegafrog.My.piano.app.external.elasticsearch.ElasticSearchInstance;
+import com.omegafrog.My.piano.app.external.tossPayment.TossPaymentInstance;
 import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
 import com.omegafrog.My.piano.app.web.domain.S3UploadFileExecutor;
 import com.omegafrog.My.piano.app.web.domain.order.SellableItemFactory;
@@ -23,6 +24,7 @@ import org.elasticsearch.client.RestClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.RestTemplate;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -55,14 +57,14 @@ public class GlobalConfig {
     private String apiKey;
 
     @Bean
-    public SellableItemFactory sellableItemFactory(){
+    public SellableItemFactory sellableItemFactory() {
         return new SellableItemFactory();
     }
 
 
     @Bean
     public ElasticsearchClient elasticsearchClient() {
-        String serverUrl = "https://" + host + ":" +port;
+        String serverUrl = "https://" + host + ":" + port;
 
         // Create the low-level client
         RestClient restClient = RestClient
@@ -85,13 +87,20 @@ public class GlobalConfig {
         return new RestTemplate();
     }
 
+
+
     @Bean
     public ElasticSearchInstance elasticSearchInstance() {
         return new ElasticSearchInstance();
     }
 
     @Bean
-    public S3UploadFileExecutor s3UploadFileExecutor(){
+    public TossPaymentInstance tossPaymentInstance() {
+        return new TossPaymentInstance();
+    }
+
+    @Bean
+    public S3UploadFileExecutor s3UploadFileExecutor() {
         return new S3UploadFileExecutor(s3Template());
     }
 
