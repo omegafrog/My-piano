@@ -19,18 +19,18 @@ import java.util.Date;
 public class TokenUtils {
 
     @Value("${security.jwt.accessToken.period}")
-    private int accessTokenExpirationPeriod;
+    private String accessTokenExpirationPeriod;
 
     @Value("${security.jwt.refreshToken.period}")
-    private int refreshTokenExpirationPeriod;
+    private String refreshTokenExpirationPeriod;
 
     @Value("${security.jwt.secret}")
     private String secret;
 
     //토큰 생성
     public TokenInfo generateToken(String securityUserId) {
-        String accessToken = getToken(securityUserId, accessTokenExpirationPeriod);
-        String refreshToken = getToken(null, refreshTokenExpirationPeriod);
+        String accessToken = getToken(securityUserId, Long.parseLong(accessTokenExpirationPeriod));
+        String refreshToken = getToken(null, Long.parseLong(refreshTokenExpirationPeriod));
         return TokenInfo.builder()
                 .grantType("Bearer")
                 .accessToken(accessToken)
@@ -41,7 +41,7 @@ public class TokenUtils {
                 .build();
     }
 
-    private  String getToken(String payload, int expirationPeriod) {
+    private  String getToken(String payload, Long expirationPeriod) {
         Claims claims = Jwts.claims();
         claims.put("id", payload);
         Long curTime = System.currentTimeMillis();
