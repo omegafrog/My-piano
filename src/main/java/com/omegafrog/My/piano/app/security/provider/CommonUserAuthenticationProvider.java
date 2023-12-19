@@ -20,8 +20,6 @@ public class CommonUserAuthenticationProvider implements AuthenticationProvider 
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        log.info("hi");
-        log.debug("authenticating");
         SecurityUser foundedUserDetails = (SecurityUser) commonUserService.loadUserByUsername(authentication.getPrincipal().toString());
 
         if (foundedUserDetails.isEnabled()) {

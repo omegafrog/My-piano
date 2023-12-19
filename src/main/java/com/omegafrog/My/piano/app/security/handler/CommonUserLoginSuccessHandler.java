@@ -51,9 +51,7 @@ public class CommonUserLoginSuccessHandler implements AuthenticationSuccessHandl
         tokenUtils.setRefreshToken(response, tokenInfo);
         APISuccessResponse loginSuccess = new APISuccessResponse("login success", data);
         String s = objectMapper.writeValueAsString(loginSuccess);
-//        s = s.replaceAll("\"\\{", "{");
-//        s = s.replaceAll("}\"", "}");
-//        s = s.replaceAll("\\\\\"", "\"");
+
         writer.write(s);
         writer.flush();
     }

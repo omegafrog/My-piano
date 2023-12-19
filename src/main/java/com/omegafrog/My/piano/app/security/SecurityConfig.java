@@ -9,10 +9,13 @@ import com.omegafrog.My.piano.app.security.handler.*;
 import com.omegafrog.My.piano.app.security.infrastructure.JpaRepositoryTokenRepositoryImpl;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
+import com.omegafrog.My.piano.app.security.provider.AdminAuthenticationProvider;
 import com.omegafrog.My.piano.app.security.provider.CommonUserAuthenticationProvider;
 import com.omegafrog.My.piano.app.security.reposiotry.InMemoryLogoutBlacklistRepository;
+import com.omegafrog.My.piano.app.security.service.AdminUserService;
 import com.omegafrog.My.piano.app.security.service.CommonUserService;
 
+import com.omegafrog.My.piano.app.web.domain.admin.AdminRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -47,6 +50,7 @@ public class SecurityConfig {
 
     @Autowired
     private SecurityUserRepository securityUserRepository;
+
     @Value("${security.passwordEncoder.secret}")
     private String secret;
 
@@ -65,6 +69,10 @@ public class SecurityConfig {
     @Bean
     public CommonUserService commonUserService() {
         return new CommonUserService(passwordEncoder(), securityUserRepository, refreshTokenRepository());
+    }
+    @Bean
+    public AdminUserService adminUserService(){
+        return new AdminUserService();
     }
 
 
@@ -99,10 +107,49 @@ public class SecurityConfig {
     }
 
     @Bean
+    public AdminAuthenticationProvider adminAuthenticationProvider(){
+        return new AdminAuthenticationProvider(adminUserService(), passwordEncoder());
+    }
+
+    @Bean
     public JwtTokenExceptionFilter jwtTokenExceptionFilter() {
         return new JwtTokenExceptionFilter();
     }
 
+    @Bean
+    public SecurityFilterChain adminAuthentication(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/admin/**")
+                .authenticationProvider(adminAuthenticationProvider())
+                .authorizeHttpRequests()
+                .requestMatchers("/admin/login", "/admin/logout")
+                .permitAll()
+                .anyRequest()
+                .hasRole(Role.ADMIN.value)
+                .and()
+                .formLogin()
+                .usernameParameter("username")
+                .passwordParameter("password")
+                .successHandler(new CommonUserLoginSuccessHandler(objectMapper, refreshTokenRepository(),jwtSecret, tokenUtils()))
+                .failureHandler(new CommonUserLoginFailureHandler(objectMapper))
+                .loginProcessingUrl("/admin/login")
+                .and()
+                .logout()
+                .logoutUrl("/admin/logout")
+                .addLogoutHandler(commonUserLogoutHandler())
+                .and()
+                .addFilterBefore(jwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .exceptionHandling()
+                .authenticationEntryPoint(UnAuthorizedEntryPoint())
+                .accessDeniedHandler(commonUserAccessDeniedHandler())
+                .and()
+                .csrf().disable()
+                .cors().configurationSource(corsConfigurationSource());
+        return http.build();
+    }
 
     @Bean
     public SecurityFilterChain oauth2Authentication(HttpSecurity http) throws Exception {
