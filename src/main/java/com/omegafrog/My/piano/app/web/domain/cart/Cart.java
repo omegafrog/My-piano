@@ -52,4 +52,9 @@ public class Cart {
         ordersToPay.forEach(order -> order.getBuyer().pay(order));
         return ordersToPay.size();
     }
+
+    public boolean itemIsInCart(Long id) {
+        return contents.stream().anyMatch(order -> order.getId().equals(id));
+    }
+
 }

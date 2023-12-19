@@ -55,13 +55,15 @@ public class OrderService {
         return byBuyerId.stream().map(Order::toDto).toList();
     }
 
-    // TODO : 이미 카트에 있는 상품이면 추가하지 못하도록 해라
     public OrderDto makeOrder(String mainResourceName, OrderRegisterDto dto) {
         User buyer = userRepository.findById(dto.getBuyerId())
                 .orElseThrow(() -> new EntityNotFoundException(USER_ENTITY_NOT_FOUNT_ERROR_MSG
                         + dto.getBuyerId()));
 
         SellableItem item = sellableItemFactory.createDetailedItem(mainResourceName, dto.getItemId());
+
+        if(buyer.getCart().itemIsInCart(item.getId()))
+            throw new IllegalArgumentException("이미 카트에 추가한 상품입니다.");
 
         if (buyer.equals(item.getAuthor()))
             throw new IllegalArgumentException("구매자와 판매자가 같을 수 없습니다.");
