@@ -13,8 +13,11 @@ import lombok.*;
 public class UserProfile {
     private Long id;
     private String name;
+    private String username;
+    private String email;
     private String profileSrc;
     private LoginMethod loginMethod;
     private Role role;
     private int cash;
+    private boolean enabled;
 }

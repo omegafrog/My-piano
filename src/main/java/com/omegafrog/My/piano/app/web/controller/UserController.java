@@ -7,6 +7,7 @@ import com.omegafrog.My.piano.app.utils.response.ResponseKeyName;
 import com.omegafrog.My.piano.app.utils.response.ResponseUtil;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.user.User;
+import com.omegafrog.My.piano.app.web.dto.ChangeUserDto;
 import com.omegafrog.My.piano.app.web.dto.ReturnCommentDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
 import com.omegafrog.My.piano.app.web.dto.post.PostDto;
@@ -18,11 +19,16 @@ import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
 import com.omegafrog.My.piano.app.utils.response.JsonAPIResponse;
 import com.omegafrog.My.piano.app.web.service.UserApplicationService;
 import jakarta.persistence.PersistenceException;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Nullable;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -117,14 +123,7 @@ public class UserController {
         return new APISuccessResponse("Get all follower success.", data);
     }
 
-    @PostMapping("/update")
-    public JsonAPIResponse updateUserInformation(@RequestBody UpdateUserDto userDto)
-            throws JsonProcessingException{
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        UserProfile userProfile = userService.updateUser(loggedInUser, userDto);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("user", userProfile);
-        return new APISuccessResponse("Update user success.", data);
-    }
+
 
     @GetMapping("")
     public JsonAPIResponse getUserInformation() throws JsonProcessingException {
@@ -132,6 +131,14 @@ public class UserController {
         UserProfile userProfile = userService.getUserProfile(loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("user", userProfile);
         return new APISuccessResponse("Get user profile success.", data);
+    }
+
+    @PostMapping(value = "")
+    public JsonAPIResponse changeUserInfo(@Valid @RequestParam(name = "updateInfo") String dto, @RequestParam(name = "profileImg") @Nullable MultipartFile profileImg) throws IOException {
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+        UserProfile userProfile = userService.changeUserInfo(dto, loggedInUser, profileImg);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("userProfile", userProfile);
+        return new APISuccessResponse("Update User profile success.", data);
     }
 
 }

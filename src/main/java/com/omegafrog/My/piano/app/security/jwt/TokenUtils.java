@@ -1,20 +1,18 @@
 package com.omegafrog.My.piano.app.security.jwt;
 
-import com.omegafrog.My.piano.app.security.entity.SecurityUser;
+import com.omegafrog.My.piano.app.security.entity.authorities.Role;
 import io.jsonwebtoken.*;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.AuthenticationException;
 
 import java.util.Arrays;
 import java.util.Date;
+import java.util.UUID;
 
 public class TokenUtils {
 
@@ -28,22 +26,26 @@ public class TokenUtils {
     private String secret;
 
     //토큰 생성
-    public TokenInfo generateToken(String securityUserId) {
-        String accessToken = getToken(securityUserId, Long.parseLong(accessTokenExpirationPeriod));
-        String refreshToken = getToken(null, Long.parseLong(refreshTokenExpirationPeriod));
+    public TokenInfo generateToken(String securityUserId, Role role) {
+        String accessToken = getToken(securityUserId, role, Long.parseLong(accessTokenExpirationPeriod));
+        String refreshToken = getToken(null,role, Long.parseLong(refreshTokenExpirationPeriod));
         return TokenInfo.builder()
                 .grantType("Bearer")
                 .accessToken(accessToken)
                 .refreshToken(RefreshToken.builder()
+                        .id(role.value + "-" + UUID.randomUUID())
                         .userId(Long.valueOf(securityUserId))
                         .refreshToken(refreshToken)
+                        .expiration(Long.parseLong(refreshTokenExpirationPeriod))
+                        .role(role)
                         .build())
                 .build();
     }
 
-    private  String getToken(String payload, Long expirationPeriod) {
+    private  String getToken(String payload, Role role, Long expirationPeriod) {
         Claims claims = Jwts.claims();
         claims.put("id", payload);
+        claims.put("role", role.value);
         Long curTime = System.currentTimeMillis();
         JwtBuilder jwtBuilder = Jwts.builder()
                 .addClaims(claims)

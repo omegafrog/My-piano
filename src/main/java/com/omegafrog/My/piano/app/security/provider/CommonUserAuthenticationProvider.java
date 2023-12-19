@@ -20,8 +20,6 @@ public class CommonUserAuthenticationProvider implements AuthenticationProvider 
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        log.info("hi");
-        log.debug("authenticating");
         SecurityUser foundedUserDetails = (SecurityUser) commonUserService.loadUserByUsername(authentication.getPrincipal().toString());
 
         if (foundedUserDetails.isEnabled()) {
@@ -32,7 +30,7 @@ public class CommonUserAuthenticationProvider implements AuthenticationProvider 
                 throw new BadCredentialsException("Password is not match.");
             }
         } else {
-            if (!foundedUserDetails.isAccountNonLocked()) {
+            if (!foundedUserDetails.isEnabled()) {
                 throw new LockedException("Account is locked");
             } else if (!foundedUserDetails.isCredentialsNonExpired()) {
                 throw new CredentialsExpiredException("Credential is expired");

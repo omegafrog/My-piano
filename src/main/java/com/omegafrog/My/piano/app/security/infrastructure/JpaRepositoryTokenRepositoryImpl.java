@@ -1,16 +1,19 @@
 package com.omegafrog.My.piano.app.security.infrastructure;
 
+import com.omegafrog.My.piano.app.security.infrastructure.redis.RedisRefreshTokenRepository;
 import com.omegafrog.My.piano.app.security.jwt.RefreshToken;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.repository.NoRepositoryBean;
 
 import java.util.List;
 import java.util.Optional;
 
+@NoRepositoryBean
 public class JpaRepositoryTokenRepositoryImpl implements RefreshTokenRepository {
 
     @Autowired
-    private JpaRefreshTokenRepository jpaRepository;
+    private RedisRefreshTokenRepository jpaRepository;
 
     @Override
     public void deleteAll() {

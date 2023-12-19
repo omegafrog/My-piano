@@ -13,6 +13,7 @@ import com.omegafrog.My.piano.app.security.jwt.RefreshToken;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.security.jwt.TokenInfo;
 import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
+import com.omegafrog.My.piano.app.utils.DtoMapper;
 import com.omegafrog.My.piano.app.utils.response.*;
 import com.omegafrog.My.piano.app.web.dto.RegisterUserDto;
 import com.omegafrog.My.piano.app.web.dto.SecurityUserDto;
@@ -29,14 +30,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
-import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Nullable;
+import javax.security.auth.login.AccountExpiredException;
+import javax.security.auth.login.AccountLockedException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -51,31 +55,24 @@ public class SecurityController {
     @Autowired
     private RefreshTokenRepository refreshTokenRepository;
     @Autowired
-    private SecurityUserRepository securityUserRepository;
-    @Autowired
     private TokenUtils tokenUtils;
 
     @Autowired
     private ObjectMapper objectMapper;
 
     private final CommonUserService commonUserService;
-
     @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
-    private Environment environment;
-
-    @Value("${security.jwt.secret}")
-    private String secret;
-
+    private GooglePublicKeysManager googlePublicKeysManager;
 
     @Autowired
-    private GooglePublicKeysManager googlePublicKeysManager;
+    private DtoMapper dtoMapper;
 
 
     @GetMapping("/validate")
-    public JsonAPIResponse validateToken(){
+    public JsonAPIResponse validateToken() {
         return new APISuccessResponse("validate success.");
     }
 
@@ -95,8 +92,6 @@ public class SecurityController {
     }
 
 
-
-
     @ExceptionHandler(S3Exception.class)
     public APIBadRequestResponse S3ExceptionHandler(S3Exception ex) {
         return new APIBadRequestResponse(ex.getMessage());
@@ -104,7 +99,7 @@ public class SecurityController {
 
     @PostMapping("/user/register")
     public JsonAPIResponse registerCommonUser(@RequestParam(name = "profileImg") @Nullable MultipartFile profileImg, @RequestParam String registerInfo) throws IOException, UsernameAlreadyExistException {
-        RegisterUserDto dto = parseRegisterUserInfo(registerInfo);
+        RegisterUserDto dto = dtoMapper.parseRegisterUserInfo(registerInfo);
         SecurityUserDto securityUserDto;
         if (profileImg == null)
             securityUserDto = commonUserService.registerUser(dto);
@@ -114,24 +109,12 @@ public class SecurityController {
         return new APISuccessResponse("회원가입 성공.", data);
     }
 
-    private RegisterUserDto parseRegisterUserInfo(String registerInfo) throws JsonProcessingException {
-        JsonNode registerNodeInfo = objectMapper.readTree(registerInfo);
-        String username = registerNodeInfo.get("username").asText();
-        String password = registerNodeInfo.get("password").asText();
-        String name = registerNodeInfo.get("name").asText();
-        String email = registerNodeInfo.get("email").asText();
-        String phoneNum = registerNodeInfo.get("phoneNum").asText();
-        String loginMethod = registerNodeInfo.get("loginMethod").asText();
-        String profileSrc = registerNodeInfo.get("profileSrc").asText();
-        return RegisterUserDto.builder()
-                .username(username)
-                .password(password)
-                .name(name)
-                .email(email)
-                .phoneNum(phoneNum)
-                .loginMethod(LoginMethod.valueOf(loginMethod))
-                .profileSrc(profileSrc)
-                .build();
+
+
+    @ExceptionHandler(AuthenticationException.class)
+    public APIForbiddenResponse authenticationErrorResponse(AuthenticationException ex){
+        ex.printStackTrace();
+        return new APIForbiddenResponse(ex.getMessage());
     }
 
 
@@ -145,7 +128,16 @@ public class SecurityController {
 
         try {
             SecurityUser user = (SecurityUser) commonUserService.loadUserByUsername(parsed.getPayload().getEmail());
-            TokenInfo tokenInfo = tokenUtils.generateToken(String.valueOf(user.getId()));
+
+            if(!user.isEnabled()){
+                if(!user.isAccountNonExpired()) throw new AccountExpiredException("Account is expired. ");
+                if(!user.isCredentialsNonExpired())
+                    throw new CredentialsExpiredException("Credential is expired at : " +
+                            user.getCredentialChangedAt().plusMonths(user.getPasswordExpirationPeriod()));
+                if(user.isLocked()) throw new AccountLockedException("Accound is locked.");
+            }
+
+            TokenInfo tokenInfo = tokenUtils.generateToken(String.valueOf(user.getId()), user.getRole());
             Optional<RefreshToken> foundedRefreshToken = refreshTokenRepository.findByUserId(user.getId());
             if (foundedRefreshToken.isPresent()) {
                 foundedRefreshToken.get().updateRefreshToken(tokenInfo.getRefreshToken().getRefreshToken());

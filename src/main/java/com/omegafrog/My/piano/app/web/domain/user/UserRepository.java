@@ -1,5 +1,8 @@
 package com.omegafrog.My.piano.app.web.domain.user;
 
+import org.springframework.data.domain.Pageable;
+
+import java.util.List;
 import java.util.Optional;
 
 public interface UserRepository {
@@ -15,4 +18,6 @@ public interface UserRepository {
     long count();
 
     void deleteAll();
+
+    List<User> findAll(Pageable pageable);
 }

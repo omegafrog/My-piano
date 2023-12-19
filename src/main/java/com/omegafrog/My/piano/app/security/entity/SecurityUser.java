@@ -7,6 +7,7 @@ import com.omegafrog.My.piano.app.web.domain.user.User;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -22,7 +23,7 @@ import java.util.List;
 public class SecurityUser implements UserDetails {
 
     @Transient
-    private final long CREDENTIAL_EXPIRED_MONTH = 30L;
+    private Long passwordExpirationPeriod=90L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -98,18 +99,18 @@ public class SecurityUser implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return locked;
+        return !locked;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return credentialChangedAt.plusMonths(CREDENTIAL_EXPIRED_MONTH)
-                .isBefore(LocalDateTime.now());
+        return credentialChangedAt.plusMonths(passwordExpirationPeriod)
+                .isAfter(LocalDateTime.now());
     }
 
     @Override
     public boolean isEnabled() {
-        return isAccountNonExpired() || isCredentialsNonExpired();
+        return isAccountNonExpired() && isCredentialsNonExpired() && isAccountNonLocked();
     }
 
     public SecurityUserDto toDto(){
@@ -122,6 +123,16 @@ public class SecurityUser implements UserDetails {
                 .username(username)
                 .role(role)
                 .build();
+    }
+
+    public void disable(){
+        this.locked=true;
+    }
+    public void enable(){
+        this.locked=false;
+    }
+    public void changePassword(String encodedPassword){
+        this.password = password;
     }
 
 }
