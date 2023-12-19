@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/cart")
@@ -66,4 +67,13 @@ public class CartController {
         Map<String, Object> data = ResponseUtil.getStringObjectMap("isInCart", isInCart);
         return new APISuccessResponse("Check item is in cart success.", data);
     }
+
+    @PatchMapping("")
+    public JsonAPIResponse purchaseInCart(@RequestParam(name="orderId") Set<Long> orderId) throws JsonProcessingException {
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+        int payCnt = cartService.purchaseInCart(orderId, loggedInUser);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("payCnt", payCnt);
+        return new APISuccessResponse("Purchase all content in cart success.", data);
+    }
+
 }

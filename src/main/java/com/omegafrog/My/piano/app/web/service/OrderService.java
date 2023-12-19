@@ -55,6 +55,7 @@ public class OrderService {
         return byBuyerId.stream().map(Order::toDto).toList();
     }
 
+    // TODO : 이미 카트에 있는 상품이면 추가하지 못하도록 해라
     public OrderDto makeOrder(String mainResourceName, OrderRegisterDto dto) {
         User buyer = userRepository.findById(dto.getBuyerId())
                 .orElseThrow(() -> new EntityNotFoundException(USER_ENTITY_NOT_FOUNT_ERROR_MSG

@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -62,5 +63,10 @@ public class CartApplicationService {
         User user = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInUser.getId()));
         return user.getCart().getContents().stream().anyMatch(order -> order.getItem().equals(detailedItem));
+    }
+
+    public int purchaseInCart(Set<Long> orderIds, User loggedInUser) {
+        User user = userRepository.findById(loggedInUser.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find User entity. id : " + loggedInUser.getId()));
+        return user.getCart().payContents(orderIds);
     }
 }
