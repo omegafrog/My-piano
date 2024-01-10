@@ -3,6 +3,7 @@ package com.omegafrog.My.piano.app.security.service;
 import com.omegafrog.My.piano.app.security.entity.authorities.Role;
 import com.omegafrog.My.piano.app.web.domain.admin.Admin;
 import com.omegafrog.My.piano.app.web.domain.admin.AdminRepository;
+import com.omegafrog.My.piano.app.web.dto.AdminDto;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,8 @@ public class AdminUserService implements UserDetailsService {
         return adminRepository.findByUsername(username)
                 .orElseThrow(() -> new AuthenticationServiceException("Cannot find admin entity. username : " + username));
     }
+
+
     public void register(String username, String password, String email, String name, Role role){
         adminRepository.save(Admin.builder()
                 .email(email)
@@ -33,5 +36,11 @@ public class AdminUserService implements UserDetailsService {
                 .password(passwordEncoder.encode(password))
                 .username(username)
                 .build());
+    }
+
+    public AdminDto getAdminProfile(Admin loggedInAdmin) {
+        Admin admin = adminRepository.findByUsername(loggedInAdmin.getUsername()).orElseThrow(
+                () -> new EntityNotFoundException("Cannot find Admin. id : " + loggedInAdmin.getId()));
+        return admin.toDto();
     }
 }

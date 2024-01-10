@@ -27,6 +27,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.security.access.AccessDeniedException;
@@ -75,7 +76,7 @@ public class SecurityController {
 
 
     @GetMapping("/validate")
-    public JsonAPIResponse validateToken(){
+    public JsonAPIResponse validateToken() {
         return new APISuccessResponse("validate success.");
     }
 
@@ -93,8 +94,6 @@ public class SecurityController {
         }
         return new APIBadRequestResponse("Token is not expired yet.");
     }
-
-
 
 
     @ExceptionHandler(S3Exception.class)
@@ -145,7 +144,7 @@ public class SecurityController {
 
         try {
             SecurityUser user = (SecurityUser) commonUserService.loadUserByUsername(parsed.getPayload().getEmail());
-            TokenInfo tokenInfo = tokenUtils.generateToken(String.valueOf(user.getId()));
+            TokenInfo tokenInfo = tokenUtils.generateToken(String.valueOf(user.getId()), user.getRole());
             Optional<RefreshToken> foundedRefreshToken = refreshTokenRepository.findByUserId(user.getId());
             if (foundedRefreshToken.isPresent()) {
                 foundedRefreshToken.get().updateRefreshToken(tokenInfo.getRefreshToken().getRefreshToken());

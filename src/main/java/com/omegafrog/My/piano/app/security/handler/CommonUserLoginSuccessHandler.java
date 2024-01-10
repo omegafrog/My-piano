@@ -36,7 +36,7 @@ public class CommonUserLoginSuccessHandler implements AuthenticationSuccessHandl
         PrintWriter writer = response.getWriter();
         Map<String, Object> data = new HashMap<>();
         SecurityUser user = (SecurityUser) authentication.getPrincipal();
-        TokenInfo tokenInfo = tokenUtils.generateToken(String.valueOf(user.getId()));
+        TokenInfo tokenInfo = tokenUtils.generateToken(String.valueOf(user.getId()), user.getRole());
         Optional<RefreshToken> founded = refreshTokenRepository.findByUserId(user.getId());
 
         if(founded.isPresent())

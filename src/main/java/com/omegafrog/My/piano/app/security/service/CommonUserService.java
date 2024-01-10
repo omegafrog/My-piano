@@ -153,7 +153,7 @@ public class CommonUserService implements UserDetailsService {
 
         RefreshToken refreshToken = refreshTokenRepository.findByUserId(userId).orElseThrow(() -> new AccessDeniedException("로그인이 만료되었습니다."));
 
-        TokenInfo tokenInfo = tokenUtils.generateToken(String.valueOf(userId));
+        TokenInfo tokenInfo = tokenUtils.generateToken(String.valueOf(userId),founded.get().getRole());
         refreshToken.updateRefreshToken(tokenInfo.getRefreshToken().getRefreshToken());
         return tokenInfo;
     }

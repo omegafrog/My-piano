@@ -23,6 +23,7 @@ import java.util.List;
 
 @Entity
 @NoArgsConstructor
+@Getter
 public class Admin implements UserDetails {
 
     @Id
@@ -69,6 +70,7 @@ public class Admin implements UserDetails {
         return AdminDto.builder()
                 .name(this.name)
                 .email(this.email)
+                .role(this.role)
                 .build();
     }
 

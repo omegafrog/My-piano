@@ -3,9 +3,13 @@ package com.omegafrog.My.piano.app.security;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
 import com.omegafrog.My.piano.app.security.entity.authorities.Role;
+import com.omegafrog.My.piano.app.security.filter.AdminJwtTokenFilter;
 import com.omegafrog.My.piano.app.security.filter.JwtTokenExceptionFilter;
-import com.omegafrog.My.piano.app.security.filter.JwtTokenFilter;
+import com.omegafrog.My.piano.app.security.filter.CommonUserJwtTokenFilter;
 import com.omegafrog.My.piano.app.security.handler.*;
+import com.omegafrog.My.piano.app.security.infrastructure.redis.AdminRefreshTokenRepositoryImpl;
+import com.omegafrog.My.piano.app.security.infrastructure.redis.CommonUserRefreshTokenRepositoryImpl;
+import com.omegafrog.My.piano.app.security.jwt.RefreshToken;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
 import com.omegafrog.My.piano.app.security.provider.AdminAuthenticationProvider;
@@ -14,6 +18,7 @@ import com.omegafrog.My.piano.app.security.reposiotry.InMemoryLogoutBlacklistRep
 import com.omegafrog.My.piano.app.security.service.AdminUserService;
 import com.omegafrog.My.piano.app.security.service.CommonUserService;
 
+import com.omegafrog.My.piano.app.web.domain.admin.AdminRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,9 +42,13 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Slf4j
 public class SecurityConfig {
 
-
     @Autowired
-    private RefreshTokenRepository refreshTokenRepository;
+    private AdminRepository adminRepository;
+
+    @Bean
+    public RefreshTokenRepository refreshTokenRepository(){
+        return new CommonUserRefreshTokenRepositoryImpl();
+    };
     @Bean
     public TokenUtils tokenUtils(){
         return new TokenUtils();
@@ -65,13 +74,17 @@ public class SecurityConfig {
 
     @Bean
     public CommonUserService commonUserService() {
-        return new CommonUserService(passwordEncoder(), securityUserRepository, refreshTokenRepository);
+        return new CommonUserService(passwordEncoder(), securityUserRepository, refreshTokenRepository());
     }
     @Bean
     public AdminUserService adminUserService(){
         return new AdminUserService();
     }
 
+    @Bean
+    public RefreshTokenRepository adminRefreshTokenRepository(){
+        return new AdminRefreshTokenRepositoryImpl();
+    }
 
     @Bean
     public CommonUserAuthenticationProvider commonUserAuthenticationProvider() {
@@ -89,13 +102,18 @@ public class SecurityConfig {
     }
 
     @Bean
-    public JwtTokenFilter jwtTokenFilter() {
-        return new JwtTokenFilter(objectMapper, securityUserRepository, refreshTokenRepository);
+    public CommonUserJwtTokenFilter jwtTokenFilter() {
+        return new CommonUserJwtTokenFilter( securityUserRepository, refreshTokenRepository(),adminRepository );
+    }
+
+    @Bean
+    public AdminJwtTokenFilter adminJwtTokenFilter(){
+        return new AdminJwtTokenFilter(adminRefreshTokenRepository());
     }
 
     @Bean
     public CommonUserLogoutHandler commonUserLogoutHandler() {
-        return new CommonUserLogoutHandler(objectMapper, refreshTokenRepository);
+        return new CommonUserLogoutHandler(objectMapper, refreshTokenRepository());
     }
 
     @Bean
@@ -132,7 +150,7 @@ public class SecurityConfig {
                 .formLogin()
                 .usernameParameter("username")
                 .passwordParameter("password")
-                .successHandler(new AdminLoginSuccessHandler(objectMapper, refreshTokenRepository, tokenUtils()))
+                .successHandler(new AdminLoginSuccessHandler(objectMapper, refreshTokenRepository(),tokenUtils()))
                 .failureHandler(new CommonUserLoginFailureHandler(objectMapper))
                 .loginProcessingUrl("/admin/login")
                 .and()
@@ -183,7 +201,7 @@ public class SecurityConfig {
                 .loginProcessingUrl("/user/login")
                 .usernameParameter("username")
                 .passwordParameter("password")
-                .successHandler(new CommonUserLoginSuccessHandler(objectMapper, refreshTokenRepository, tokenUtils()))
+                .successHandler(new CommonUserLoginSuccessHandler(objectMapper, refreshTokenRepository(), tokenUtils()))
                 .failureHandler(new CommonUserLoginFailureHandler(objectMapper))
                 .and()
                 .logout()
@@ -192,7 +210,7 @@ public class SecurityConfig {
                 .and()
                 .addFilterBefore(jwtTokenFilter(),
                         UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(jwtTokenExceptionFilter(), JwtTokenFilter.class)
+                .addFilterBefore(jwtTokenExceptionFilter(), CommonUserJwtTokenFilter.class)
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
@@ -230,7 +248,7 @@ public class SecurityConfig {
                 .and()
                 .addFilterBefore(jwtTokenFilter(),
                         UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(jwtTokenExceptionFilter(), JwtTokenFilter.class)
+                .addFilterBefore(jwtTokenExceptionFilter(), CommonUserJwtTokenFilter.class)
                 .csrf().disable()
                 .cors().configurationSource(corsConfigurationSource());
         return http.build();
@@ -253,7 +271,7 @@ public class SecurityConfig {
                 .and()
                 .addFilterBefore(jwtTokenFilter(),
                         UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(jwtTokenExceptionFilter(), JwtTokenFilter.class)
+                .addFilterBefore(jwtTokenExceptionFilter(), CommonUserJwtTokenFilter.class)
                 .exceptionHandling()
                 .authenticationEntryPoint(UnAuthorizedEntryPoint())
                 .accessDeniedHandler(commonUserAccessDeniedHandler())
@@ -276,7 +294,7 @@ public class SecurityConfig {
                 .anyRequest().hasRole(Role.USER.value)
                 .and()
                 .addFilterBefore(jwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(jwtTokenExceptionFilter(), JwtTokenFilter.class)
+                .addFilterBefore(jwtTokenExceptionFilter(), CommonUserJwtTokenFilter.class)
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
@@ -305,7 +323,7 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .addFilterBefore(jwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(jwtTokenExceptionFilter(), JwtTokenFilter.class)
+                .addFilterBefore(jwtTokenExceptionFilter(), CommonUserJwtTokenFilter.class)
                 .exceptionHandling()
                 .authenticationEntryPoint(UnAuthorizedEntryPoint())
                 .accessDeniedHandler(commonUserAccessDeniedHandler())
@@ -329,7 +347,7 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .addFilterBefore(jwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(jwtTokenExceptionFilter(), JwtTokenFilter.class)
+                .addFilterBefore(jwtTokenExceptionFilter(), CommonUserJwtTokenFilter.class)
                 .exceptionHandling()
                 .authenticationEntryPoint(UnAuthorizedEntryPoint())
                 .accessDeniedHandler(commonUserAccessDeniedHandler())
