@@ -6,7 +6,6 @@ import com.omegafrog.My.piano.app.security.entity.authorities.Role;
 import com.omegafrog.My.piano.app.security.filter.JwtTokenExceptionFilter;
 import com.omegafrog.My.piano.app.security.filter.JwtTokenFilter;
 import com.omegafrog.My.piano.app.security.handler.*;
-import com.omegafrog.My.piano.app.security.infrastructure.JpaRepositoryTokenRepositoryImpl;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
 import com.omegafrog.My.piano.app.security.provider.AdminAuthenticationProvider;
@@ -39,10 +38,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Slf4j
 public class SecurityConfig {
 
-    @Bean
-    public RefreshTokenRepository refreshTokenRepository(){
-        return new JpaRepositoryTokenRepositoryImpl();
-    }
+
+    @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
     @Bean
     public TokenUtils tokenUtils(){
         return new TokenUtils();
@@ -68,7 +66,7 @@ public class SecurityConfig {
 
     @Bean
     public CommonUserService commonUserService() {
-        return new CommonUserService(passwordEncoder(), securityUserRepository, refreshTokenRepository());
+        return new CommonUserService(passwordEncoder(), securityUserRepository, refreshTokenRepository);
     }
     @Bean
     public AdminUserService adminUserService(){
@@ -93,12 +91,12 @@ public class SecurityConfig {
 
     @Bean
     public JwtTokenFilter jwtTokenFilter() {
-        return new JwtTokenFilter(objectMapper, securityUserRepository, refreshTokenRepository());
+        return new JwtTokenFilter(objectMapper, securityUserRepository, refreshTokenRepository);
     }
 
     @Bean
     public CommonUserLogoutHandler commonUserLogoutHandler() {
-        return new CommonUserLogoutHandler(objectMapper, refreshTokenRepository());
+        return new CommonUserLogoutHandler(objectMapper, refreshTokenRepository);
     }
 
     @Bean
@@ -181,7 +179,7 @@ public class SecurityConfig {
                 .loginProcessingUrl("/user/login")
                 .usernameParameter("username")
                 .passwordParameter("password")
-                .successHandler(new CommonUserLoginSuccessHandler(objectMapper, refreshTokenRepository(),jwtSecret, tokenUtils()))
+                .successHandler(new CommonUserLoginSuccessHandler(objectMapper, refreshTokenRepository,jwtSecret, tokenUtils()))
                 .failureHandler(new CommonUserLoginFailureHandler(objectMapper))
                 .and()
                 .logout()

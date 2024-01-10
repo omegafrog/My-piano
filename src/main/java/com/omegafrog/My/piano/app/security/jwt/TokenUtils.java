@@ -1,15 +1,11 @@
 package com.omegafrog.My.piano.app.security.jwt;
 
-import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import io.jsonwebtoken.*;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.AuthenticationException;
 
@@ -37,6 +33,7 @@ public class TokenUtils {
                 .refreshToken(RefreshToken.builder()
                         .userId(Long.valueOf(securityUserId))
                         .refreshToken(refreshToken)
+                        .expiration(Long.parseLong(refreshTokenExpirationPeriod))
                         .build())
                 .build();
     }
