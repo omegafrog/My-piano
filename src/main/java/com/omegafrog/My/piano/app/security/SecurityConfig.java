@@ -7,9 +7,7 @@ import com.omegafrog.My.piano.app.security.filter.AdminJwtTokenFilter;
 import com.omegafrog.My.piano.app.security.filter.JwtTokenExceptionFilter;
 import com.omegafrog.My.piano.app.security.filter.CommonUserJwtTokenFilter;
 import com.omegafrog.My.piano.app.security.handler.*;
-import com.omegafrog.My.piano.app.security.infrastructure.redis.AdminRefreshTokenRepositoryImpl;
 import com.omegafrog.My.piano.app.security.infrastructure.redis.CommonUserRefreshTokenRepositoryImpl;
-import com.omegafrog.My.piano.app.security.jwt.RefreshToken;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
 import com.omegafrog.My.piano.app.security.provider.AdminAuthenticationProvider;
@@ -81,10 +79,6 @@ public class SecurityConfig {
         return new AdminUserService();
     }
 
-    @Bean
-    public RefreshTokenRepository adminRefreshTokenRepository(){
-        return new AdminRefreshTokenRepositoryImpl();
-    }
 
     @Bean
     public CommonUserAuthenticationProvider commonUserAuthenticationProvider() {
@@ -106,10 +100,7 @@ public class SecurityConfig {
         return new CommonUserJwtTokenFilter( securityUserRepository, refreshTokenRepository(),adminRepository );
     }
 
-    @Bean
-    public AdminJwtTokenFilter adminJwtTokenFilter(){
-        return new AdminJwtTokenFilter(adminRefreshTokenRepository());
-    }
+
 
     @Bean
     public CommonUserLogoutHandler commonUserLogoutHandler() {
