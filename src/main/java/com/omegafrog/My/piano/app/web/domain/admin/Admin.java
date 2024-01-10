@@ -10,6 +10,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
@@ -31,14 +32,20 @@ public class Admin implements UserDetails {
     private String username;
     private String password;
     private String name;
-    private Position position;
     private String email;
     private Role role;
 
+    @Builder
+    public Admin(String username, String password, String name, String email, Role role) {
+        this.username = username;
+        this.password = password;
+        this.name = name;
+        this.email = email;
+        this.role = role;
+    }
 
     public Admin update(UpdateAdminDto dto) {
         this.name = dto.getName();
-        this.position = dto.getPosition();
         this.email = dto.getEmail();
         return this;
     }
@@ -62,7 +69,6 @@ public class Admin implements UserDetails {
         return AdminDto.builder()
                 .name(this.name)
                 .email(this.email)
-                .position(this.position)
                 .build();
     }
 

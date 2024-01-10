@@ -14,7 +14,6 @@ import com.omegafrog.My.piano.app.security.reposiotry.InMemoryLogoutBlacklistRep
 import com.omegafrog.My.piano.app.security.service.AdminUserService;
 import com.omegafrog.My.piano.app.security.service.CommonUserService;
 
-import com.omegafrog.My.piano.app.web.domain.admin.AdminRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -120,15 +119,20 @@ public class SecurityConfig {
                 .securityMatcher("/admin/**")
                 .authenticationProvider(adminAuthenticationProvider())
                 .authorizeHttpRequests()
-                .requestMatchers("/admin/login", "/admin/logout")
+                .requestMatchers("/admin/login","/admin/register", "/admin/logout")
                 .permitAll()
                 .anyRequest()
                 .hasRole(Role.ADMIN.value)
                 .and()
+                /*
+                슈퍼 관리자 엔드포인트 권한 등록 필요
+                .authorizeHttpRequests()
+                .requestMatchers()
+                */
                 .formLogin()
                 .usernameParameter("username")
                 .passwordParameter("password")
-                .successHandler(new CommonUserLoginSuccessHandler(objectMapper, refreshTokenRepository(),jwtSecret, tokenUtils()))
+                .successHandler(new AdminLoginSuccessHandler(objectMapper, refreshTokenRepository, tokenUtils()))
                 .failureHandler(new CommonUserLoginFailureHandler(objectMapper))
                 .loginProcessingUrl("/admin/login")
                 .and()
@@ -179,7 +183,7 @@ public class SecurityConfig {
                 .loginProcessingUrl("/user/login")
                 .usernameParameter("username")
                 .passwordParameter("password")
-                .successHandler(new CommonUserLoginSuccessHandler(objectMapper, refreshTokenRepository,jwtSecret, tokenUtils()))
+                .successHandler(new CommonUserLoginSuccessHandler(objectMapper, refreshTokenRepository, tokenUtils()))
                 .failureHandler(new CommonUserLoginFailureHandler(objectMapper))
                 .and()
                 .logout()

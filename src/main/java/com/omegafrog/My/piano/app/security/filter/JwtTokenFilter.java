@@ -46,8 +46,8 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
         List<AntPathRequestMatcher> ignoredPatterns = new ArrayList<>(
                 Arrays.asList(
-                        AntPathRequestMatcher.antMatcher("/user/login/**"),
-                        AntPathRequestMatcher.antMatcher("/user/register"),
+                        AntPathRequestMatcher.antMatcher("/**/login/**"),
+                        AntPathRequestMatcher.antMatcher("/**/register/**"),
                         AntPathRequestMatcher.antMatcher("/user/profile/register"),
                         AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/sheet"),
                         AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/sheet/{regex:\\d+}"),
