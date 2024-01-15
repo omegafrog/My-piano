@@ -7,14 +7,14 @@ import lombok.Data;
 
 @Data
 public class AdminDto {
-    private String id;
+    private Long id;
 
     private String name;
     private String email;
     private Role role;
 
     @Builder
-    public AdminDto(String id, String name, String email, Role role) {
+    public AdminDto(Long id, String name, String email, Role role) {
         this.id = id;
         this.name = name;
         this.email = email;

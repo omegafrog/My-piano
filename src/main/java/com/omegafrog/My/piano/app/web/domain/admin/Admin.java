@@ -68,6 +68,7 @@ public class Admin implements UserDetails {
 
     public AdminDto toDto() {
         return AdminDto.builder()
+                .id(this.id)
                 .name(this.name)
                 .email(this.email)
                 .role(this.role)

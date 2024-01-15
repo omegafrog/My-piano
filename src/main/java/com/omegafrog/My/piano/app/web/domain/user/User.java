@@ -308,6 +308,7 @@ public class User {
                 .profileSrc(profileSrc)
                 .loginMethod(loginMethod)
                 .role(securityUser.getRole())
+                .enabled(securityUser.isEnabled())
                 .cash(cash)
                 .build();
     }

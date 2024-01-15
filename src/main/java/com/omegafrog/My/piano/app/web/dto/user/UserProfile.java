@@ -17,4 +17,5 @@ public class UserProfile {
     private LoginMethod loginMethod;
     private Role role;
     private int cash;
+    private boolean enabled;
 }
