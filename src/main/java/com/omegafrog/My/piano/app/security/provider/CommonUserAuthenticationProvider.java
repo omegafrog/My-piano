@@ -30,7 +30,7 @@ public class CommonUserAuthenticationProvider implements AuthenticationProvider 
                 throw new BadCredentialsException("Password is not match.");
             }
         } else {
-            if (!foundedUserDetails.isAccountNonLocked()) {
+            if (!foundedUserDetails.isEnabled()) {
                 throw new LockedException("Account is locked");
             } else if (!foundedUserDetails.isCredentialsNonExpired()) {
                 throw new CredentialsExpiredException("Credential is expired");

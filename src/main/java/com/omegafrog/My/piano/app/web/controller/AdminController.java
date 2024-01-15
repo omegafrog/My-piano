@@ -11,12 +11,10 @@ import com.omegafrog.My.piano.app.web.domain.admin.Admin;
 import com.omegafrog.My.piano.app.web.dto.AdminDto;
 import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
 import com.omegafrog.My.piano.app.web.service.UserApplicationService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
@@ -53,5 +51,16 @@ public class AdminController {
         List<UserProfile> users = adminUserService.getUsers(pageable);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("users", users);
         return new APISuccessResponse("Load all users success.", data);
+    }
+
+    @DeleteMapping("/users/{id}")
+    public JsonAPIResponse disableUser(@PathVariable Long id ){
+        adminUserService.disableUser(id);
+        return new APISuccessResponse("Disable User " + id + " success.");
+    }
+    @PostMapping("/users/{id}")
+    public JsonAPIResponse enableUser(@PathVariable Long id){
+        adminUserService.enableUser(id);
+        return new APISuccessResponse("Enable user " + id + " success.");
     }
 }

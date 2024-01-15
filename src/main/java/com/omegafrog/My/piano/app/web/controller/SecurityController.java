@@ -27,17 +27,19 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
-import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Nullable;
+import javax.security.auth.login.AccountExpiredException;
+import javax.security.auth.login.AccountLockedException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -133,6 +135,12 @@ public class SecurityController {
                 .build();
     }
 
+    @ExceptionHandler(AuthenticationException.class)
+    public APIForbiddenResponse authenticationErrorResponse(AuthenticationException ex){
+        ex.printStackTrace();
+        return new APIForbiddenResponse(ex.getMessage());
+    }
+
 
     @PostMapping("/oauth2/google")
     public JsonAPIResponse registerOrLoginGoogleUser(HttpServletRequest request, HttpServletResponse
@@ -144,6 +152,15 @@ public class SecurityController {
 
         try {
             SecurityUser user = (SecurityUser) commonUserService.loadUserByUsername(parsed.getPayload().getEmail());
+
+            if(!user.isEnabled()){
+                if(!user.isAccountNonExpired()) throw new AccountExpiredException("Account is expired. ");
+                if(!user.isCredentialsNonExpired())
+                    throw new CredentialsExpiredException("Credential is expired at : " +
+                            user.getCredentialChangedAt().plusMonths(user.getPasswordExpirationPeriod()));
+                if(user.isLocked()) throw new AccountLockedException("Accound is locked.");
+            }
+
             TokenInfo tokenInfo = tokenUtils.generateToken(String.valueOf(user.getId()), user.getRole());
             Optional<RefreshToken> foundedRefreshToken = refreshTokenRepository.findByUserId(user.getId());
             if (foundedRefreshToken.isPresent()) {
