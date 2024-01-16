@@ -12,6 +12,7 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.omegafrog.My.piano.app.external.elasticsearch.ElasticSearchInstance;
 import com.omegafrog.My.piano.app.external.tossPayment.TossPaymentInstance;
 import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
+import com.omegafrog.My.piano.app.utils.DtoMapper;
 import com.omegafrog.My.piano.app.web.domain.S3UploadFileExecutor;
 import com.omegafrog.My.piano.app.web.domain.order.SellableItemFactory;
 import io.awspring.cloud.s3.InMemoryBufferingS3OutputStreamProvider;
@@ -61,6 +62,10 @@ public class GlobalConfig {
         return new SellableItemFactory();
     }
 
+    @Bean
+    public DtoMapper dtoMapper(){
+        return new DtoMapper();
+    }
 
     @Bean
     public ElasticsearchClient elasticsearchClient() {

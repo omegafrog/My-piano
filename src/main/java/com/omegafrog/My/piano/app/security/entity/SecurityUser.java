@@ -124,4 +124,8 @@ public class SecurityUser implements UserDetails {
                 .build();
     }
 
+    public void changePassword(String encodedPassword){
+        this.password = password;
+    }
+
 }
