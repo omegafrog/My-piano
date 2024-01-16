@@ -8,6 +8,7 @@ import com.omegafrog.My.piano.app.security.filter.JwtTokenFilter;
 import com.omegafrog.My.piano.app.security.handler.*;
 import com.omegafrog.My.piano.app.security.infrastructure.JpaRepositoryTokenRepositoryImpl;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
+import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
 import com.omegafrog.My.piano.app.security.provider.CommonUserAuthenticationProvider;
 import com.omegafrog.My.piano.app.security.reposiotry.InMemoryLogoutBlacklistRepository;
 import com.omegafrog.My.piano.app.security.service.CommonUserService;
@@ -39,6 +40,11 @@ public class SecurityConfig {
     public RefreshTokenRepository refreshTokenRepository(){
         return new JpaRepositoryTokenRepositoryImpl();
     }
+    @Bean
+    public TokenUtils tokenUtils(){
+        return new TokenUtils();
+    }
+
     @Autowired
     private SecurityUserRepository securityUserRepository;
     @Value("${security.passwordEncoder.secret}")
@@ -128,7 +134,7 @@ public class SecurityConfig {
                 .loginProcessingUrl("/user/login")
                 .usernameParameter("username")
                 .passwordParameter("password")
-                .successHandler(new CommonUserLoginSuccessHandler(objectMapper, refreshTokenRepository(),jwtSecret))
+                .successHandler(new CommonUserLoginSuccessHandler(objectMapper, refreshTokenRepository(),jwtSecret, tokenUtils()))
                 .failureHandler(new CommonUserLoginFailureHandler(objectMapper))
                 .and()
                 .logout()
@@ -229,6 +235,7 @@ public class SecurityConfig {
                 .authenticationEntryPoint(UnAuthorizedEntryPoint())
                 .accessDeniedHandler(commonUserAccessDeniedHandler())
                 .and()
+                .csrf().disable()
                 .cors().configurationSource(corsConfigurationSource());
         return http.build();
     }
@@ -256,6 +263,31 @@ public class SecurityConfig {
                 .and()
                 .csrf().disable()
                 .cors().configurationSource(corsConfigurationSource());
+        return http.build();
+    }
+
+    @Bean
+    public  SecurityFilterChain cartAuthentication(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/cart/**")
+                .authenticationProvider(commonUserAuthenticationProvider())
+                .authorizeHttpRequests()
+                .requestMatchers("/cart")
+                .permitAll()
+                .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value)
+                .and()
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .addFilterBefore(jwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtTokenExceptionFilter(), JwtTokenFilter.class)
+                .exceptionHandling()
+                .authenticationEntryPoint(UnAuthorizedEntryPoint())
+                .accessDeniedHandler(commonUserAccessDeniedHandler())
+                .and()
+                .csrf().disable()
+                .cors().configurationSource(corsConfigurationSource());
+
         return http.build();
     }
 

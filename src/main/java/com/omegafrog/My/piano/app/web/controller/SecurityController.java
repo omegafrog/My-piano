@@ -52,6 +52,8 @@ public class SecurityController {
     private RefreshTokenRepository refreshTokenRepository;
     @Autowired
     private SecurityUserRepository securityUserRepository;
+    @Autowired
+    private TokenUtils tokenUtils;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -79,14 +81,14 @@ public class SecurityController {
 
     @GetMapping("/revalidate")
     public JsonAPIResponse revalidateToken(HttpServletRequest request, HttpServletResponse response) throws JsonProcessingException {
-        String accessToken = TokenUtils.getAccessTokenStringFromHeaders(request);
+        String accessToken = tokenUtils.getAccessTokenStringFromHeaders(request);
         try {
-            Claims claims = TokenUtils.extractClaims(accessToken, secret);
+            Claims claims = tokenUtils.extractClaims(accessToken);
         } catch (ExpiredJwtException e) {
             TokenInfo tokenInfo = commonUserService.getTokenInfo(e);
             Map<String, Object> data = ResponseUtil.getStringObjectMap(
                     "access token", tokenInfo.getGrantType() + " " + tokenInfo.getAccessToken());
-            TokenUtils.setRefreshToken(response, tokenInfo);
+            tokenUtils.setRefreshToken(response, tokenInfo);
             return new APISuccessResponse("Token invalidating success.", data);
         }
         return new APIBadRequestResponse("Token is not expired yet.");
@@ -143,14 +145,14 @@ public class SecurityController {
 
         try {
             SecurityUser user = (SecurityUser) commonUserService.loadUserByUsername(parsed.getPayload().getEmail());
-            TokenInfo tokenInfo = TokenUtils.generateToken(String.valueOf(user.getId()), secret);
+            TokenInfo tokenInfo = tokenUtils.generateToken(String.valueOf(user.getId()));
             Optional<RefreshToken> foundedRefreshToken = refreshTokenRepository.findByUserId(user.getId());
             if (foundedRefreshToken.isPresent()) {
                 foundedRefreshToken.get().updateRefreshToken(tokenInfo.getRefreshToken().getRefreshToken());
             } else
                 refreshTokenRepository.save(tokenInfo.getRefreshToken());
             Map<String, Object> data = ResponseUtil.getStringObjectMap("access token", tokenInfo.getGrantType() + " " + tokenInfo.getAccessToken());
-            TokenUtils.setRefreshToken(response, tokenInfo);
+            tokenUtils.setRefreshToken(response, tokenInfo);
             return new APISuccessResponse("Google OAuth login success.", data);
             // token만들어반환
         } catch (UsernameNotFoundException e) {

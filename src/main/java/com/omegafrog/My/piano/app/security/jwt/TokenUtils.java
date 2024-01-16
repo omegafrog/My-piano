@@ -15,17 +15,22 @@ import org.springframework.security.core.AuthenticationException;
 
 import java.util.Arrays;
 import java.util.Date;
-import java.util.Optional;
 
 public class TokenUtils {
 
+    @Value("${security.jwt.accessToken.period}")
+    private String accessTokenExpirationPeriod;
+
+    @Value("${security.jwt.refreshToken.period}")
+    private String refreshTokenExpirationPeriod;
+
+    @Value("${security.jwt.secret}")
+    private String secret;
 
     //토큰 생성
-    public static TokenInfo generateToken(String securityUserId, String secret) {
-        int accessTokenExpirationPeriod = 1000 * 60 * 10;
-        int refreshTokenExpirationPeriod = 1000 * 60 * 60;
-        String accessToken = getToken(securityUserId, accessTokenExpirationPeriod, secret);
-        String refreshToken = getToken(null, refreshTokenExpirationPeriod, secret);
+    public TokenInfo generateToken(String securityUserId) {
+        String accessToken = getToken(securityUserId, Long.parseLong(accessTokenExpirationPeriod));
+        String refreshToken = getToken(null, Long.parseLong(refreshTokenExpirationPeriod));
         return TokenInfo.builder()
                 .grantType("Bearer")
                 .accessToken(accessToken)
@@ -36,7 +41,7 @@ public class TokenUtils {
                 .build();
     }
 
-    private static String getToken(String payload, int expirationPeriod, String secret) {
+    private  String getToken(String payload, Long expirationPeriod) {
         Claims claims = Jwts.claims();
         claims.put("id", payload);
         Long curTime = System.currentTimeMillis();
@@ -50,7 +55,7 @@ public class TokenUtils {
 
 
 
-    public static String getAccessTokenStringFromHeaders(HttpServletRequest request) throws AuthenticationException {
+    public  String getAccessTokenStringFromHeaders(HttpServletRequest request) throws AuthenticationException {
         String tokenString = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (tokenString != null) {
             String[] tokenSplit = tokenString.split(" ");
@@ -60,7 +65,7 @@ public class TokenUtils {
         throw new AuthenticationCredentialsNotFoundException("Invalid Access token");
     }
 
-    public static String getRefreshTokenStringFromCookies(HttpServletRequest request) throws AuthenticationException {
+    public  String getRefreshTokenStringFromCookies(HttpServletRequest request) throws AuthenticationException {
         Cookie[] cookies = request.getCookies();
         return Arrays.stream(cookies).filter(cookie ->
                 cookie.getName().equals("refreshToken")
@@ -69,7 +74,7 @@ public class TokenUtils {
         ).getValue();
     }
 
-    private static boolean verifyAccessTokenString(String[] accessToken) throws AuthenticationException {
+    private  boolean verifyAccessTokenString(String[] accessToken) throws AuthenticationException {
         if (accessToken.length == 2) {
             String[] splitted = accessToken[1].split("\\.");
             return accessToken[0].equals("Bearer") && splitted.length == 3;
@@ -78,22 +83,22 @@ public class TokenUtils {
         }
     }
 
-    public static Claims extractClaims(String token, String secret) {
+    public  Claims extractClaims(String token) {
         return Jwts.parser().setSigningKey(secret).parseClaimsJws(token).getBody();
     }
 
 
     //토큰 유효성 검증
-    public static boolean isNonExpired(String token, String secret) {
+    public  boolean isNonExpired(String token) {
         try{
-            Claims body = extractClaims(token, secret);
+            Claims body = extractClaims(token);
             return body.getExpiration().after(new Date());
         }catch (JwtException e){
             return false;
         }
     }
 
-    public static void setRefreshToken(HttpServletResponse response, TokenInfo tokenInfo) {
+    public  void setRefreshToken(HttpServletResponse response, TokenInfo tokenInfo) {
         Cookie refreshToken = new Cookie("refreshToken", tokenInfo.getRefreshToken().getRefreshToken());
         refreshToken.setPath("/");
         refreshToken.setHttpOnly(true);

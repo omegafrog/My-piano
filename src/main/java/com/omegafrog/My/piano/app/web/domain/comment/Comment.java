@@ -1,6 +1,6 @@
 package com.omegafrog.My.piano.app.web.domain.comment;
 
-import com.omegafrog.My.piano.app.web.domain.post.Post;
+import com.omegafrog.My.piano.app.web.domain.article.Article;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.ReturnCommentDto;
 import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
@@ -38,7 +38,11 @@ public class Comment {
     private List<Comment> replies = new CopyOnWriteArrayList<>();
 
     @ManyToOne
-    private Post target;
+    private Article target;
+
+    public void setTarget(Article article){
+        target = article;
+    }
 
     public void increaseLikeCount(){
         likeCount++;

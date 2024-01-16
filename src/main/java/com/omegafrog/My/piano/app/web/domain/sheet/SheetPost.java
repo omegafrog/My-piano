@@ -62,7 +62,7 @@ public class SheetPost extends SellableItem {
                 .viewCount(viewCount)
                 .discountRate(getDiscountRate())
                 .comments(comments.stream().map(Comment::toDto).toList())
-                .author(author.getUserProfile())
+                .artist(author.getUserProfile())
                 .createdAt(createdAt)
                 .sheet(toInfoDto())
                 .price(getPrice())
