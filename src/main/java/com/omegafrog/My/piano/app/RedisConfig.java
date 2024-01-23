@@ -1,4 +1,4 @@
-package com.omegafrog.My.piano.app.security;
+package com.omegafrog.My.piano.app;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
