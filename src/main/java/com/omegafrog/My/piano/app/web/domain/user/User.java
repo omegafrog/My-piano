@@ -12,6 +12,7 @@ import com.omegafrog.My.piano.app.web.domain.order.SellableItem;
 import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
+import com.omegafrog.My.piano.app.web.dto.ChangeUserDto;
 import com.omegafrog.My.piano.app.web.dto.user.UpdateUserDto;
 import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
 import com.omegafrog.My.piano.app.web.enums.OrderStatus;
@@ -243,10 +244,10 @@ public class User {
         this.cash = cash;
     }
 
-    public User update(UpdateUserDto userDto) {
+    public User update(ChangeUserDto userDto) {
         this.name = userDto.getName();
         this.profileSrc = userDto.getProfileSrc();
-        this.phoneNum = userDto.getPhoneNum();
+        this.phoneNum = new PhoneNum(userDto.getPhoneNum());
         return this;
     }
 
@@ -305,6 +306,8 @@ public class User {
         return UserProfile.builder()
                 .id(id)
                 .name(name)
+                .username(securityUser.getUsername())
+                .email(email)
                 .profileSrc(profileSrc)
                 .loginMethod(loginMethod)
                 .role(securityUser.getRole())

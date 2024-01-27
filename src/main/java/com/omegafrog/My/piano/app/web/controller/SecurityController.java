@@ -13,6 +13,7 @@ import com.omegafrog.My.piano.app.security.jwt.RefreshToken;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.security.jwt.TokenInfo;
 import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
+import com.omegafrog.My.piano.app.utils.DtoMapper;
 import com.omegafrog.My.piano.app.utils.response.*;
 import com.omegafrog.My.piano.app.web.dto.RegisterUserDto;
 import com.omegafrog.My.piano.app.web.dto.SecurityUserDto;
@@ -54,27 +55,20 @@ public class SecurityController {
     @Autowired
     private RefreshTokenRepository refreshTokenRepository;
     @Autowired
-    private SecurityUserRepository securityUserRepository;
-    @Autowired
     private TokenUtils tokenUtils;
 
     @Autowired
     private ObjectMapper objectMapper;
 
     private final CommonUserService commonUserService;
-
     @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
-    private Environment environment;
-
-    @Value("${security.jwt.secret}")
-    private String secret;
-
+    private GooglePublicKeysManager googlePublicKeysManager;
 
     @Autowired
-    private GooglePublicKeysManager googlePublicKeysManager;
+    private DtoMapper dtoMapper;
 
 
     @GetMapping("/validate")
@@ -105,7 +99,7 @@ public class SecurityController {
 
     @PostMapping("/user/register")
     public JsonAPIResponse registerCommonUser(@RequestParam(name = "profileImg") @Nullable MultipartFile profileImg, @RequestParam String registerInfo) throws IOException, UsernameAlreadyExistException {
-        RegisterUserDto dto = parseRegisterUserInfo(registerInfo);
+        RegisterUserDto dto = dtoMapper.parseRegisterUserInfo(registerInfo);
         SecurityUserDto securityUserDto;
         if (profileImg == null)
             securityUserDto = commonUserService.registerUser(dto);
@@ -115,25 +109,7 @@ public class SecurityController {
         return new APISuccessResponse("회원가입 성공.", data);
     }
 
-    private RegisterUserDto parseRegisterUserInfo(String registerInfo) throws JsonProcessingException {
-        JsonNode registerNodeInfo = objectMapper.readTree(registerInfo);
-        String username = registerNodeInfo.get("username").asText();
-        String password = registerNodeInfo.get("password").asText();
-        String name = registerNodeInfo.get("name").asText();
-        String email = registerNodeInfo.get("email").asText();
-        String phoneNum = registerNodeInfo.get("phoneNum").asText();
-        String loginMethod = registerNodeInfo.get("loginMethod").asText();
-        String profileSrc = registerNodeInfo.get("profileSrc").asText();
-        return RegisterUserDto.builder()
-                .username(username)
-                .password(password)
-                .name(name)
-                .email(email)
-                .phoneNum(phoneNum)
-                .loginMethod(LoginMethod.valueOf(loginMethod))
-                .profileSrc(profileSrc)
-                .build();
-    }
+
 
     @ExceptionHandler(AuthenticationException.class)
     public APIForbiddenResponse authenticationErrorResponse(AuthenticationException ex){

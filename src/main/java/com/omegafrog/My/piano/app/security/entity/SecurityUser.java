@@ -7,7 +7,6 @@ import com.omegafrog.My.piano.app.web.domain.user.User;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -131,4 +130,8 @@ public class SecurityUser implements UserDetails {
     public void enable(){
         this.locked=false;
     }
+    public void changePassword(String encodedPassword){
+        this.password = password;
+    }
+
 }
