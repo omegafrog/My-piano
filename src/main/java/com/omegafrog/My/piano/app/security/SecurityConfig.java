@@ -175,6 +175,30 @@ public class SecurityConfig {
         return http.build();
     }
 
+    @Bean
+    public SecurityFilterChain cashApiAuthentication(HttpSecurity http) throws Exception {
+        http.securityMatcher("/cash/**")
+                .authenticationProvider(commonUserAuthenticationProvider())
+                .authorizeHttpRequests()
+                .requestMatchers("/cash/webhook")
+                .permitAll()
+                .anyRequest().hasRole(Role.USER.value)
+                .and()
+                .addFilterBefore(jwtTokenFilter(),
+                        UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtTokenExceptionFilter(), CommonUserJwtTokenFilter.class)
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .exceptionHandling()
+                .authenticationEntryPoint(UnAuthorizedEntryPoint())
+                .accessDeniedHandler(commonUserAccessDeniedHandler())
+                .and()
+                .csrf().disable()
+                .cors().configurationSource(corsConfigurationSource());
+        return http.build();
+    }
+
 
     @Bean
     public SecurityFilterChain commonUserAuthentication(HttpSecurity http) throws Exception {
@@ -211,6 +235,7 @@ public class SecurityConfig {
                 .and()
                 .csrf().disable()
                 .cors().configurationSource(corsConfigurationSource());
+
         return http.build();
     }
 

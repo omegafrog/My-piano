@@ -1,7 +1,7 @@
 package com.omegafrog.My.piano.app.web.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.omegafrog.My.piano.app.utils.DtoMapper;
+import com.omegafrog.My.piano.app.utils.MapperUtil;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.UpdateSheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.RegisterSheetPostDto;
@@ -32,7 +32,7 @@ public class SheetPostController {
 
     private final SheetPostApplicationService sheetPostService;
     @Autowired
-    private DtoMapper dtoMapper;
+    private MapperUtil mapperUtil;
 
     @GetMapping("/{id}")
     public JsonAPIResponse getSheetPost(@PathVariable Long id)
@@ -77,7 +77,7 @@ public class SheetPostController {
             throws IOException, PersistenceException, AccessDeniedException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
 
-        RegisterSheetPostDto dto = dtoMapper.parseRegisterSheetPostInfo(registerSheetInfo, loggedInUser);
+        RegisterSheetPostDto dto = mapperUtil.parseRegisterSheetPostInfo(registerSheetInfo, loggedInUser);
         SheetPostDto sheetPostDto = sheetPostService.writeSheetPost(dto, file, loggedInUser);
 
         Map<String, Object> data = ResponseUtil.getStringObjectMap("sheetPost", sheetPostDto);
