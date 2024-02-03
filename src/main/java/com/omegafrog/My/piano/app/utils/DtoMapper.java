@@ -3,8 +3,11 @@ package com.omegafrog.My.piano.app.utils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.ChangeUserDto;
+import com.omegafrog.My.piano.app.web.dto.RegisterSheetDto;
 import com.omegafrog.My.piano.app.web.dto.RegisterUserDto;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.RegisterSheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.user.UpdateUserDto;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +15,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class DtoMapper {
     @Autowired
     private ObjectMapper objectMapper;
+
+    public RegisterSheetPostDto parseRegisterSheetPostInfo(String registerSheetInfo, User loggedInUser) throws JsonProcessingException {
+        JsonNode node = objectMapper.readTree(registerSheetInfo);
+
+        return RegisterSheetPostDto.builder()
+                .title(node.get("title").asText())
+                .content(node.get("content").asText())
+                .price(node.get("price").asInt())
+                .discountRate(node.get("discountRate").asDouble())
+                .artistId(loggedInUser.getId())
+                .sheetDto(objectMapper.convertValue(node.get("sheetDto"), RegisterSheetDto.class))
+                .build();
+    }
 
     public RegisterUserDto parseRegisterUserInfo(String registerInfo) throws JsonProcessingException {
         JsonNode registerNodeInfo = objectMapper.readTree(registerInfo);

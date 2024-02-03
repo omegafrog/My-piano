@@ -200,7 +200,7 @@ public class SheetPostApplicationService implements CommentHandler {
         instrument = instrument==null ? new ArrayList<>() : instrument;
         difficulty = difficulty==null ? new ArrayList<>() : difficulty;
         genre = genre==null ? new ArrayList<>() : genre;
-        List<Long> sheetPostIds = elasticSearchInstance.searchingSheetPost(page, instrument, difficulty, genre);
+        List<Long> sheetPostIds = elasticSearchInstance.searchSheetPost(page, instrument, difficulty, genre);
         return sheetPostIds.stream().map(id -> sheetPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity:" + id)).toDto()).toList();
     }

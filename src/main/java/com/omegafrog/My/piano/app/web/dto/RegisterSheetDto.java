@@ -4,7 +4,9 @@ import com.omegafrog.My.piano.app.web.domain.sheet.Genres;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import com.omegafrog.My.piano.app.web.enums.Difficulty;
 import com.omegafrog.My.piano.app.web.enums.Instrument;
+import jakarta.validation.constraints.Positive;
 import lombok.*;
+import org.hibernate.validator.constraints.Range;
 
 import java.lang.reflect.Array;
 import java.util.Arrays;
@@ -15,9 +17,13 @@ import java.util.Arrays;
 @NoArgsConstructor
 public class RegisterSheetDto {
     private String title;
+    @Positive
     private int pageNum;
+    @Range(min = 0, max = 4)
     private int difficulty;
+    @Range(min=0,max=12)
     private int instrument;
+
     private Genres genres;
     private Boolean isSolo;
     private boolean lyrics;
