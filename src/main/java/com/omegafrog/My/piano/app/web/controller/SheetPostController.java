@@ -1,10 +1,8 @@
 package com.omegafrog.My.piano.app.web.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.omegafrog.My.piano.app.utils.MapperUtil;
 import com.omegafrog.My.piano.app.web.domain.user.User;
-import com.omegafrog.My.piano.app.web.dto.RegisterSheetDto;
 import com.omegafrog.My.piano.app.web.dto.UpdateSheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.RegisterSheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
@@ -34,7 +32,7 @@ public class SheetPostController {
 
     private final SheetPostApplicationService sheetPostService;
     @Autowired
-    private ObjectMapper objectMapper;
+    private MapperUtil mapperUtil;
 
     @GetMapping("/{id}")
     public JsonAPIResponse getSheetPost(@PathVariable Long id)
@@ -78,15 +76,8 @@ public class SheetPostController {
                                           @RequestPart(name = "sheetInfo") String registerSheetInfo)
             throws IOException, PersistenceException, AccessDeniedException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        JsonNode node = objectMapper.readTree(registerSheetInfo);
-        RegisterSheetPostDto dto = RegisterSheetPostDto.builder()
-                .title(node.get("title").asText())
-                .content(node.get("content").asText())
-                .price(node.get("price").asInt())
-                .discountRate(node.get("discountRate").asDouble())
-                .artistId(loggedInUser.getId())
-                .sheetDto(objectMapper.convertValue(node.get("sheetDto"), RegisterSheetDto.class))
-                .build();
+
+        RegisterSheetPostDto dto = mapperUtil.parseRegisterSheetPostInfo(registerSheetInfo, loggedInUser);
         SheetPostDto sheetPostDto = sheetPostService.writeSheetPost(dto, file, loggedInUser);
 
         Map<String, Object> data = ResponseUtil.getStringObjectMap("sheetPost", sheetPostDto);

@@ -3,14 +3,13 @@ package com.omegafrog.My.piano.app.web.domain.order;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import jakarta.persistence.EntityNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 public class SellableItemFactory {
-    @Autowired
-    private LessonRepository lessonRepository;
+    private final LessonRepository lessonRepository;
 
-    @Autowired
-    private SheetPostRepository sheetPostRepository;
+    private final SheetPostRepository sheetPostRepository;
 
     /**
      * 요청의 mainResource와 주어진 id에 따라 맞는 객체를 검색해 반환하는 함수

@@ -1,9 +1,6 @@
 package com.omegafrog.My.piano.app;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.json.jackson.JacksonJsonpMapper;
-import co.elastic.clients.transport.ElasticsearchTransport;
-import co.elastic.clients.transport.rest_client.RestClientTransport;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
@@ -11,21 +8,19 @@ import com.google.api.client.http.apache.v2.ApacheHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.omegafrog.My.piano.app.external.elasticsearch.ElasticSearchInstance;
 import com.omegafrog.My.piano.app.external.tossPayment.TossPaymentInstance;
-import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
-import com.omegafrog.My.piano.app.utils.DtoMapper;
+import com.omegafrog.My.piano.app.external.tossPayment.TossWebHookResultFactory;
+import com.omegafrog.My.piano.app.external.tossPayment.TossWebHookResultFactoryImpl;
+import com.omegafrog.My.piano.app.utils.MapperUtil;
 import com.omegafrog.My.piano.app.web.domain.S3UploadFileExecutor;
+import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
 import com.omegafrog.My.piano.app.web.domain.order.SellableItemFactory;
+import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import io.awspring.cloud.s3.InMemoryBufferingS3OutputStreamProvider;
 import io.awspring.cloud.s3.Jackson2JsonS3ObjectConverter;
 import io.awspring.cloud.s3.S3Template;
-import org.apache.http.Header;
-import org.apache.http.HttpHost;
-import org.apache.http.message.BasicHeader;
-import org.elasticsearch.client.RestClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.RestTemplate;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -50,42 +45,23 @@ public class GlobalConfig {
     @Value("${spring.cloud.aws.region.static}")
     private String region;
 
-    @Value("${elasticsearch.host}")
-    private String host;
-    @Value("${elasticsearch.port}")
-    private String port;
-    @Value("${elasticsearch.apiKey}")
-    private String apiKey;
+
 
     @Bean
-    public SellableItemFactory sellableItemFactory() {
-        return new SellableItemFactory();
+    public SellableItemFactory sellableItemFactory(LessonRepository lessonRepository, SheetPostRepository sheetPostRepository) {
+        return new SellableItemFactory(lessonRepository, sheetPostRepository);
     }
 
     @Bean
-    public DtoMapper dtoMapper(){
-        return new DtoMapper();
+    public MapperUtil mapperUtil(ObjectMapper objectMapper, TossWebHookResultFactory factory){
+        return new MapperUtil(objectMapper, factory);
     }
 
     @Bean
-    public ElasticsearchClient elasticsearchClient() {
-        String serverUrl = "https://" + host + ":" + port;
-
-        // Create the low-level client
-        RestClient restClient = RestClient
-                .builder(HttpHost.create(serverUrl))
-                .setDefaultHeaders(new Header[]{
-                        new BasicHeader("Authorization", "ApiKey " + apiKey)
-                })
-                .build();
-
-        // Create the transport with a Jackson mapper
-        ElasticsearchTransport transport = new RestClientTransport(
-                restClient, new JacksonJsonpMapper());
-
-        // And create the API client
-        return new ElasticsearchClient(transport);
+    public TossWebHookResultFactory tossWebHookResultFactory(ObjectMapper objectMapper){
+        return new TossWebHookResultFactoryImpl(objectMapper);
     }
+
 
     @Bean
     public RestTemplate restTemplate() {
@@ -100,8 +76,8 @@ public class GlobalConfig {
     }
 
     @Bean
-    public TossPaymentInstance tossPaymentInstance() {
-        return new TossPaymentInstance();
+    public TossPaymentInstance tossPaymentInstance(RestTemplate restTemplate, MapperUtil mapperUtil) {
+        return new TossPaymentInstance(restTemplate, mapperUtil);
     }
 
     @Bean
@@ -113,6 +89,8 @@ public class GlobalConfig {
     public ObjectMapper objectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
         return objectMapper;
     }
 

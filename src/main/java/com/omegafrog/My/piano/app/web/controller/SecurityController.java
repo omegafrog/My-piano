@@ -1,19 +1,17 @@
 package com.omegafrog.My.piano.app.web.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
 import com.google.api.client.json.gson.GsonFactory;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
-import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
 import com.omegafrog.My.piano.app.security.jwt.RefreshToken;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.security.jwt.TokenInfo;
 import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
-import com.omegafrog.My.piano.app.utils.DtoMapper;
+import com.omegafrog.My.piano.app.utils.MapperUtil;
 import com.omegafrog.My.piano.app.utils.response.*;
 import com.omegafrog.My.piano.app.web.dto.RegisterUserDto;
 import com.omegafrog.My.piano.app.web.dto.SecurityUserDto;
@@ -28,8 +26,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -52,23 +48,23 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Slf4j
 public class SecurityController {
-    @Autowired
-    private RefreshTokenRepository refreshTokenRepository;
-    @Autowired
-    private TokenUtils tokenUtils;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    private final RefreshTokenRepository refreshTokenRepository;
+
+    private final TokenUtils tokenUtils;
+
+
+    private final ObjectMapper objectMapper;
 
     private final CommonUserService commonUserService;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private GooglePublicKeysManager googlePublicKeysManager;
+    private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private DtoMapper dtoMapper;
+
+    private final GooglePublicKeysManager googlePublicKeysManager;
+
+
+    private final MapperUtil mapperUtil;
 
 
     @GetMapping("/validate")
@@ -99,7 +95,7 @@ public class SecurityController {
 
     @PostMapping("/user/register")
     public JsonAPIResponse registerCommonUser(@RequestParam(name = "profileImg") @Nullable MultipartFile profileImg, @RequestParam String registerInfo) throws IOException, UsernameAlreadyExistException {
-        RegisterUserDto dto = dtoMapper.parseRegisterUserInfo(registerInfo);
+        RegisterUserDto dto = mapperUtil.parseRegisterUserInfo(registerInfo);
         SecurityUserDto securityUserDto;
         if (profileImg == null)
             securityUserDto = commonUserService.registerUser(dto);

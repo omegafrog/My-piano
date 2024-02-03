@@ -1,21 +1,19 @@
 package com.omegafrog.My.piano.app.external.tossPayment;
 
-import lombok.*;
-
-@Data
-@Setter
-@Getter
-@NoArgsConstructor
-@AllArgsConstructor
-public class Payment {
-    private String paymentKey;
-    private String type;
-    private String orderId;
-    private String orderName;
-    private String mId;
-    private String currency;
-    private String method;
-    private Long totalAmount;
-    private String status;
-
+public record Payment(String paymentKey, String type, String orderId, String orderName, String mId, String currency,
+                      String method, Long totalAmount, String status) {
+    @Override
+    public String toString() {
+        return "Payment{" +
+                "paymentKey='" + paymentKey + '\'' +
+                ", type='" + type + '\'' +
+                ", orderId='" + orderId + '\'' +
+                ", orderName='" + orderName + '\'' +
+                ", mId='" + mId + '\'' +
+                ", currency='" + currency + '\'' +
+                ", method='" + method + '\'' +
+                ", totalAmount=" + totalAmount +
+                ", status='" + status + '\'' +
+                '}';
+    }
 }

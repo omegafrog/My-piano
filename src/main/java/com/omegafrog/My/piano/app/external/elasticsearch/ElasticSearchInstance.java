@@ -1,20 +1,25 @@
 package com.omegafrog.My.piano.app.external.elasticsearch;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch._types.FieldValue;
+import co.elastic.clients.elasticsearch._types.*;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
+import co.elastic.clients.json.JsonData;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
+import com.omegafrog.My.piano.app.web.dto.dateRange.DateRange;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 
 import java.io.IOException;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 @Slf4j
 public class ElasticSearchInstance {
@@ -23,47 +28,43 @@ public class ElasticSearchInstance {
     private ElasticsearchClient esClient;
     @Autowired
     private SheetPostRepository sheetPostRepository;
+    @Autowired
+    private SheetPostIndexRepository sheetPostIndexRepository;
 
     private final Integer MAX_PAGE_SIZE = 20;
 
+    private final String SHEET_POST_INDEX_NAME="sheetpost";
+
 
     @Async("ThreadPoolTaskExecutor")
-    public void invertIndexingSheetPost(SheetPost sheetPost) throws IOException {
-//        curl -XPUT "https://172.18.0.2:9200/sheets/_doc/1" -H "kbn-xsrf: reporting" -H "Content-Type: application/json" -d'
-//        {
-//            "name":"동해물과 백두산이"
-//        }'
-        esClient.index(i -> i
-                .index("sheets")
-                .id(sheetPost.getId().toString())
-                .document(
-                        SheetPostIndex.of(sheetPost)
-                ));
+    public void invertIndexingSheetPost(SheetPost sheetPost) {
+        sheetPostIndexRepository.save(SheetPostIndex.of(sheetPost));
+
     }
 
-    public List<Long> searchingSheetPost(Integer page, List<String> instruments, List<String> difficulties, List<String> genres) throws IOException {
+    public List<Long> searchSheetPost(Integer page, List<String> instruments, List<String> difficulties, List<String> genres) throws IOException {
         List<Query> searchOptions = new ArrayList<>();
-        if(!instruments.isEmpty()){
+        if (!instruments.isEmpty()) {
             Query instrumentFilter = QueryBuilders.terms(t -> t
-                    .field("instrument")
+                    .field("instrument.keyword")
                     .terms(terms -> terms.value(instruments.stream().map(item -> FieldValue.of(item)).toList())));
             searchOptions.add(instrumentFilter);
         }
-        if(!difficulties.isEmpty()){
+        if (!difficulties.isEmpty()) {
             Query instrumentFilter = QueryBuilders.terms(t -> t
-                    .field("difficulty")
+                    .field("difficulty.keyword")
                     .terms(terms -> terms.value(difficulties.stream().map(item -> FieldValue.of(item)).toList())));
             searchOptions.add(instrumentFilter);
         }
-        if(!genres.isEmpty()){
+        if (!genres.isEmpty()) {
             Query instrumentFilter = QueryBuilders.terms(t -> t
-                    .field("genre")
+                    .field("genre.keyword")
                     .terms(terms -> terms.value(genres.stream().map(item -> FieldValue.of(item)).toList())));
             searchOptions.add(instrumentFilter);
         }
         SearchResponse<SheetPostIndex> response = esClient.search(
-                s -> s.index("sheets")
-                        .from(page*MAX_PAGE_SIZE)
+                s -> s.index(SHEET_POST_INDEX_NAME)
+                        .from(page * MAX_PAGE_SIZE)
                         .size(MAX_PAGE_SIZE)
                         .query(q -> q
                                 .bool(b -> b.
@@ -71,9 +72,42 @@ public class ElasticSearchInstance {
         );
         List<Hit<SheetPostIndex>> hits = response.hits().hits();
         List<Long> sheetPostIds = new ArrayList<>();
-        for(Hit<SheetPostIndex> hit: hits){
+        for (Hit<SheetPostIndex> hit : hits) {
             sheetPostIds.add(Long.valueOf(hit.id()));
         }
         return sheetPostIds;
+    }
+
+    public List<SheetPostIndex> searchPopularDateRangeSheetPost(DateRange dateRange, String limit) throws IOException, TimeoutException {
+        List<Query> searchOptions = new ArrayList<>();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX");
+        Query dateRangeQuery = QueryBuilders.range(r -> r
+                .field("created_at")
+                .gte(JsonData.of(dateRange.getStart().atStartOfDay().atOffset(ZoneOffset.UTC).format(formatter)))
+                .lt(JsonData.of(dateRange.getEnd().atStartOfDay().atOffset(ZoneOffset.UTC).format(formatter))));
+        searchOptions.add(dateRangeQuery);
+        SortOptions sortOptions = SortOptionsBuilders
+                .field(f -> f
+                        .field("viewCount")
+                        .order(SortOrder.Desc));
+
+        SearchResponse<SheetPostIndex> response = esClient.search(fn -> fn
+                        .index(SHEET_POST_INDEX_NAME)
+                        .query(q -> q
+                                .bool(v -> v
+                                        .must(searchOptions)))
+                        .sort(sortOptions)
+                        .size(Integer.valueOf(limit))
+                , SheetPostIndex.class);
+
+        if (response.timedOut())
+            throw new TimeoutException("Elasticsearch response is time out.");
+
+        log.info("{} hits in {} seconds. ", response.hits().hits().size(), response.took());
+        log.info("searchOptions : {}", searchOptions);
+        log.info("sortOptions : {}", sortOptions.toString());
+
+        List<Hit<SheetPostIndex>> hits = response.hits().hits();
+        return hits.stream().map(Hit::source).toList();
     }
 }

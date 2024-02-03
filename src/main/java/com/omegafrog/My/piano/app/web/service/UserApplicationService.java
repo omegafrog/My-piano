@@ -1,7 +1,6 @@
 package com.omegafrog.My.piano.app.web.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.omegafrog.My.piano.app.utils.DtoMapper;
+import com.omegafrog.My.piano.app.utils.MapperUtil;
 import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
 import com.omegafrog.My.piano.app.web.domain.S3UploadFileExecutor;
 import com.omegafrog.My.piano.app.web.domain.comment.Comment;
@@ -16,10 +15,8 @@ import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
 import com.omegafrog.My.piano.app.web.dto.post.PostDto;
 import com.omegafrog.My.piano.app.web.dto.sheet.SheetInfoDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
-import com.omegafrog.My.piano.app.web.dto.user.UpdateUserDto;
 import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
 import io.awspring.cloud.s3.ObjectMetadata;
-import io.awspring.cloud.s3.S3Template;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceException;
 import lombok.RequiredArgsConstructor;
@@ -31,11 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.channels.FileChannel;
-import java.nio.channels.ReadableByteChannel;
 import java.util.Arrays;
 import java.util.List;
 
@@ -47,7 +40,7 @@ public class UserApplicationService {
     public static final String USER_ENTITY_NOT_FOUNT_ERROR_MSG = "Cannot find User entity : ";
     private final UserRepository userRepository;
     @Autowired
-    private DtoMapper dtoMapper;
+    private MapperUtil mapperUtil;
 
     @Autowired
     private S3UploadFileExecutor s3UploadFileExecutor;
@@ -125,7 +118,7 @@ public class UserApplicationService {
 
     public UserProfile changeUserInfo(String dto, User loggedInUser, MultipartFile profileImg) throws IOException {
         User user = userRepository.findById(loggedInUser.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find User entity. id : " + loggedInUser.getId()));
-        ChangeUserDto changeUserDto = dtoMapper.parseUpdateUserInfo(dto);
+        ChangeUserDto changeUserDto = mapperUtil.parseUpdateUserInfo(dto);
 
         // 비밀번호 수정
         // 비밀번호 수정을 위해 현재 비밀번호는 입력하였으나 바꿀 비밀번호를 입력하지 않은 경우
