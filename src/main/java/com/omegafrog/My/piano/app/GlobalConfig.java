@@ -48,12 +48,7 @@ public class GlobalConfig {
     @Value("${spring.cloud.aws.region.static}")
     private String region;
 
-    @Value("${elasticsearch.host}")
-    private String host;
-    @Value("${elasticsearch.port}")
-    private String port;
-    @Value("${elasticsearch.apiKey}")
-    private String apiKey;
+
 
     @Bean
     public SellableItemFactory sellableItemFactory(){
@@ -65,25 +60,6 @@ public class GlobalConfig {
         return new DtoMapper();
     }
 
-    @Bean
-    public ElasticsearchClient elasticsearchClient() {
-        String serverUrl = "https://" + host + ":" +port;
-
-        // Create the low-level client
-        RestClient restClient = RestClient
-                .builder(HttpHost.create(serverUrl))
-                .setDefaultHeaders(new Header[]{
-                        new BasicHeader("Authorization", "ApiKey " + apiKey)
-                })
-                .build();
-
-        // Create the transport with a Jackson mapper
-        ElasticsearchTransport transport = new RestClientTransport(
-                restClient, new JacksonJsonpMapper());
-
-        // And create the API client
-        return new ElasticsearchClient(transport);
-    }
 
     @Bean
     public RestTemplate restTemplate() {
@@ -104,6 +80,7 @@ public class GlobalConfig {
     public ObjectMapper objectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
+
         return objectMapper;
     }
 
