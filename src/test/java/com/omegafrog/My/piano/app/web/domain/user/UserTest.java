@@ -7,6 +7,7 @@ import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.dto.ChangeUserDto;
+import com.omegafrog.My.piano.app.web.enums.PostType;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 import lombok.extern.slf4j.Slf4j;
@@ -14,12 +15,8 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-@Slf4j
-@ExtendWith(MockitoExtension.class)
 class UserTest {
 
     @Test
@@ -65,7 +62,7 @@ class UserTest {
                 .phoneNum(new PhoneNum())
                 .build();
         ReflectionTestUtils.setField(user, "id", 1L);
-        Post post = new Post(user, "title", "content");
+        Post post = new Post(user, "title", "content", PostType.COMMON);
         user.addUploadedPost(post);
         Assertions.assertThat(user.getUploadedPosts()).hasSize(1).contains(post);
     }
@@ -100,7 +97,7 @@ class UserTest {
         ReflectionTestUtils.setField(author, "id", 1L);
         Lesson lesson = new Lesson();
         ReflectionTestUtils.setField(lesson, "id", 1L);
-        author.addUploadedLesson(lesson);
+        author.getUploadedLessons().add(lesson);
 
         User scrappedUser = User.builder().build();
 
@@ -121,7 +118,7 @@ class UserTest {
         ReflectionTestUtils.setField(user, "id", 1L);
         Lesson lesson = new Lesson();
         ReflectionTestUtils.setField(lesson, "id", 1L);
-        user.addUploadedLesson(lesson);
+        user.getUploadedLessons().add(lesson);
 
         user.scrapLesson(lesson);
 
@@ -335,7 +332,6 @@ class UserTest {
         com.omegafrog.My.piano.app.web.domain.order.Order order =
                 new com.omegafrog.My.piano.app.web.domain.order.Order(seller,
                         buyer, item, 0D, null);
-        log.info("order :{}", order);
 
         buyer.pay(order);
         Assertions.assertThat(buyer.isPurchased(item)).isTrue();
