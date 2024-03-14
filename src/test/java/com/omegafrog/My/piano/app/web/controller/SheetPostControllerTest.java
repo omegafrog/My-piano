@@ -88,7 +88,7 @@ class SheetPostControllerTest {
         SecurityUserDto securityUserDto1 = commonUserService.registerUser(TestLoginUtil.user1);
         User user = ((SecurityUser) commonUserService.loadUserByUsername(securityUserDto1.getUsername()))
                 .getUser();
-        user.addCash(20000);
+        user.chargeCash(20000);
         userRepository.save(user);
 
         SecurityUserDto securityUserDto2 = commonUserService.registerUser(TestLoginUtil.user2);

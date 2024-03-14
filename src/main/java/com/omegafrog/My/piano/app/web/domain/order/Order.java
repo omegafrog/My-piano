@@ -14,6 +14,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
+import org.springframework.validation.annotation.Validated;
 
 import javax.annotation.Nullable;
 
@@ -45,7 +46,7 @@ public class Order {
     private SellableItem item;
 
     @NotNull
-    private int initialPrice;
+    private Integer initialPrice;
 
     private Integer totalPrice;
 
@@ -59,13 +60,14 @@ public class Order {
     @Nullable
     private Coupon coupon;
 
-    public Order(User seller, User buyer, SellableItem item, Coupon coupon) {
+    public Order(User seller, User buyer, SellableItem item, Double discountRate, @Nullable Coupon coupon) {
         this.seller = seller;
         this.buyer = buyer;
         this.item = item;
-        this.initialPrice = item.price;
-        this.discountRate = item.discountRate;
+        this.initialPrice = item.getPrice();
+        this.discountRate = discountRate;
         this.coupon = coupon;
+        this.calculateTotalPrice();
     }
 
     public void setStatus(OrderStatus status){
@@ -108,5 +110,20 @@ public class Order {
                 .initialPrice(initialPrice)
                 .totalPrice(totalPrice)
                 .build();
+    }
+
+    @Override
+    public String toString() {
+        return "Order{" +
+                "id=" + id +
+                ", seller=" + seller +
+                ", buyer=" + buyer +
+                ", item=" + item +
+                ", initialPrice=" + initialPrice +
+                ", totalPrice=" + totalPrice +
+                ", orderStatus=" + orderStatus +
+                ", discountRate=" + discountRate +
+                ", coupon=" + coupon +
+                '}';
     }
 }

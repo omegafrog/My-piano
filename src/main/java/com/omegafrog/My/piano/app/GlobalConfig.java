@@ -11,6 +11,7 @@ import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
 import com.google.api.client.http.apache.v2.ApacheHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.omegafrog.My.piano.app.external.elasticsearch.ElasticSearchInstance;
+import com.omegafrog.My.piano.app.external.elasticsearch.SheetPostIndexRepository;
 import com.omegafrog.My.piano.app.external.tossPayment.TossPaymentInstance;
 import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
 import com.omegafrog.My.piano.app.external.tossPayment.TossPaymentInstance;

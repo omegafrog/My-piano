@@ -63,7 +63,7 @@ public class RankingJobConfig {
     public JpaPagingItemReader<SheetPost> jpaPagingItemReader()  {
         return new JpaPagingItemReaderBuilder<SheetPost>()
                 .entityManagerFactory(entityManagerFactory)
-                .queryString("from SheetPost")
+                .queryString("from SheetPost p ORDER by id ASC")
                 .pageSize(100)
                 .name("jpaPagingItemReader")
                 .build();
@@ -87,10 +87,12 @@ public class RankingJobConfig {
             @Override
             public void write(Chunk<? extends SheetPostIndex> chunk) throws Exception {
                 List<? extends SheetPostIndex> items = chunk.getItems();
-                for (SheetPostIndex item : items) {
-                    log.info("created_at:{}", item.getCreated_at());
-                    sheetPostIndexRepository.save(item);
-                }
+//                for (SheetPostIndex item : items) {
+//                    log.info("created_at:{}", item.getCreated_at());
+//                    sheetPostIndexRepository.save(item);
+//                }
+                    sheetPostIndexRepository.saveAll(items);
+
             }
         };
     }

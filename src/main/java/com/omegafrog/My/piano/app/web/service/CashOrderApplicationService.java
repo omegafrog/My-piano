@@ -113,7 +113,7 @@ public class CashOrderApplicationService {
             // API 호출
             paymentInstance.requestCashOrder(byOrderId);
             // cash 업데이트
-            user.addCash(amount);
+            user.chargeCash(amount);
             // order state 변경
             byOrderId.changeState(OrderStatus.DONE);
 

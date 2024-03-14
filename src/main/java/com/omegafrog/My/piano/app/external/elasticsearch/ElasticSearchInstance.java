@@ -46,19 +46,19 @@ public class ElasticSearchInstance {
         List<Query> searchOptions = new ArrayList<>();
         if (!instruments.isEmpty()) {
             Query instrumentFilter = QueryBuilders.terms(t -> t
-                    .field("instrument.keyword")
+                    .field("instrument")
                     .terms(terms -> terms.value(instruments.stream().map(item -> FieldValue.of(item)).toList())));
             searchOptions.add(instrumentFilter);
         }
         if (!difficulties.isEmpty()) {
             Query instrumentFilter = QueryBuilders.terms(t -> t
-                    .field("difficulty.keyword")
+                    .field("difficulty")
                     .terms(terms -> terms.value(difficulties.stream().map(item -> FieldValue.of(item)).toList())));
             searchOptions.add(instrumentFilter);
         }
         if (!genres.isEmpty()) {
             Query instrumentFilter = QueryBuilders.terms(t -> t
-                    .field("genre.keyword")
+                    .field("genre")
                     .terms(terms -> terms.value(genres.stream().map(item -> FieldValue.of(item)).toList())));
             searchOptions.add(instrumentFilter);
         }
