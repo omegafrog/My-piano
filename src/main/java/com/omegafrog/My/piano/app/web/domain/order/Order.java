@@ -49,7 +49,7 @@ public class Order {
 
     private Integer totalPrice;
 
-    private OrderStatus orderStatus=OrderStatus.CREATED;
+    private OrderStatus orderStatus=OrderStatus.READY;
 
     @Builder.Default
     private Double discountRate=0d;

@@ -7,10 +7,10 @@ import org.springframework.http.HttpStatus;
 
 import java.util.Map;
 
-public class APISuccessResponse extends JsonAPIResponse {
+public class APISuccessResponse<T> extends JsonAPIResponse<T> {
 
 
-    public APISuccessResponse(String message, @NotNull Map<String, Object> data)
+    public APISuccessResponse(String message, @NotNull T data)
             throws JsonProcessingException, NullPointerException {
         super(HttpStatus.OK.value(), message, data);
     }

@@ -13,7 +13,6 @@ import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.dto.ChangeUserDto;
-import com.omegafrog.My.piano.app.web.dto.user.UpdateUserDto;
 import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
 import com.omegafrog.My.piano.app.web.enums.OrderStatus;
 import com.omegafrog.My.piano.app.utils.exception.payment.NotEnoughCashException;
@@ -272,7 +271,7 @@ public class User {
             // 캐시 부족
         } else {
             cash -= order.getTotalPrice();
-            order.setStatus(OrderStatus.PROGRESSING);
+            order.setStatus(OrderStatus.IN_PROGRESS);
             if (order.getItem() instanceof Lesson item)
                 purchasedLessons.add(item);
             else if (order.getItem() instanceof SheetPost item)
