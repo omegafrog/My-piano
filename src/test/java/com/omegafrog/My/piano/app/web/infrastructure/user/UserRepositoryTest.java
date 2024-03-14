@@ -1,7 +1,8 @@
 package com.omegafrog.My.piano.app.web.infrastructure.user;
 
+import com.omegafrog.My.piano.app.DataJpaUnitConfig;
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
-import com.omegafrog.My.piano.app.web.dto.user.UpdateUserDto;
+import com.omegafrog.My.piano.app.web.dto.ChangeUserDto;
 import com.omegafrog.My.piano.app.web.infra.user.JpaUserRepositoryImpl;
 import com.omegafrog.My.piano.app.web.infra.user.SimpleJpaUserRepository;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
@@ -10,13 +11,21 @@ import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.Optional;
 
 
 @DataJpaTest
+@Import(value = DataJpaUnitConfig.class)
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@ExtendWith({SpringExtension.class, MockitoExtension.class})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class UserRepositoryTest {
 
@@ -77,12 +86,10 @@ class UserRepositoryTest {
                 .build();
         User saved = userRepository.save(user);
         //when
-        UpdateUserDto updateDto = UpdateUserDto.builder()
+        ChangeUserDto updateDto = ChangeUserDto.builder()
                 .name("updatedName")
                 .profileSrc("updatedProfile")
-                .phoneNum(PhoneNum.builder()
-                        .phoneNum("010-1234-1234")
-                        .build())
+                .phoneNum("010-1234-1234")
                 .build();
 
         User updated = saved.update(updateDto);
