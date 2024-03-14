@@ -1,20 +1,20 @@
-package com.omegafrog.My.piano.app.web.domain.entity.post;
+package com.omegafrog.My.piano.app.web.domain.post;
 
-import com.omegafrog.My.piano.app.web.dto.post.UpdateVideoPostDto;
+import com.omegafrog.My.piano.app.web.dto.post.UpdatePostDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 import com.omegafrog.My.piano.app.web.domain.comment.Comment;
-import com.omegafrog.My.piano.app.web.domain.post.VideoPost;
+import com.omegafrog.My.piano.app.web.domain.post.Post;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
-class VideoPostTest {
+class PostTest {
 
     @Test
     void update() {
-        VideoPost post = VideoPost.builder()
+        Post post = Post.builder()
                 .title("title")
                 .content("content")
                 .author(User.builder()
@@ -28,20 +28,19 @@ class VideoPostTest {
                 .build();
         String title = "updated";
         String content = "updatedContent";
-        UpdateVideoPostDto updated = UpdateVideoPostDto.builder()
+        UpdatePostDto updated = UpdatePostDto.builder()
                 .title(title)
                 .content(content)
-                .videoUrl("none")
                 .build();
-        post.update(updated);
+        Post updatedPost = post.update(updated);
 
-        Assertions.assertThat(post.getContent()).isEqualTo(content);
-        Assertions.assertThat(post.getTitle()).isEqualTo(title);
+        Assertions.assertThat(updatedPost.getContent()).isEqualTo(content);
+        Assertions.assertThat(updatedPost.getTitle()).isEqualTo(title);
     }
 
     @Test
     void addComment() {
-        VideoPost post = VideoPost.builder()
+        Post post = Post.builder()
                 .title("title")
                 .content("content")
                 .author(User.builder()
@@ -52,7 +51,6 @@ class VideoPostTest {
                                 .phoneNum("010-1111-1112")
                                 .build())
                         .build())
-                .videoUrl("url1")
                 .build();
         String content = "hi";
         Comment comment = new Comment(
@@ -66,14 +64,14 @@ class VideoPostTest {
                                 .build())
                         .build(),
                 content
-        );
+               );
         post.addComment(comment);
         Assertions.assertThat(post.getComments().get(0).getContent()).isEqualTo(content);
     }
 
     @Test
     void deleteComment() {
-        VideoPost post = VideoPost.builder()
+        Post post = Post.builder()
                 .title("title")
                 .content("content")
                 .author(User.builder()
@@ -84,7 +82,6 @@ class VideoPostTest {
                                 .phoneNum("010-1111-1112")
                                 .build())
                         .build())
-                .videoUrl("url1")
                 .build();
         String content = "hi";
         User build = User.builder()
@@ -95,13 +92,13 @@ class VideoPostTest {
                         .phoneNum("010-1111-1112")
                         .build())
                 .build();
-        ReflectionTestUtils.setField(build,"id",0L);
+        ReflectionTestUtils.setField(build, "id", 0L);
         Comment comment = new Comment(
                 0L,
                 build,
                 content);
         post.addComment(comment);
         post.deleteComment(0L, build);
-        Assertions.assertThat(post.getComments().size()).isEqualTo(0);
+        Assertions.assertThat(post.getComments()).isEmpty();
     }
 }

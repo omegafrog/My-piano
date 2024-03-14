@@ -1,7 +1,7 @@
-package com.omegafrog.My.piano.app.web.domain.entity.user;
+package com.omegafrog.My.piano.app.web.domain.user;
 
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
-import com.omegafrog.My.piano.app.web.dto.user.UpdateUserDto;
+import com.omegafrog.My.piano.app.web.dto.ChangeUserDto;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 import com.omegafrog.My.piano.app.web.domain.user.User;
@@ -21,9 +21,9 @@ class UserTest {
                 .profileSrc("hi")
                 .phoneNum(new PhoneNum())
                 .build();
-        User updated = user.update(UpdateUserDto.builder()
+        User updated = user.update(ChangeUserDto.builder()
                 .name("hihi")
-                .phoneNum(new PhoneNum("111-222-333"))
+                .phoneNum("111-222-333")
                 .profileSrc("changed")
                 .build());
         Assertions.assertThat(updated).isEqualTo(user);

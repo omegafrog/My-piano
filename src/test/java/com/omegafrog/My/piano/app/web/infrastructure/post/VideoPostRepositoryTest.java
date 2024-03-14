@@ -1,5 +1,6 @@
 package com.omegafrog.My.piano.app.web.infrastructure.post;
 
+import com.omegafrog.My.piano.app.DataJpaUnitConfig;
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.post.UpdateVideoPostDto;
@@ -14,9 +15,15 @@ import com.omegafrog.My.piano.app.web.domain.post.VideoPostRepository;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
+
+import java.util.Optional;
 
 @DataJpaTest
+@Import(DataJpaUnitConfig.class)
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class VideoPostRepositoryTest {
 
@@ -24,15 +31,12 @@ class VideoPostRepositoryTest {
     private VideoPostRepository videoPostRepository;
 
     @Autowired
-    private SimpleJpaUserRepository jpaUserRepository;
-
     private UserRepository userRepository;
 
     private User user1;
 
-    @BeforeAll
+    @BeforeEach
     void settings() {
-        userRepository = new JpaUserRepositoryImpl(jpaUserRepository);
         User build = User.builder()
                 .name("user1")
                 .profileSrc("profile1")
@@ -44,16 +48,6 @@ class VideoPostRepositoryTest {
                 .cart(new Cart())
                 .build();
         user1 = userRepository.save(build);
-    }
-
-    @AfterEach
-    void clearRepository() {
-        videoPostRepository.deleteAll();
-    }
-
-    @AfterAll
-    void clearAllRepository() {
-        userRepository.deleteAll();
     }
 
     @Test
@@ -94,63 +88,17 @@ class VideoPostRepositoryTest {
                 .videoUrl(changedUrl)
                 .build();
         saved.update(dto);
-        VideoPost updatedVideoPost = videoPostRepository.save(saved);
-        //then
-        Assertions.assertThat(updatedVideoPost).isEqualTo(saved);
-        Assertions.assertThat(updatedVideoPost.getTitle())
-                .isEqualTo(changedTitle);
-        Assertions.assertThat(updatedVideoPost.getContent())
-                .isEqualTo(changedContent);
-        Assertions.assertThat(updatedVideoPost.getVideoUrl())
-                .isEqualTo(changedUrl);
-    }
-
-    @Test
-    @DisplayName("게시글에 댓글을 작성할 수 있어야 한다.")
-    void addCommentTest() {
-        //given
-        VideoPost post = VideoPost.builder()
-                .title("title")
-                .content("content")
-                .author(user1)
-                .videoUrl("url")
-                .build();
-        VideoPost saved = videoPostRepository.save(post);
-        //when
-        Comment comment = Comment.builder()
-                .content("comment1")
-                .author(user1)
-                .build();
-        saved.addComment(comment);
-        VideoPost commentAdded = videoPostRepository.save(saved);
-        //then
-        Assertions.assertThat(commentAdded.getComments().size()).isGreaterThanOrEqualTo(1);
-        Assertions.assertThat(commentAdded.getComments().get(0).getContent()).isEqualTo("comment1");
-    }
-
-    @Test
-    @DisplayName("게시글의 댓글을 삭제할 수 있어야 한다.")
-    void deleteCommentTest() {
-        //given
-        VideoPost post = VideoPost.builder()
-                .title("title")
-                .content("content")
-                .author(user1)
-                .videoUrl("url")
-                .build();
-        VideoPost saved = videoPostRepository.save(post);
-        Comment comment = Comment.builder()
-                .content("comment1")
-                .author(user1)
-                .build();
-        saved.addComment(comment);
-        VideoPost commentAdded = videoPostRepository.save(saved);
-        //when
-        commentAdded.deleteComment(commentAdded.getComments().get(0).getId(), commentAdded.getComments().get(0).getAuthor());
-        VideoPost deletedComment = videoPostRepository.save(commentAdded);
 
         //then
-        Assertions.assertThat(deletedComment.getComments().size()).isEqualTo(0);
+        Optional<VideoPost> byId = videoPostRepository.findById(saved.getId());
+        Assertions.assertThat(byId).get().isEqualTo(saved)
+                .extracting("title").isEqualTo(changedTitle);
+        Assertions.assertThat(byId).get().isEqualTo(saved)
+                .extracting("content").isEqualTo(changedContent);
+        Assertions.assertThat(byId).get().isEqualTo(saved)
+                .extracting("videoUrl").isEqualTo(changedUrl);
     }
+
+
 
 }

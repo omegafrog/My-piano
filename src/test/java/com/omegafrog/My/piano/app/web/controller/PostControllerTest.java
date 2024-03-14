@@ -94,7 +94,7 @@ class PostControllerTest {
                             .user(author)
                             .build(),
                             "password",
-                            Arrays.asList(Authority.builder().authority(Role.USER.authorityName).build()))
+                            Arrays.asList(Authority.builder().authority(Role.USER.value).build()))
             );
         }
 
@@ -118,7 +118,7 @@ class PostControllerTest {
             JsonAPIResponse apiResponse = controller.writePost( postDto);
             //then
             Assertions.assertThat(apiResponse).isNotNull();
-            PostDto postDto1 = (PostDto) apiResponse.getSerializedData().get("post");
+            PostDto postDto1 = (PostDto) apiResponse.getData();
 
             Assertions.assertThat(postDto1.getId()).isEqualTo(0L);
         }
@@ -148,7 +148,7 @@ class PostControllerTest {
 
 
             Assertions.assertThat(response).isNotNull();
-            PostDto postDto1 = (PostDto) response.getSerializedData().get("post");
+            PostDto postDto1 = (PostDto) response.getData();
             Long id = postDto1.getId();
             Assertions.assertThat(id).isEqualTo(0);
             String updatedContent = postDto1.getContent();
@@ -200,7 +200,7 @@ class PostControllerTest {
         JsonAPIResponse response = controller.findPost(0L);
         //then
         Assertions.assertThat(response).isNotNull();
-        PostDto postDto1 = (PostDto) response.getSerializedData().get("post");
+        PostDto postDto1 = (PostDto) response.getData();
         long id = postDto1.getId();
         String text = postDto1.getTitle();
         Assertions.assertThat(id).isEqualTo(0L);

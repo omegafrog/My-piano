@@ -18,7 +18,6 @@ import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 import java.time.LocalTime;
 
 public class DummyData {
-
     public static SheetPost sheetPost(User artist){
         return SheetPost.builder()
                 .sheet(Sheet.builder()
@@ -32,7 +31,7 @@ public class DummyData {
                         .lyrics(false)
                         .pageNum(3)
                         .build())
-                .title("SheetPostTItle1")
+                .title("SheetPostTitle1")
                 .price(12000)
                 .artist(artist)
                 .content("hihi this is content")

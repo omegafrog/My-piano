@@ -2,6 +2,7 @@ package com.omegafrog.My.piano.app.web.dto;
 
 import com.omegafrog.My.piano.app.web.domain.sheet.Genres;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
+import com.omegafrog.My.piano.app.web.domain.sheet.Sheet.SheetBuilder;
 import com.omegafrog.My.piano.app.web.enums.Difficulty;
 import com.omegafrog.My.piano.app.web.enums.Instrument;
 import jakarta.validation.constraints.Positive;
@@ -41,7 +42,7 @@ public class RegisterSheetDto {
         this.filePath = filePath;
     }
 
-    public Sheet.SheetBuilder getEntityBuilderWithoutAuthor() {
+    public SheetBuilder getEntityBuilderWithoutAuthor() {
         return Sheet.builder()
                 .title(title)
                 .pageNum(pageNum)
