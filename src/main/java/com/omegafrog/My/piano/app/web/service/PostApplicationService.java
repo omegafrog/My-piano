@@ -10,12 +10,11 @@ import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
 import com.omegafrog.My.piano.app.web.dto.comment.RegisterCommentDto;
-import com.omegafrog.My.piano.app.web.dto.post.PostDto;
-import com.omegafrog.My.piano.app.web.dto.post.PostRegisterDto;
-import com.omegafrog.My.piano.app.web.dto.post.UpdatePostDto;
+import com.omegafrog.My.piano.app.web.dto.post.*;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -135,5 +134,11 @@ public class PostApplicationService implements CommentHandler {
         Post post = postRepository.findById(articleId)
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_POST));
         return post.getComments().stream().map(Comment::toDto).toList();
+    }
+
+    public ReturnPostListDto findPosts(Pageable pageable) {
+        Long count = postRepository.count();
+        List<PostListDto> postList = postRepository.findAll(pageable, Sort.by(Sort.Direction.DESC, "createdAt")).stream().map(PostListDto::new).toList();
+        return new ReturnPostListDto(count, postList);
     }
 }
