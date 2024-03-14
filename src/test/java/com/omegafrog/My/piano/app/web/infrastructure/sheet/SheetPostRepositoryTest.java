@@ -1,5 +1,6 @@
 package com.omegafrog.My.piano.app.web.infrastructure.sheet;
 
+import com.omegafrog.My.piano.app.DataJpaUnitConfig;
 import com.omegafrog.My.piano.app.web.controller.DummyData;
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
 import com.omegafrog.My.piano.app.web.domain.sheet.Genres;
@@ -21,57 +22,43 @@ import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
 @DataJpaTest
+@Import(DataJpaUnitConfig.class)
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@ExtendWith({MockitoExtension.class})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SheetPostRepositoryTest {
 
     @Autowired
-    private SimpleJpaSheetPostRepository jpaRepository;
-    @Autowired
-    private SimpleJpaUserRepository jpaUserRepository;
-
     private UserRepository userRepository;
+    @Autowired
     private SheetPostRepository sheetPostRepository;
 
-    private User user;
-    private User author;
+    private User a;
 
-    @BeforeAll
+    @BeforeEach
     void setRepository() {
-        sheetPostRepository = new JpaSheetPostRepositoryImpl(jpaRepository);
-        userRepository = new JpaUserRepositoryImpl(jpaUserRepository);
-        User a = User.builder()
+        a = userRepository.save(User.builder()
                 .name("user")
                 .phoneNum(new PhoneNum("010-1111-2222"))
                 .email("artist1@gmail.com")
                 .loginMethod(LoginMethod.EMAIL)
                 .cart(new Cart())
                 .profileSrc("profileSrc")
-                .build();
-        user = userRepository.save(a);
-
-        User b = User.builder()
-                .name("uploader")
-                .profileSrc("none")
-                .loginMethod(LoginMethod.EMAIL)
-                .phoneNum(new PhoneNum("010-1111-2222"))
-                .email("artist2@gmail.com")
-                .cart(new Cart())
-                .build();
-        author = userRepository.save(b);
+                .build());
     }
-
-    @AfterEach
-    void clearRepository() {
-        sheetPostRepository.deleteAll();
-    }
-
 
     @Test
     @DisplayName("악보 판매글을 추가하고 조회할 수 있어야 한다.")
@@ -80,11 +67,10 @@ class SheetPostRepositoryTest {
         //given
 
         //when
-        SheetPost saved = sheetPostRepository.save(DummyData.sheetPost(user));
+        SheetPost saved = sheetPostRepository.save(DummyData.sheetPost(a));
         Optional<SheetPost> founded = sheetPostRepository.findById(saved.getId());
         //then
-        Assertions.assertThat(founded).isPresent();
-        Assertions.assertThat(founded).contains(saved);
+        Assertions.assertThat(founded).isPresent().contains(saved);
     }
 
     @Test
@@ -92,7 +78,7 @@ class SheetPostRepositoryTest {
     void updateTest() {
         //given
 
-        SheetPost saved = sheetPostRepository.save(DummyData.sheetPost(user));
+        SheetPost saved = sheetPostRepository.save(DummyData.sheetPost(a));
         //when
         UpdateSheetPostDto updated = UpdateSheetPostDto.builder()
                 .sheetDto(UpdateSheetDto.builder()
@@ -109,8 +95,7 @@ class SheetPostRepositoryTest {
                 .build();
 
         SheetPost updatedPost = saved.update(updated);
-        SheetPost updatedSheetPost = sheetPostRepository.save(updatedPost);
-        Assertions.assertThat(updatedSheetPost).isEqualTo(saved);
+        Assertions.assertThat(updatedPost).isEqualTo(saved);
     }
 
     @Test
@@ -118,17 +103,11 @@ class SheetPostRepositoryTest {
     void deleteTest() {
         //given
 
-        SheetPost saved = sheetPostRepository.save(DummyData.sheetPost(user));
+        SheetPost saved = sheetPostRepository.save(DummyData.sheetPost(a));
         //when
         sheetPostRepository.deleteById(saved.getId());
         Optional<SheetPost> founded = sheetPostRepository.findById(saved.getId());
         Assertions.assertThat(founded).isEmpty();
-    }
-
-    @AfterAll
-    void clearAllReposiotry() {
-        sheetPostRepository.deleteAll();
-        userRepository.deleteAll();
     }
 
 }

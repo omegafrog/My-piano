@@ -47,7 +47,5 @@ public class Post extends Article {
                 .author(author.getUserProfile())
                 .build();
     }
-
-
 }
 

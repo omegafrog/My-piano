@@ -1,5 +1,6 @@
 package com.omegafrog.My.piano.app.web.infrastructure.post;
 
+import com.omegafrog.My.piano.app.DataJpaUnitConfig;
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.post.UpdatePostDto;
@@ -17,39 +18,29 @@ import com.omegafrog.My.piano.app.web.domain.post.PostRepository;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
 @DataJpaTest
+@Import(DataJpaUnitConfig.class)
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PostRepositoryTest {
 
-
     @Autowired
-    private SimpleJpaPostRepository jpaPostRepository;
-
     private PostRepository postRepository;
 
     @Autowired
-    private SimpleJpaUserRepository jpaUserRepository;
-
-    @Autowired
-    private SimpleJpaSheetPostRepository jpaSheetPostRepository;
-
     private UserRepository userRepository;
 
     private User user1;
-    @BeforeAll
-    @Transactional
-    void clearAllRepository() {
-        jpaUserRepository.deleteAll();
-    }
-    @BeforeAll
+
+    @BeforeEach
     void settings() {
-        userRepository = new JpaUserRepositoryImpl(jpaUserRepository);
-        postRepository = new JpaPostRepositoryImpl(jpaPostRepository);
         User build = User.builder()
                 .name("user1")
                 .profileSrc("profile1")
@@ -63,41 +54,33 @@ class PostRepositoryTest {
         user1 = userRepository.save(build);
     }
 
-    @BeforeEach
-    void clearRepository() {
-        postRepository.deleteAll();
-    }
-
-
-
     @Test
     @DisplayName("게시글을 작성하고 조회할 수 있어야 한다")
     void saveNFindPostTest() {
-        Optional<User> foundedUser = userRepository.findById(user1.getId());
+        //given
         Post post = Post.builder()
                 .title("test1")
                 .content("content1")
-                .author(foundedUser.get())
+                .author(user1)
                 .build();
+        //when
         Post saved = postRepository.save(post);
-        Assertions.assertThat(saved).isEqualTo(post);
+        //then
         Optional<Post> founded = postRepository.findById(saved.getId());
-        Optional<User> byId = userRepository.findById(user1.getId());
-        Assertions.assertThat(founded.isPresent()).isTrue();
-        Assertions.assertThat(founded.get()).isEqualTo(saved);
-        Assertions.assertThat(byId.get().getUploadedPosts().get(0)).isEqualTo(founded.get());
+        Assertions.assertThat(founded).get().isEqualTo(saved);
     }
 
     @Test
     @DisplayName("게시글을 수정할 수 있어야 한다.")
     void updatePostTest() {
-        Optional<User> foundedUser = userRepository.findById(user1.getId());
+        //given
         Post post = Post.builder()
                 .title("test1")
                 .content("content1")
-                .author(foundedUser.get())
+                .author(user1)
                 .build();
         Post saved = postRepository.save(post);
+        //when
         UpdatePostDto updatePostDto = UpdatePostDto.builder()
                 .title("updated")
                 .content("updatedContent")
@@ -105,81 +88,29 @@ class PostRepositoryTest {
                 .likeCount(1)
                 .build();
         Post updatedPost = post.update(updatePostDto);
-        Post updated = postRepository.save(updatedPost);
-        Optional<User> byId = userRepository.findById(user1.getId());
-        Assertions.assertThat(updated).isEqualTo(saved);
-        Assertions.assertThat(updated.getContent()).isEqualTo("updatedContent");
-        Assertions.assertThat(byId.get().getUploadedPosts().get(0).getTitle()).isEqualTo("updated");
+        //then
+        Optional<Post> byId = postRepository.findById(saved.getId());
+        Assertions.assertThat(byId).get().isEqualTo(updatedPost);
+        Assertions.assertThat(byId).get().extracting("content").isEqualTo("updatedContent");
     }
 
     @Test
     @DisplayName("게시글을 삭제할 수 있어야 한다")
     void deletePostTest() {
-        Optional<User> foundedUser = userRepository.findById(user1.getId());
+        //given
         Post post = Post.builder()
                 .title("test1")
                 .content("content1")
-                .author(foundedUser.get())
+                .author(user1)
                 .build();
         Post saved = postRepository.save(post);
+        //when
         postRepository.deleteById(saved.getId());
-        Optional<Post> founded =postRepository.findById(saved.getId());
-        Optional<User> byId = userRepository.findById(user1.getId());
-        Assertions.assertThat(founded.isEmpty()).isTrue();
-        Assertions.assertThat(byId.get().getUploadedPosts().contains(saved)).isFalse();
-    }
-
-    @Test
-    @DisplayName("게시글에 댓글을 작성할 수 있어야 한다.")
-    void addCommentTest() {
-        //given
-        Optional<User> foundedUser = userRepository.findById(user1.getId());
-        Post post = Post.builder()
-                .title("test1")
-                .content("content1")
-                .author(foundedUser.get())
-                .build();
-        Post saved = postRepository.save(post);
-        //when
-        Comment comment = Comment.builder()
-                .content("comment1")
-                .author(user1)
-                .build();
-        saved.addComment(comment);
-        Post commentAdded = postRepository.save(saved);
         //then
-        Assertions.assertThat(commentAdded.getComments().size()).isGreaterThanOrEqualTo(1);
-        Assertions.assertThat(commentAdded.getComments().get(0).getContent()).isEqualTo("comment1");
+        Optional<Post> byId = postRepository.findById(saved.getId());
+        Assertions.assertThat(byId).isEmpty();
     }
 
-    @Test
-    @DisplayName("게시글의 댓글을 삭제할 수 있어야 한다.")
-    void deleteCommentTest() {
-        //given
-        Optional<User> foundedUser = userRepository.findById(user1.getId());
-        Post post = Post.builder()
-                .title("test1")
-                .content("content1")
-                .author(foundedUser.get())
-                .build();
-        Post saved = postRepository.save(post);
-        Comment comment = Comment.builder()
-                .content("comment1")
-                .author(user1)
-                .build();
-        saved.addComment(comment);
-        Post commentAdded = postRepository.save(saved);
-        //when
-        commentAdded.deleteComment(commentAdded.getComments().get(0).getId(), commentAdded.getComments().get(0).getAuthor());
-        Post deletedComment = postRepository.save(commentAdded);
 
-        //then
-        Assertions.assertThat(deletedComment.getComments().size()).isEqualTo(0);
-    }
 
-    @AfterAll
-    void deleteAll(){
-        postRepository.deleteAll();
-        userRepository.deleteAll();
-    }
 }

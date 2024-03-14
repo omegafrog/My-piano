@@ -1,9 +1,6 @@
 package com.omegafrog.My.piano.app.web.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
-import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
-import com.omegafrog.My.piano.app.utils.response.ResponseUtil;
 import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
@@ -25,7 +22,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
 
 @Service
 @Transactional
@@ -56,7 +52,6 @@ public class LessonService implements CommentHandler {
                 .build();
         Lesson saved = lessonRepository.save(lesson);
         user.getUploadedLessons().add(saved);
-        userRepository.save(user);
         return saved.toDto();
     }
 
@@ -177,7 +172,7 @@ public class LessonService implements CommentHandler {
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson Entity : " + id));
         lesson.increaseLikedCount();
         User loggedUser = userRepository.findById(user.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + user.getId()));
-        loggedUser.addLikedLesson(lesson);
+        loggedUser.likeLesson(lesson);
     }
     public void dislikeLesson(Long id, User user){
         Lesson lesson = lessonRepository.findById(id)

@@ -14,7 +14,6 @@ import org.springframework.security.access.AccessDeniedException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 @NoArgsConstructor
 @Getter
 @Entity
@@ -106,15 +105,8 @@ public class Article {
         return comments.subList((int) offset, toIdx);
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
 
-        Article article = (Article) o;
 
-        return Objects.equals(id, article.id);
-    }
 
     @Override
     public int hashCode() {

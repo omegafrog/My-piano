@@ -102,7 +102,7 @@ class OrderControllerTest {
         SecurityUserDto securityUserDto1 = commonUserService.registerUser(user1);
         testUser1Profile = ((SecurityUser) commonUserService.loadUserByUsername(securityUserDto1.getUsername()))
                 .getUser();
-        testUser1Profile.addCash(20000);
+        testUser1Profile.chargeCash(20000);
         userRepository.save(testUser1Profile);
         RegisterUserDto user2 = TestLoginUtil.user2;
         SecurityUserDto securityUserDto2 = commonUserService.registerUser(user2);

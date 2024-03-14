@@ -1,5 +1,6 @@
 package com.omegafrog.My.piano.app.web.infrastructure.lesson;
 
+import com.omegafrog.My.piano.app.DataJpaUnitConfig;
 import com.omegafrog.My.piano.app.web.controller.DummyData;
 import com.omegafrog.My.piano.app.web.infra.user.JpaUserRepositoryImpl;
 import com.omegafrog.My.piano.app.web.infra.user.SimpleJpaUserRepository;
@@ -21,13 +22,19 @@ import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
 import com.omegafrog.My.piano.app.web.domain.lesson.VideoInformation;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
 
 import java.time.LocalTime;
 import java.util.Optional;
 
 @DataJpaTest
+@Import(DataJpaUnitConfig.class)
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class LessonRepositoryTest {
 
@@ -35,23 +42,20 @@ class LessonRepositoryTest {
     private LessonRepository lessonRepository;
 
     @Autowired
-    private SimpleJpaUserRepository jpaUserRepository;
-
     private UserRepository userRepository;
 
     @Autowired
-    private SimpleJpaSheetPostRepository jpaSheetPostRepository;
+    private SheetPostRepository sheetPostRepository;
+
 
 
     private User author;
 
     private SheetPost savedSheetPost;
 
-    @BeforeAll
+    @BeforeEach
     void settings() {
-        userRepository = new JpaUserRepositoryImpl(jpaUserRepository);
-        SheetPostRepository sheetPostRepository = new JpaSheetPostRepositoryImpl(jpaSheetPostRepository);
-        User build = User.builder()
+        author = userRepository.save(User.builder()
                 .name("user1")
                 .profileSrc("profile1")
                 .loginMethod(LoginMethod.EMAIL)
@@ -60,24 +64,21 @@ class LessonRepositoryTest {
                         .build())
                 .cart(new Cart())
                 .email("user1@gmail.com")
-                .build();
-        author = userRepository.save(build);
+                .build());
         savedSheetPost = sheetPostRepository.save(DummyData.sheetPost(author));
     }
-
-    @AfterEach
-    void deleteAll() {
-        lessonRepository.deleteAll();
-    }
-
 
     @Test
     @DisplayName("lesson을 추가하고 조회할 수 있어야 한다.")
     void addNFindTest() {
+        //given
 
+        //when
         Lesson saved = lessonRepository.save(DummyData.lesson(savedSheetPost.getSheet(), author));
+
+        //then
         Optional<Lesson> founded = lessonRepository.findById(saved.getId());
-        Assertions.assertThat(saved).isEqualTo(founded.get());
+        Assertions.assertThat(founded).isNotEmpty().contains(saved);
     }
 
     @Test
@@ -87,7 +88,7 @@ class LessonRepositoryTest {
 
         Lesson saved = lessonRepository.save(DummyData.lesson(savedSheetPost.getSheet(), author));
         //when
-        saved.update(UpdateLessonDto.builder()
+        Lesson updated = saved.update(UpdateLessonDto.builder()
                 .title("changedTitle")
                 .subTitle("changedSubTitle")
                 .price(11000)
@@ -105,7 +106,6 @@ class LessonRepositoryTest {
                 )
                 .sheetId(saved.getSheet().getId())
                 .build(), saved.getSheet());
-        Lesson updated = lessonRepository.save(saved);
         //then
         Assertions.assertThat(updated).isEqualTo(saved);
     }
@@ -114,7 +114,6 @@ class LessonRepositoryTest {
     @DisplayName("레슨을 삭제할 수 있어야 한다.")
     void deleteTest() {
         //given
-
         Lesson saved = lessonRepository.save(DummyData.lesson(savedSheetPost.getSheet(), author));
         //when
         lessonRepository.deleteById(saved.getId());
@@ -124,9 +123,4 @@ class LessonRepositoryTest {
         Assertions.assertThat(founded).isEmpty();
     }
 
-    @AfterAll
-    void clearRepository() {
-        jpaSheetPostRepository.deleteAll();
-        userRepository.deleteAll();
-    }
 }

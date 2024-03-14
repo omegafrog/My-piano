@@ -17,8 +17,6 @@ import jakarta.persistence.*;
 @NoArgsConstructor
 @Getter
 public class Lesson extends SellableItem {
-
-
     @NotNull
     private VideoInformation videoInformation;
 
@@ -32,7 +30,7 @@ public class Lesson extends SellableItem {
 
 
     @Builder
-    public Lesson(String title, String subTitle, int price, VideoInformation videoInformation,
+    public Lesson(String title, String subTitle, Integer price, VideoInformation videoInformation,
                   User lessonProvider, Sheet sheet, LessonInformation lessonInformation) {
         super(lessonProvider, title, subTitle, price);
         this.videoInformation = videoInformation;

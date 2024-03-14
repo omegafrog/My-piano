@@ -60,8 +60,7 @@ dependencies {
 			}
 		}
 	}
-
-	testImplementation 'junit:junit:5'
+	testImplementation 'org.junit.jupiter:junit:5.9.2'
 	testCompileOnly 'org.projectlombok:lombok'
 	compileOnly 'org.projectlombok:lombok'
 //	runtimeOnly 'com.h2database:h2'

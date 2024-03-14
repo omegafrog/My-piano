@@ -5,19 +5,19 @@ import lombok.Getter;
 import java.util.Map;
 
 @Getter
-public abstract class JsonAPIResponse {
+public abstract class JsonAPIResponse<T> {
     protected int status;
     protected String message;
-    protected Map<String, Object> serializedData;
+    protected T  data;
 
-    public JsonAPIResponse(int status, String message, Map<String, Object> serializedData) {
+    public JsonAPIResponse(int status, String message, T data) {
         this.status = status;
         this.message = message;
-        this.serializedData = serializedData;
+        this.data = data;
     }
     public JsonAPIResponse(int status, String message) {
         this.status = status;
         this.message = message;
-        this.serializedData = null;
+        this.data = null;
     }
 }
