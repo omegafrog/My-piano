@@ -5,44 +5,41 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.utils.response.ResponseUtil;
 import com.omegafrog.My.piano.app.web.domain.user.User;
-import com.omegafrog.My.piano.app.web.dto.post.PostDto;
-import com.omegafrog.My.piano.app.web.dto.post.PostRegisterDto;
-import com.omegafrog.My.piano.app.web.dto.post.UpdatePostDto;
+import com.omegafrog.My.piano.app.web.dto.post.*;
 import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
 import com.omegafrog.My.piano.app.utils.response.JsonAPIResponse;
 import com.omegafrog.My.piano.app.web.service.PostApplicationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/community/post")
+@RequestMapping("/community/posts")
 @RequiredArgsConstructor
 public class PostController {
 
-    private final ObjectMapper objectMapper;
     private final PostApplicationService postApplicationService;
 
-
     @PostMapping("")
-    public JsonAPIResponse writePost(@RequestBody PostRegisterDto post)
-            throws JsonProcessingException {
+    public JsonAPIResponse<Void> writePost(@RequestBody PostRegisterDto post) {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        PostDto postDto = postApplicationService.writePost(post, loggedInUser);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("post", postDto);
-        return new APISuccessResponse("Write post success", data);
+        postApplicationService.writePost(post, loggedInUser);
+        return new APISuccessResponse<>("Write post success");
     }
 
-    //TODO : 모든 post pagination해서 조회해야함
-
     @GetMapping("/{id}")
-    public JsonAPIResponse findPost(@PathVariable Long id)
+    public JsonAPIResponse<ReturnPostDto> findPost(@PathVariable Long id)
             throws JsonProcessingException {
-        PostDto postById = postApplicationService.findPostById(id);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("post", postById);
-        return new APISuccessResponse("Find post success", data);
+        ReturnPostDto postById = postApplicationService.findPostById(id);
+        return new APISuccessResponse<>("Find post success", postById);
+    }
+
+    @GetMapping("")
+    public JsonAPIResponse<ReturnPostListDto> findAllPost(Pageable pageable) throws JsonProcessingException {
+        ReturnPostListDto data = postApplicationService.findPosts(pageable);
+        return new APISuccessResponse<>("Find all post success", data);
     }
 
     @PostMapping("/{id}")
@@ -50,21 +47,32 @@ public class PostController {
             throws JsonProcessingException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         PostDto postDto = postApplicationService.updatePost(id, post, loggedInUser);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("post", postDto);
-        return new APISuccessResponse("update post success", data);
+        return new APISuccessResponse("update post success", postDto);
     }
 
     @DeleteMapping("/{id}")
-    public JsonAPIResponse deletePost(@PathVariable Long id) {
+    public JsonAPIResponse<Void> deletePost(@PathVariable Long id) {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         postApplicationService.deletePost(id, loggedInUser);
-        return new APISuccessResponse("delete post success");
+        return new APISuccessResponse<>("delete post success");
     }
 
-    @GetMapping("/{id}/like")
-    public JsonAPIResponse likePost(@PathVariable Long id){
+    @PutMapping("/{id}/like")
+    public JsonAPIResponse likePost(@PathVariable Long id) {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         postApplicationService.likePost(id, loggedInUser);
         return new APISuccessResponse("like post success");
+    }
+    @DeleteMapping("/{id}/like")
+    public JsonAPIResponse dislikePost(@PathVariable Long id) {
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+        postApplicationService.dislikePost(id, loggedInUser);
+        return new APISuccessResponse("dislike post success");
+    }
+    @GetMapping("/{id}/like")
+    public JsonAPIResponse isLikedPost(@PathVariable Long id) throws JsonProcessingException {
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+        boolean isLikedPost = postApplicationService.isLikedPost(id, loggedInUser);
+        return new APISuccessResponse("Check liked post success", isLikedPost);
     }
 }

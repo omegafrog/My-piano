@@ -12,7 +12,7 @@ import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
 import com.omegafrog.My.piano.app.web.dto.post.PostDto;
 import com.omegafrog.My.piano.app.web.dto.sheet.SheetInfoDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
-import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
+import com.omegafrog.My.piano.app.web.dto.user.UserInfo;
 import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
 import com.omegafrog.My.piano.app.utils.response.JsonAPIResponse;
 import com.omegafrog.My.piano.app.web.service.UserApplicationService;
@@ -115,7 +115,7 @@ public class UserController {
     public JsonAPIResponse getFollowingFollower()
         throws JsonProcessingException{
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        List<UserProfile> followingFollower = userService.getFollowingFollower(loggedInUser);
+        List<UserInfo> followingFollower = userService.getFollowingFollower(loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap(ResponseKeyName.FOLLOWED_USERS.keyName, followingFollower);
         return new APISuccessResponse("Get all follower success.", data);
     }
@@ -125,16 +125,16 @@ public class UserController {
     @GetMapping("")
     public JsonAPIResponse getUserInformation() throws JsonProcessingException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        UserProfile userProfile = userService.getUserProfile(loggedInUser);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("user", userProfile);
+        UserInfo userInfo = userService.getUserProfile(loggedInUser);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("user", userInfo);
         return new APISuccessResponse("Get user profile success.", data);
     }
 
     @PostMapping(value = "")
     public JsonAPIResponse changeUserInfo(@Valid @RequestParam(name = "updateInfo") String dto, @RequestParam(name = "profileImg") @Nullable MultipartFile profileImg) throws IOException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        UserProfile userProfile = userService.changeUserInfo(dto, loggedInUser, profileImg);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("userProfile", userProfile);
+        UserInfo userInfo = userService.changeUserInfo(dto, loggedInUser, profileImg);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("userProfile", userInfo);
         return new APISuccessResponse("Update User profile success.", data);
     }
 

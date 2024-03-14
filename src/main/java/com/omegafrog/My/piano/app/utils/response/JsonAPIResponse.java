@@ -8,7 +8,7 @@ import java.util.Map;
 public abstract class JsonAPIResponse<T> {
     protected int status;
     protected String message;
-    protected T  data;
+    protected T data;
 
     public JsonAPIResponse(int status, String message, T data) {
         this.status = status;

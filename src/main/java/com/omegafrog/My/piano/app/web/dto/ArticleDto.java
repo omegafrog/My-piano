@@ -1,7 +1,7 @@
 package com.omegafrog.My.piano.app.web.dto;
 
 import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
-import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
+import com.omegafrog.My.piano.app.web.dto.user.UserInfo;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
@@ -23,7 +23,7 @@ public abstract class ArticleDto {
     @NotNull
     private LocalDateTime createdAt;
     @NotNull
-    private UserProfile author;
+    private UserInfo author;
     @NotNull
     private int likeCount;
     @NotNull
@@ -31,7 +31,7 @@ public abstract class ArticleDto {
     @NotNull
     private List<CommentDto> comments;
 
-    protected ArticleDto(Long id, String title, String content, LocalDateTime createdAt, UserProfile author, int likeCount, int viewCount, List<CommentDto> comments) {
+    protected ArticleDto(Long id, String title, String content, LocalDateTime createdAt, UserInfo author, int likeCount, int viewCount, List<CommentDto> comments) {
         this.id = id;
         this.title = title;
         this.content = content;

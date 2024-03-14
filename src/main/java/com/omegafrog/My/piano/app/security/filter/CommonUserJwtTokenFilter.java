@@ -39,7 +39,6 @@ public class CommonUserJwtTokenFilter extends OncePerRequestFilter {
 
     private final AdminRepository adminRepository;
 
-
     @Autowired
     private TokenUtils tokenUtils;
 
@@ -56,6 +55,8 @@ public class CommonUserJwtTokenFilter extends OncePerRequestFilter {
                         AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/sheet/{regex:\\d+}"),
                         AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/lesson/{regex:\\d+}"),
                         AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/lessons"),
+                        AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/community/posts"),
+                        AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/community/posts/{regex:\\d+}"),
                         AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/community/video-post"),
                         AntPathRequestMatcher.antMatcher("/h2-console/**"),
                         AntPathRequestMatcher.antMatcher("/oauth2/**"),

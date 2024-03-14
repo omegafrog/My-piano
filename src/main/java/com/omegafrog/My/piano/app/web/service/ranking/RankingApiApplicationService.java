@@ -5,6 +5,8 @@ import com.omegafrog.My.piano.app.external.elasticsearch.SheetPostIndex;
 import com.omegafrog.My.piano.app.web.domain.ranking.PopularRankingItem;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
+import com.omegafrog.My.piano.app.web.dto.dateRange.DateRange;
+import com.omegafrog.My.piano.app.web.dto.dateRange.DateRangeFactory;
 import com.omegafrog.My.piano.app.web.enums.DateRangeType;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;

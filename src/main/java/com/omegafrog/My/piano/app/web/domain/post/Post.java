@@ -4,6 +4,7 @@ import com.omegafrog.My.piano.app.web.domain.article.Article;
 import com.omegafrog.My.piano.app.web.dto.post.PostDto;
 import com.omegafrog.My.piano.app.web.dto.post.UpdatePostDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
+import com.omegafrog.My.piano.app.web.enums.PostType;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,6 +15,8 @@ import jakarta.persistence.*;
 @Getter
 @NoArgsConstructor
 public class Post extends Article {
+
+    private PostType type;
     public void setAuthor(User author){
         this.author = author;
         if(!author.getUploadedPosts().contains(this)){
@@ -21,18 +24,17 @@ public class Post extends Article {
         }
     }
     public Post update(UpdatePostDto post){
-        super.viewCount = post.getViewCount();
         super.title = post.getTitle();
         super.content = post.getContent();
-        super.likeCount = post.getLikeCount();
         return this;
     }
 
     @Builder
-    public Post(User author, String title, String content) {
+    public Post(User author, String title, String content, PostType type) {
         this.author = author;
         this.title = title;
         this.content = content;
+        this.type = type;
     }
 
     public PostDto toDto(){

@@ -3,10 +3,7 @@ package com.omegafrog.My.piano.app.utils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.omegafrog.My.piano.app.external.tossPayment.Payment;
-import com.omegafrog.My.piano.app.external.tossPayment.TossError;
-import com.omegafrog.My.piano.app.external.tossPayment.TossWebHookResult;
-import com.omegafrog.My.piano.app.external.tossPayment.TossWebHookResultFactory;
+import com.omegafrog.My.piano.app.external.tossPayment.*;
 import com.omegafrog.My.piano.app.web.domain.cash.PaymentHistory;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.ChangeUserDto;
@@ -23,8 +20,12 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class MapperUtil {
     private final ObjectMapper objectMapper;
-
     private final TossWebHookResultFactory tossWebHookResultFactory;
+
+    public MapperUtil(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+        this.tossWebHookResultFactory = new TossWebHookResultFactoryImpl(objectMapper);
+    }
 
     public PaymentHistory parsePaymentHistory(String result) throws JsonProcessingException {
             JsonNode node = objectMapper.readTree(result);

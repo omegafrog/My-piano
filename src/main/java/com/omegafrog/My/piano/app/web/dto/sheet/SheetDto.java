@@ -1,7 +1,7 @@
 package com.omegafrog.My.piano.app.web.dto.sheet;
 
 import com.omegafrog.My.piano.app.web.domain.sheet.Genres;
-import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
+import com.omegafrog.My.piano.app.web.dto.user.UserInfo;
 import com.omegafrog.My.piano.app.web.enums.Difficulty;
 import com.omegafrog.My.piano.app.web.enums.Instrument;
 import jakarta.validation.constraints.NotNull;
@@ -35,10 +35,10 @@ public class SheetDto {
     @NotNull
     private LocalDateTime createdAt;
     @NotNull
-    private UserProfile user;
+    private UserInfo user;
 
     @Builder
-    public SheetDto(Long id, String title, int pageNum, Difficulty difficulty, Genres genres,Instrument instrument, Boolean isSolo, Boolean lyrics, String filePath, LocalDateTime createdAt, UserProfile user) {
+    public SheetDto(Long id, String title, int pageNum, Difficulty difficulty, Genres genres,Instrument instrument, Boolean isSolo, Boolean lyrics, String filePath, LocalDateTime createdAt, UserInfo user) {
         this.id = id;
         this.title = title;
         this.pageNum = pageNum;

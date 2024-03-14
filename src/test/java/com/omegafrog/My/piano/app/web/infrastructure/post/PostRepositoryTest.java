@@ -84,8 +84,6 @@ class PostRepositoryTest {
         UpdatePostDto updatePostDto = UpdatePostDto.builder()
                 .title("updated")
                 .content("updatedContent")
-                .viewCount(1)
-                .likeCount(1)
                 .build();
         Post updatedPost = post.update(updatePostDto);
         //then

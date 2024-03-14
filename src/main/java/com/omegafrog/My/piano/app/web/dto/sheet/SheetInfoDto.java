@@ -1,8 +1,7 @@
 package com.omegafrog.My.piano.app.web.dto.sheet;
 
 import com.omegafrog.My.piano.app.web.domain.sheet.Genres;
-import com.omegafrog.My.piano.app.web.dto.order.SellableItemDto;
-import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
+import com.omegafrog.My.piano.app.web.dto.user.UserInfo;
 import com.omegafrog.My.piano.app.web.enums.Difficulty;
 import com.omegafrog.My.piano.app.web.enums.Instrument;
 import lombok.*;
@@ -18,7 +17,7 @@ public class SheetInfoDto {
     private String title;
     private String content;
     private LocalDateTime createdAt;
-    private UserProfile artist;
+    private UserInfo artist;
     private Genres genres;
     private int pageNum;
     private Difficulty difficulty;
@@ -28,7 +27,7 @@ public class SheetInfoDto {
     private String sheetUrl;
 
     @Builder
-    public SheetInfoDto(Long id, String title, String content,LocalDateTime createdAt, UserProfile artist,
+    public SheetInfoDto(Long id, String title, String content,LocalDateTime createdAt, UserInfo artist,
                         Genres genres, int pageNum, Difficulty difficulty, Instrument instrument, boolean isSolo,
                         boolean lyrics, String sheetUrl) {
         this.id = id;

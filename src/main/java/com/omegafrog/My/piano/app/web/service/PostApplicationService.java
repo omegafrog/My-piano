@@ -10,18 +10,16 @@ import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
 import com.omegafrog.My.piano.app.web.dto.comment.RegisterCommentDto;
-import com.omegafrog.My.piano.app.web.dto.post.PostDto;
-import com.omegafrog.My.piano.app.web.dto.post.PostRegisterDto;
-import com.omegafrog.My.piano.app.web.dto.post.UpdatePostDto;
+import com.omegafrog.My.piano.app.web.dto.post.*;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -45,9 +43,11 @@ public class PostApplicationService implements CommentHandler {
         return saved.toDto();
     }
 
-    public PostDto findPostById(Long id) {
-        return postRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_POST + id)).toDto();
+    public ReturnPostDto findPostById(Long id) {
+        Post founded = postRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_POST + id));
+        founded.increaseViewCount();
+        return new ReturnPostDto(founded, founded.getAuthor());
     }
 
     public PostDto updatePost(Long id, UpdatePostDto updatePostDto, User loggedInUser) {
@@ -74,13 +74,18 @@ public class PostApplicationService implements CommentHandler {
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + user.getId()));
         Post post = getPostById(postId);
         post.increaseLikedCount();
-        byId.addLikePost(post);
+        byId.likePost(post);
     }
     public void dislikePost(Long id, User loggedInUser){
-        getPostById(id);
-        if (!loggedInUser.dislikePost(id)) {
-            throw new EntityNotFoundException("Cannot find post entity that you liked.");
-        }
+        Post dislikedPost = getPostById(id);
+        User founded = userRepository.findById(loggedInUser.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity."));
+        founded.dislikePost(dislikedPost);
+    }
+    public boolean isLikedPost(Long id, User loggedInUser){
+        User founded = userRepository.findById(loggedInUser.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity. "));
+        return !founded.getLikedPosts().stream().filter(post -> post.getId().equals(id)).findFirst().isEmpty();
     }
 
     @Override
@@ -135,5 +140,11 @@ public class PostApplicationService implements CommentHandler {
         Post post = postRepository.findById(articleId)
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_POST));
         return post.getComments().stream().map(Comment::toDto).toList();
+    }
+
+    public ReturnPostListDto findPosts(Pageable pageable) {
+        Long count = postRepository.count();
+        List<PostListDto> postList = postRepository.findAll(pageable, Sort.by(Sort.Direction.DESC, "createdAt")).stream().map(PostListDto::new).toList();
+        return new ReturnPostListDto(count, postList);
     }
 }
