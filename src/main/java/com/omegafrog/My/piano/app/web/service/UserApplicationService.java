@@ -15,7 +15,7 @@ import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
 import com.omegafrog.My.piano.app.web.dto.post.PostDto;
 import com.omegafrog.My.piano.app.web.dto.sheet.SheetInfoDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
-import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
+import com.omegafrog.My.piano.app.web.dto.user.UserInfo;
 import io.awspring.cloud.s3.ObjectMetadata;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceException;
@@ -52,7 +52,7 @@ public class UserApplicationService {
     @Value("${spring.cloud.aws.bucket.name}")
     private String bucketName;
 
-    public UserProfile getUserProfile(User loggedInUser){
+    public UserInfo getUserProfile(User loggedInUser){
         User user = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER));
         return user.getUserProfile();
@@ -98,7 +98,7 @@ public class UserApplicationService {
         return user.getScrappedSheets().stream().map(sheetPost->((SheetPost)sheetPost).toInfoDto()).toList();
     }
 
-    public List<com.omegafrog.My.piano.app.web.dto.user.UserProfile> getFollowingFollower(User loggedInUser) {
+    public List<UserInfo> getFollowingFollower(User loggedInUser) {
         User user = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInUser.getId()));
         return user.getFollowed().stream().map(User::getUserProfile).toList();
@@ -117,7 +117,7 @@ public class UserApplicationService {
         return user.getLikedSheetPosts();
     }
 
-    public UserProfile changeUserInfo(String dto, User loggedInUser, MultipartFile profileImg) throws IOException {
+    public UserInfo changeUserInfo(String dto, User loggedInUser, MultipartFile profileImg) throws IOException {
         User user = userRepository.findById(loggedInUser.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find User entity. id : " + loggedInUser.getId()));
         ChangeUserDto changeUserDto = mapperUtil.parseUpdateUserInfo(dto);
 

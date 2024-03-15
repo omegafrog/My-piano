@@ -54,7 +54,7 @@ class PostControllerTest {
 
     @BeforeEach
     public void createController(){
-        controller = new PostController(objectMapper, postApplicationService);
+        controller = new PostController( postApplicationService);
 
     }
     @Nested

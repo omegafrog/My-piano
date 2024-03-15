@@ -1,6 +1,6 @@
 package com.omegafrog.My.piano.app.web.dto.comment;
 
-import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
+import com.omegafrog.My.piano.app.web.dto.user.UserInfo;
 
 import lombok.*;
 
@@ -14,7 +14,7 @@ import java.util.List;
 public class CommentDto {
     private Long id;
 
-    private UserProfile author;
+    private UserInfo author;
     private LocalDateTime createdAt;
 
     private String content;
@@ -24,7 +24,7 @@ public class CommentDto {
     private List<CommentDto> replies;
 
     @Builder
-    public CommentDto(Long id, UserProfile author, LocalDateTime createdAt, String content, int likeCount, List<CommentDto> replies) {
+    public CommentDto(Long id, UserInfo author, LocalDateTime createdAt, String content, int likeCount, List<CommentDto> replies) {
         this.id = id;
         this.author = author;
         this.createdAt = createdAt;

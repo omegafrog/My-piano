@@ -8,7 +8,7 @@ import com.omegafrog.My.piano.app.web.domain.admin.AdminRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.AdminDto;
-import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
+import com.omegafrog.My.piano.app.web.dto.user.UserInfo;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -58,7 +58,7 @@ public class AdminUserService implements UserDetailsService {
         return admin.toDto();
     }
 
-    public List<UserProfile> getUsers(Pageable pageable){
+    public List<UserInfo> getUsers(Pageable pageable){
         List<User> all = userRepository.findAll(pageable);
         return all.stream().map(User::getUserProfile).toList();
     }

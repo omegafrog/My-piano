@@ -40,7 +40,7 @@ public class CommentController {
 
 
     @PostMapping(value = {"/lesson/{id}/comment",
-            "/community/post/{id}/comment",
+            "/community/posts/{id}/comment",
             "/community/video-post/{id}/comment",
             "/sheet/{id}/comment"})
     public JsonAPIResponse addComment(
@@ -58,7 +58,7 @@ public class CommentController {
 
     @DeleteMapping(value = {"/lesson/{id}/comment/{comment-id}",
             "/sheet/{id}/comment/{comment-id}",
-            "/community/post/{id}/comment/{comment-id}",
+            "/community/posts/{id}/comment/{comment-id}",
             "/community/video-post/{id}/comment/{comment-id}"})
     public JsonAPIResponse deleteComment(
             @PathVariable Long id,
@@ -74,7 +74,7 @@ public class CommentController {
 
     @GetMapping(value = {"/lesson/{id}/comment/{comment-id}/like",
             "/sheet/{id}/comment/{comment-id}/like",
-            "/community/post/{id}/comment/{comment-id}/like",
+            "/community/posts/{id}/comment/{comment-id}/like",
             "/community/video-post/{id}/comment/{comment-id}/like"})
     public JsonAPIResponse likeComments(
             @PathVariable Long id,
@@ -88,7 +88,7 @@ public class CommentController {
 
     @GetMapping(value = {"/lesson/{id}/comment/{comment-id}/dislike",
             "/sheet/{id}/comment/{comment-id}/dislike",
-            "/community/post/{id}/comment/{comment-id}/dislike",
+            "/community/posts/{id}/comment/{comment-id}/dislike",
             "/community/video-post/{id}/comment/{comment-id}/dislike"})
     public JsonAPIResponse dislikeComments(
             @PathVariable Long id,
@@ -101,7 +101,7 @@ public class CommentController {
     }
 
     @GetMapping(value = {"/lesson/{id}/comments",
-            "/community/post/{id}/comments",
+            "/community/posts/{id}/comments",
             "/community/video-post/{id}/comments",
             "/sheet/{id}/comments"})
     public JsonAPIResponse getComments(
@@ -124,7 +124,7 @@ public class CommentController {
         switch (mainResource) {
             case "lesson":
                 return lessonService;
-            case "post":
+            case "posts":
                 return postApplicationService;
             case "video-post":
                 return videoPostApplicationService;

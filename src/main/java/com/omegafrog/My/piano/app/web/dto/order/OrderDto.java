@@ -1,7 +1,7 @@
 package com.omegafrog.My.piano.app.web.dto.order;
 
 import com.omegafrog.My.piano.app.web.domain.coupon.Coupon;
-import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
+import com.omegafrog.My.piano.app.web.dto.user.UserInfo;
 import lombok.*;
 
 @Data
@@ -11,8 +11,8 @@ import lombok.*;
 public class OrderDto {
     private Long id;
     private SellableItemDto item;
-    private UserProfile seller;
-    private UserProfile buyer;
+    private UserInfo seller;
+    private UserInfo buyer;
     private int initialPrice;
     private int totalPrice;
     private Double discountRate;
@@ -22,8 +22,8 @@ public class OrderDto {
     public OrderDto(
             Long id,
             SellableItemDto item,
-            UserProfile seller,
-            UserProfile buyer,
+            UserInfo seller,
+            UserInfo buyer,
             Double discountRate,
             Coupon coupon,
             int initialPrice,

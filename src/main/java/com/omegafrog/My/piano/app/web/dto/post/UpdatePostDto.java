@@ -7,16 +7,12 @@ import lombok.*;
 @Getter
 @NoArgsConstructor
 public class UpdatePostDto {
-    private int viewCount;
     private String title;
     private String content;
-    private int likeCount;
 
     @Builder
-    public UpdatePostDto( int viewCount, String title, String content, int likeCount) {
-        this.viewCount = viewCount;
+    public UpdatePostDto(  String title, String content) {
         this.title = title;
         this.content = content;
-        this.likeCount = likeCount;
     }
 }

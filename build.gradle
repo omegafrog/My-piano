@@ -61,7 +61,8 @@ dependencies {
 		}
 	}
 
-	testImplementation 'junit:junit:5.9.2'
+	// https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
 	testCompileOnly 'org.projectlombok:lombok'
 	compileOnly 'org.projectlombok:lombok'
 //	runtimeOnly 'com.h2database:h2'

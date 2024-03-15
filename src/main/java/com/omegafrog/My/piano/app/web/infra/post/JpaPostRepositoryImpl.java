@@ -2,10 +2,12 @@ package com.omegafrog.My.piano.app.web.infra.post;
 
 import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.post.PostRepository;
+import jakarta.persistence.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,6 +15,9 @@ import java.util.Optional;
 @Repository
 @RequiredArgsConstructor
 public class JpaPostRepositoryImpl implements PostRepository {
+
+    @PersistenceUnit
+    private EntityManagerFactory emf;
 
     private final SimpleJpaPostRepository postRepository;
     @Override
@@ -26,9 +31,12 @@ public class JpaPostRepositoryImpl implements PostRepository {
     }
 
     @Override
+    @Transactional
     public void deleteById(Long id) {
-        Optional<Post> byId = findById(id);
-        byId.get().getAuthor().deleteUploadedPost(byId.get());
+        Post byId = findById(id).orElseThrow(() -> new EntityNotFoundException("Cannot find Post entity."));
+        byId.getAuthor().deleteUploadedPost(byId);
+
+        postRepository.deleteAllLikedPostById(id);
         postRepository.deleteById(id);
     }
 
