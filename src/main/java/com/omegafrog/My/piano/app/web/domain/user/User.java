@@ -13,7 +13,7 @@ import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.dto.ChangeUserDto;
-import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
+import com.omegafrog.My.piano.app.web.dto.user.UserInfo;
 import com.omegafrog.My.piano.app.web.enums.OrderStatus;
 import com.omegafrog.My.piano.app.utils.exception.payment.NotEnoughCashException;
 import com.omegafrog.My.piano.app.utils.exception.payment.PaymentException;
@@ -33,6 +33,7 @@ import org.springframework.security.access.AccessDeniedException;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @Entity
@@ -162,6 +163,12 @@ public class User {
         }
     }
 
+    public void addUploadedLesson(Lesson lesson) {
+        uploadedLessons.add(lesson);
+        if (lesson.getAuthor() != this)
+            lesson.setAuthor(this);
+    }
+
     public void addUploadedVideoPost(VideoPost videoPost) {
         uploadedVideoPosts.add(videoPost);
         if (videoPost.getAuthor() != this) {
@@ -197,9 +204,6 @@ public class User {
         uploadedPosts.remove(post);
     }
 
-    public void addLikePost(Post post) {
-        likedPosts.add(post);
-    }
 
     public void likeVideoPost(VideoPost videoPost) {
         if (likedVideoPosts.contains(videoPost))
@@ -250,14 +254,19 @@ public class User {
         return this;
     }
 
+    public void likePost(Post post) {
+        assert likedPosts.stream().anyMatch(p -> p.equals(post));
+        likedPosts.add(post);
+    }
 
-    public boolean dislikePost(Long postId) {
+    public void dislikePost(Post dislikedPost) {
         likedPosts.forEach(
-                post -> {
-                    if (post.getId().equals(postId)) post.decreaseLikedCount();
+                post ->
+                {
+                    if (post.equals(dislikedPost)) post.decreaseLikedCount();
                 }
         );
-        return likedPosts.removeIf(post -> post.getId().equals(postId));
+        likedPosts.removeIf(post -> post.equals(dislikedPost));
     }
 
     public void addCash(int cash) {
@@ -269,16 +278,16 @@ public class User {
             throw new NotEnoughCashException("Cannot buy this item => cash:"
                     + cash + " < price:" + order.getTotalPrice());
             // 캐시 부족
-        } else {
-            cash -= order.getTotalPrice();
-            order.setStatus(OrderStatus.IN_PROGRESS);
-            if (order.getItem() instanceof Lesson item)
-                purchasedLessons.add(item);
-            else if (order.getItem() instanceof SheetPost item)
-                purchasedSheets.add(item);
-            else
-                throw new ClassCastException("Cannot cast this class to child class.");
         }
+
+        cash -= order.getTotalPrice();
+        order.setStatus(OrderStatus.IN_PROGRESS);
+        if (order.getItem() instanceof Lesson item)
+            purchasedLessons.add(item);
+        else if (order.getItem() instanceof SheetPost item)
+            purchasedSheets.add(item);
+        else
+            throw new ClassCastException("Cannot cast this class to child class.");
     }
 
     public void receiveCash(int totalPrice) {
@@ -290,7 +299,7 @@ public class User {
      * @param item 구매 여부를 확인할 상품 엔티티. SellableItem의 서브클래스의 인스턴스.
      * @return 구매한 상품이라면 true, 구매하지 않은 상품이라면 false
      */
-    public boolean isPurchased(SellableItem item){
+    public boolean isPurchased(SellableItem item) {
         List<? extends SellableItem> purchasedItemList;
         if (item instanceof SheetPost)
             purchasedItemList = purchasedSheets;
@@ -301,8 +310,8 @@ public class User {
         return purchasedItemList.stream().anyMatch(purchasedItem -> purchasedItem.equals(item));
     }
 
-    public UserProfile getUserProfile() {
-        return UserProfile.builder()
+    public UserInfo getUserProfile() {
+        return UserInfo.builder()
                 .id(id)
                 .name(name)
                 .username(securityUser.getUsername())
@@ -321,7 +330,7 @@ public class User {
             throw new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_VIDEO_POST);
     }
 
-    public void addLikedLesson(Lesson lesson) {
+    public void likeLesson(Lesson lesson) {
         if (likedLessons.stream().anyMatch(item -> item.equals(lesson)))
             throw new EntityExistsException("이미 좋아요를 누른 글입니다.");
         likedLessons.add(lesson);
@@ -346,10 +355,8 @@ public class User {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
         User user = (User) o;
-
-        return id.equals(user.id);
+        return Objects.equals(id, user.id);
     }
 
     @Override

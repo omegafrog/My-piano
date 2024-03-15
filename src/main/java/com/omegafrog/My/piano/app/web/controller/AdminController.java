@@ -9,9 +9,8 @@ import com.omegafrog.My.piano.app.utils.response.JsonAPIResponse;
 import com.omegafrog.My.piano.app.utils.response.ResponseUtil;
 import com.omegafrog.My.piano.app.web.domain.admin.Admin;
 import com.omegafrog.My.piano.app.web.dto.AdminDto;
-import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
+import com.omegafrog.My.piano.app.web.dto.user.UserInfo;
 import com.omegafrog.My.piano.app.web.service.UserApplicationService;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
@@ -48,7 +47,7 @@ public class AdminController {
 
     @GetMapping("/users")
     public JsonAPIResponse loadUsers(Pageable pageable) throws JsonProcessingException {
-        List<UserProfile> users = adminUserService.getUsers(pageable);
+        List<UserInfo> users = adminUserService.getUsers(pageable);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("users", users);
         return new APISuccessResponse("Load all users success.", data);
     }

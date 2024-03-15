@@ -1,7 +1,6 @@
 package com.omegafrog.My.piano.app.web.dto;
 
-import com.omegafrog.My.piano.app.web.dto.post.PostDto;
-import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
+import com.omegafrog.My.piano.app.web.dto.user.UserInfo;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -12,14 +11,14 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class ReturnCommentDto {
     private Long id;
-    private UserProfile author;
+    private UserInfo author;
     private LocalDateTime createdAt;
     private String content;
     private int likeCount;
     private Long targetId;
 
     @Builder
-    public ReturnCommentDto(Long id, UserProfile author, LocalDateTime createdAt, String content, int likeCount, Long targetId) {
+    public ReturnCommentDto(Long id, UserInfo author, LocalDateTime createdAt, String content, int likeCount, Long targetId) {
         this.id = id;
         this.author = author;
         this.createdAt = createdAt;

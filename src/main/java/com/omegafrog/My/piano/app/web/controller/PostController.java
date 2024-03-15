@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.utils.response.ResponseUtil;
-import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.post.*;
 import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
@@ -14,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -22,7 +20,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class PostController {
 
-    private final ObjectMapper objectMapper;
     private final PostApplicationService postApplicationService;
 
     @PostMapping("")
@@ -33,10 +30,10 @@ public class PostController {
     }
 
     @GetMapping("/{id}")
-    public JsonAPIResponse<PostDto> findPost(@PathVariable Long id)
+    public JsonAPIResponse<ReturnPostDto> findPost(@PathVariable Long id)
             throws JsonProcessingException {
-        PostDto postById = postApplicationService.findPostById(id);
-        return new APISuccessResponse("Find post success", postById);
+        ReturnPostDto postById = postApplicationService.findPostById(id);
+        return new APISuccessResponse<>("Find post success", postById);
     }
 
     @GetMapping("")
@@ -50,21 +47,32 @@ public class PostController {
             throws JsonProcessingException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         PostDto postDto = postApplicationService.updatePost(id, post, loggedInUser);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("post", postDto);
-        return new APISuccessResponse("update post success", data);
+        return new APISuccessResponse("update post success", postDto);
     }
 
     @DeleteMapping("/{id}")
-    public JsonAPIResponse deletePost(@PathVariable Long id) {
+    public JsonAPIResponse<Void> deletePost(@PathVariable Long id) {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         postApplicationService.deletePost(id, loggedInUser);
-        return new APISuccessResponse("delete post success");
+        return new APISuccessResponse<>("delete post success");
     }
 
-    @GetMapping("/{id}/like")
+    @PutMapping("/{id}/like")
     public JsonAPIResponse likePost(@PathVariable Long id) {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         postApplicationService.likePost(id, loggedInUser);
         return new APISuccessResponse("like post success");
+    }
+    @DeleteMapping("/{id}/like")
+    public JsonAPIResponse dislikePost(@PathVariable Long id) {
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+        postApplicationService.dislikePost(id, loggedInUser);
+        return new APISuccessResponse("dislike post success");
+    }
+    @GetMapping("/{id}/like")
+    public JsonAPIResponse isLikedPost(@PathVariable Long id) throws JsonProcessingException {
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+        boolean isLikedPost = postApplicationService.isLikedPost(id, loggedInUser);
+        return new APISuccessResponse("Check liked post success", isLikedPost);
     }
 }
