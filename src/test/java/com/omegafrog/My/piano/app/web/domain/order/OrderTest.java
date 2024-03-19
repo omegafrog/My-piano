@@ -11,8 +11,6 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 class OrderTest {
 
     @Test
@@ -29,7 +27,8 @@ class OrderTest {
                 new LessonInformation());
         Coupon coupon = new Coupon("name", "code", 0.3D,
                 LocalDateTime.of(2024, 01, 01, 00, 00));
-        Order order = new Order(seller, buyer, lesson, coupon);
+        Order order = new Order(seller, buyer, lesson, 0D, coupon);
+
         //when
         order.calculateTotalPrice();
         //then

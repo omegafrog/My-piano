@@ -2,6 +2,7 @@ package com.omegafrog.My.piano.app.web.domain.order;
 
 import com.omegafrog.My.piano.app.web.domain.article.Article;
 import com.omegafrog.My.piano.app.web.domain.user.User;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -14,12 +15,13 @@ import jakarta.persistence.*;
 @Getter
 public class SellableItem extends Article {
 
-    protected int price;
+    @NotNull
+    protected Integer price;
 
     protected Double discountRate = 0d;
 
 
-    public SellableItem(User author, String title, String content, int price) {
+    public SellableItem(User author, String title, String content, Integer price) {
         this.author = author;
         this.title = title;
         this.content = content;
