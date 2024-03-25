@@ -26,7 +26,6 @@ echo "새 애플리케이션 배포"
 JAR_NAME=$(ls -tr $REPOSITORY/build/libs/*.jar | tail -n 1)
 chmod +x $JAR_NAME
 
-mkdir $REPOSITORY/config
 aws s3 cp --recursive s3://mypiano-deploy/config $REPOSITORY/config/
 
 nohup java -jar \
