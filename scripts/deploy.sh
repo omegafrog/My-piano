@@ -11,6 +11,9 @@ echo "애플리케이션 pid 확인"
 
 CURRENT_PID=$(pgrep -fl springboot-webservice | grep jar | awk '{print $1}')
 
+mkdir $REPOSITORY/config
+
+aws s3 cp --recursive s3://mypiano-deploy/config $REPOSITORY/config
 
 
 if [ -z "$CURRENT_PID" ]; then
