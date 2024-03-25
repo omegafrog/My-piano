@@ -41,3 +41,7 @@ out/
 *.puml
 *.xml
 
+
+application.pid
+
+*.patch

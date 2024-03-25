@@ -20,6 +20,7 @@ import com.omegafrog.My.piano.app.external.tossPayment.TossWebHookResultFactoryI
 import com.omegafrog.My.piano.app.utils.MapperUtil;
 import com.omegafrog.My.piano.app.web.domain.S3UploadFileExecutor;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
+import com.omegafrog.My.piano.app.web.domain.notification.PushInstance;
 import com.omegafrog.My.piano.app.web.domain.order.SellableItemFactory;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import io.awspring.cloud.s3.InMemoryBufferingS3OutputStreamProvider;
@@ -38,6 +39,8 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+
+import java.io.IOException;
 
 @Configuration
 public class GlobalConfig {
@@ -62,11 +65,9 @@ public class GlobalConfig {
     private String port;
     @Value("${elasticsearch.apiKey}")
     private String apiKey;
+    @Value("${firebase.app.admin.json}")
+    private String serviceAccountPath;
 
-    @Bean
-    public MapperUtil mapperUtil(ObjectMapper objectMapper, TossWebHookResultFactory factory) {
-        return new MapperUtil(objectMapper, factory);
-    }
 
     @Bean
     public SellableItemFactory sellableItemFactory(LessonRepository lessonRepository, SheetPostRepository sheetPostRepository) {
@@ -74,6 +75,15 @@ public class GlobalConfig {
     }
 
     @Bean
+    public PushInstance pushInstance() throws IOException {
+        System.out.println("serviceAccountPath = " + serviceAccountPath);
+        return new PushInstance(serviceAccountPath);
+    }
+
+    @Bean
+    public MapperUtil mapperUtil(ObjectMapper objectMapper){
+        return new MapperUtil(objectMapper);
+    }
     public ElasticsearchClient elasticsearchClient() {
         String serverUrl = "https://" + host + ":" + port;
 

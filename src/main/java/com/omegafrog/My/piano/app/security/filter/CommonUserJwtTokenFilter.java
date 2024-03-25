@@ -60,7 +60,9 @@ public class CommonUserJwtTokenFilter extends OncePerRequestFilter {
                         AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/community/video-post"),
                         AntPathRequestMatcher.antMatcher("/h2-console/**"),
                         AntPathRequestMatcher.antMatcher("/oauth2/**"),
+                        AntPathRequestMatcher.antMatcher("/revalidate"),
                         AntPathRequestMatcher.antMatcher("/api/v1/popular"),
+                        AntPathRequestMatcher.antMatcher("/healthcheak"),
                         AntPathRequestMatcher.antMatcher("/cash/webhook")
                 ));
         for (AntPathRequestMatcher pathMatcher : ignoredPatterns) {
