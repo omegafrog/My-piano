@@ -1,23 +1,14 @@
 package com.omegafrog.My.piano.app.external.elasticsearch;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.nimbusds.openid.connect.sdk.claims.UserInfo;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
-import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
-import com.omegafrog.My.piano.app.web.dto.user.UserProfile;
 import com.omegafrog.My.piano.app.web.enums.Genre;
 import jakarta.persistence.Id;
-import jakarta.persistence.NamedQuery;
 import lombok.*;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.WriteTypeHint;
 
-import java.lang.annotation.Documented;
-import java.lang.reflect.Array;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @AllArgsConstructor
