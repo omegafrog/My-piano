@@ -1,9 +1,7 @@
 package com.omegafrog.My.piano.app.web.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
-import com.omegafrog.My.piano.app.utils.response.ResponseUtil;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.post.*;
 import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
@@ -13,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
 
 @RestController
 @RequestMapping("/community/posts")
@@ -57,7 +54,7 @@ public class PostController {
         return new APISuccessResponse<>("delete post success");
     }
 
-    @PutMapping("/{id}/like")
+    @GetMapping("/{id}/like")
     public JsonAPIResponse likePost(@PathVariable Long id) {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         postApplicationService.likePost(id, loggedInUser);
