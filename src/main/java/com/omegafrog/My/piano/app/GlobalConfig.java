@@ -11,6 +11,7 @@ import com.omegafrog.My.piano.app.external.tossPayment.TossPaymentInstance;
 import com.omegafrog.My.piano.app.utils.MapperUtil;
 import com.omegafrog.My.piano.app.web.domain.S3UploadFileExecutor;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
+import com.omegafrog.My.piano.app.web.domain.notification.PushInstance;
 import com.omegafrog.My.piano.app.web.domain.order.SellableItemFactory;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import io.awspring.cloud.s3.InMemoryBufferingS3OutputStreamProvider;
@@ -25,6 +26,8 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+
+import java.io.IOException;
 
 @Configuration
 public class GlobalConfig {
@@ -48,6 +51,11 @@ public class GlobalConfig {
     @Bean
     public SellableItemFactory sellableItemFactory(LessonRepository lessonRepository, SheetPostRepository sheetPostRepository) {
         return new SellableItemFactory(lessonRepository, sheetPostRepository);
+    }
+
+    @Bean
+    public PushInstance pushInstance() throws IOException {
+        return new PushInstance();
     }
 
     @Bean
