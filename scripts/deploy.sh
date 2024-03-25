@@ -30,7 +30,7 @@ mkdir $REPOSITORY/config
 aws s3 cp --recursive s3://mypiano-deploy/config $REPOSITORY/config/
 
 nohup java -jar \
-  -Dspring.config.location=$REPOSITORY/config/application-mysql.properties\
+  -Dspring.config.location=$REPOSITORY/config/application-mysql.properties \
   -Dspring.profiles.active=mysql \
   $JAR_NAME > $REPOSITORY/nohup.out 2>&1 &
 
