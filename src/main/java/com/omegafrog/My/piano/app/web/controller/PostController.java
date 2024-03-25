@@ -54,7 +54,7 @@ public class PostController {
         return new APISuccessResponse<>("delete post success");
     }
 
-    @GetMapping("/{id}/like")
+    @PutMapping("/{id}/like")
     public JsonAPIResponse likePost(@PathVariable Long id) {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         postApplicationService.likePost(id, loggedInUser);
