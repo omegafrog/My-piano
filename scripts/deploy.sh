@@ -32,8 +32,8 @@ chmod +x $JAR_NAME
 aws s3 cp --recursive s3://mypiano-deploy/config $REPOSITORY/config/
 
 nohup java -jar \
-  -Dspring.config.location=$REPOSITORY/config/application-mysql.properties \
-  -Dspring.profiles.active=mysql \
+  -Dspring.config.location=$REPOSITORY/config/application-prod.properties \
+  -Dspring.profiles.active=prod \
   $JAR_NAME > $REPOSITORY/nohup.out 2>&1 &
 
 
