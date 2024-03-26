@@ -18,11 +18,9 @@ import java.io.IOException;
 @Slf4j
 public class PushInstance {
 
-    @Value("${firebase.app.admin.json}")
-    private String serviceAccountPath;
     private FirebaseApp app;
 
-    public PushInstance() throws IOException {
+    public PushInstance(String serviceAccountPath) throws IOException {
         log.info("{}", serviceAccountPath);
         FileInputStream serviceAccount =
                 new FileInputStream(serviceAccountPath);

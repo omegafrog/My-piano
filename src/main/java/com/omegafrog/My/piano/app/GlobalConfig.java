@@ -46,6 +46,8 @@ public class GlobalConfig {
     @Value("${spring.cloud.aws.region.static}")
     private String region;
 
+    @Value("${firebase.app.admin.json}")
+    private String serviceAccountPath;
 
 
     @Bean
@@ -55,7 +57,7 @@ public class GlobalConfig {
 
     @Bean
     public PushInstance pushInstance() throws IOException {
-        return new PushInstance();
+        return new PushInstance(serviceAccountPath);
     }
 
     @Bean
