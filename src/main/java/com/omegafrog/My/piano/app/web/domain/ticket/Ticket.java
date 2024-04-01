@@ -1,7 +1,7 @@
 package com.omegafrog.My.piano.app.web.domain.ticket;
 
+import com.omegafrog.My.piano.app.web.domain.Reply;
 import com.omegafrog.My.piano.app.web.enums.TicketType;
-import com.omegafrog.My.piano.app.web.dto.ticket.TicketDto;
 import com.omegafrog.My.piano.app.web.dto.ticket.UpdateTicketDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import lombok.Builder;
@@ -10,24 +10,32 @@ import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @NoArgsConstructor
+@Getter
 public class Ticket {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Getter
     private Long id;
 
     private LocalDateTime createdAt;
 
-    @OneToOne(cascade = {CascadeType.MERGE})
+    @OneToOne
     @JoinColumn(name = "USER_ID")
     private User author;
+
     private TicketType type;
     private String content;
+
+    private TicketStatus status;
     private LocalDateTime closedAt;
+
+    @OneToMany(cascade = {CascadeType.PERSIST}, mappedBy = "parent", fetch = FetchType.LAZY)
+    private List<Reply> reply = new ArrayList<>();
 
     @Builder
     public Ticket(User author, TicketType type, String content) {
@@ -35,6 +43,7 @@ public class Ticket {
         this.author = author;
         this.type = type;
         this.content = content;
+        this.status = TicketStatus.CREATED;
     }
 
     public Ticket update(UpdateTicketDto dto){
@@ -58,16 +67,17 @@ public class Ticket {
         return id.hashCode();
     }
 
+    public void close(){
+        this.status = TicketStatus.CLOSED;
+        this.closedAt = LocalDateTime.now();
+    }
 
-    public TicketDto toDto(){
-        return TicketDto.builder()
-                .id(this.id)
-                .createdAt(this.createdAt)
-                .author(this.author)
-                .type(this.type)
-                .content(this.content)
-                .closedAt(this.closedAt)
-                .build();
+    public void addReply(Reply reply){
+        this.reply.add(reply);
+    }
+
+    public void changeStatus(TicketStatus status){
+        this.status = status;
     }
 
 }
