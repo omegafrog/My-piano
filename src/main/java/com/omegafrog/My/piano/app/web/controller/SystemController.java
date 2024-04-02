@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class SystemController {
 
-    @GetMapping("/healthcheak")
+    @GetMapping("/healthcheck")
     public JsonAPIResponse<Void> checkHealth(){
         return new APISuccessResponse<>("hello world");
 

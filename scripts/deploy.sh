@@ -27,7 +27,7 @@ fi
 echo "새 애플리케이션 배포"
 
 JAR_NAME=$(ls -tr $REPOSITORY/build/libs/*.jar | tail -n 1)
-chmod +x $JAR_NAME
+sudo chmod +x $JAR_NAME
 
 aws s3 cp s3://mypiano-deploy/certs/http_ca.crt ./http_ca.crt
 sudo keytool -import -trustcacerts -keystore /usr/lib/jvm/java-17-amazon-corretto.x86_64/lib/security/cacerts -storepass changeit -noprompt -alias elasticCA -file ~/build/http_ca.crt
