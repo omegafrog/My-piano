@@ -135,4 +135,7 @@ public class SecurityUser implements UserDetails {
         this.password = password;
     }
 
+    public void changeRole(Role role) {
+        this.role = role;
+    }
 }

@@ -25,7 +25,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -134,9 +133,9 @@ public class SecurityController {
             }
 
             TokenInfo tokenInfo = tokenUtils.generateToken(String.valueOf(user.getId()), user.getRole());
-            Optional<RefreshToken> foundedRefreshToken = refreshTokenRepository.findByUserId(user.getId());
+            Optional<RefreshToken> foundedRefreshToken = refreshTokenRepository.findByRoleAndUserId(user.getId(), user.getRole());
             if (foundedRefreshToken.isPresent()) {
-                foundedRefreshToken.get().updateRefreshToken(tokenInfo.getRefreshToken().getRefreshToken());
+                foundedRefreshToken.get().updateRefreshToken(tokenInfo.getRefreshToken().getPayload());
             } else
                 refreshTokenRepository.save(tokenInfo.getRefreshToken());
             Map<String, Object> data = ResponseUtil.getStringObjectMap("access token", tokenInfo.getGrantType() + " " + tokenInfo.getAccessToken());

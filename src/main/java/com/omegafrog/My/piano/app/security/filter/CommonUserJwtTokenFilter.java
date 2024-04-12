@@ -81,7 +81,7 @@ public class CommonUserJwtTokenFilter extends OncePerRequestFilter {
             Role role = Role.valueOf(String.valueOf(claims.get("role")));
 
             // refresh token repository에 해당 유저의 refresh token이 없다면 로그아웃한 것.
-            if (refreshTokenRepository.findByUserId(userId).isEmpty()) {
+            if (refreshTokenRepository.findByRoleAndUserId(userId, role).isEmpty()) {
                 throw new BadCredentialsException("Already logged out user.");
             }
             // token validation 진행

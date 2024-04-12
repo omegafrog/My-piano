@@ -1,6 +1,7 @@
 package com.omegafrog.My.piano.app.security.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.omegafrog.My.piano.app.security.entity.authorities.Role;
 import com.omegafrog.My.piano.app.security.jwt.RefreshToken;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.security.jwt.TokenInfo;
@@ -12,7 +13,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
@@ -36,10 +36,10 @@ public class AdminLoginSuccessHandler implements AuthenticationSuccessHandler {
         Map<String, Object> data = new HashMap<>();
         Admin user = (Admin) authentication.getPrincipal();
         TokenInfo tokenInfo = tokenUtils.generateToken(String.valueOf(user.getId()), user.getRole());
-        Optional<RefreshToken> founded = refreshTokenRepository.findByUserId(user.getId());
+        Optional<RefreshToken> founded = refreshTokenRepository.findByRoleAndUserId(user.getId(), Role.ADMIN);
 
         if (founded.isPresent())
-            founded.get().updateRefreshToken(tokenInfo.getRefreshToken().getRefreshToken());
+            founded.get().updateRefreshToken(tokenInfo.getRefreshToken().getPayload());
         else
             founded = Optional.of(refreshTokenRepository.save(tokenInfo.getRefreshToken()));
 

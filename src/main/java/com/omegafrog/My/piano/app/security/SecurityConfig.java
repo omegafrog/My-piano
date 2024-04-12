@@ -16,6 +16,9 @@ import com.omegafrog.My.piano.app.security.service.AdminUserService;
 import com.omegafrog.My.piano.app.security.service.CommonUserService;
 
 import com.omegafrog.My.piano.app.web.domain.admin.AdminRepository;
+import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
+import com.omegafrog.My.piano.app.web.infra.user.JpaUserRepositoryImpl;
+import com.omegafrog.My.piano.app.web.infra.user.SimpleJpaUserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -45,7 +48,7 @@ public class SecurityConfig {
     @Bean
     public RefreshTokenRepository refreshTokenRepository(){
         return new CommonUserRefreshTokenRepositoryImpl();
-    };
+    }
     @Bean
     public TokenUtils tokenUtils(){
         return new TokenUtils();
@@ -73,9 +76,18 @@ public class SecurityConfig {
     public CommonUserService commonUserService() {
         return new CommonUserService(passwordEncoder(), securityUserRepository, refreshTokenRepository());
     }
+
+    @Autowired
+    private UserRepository userRepository;
+
     @Bean
     public AdminUserService adminUserService(){
-        return new AdminUserService();
+        return new AdminUserService(adminRepository,
+                passwordEncoder(),
+                userRepository,
+                refreshTokenRepository(),
+                securityUserRepository
+                );
     }
 
 
