@@ -9,6 +9,8 @@ import com.omegafrog.My.piano.app.web.domain.ticket.Ticket;
 import com.omegafrog.My.piano.app.web.domain.ticket.TicketRepository;
 import com.omegafrog.My.piano.app.web.domain.ticket.TicketStatus;
 import com.omegafrog.My.piano.app.web.domain.user.User;
+import com.omegafrog.My.piano.app.web.dto.ReplyDto;
+import com.omegafrog.My.piano.app.web.dto.SearchTicketFilter;
 import com.omegafrog.My.piano.app.web.dto.ticket.RequestTicketDto;
 import com.omegafrog.My.piano.app.web.dto.ticket.TicketDto;
 import jakarta.persistence.EntityNotFoundException;
@@ -30,23 +32,25 @@ public class TicketService {
     private final SecurityUserRepository securityUserRepository;
 
 
-    public List<TicketDto> getTickets(UserDetails userDetails, Pageable pageable) {
+    public List<TicketDto> getTickets(UserDetails userDetails,
+
+                                      SearchTicketFilter filter, Pageable pageable) {
         if(userDetails instanceof SecurityUser user){
             securityUserRepository.findById(user.getUser().getId());
-            List<Ticket> byAuthorId = ticketRepository.findByAuthor_Id(user.getUser().getId(), pageable);
+            List<Ticket> byAuthorId = ticketRepository.findByAuthor_IdAndFilter(user.getUser().getId(), filter, pageable);
             return byAuthorId.stream().map(TicketDto::new).toList();
         }else if(userDetails instanceof Admin){
-            Page<Ticket> all = ticketRepository.findAll(pageable);
+            Page<Ticket> all = ticketRepository.findAll(filter, pageable);
             return all.getContent().stream().map(TicketDto::new).toList();
         } else throw new IllegalArgumentException("Invalid userDetails:" + userDetails.toString());
     }
 
     public TicketDto createTicket(RequestTicketDto dto,  User loggedInUser) {
-        Ticket ticket = new Ticket(loggedInUser, dto.type(), dto.content());
+        Ticket ticket = new Ticket(loggedInUser, dto.type(),dto.title(), dto.content());
         return new TicketDto(ticketRepository.save(ticket));
     }
 
-    public void replyTo(Long id, RequestTicketDto dto, UserDetails principal) {
+    public ReplyDto replyTo(Long id, RequestTicketDto dto, UserDetails principal) {
         Ticket ticket = ticketRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Cannot find ticket entity."));
         ticket.changeStatus(TicketStatus.PRODUCING);
         Reply.ReplyBuilder builder = Reply.builder()
@@ -60,7 +64,9 @@ public class TicketService {
             builder.authorId(admin.getId());
         } else throw new IllegalArgumentException("Invalid principal type.");
         builder.authorName(principal.getUsername());
-        ticket.addReply(builder.build());
+        Reply reply = builder.build();
+        ticket.addReply(reply);
+        return new ReplyDto(reply);
     }
 
     public TicketDto getTicket(Long id, UserDetails principal){
@@ -84,4 +90,7 @@ public class TicketService {
         ticket.close();
     }
 
+    public Long countTickets() {
+        return Long.valueOf(ticketRepository.count());
+    }
 }

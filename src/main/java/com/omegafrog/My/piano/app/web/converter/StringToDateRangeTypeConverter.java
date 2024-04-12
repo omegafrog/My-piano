@@ -1,4 +1,4 @@
-package com.omegafrog.My.piano.app.web.enums.converter;
+package com.omegafrog.My.piano.app.web.converter;
 
 import com.omegafrog.My.piano.app.web.enums.DateRangeType;
 import org.springframework.core.convert.converter.Converter;

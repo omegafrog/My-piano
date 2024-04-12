@@ -29,6 +29,7 @@ public class Ticket {
     private User author;
 
     private TicketType type;
+    private String title;
     private String content;
 
     private TicketStatus status;
@@ -38,11 +39,12 @@ public class Ticket {
     private List<Reply> reply = new ArrayList<>();
 
     @Builder
-    public Ticket(User author, TicketType type, String content) {
+    public Ticket(User author, TicketType type, String title, String content) {
         this.createdAt = LocalDateTime.now();
         this.author = author;
         this.type = type;
         this.content = content;
+        this.title = title;
         this.status = TicketStatus.CREATED;
     }
 
