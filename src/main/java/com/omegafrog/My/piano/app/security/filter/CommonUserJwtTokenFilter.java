@@ -1,13 +1,12 @@
 package com.omegafrog.My.piano.app.security.filter;
 
-import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
 import com.omegafrog.My.piano.app.security.entity.authorities.Role;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
-import com.omegafrog.My.piano.app.web.domain.admin.AdminRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,8 +14,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
-import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -36,8 +33,6 @@ public class CommonUserJwtTokenFilter extends OncePerRequestFilter {
 
     private final SecurityUserRepository securityUserRepository;
     private final RefreshTokenRepository refreshTokenRepository;
-
-    private final AdminRepository adminRepository;
 
     @Autowired
     private TokenUtils tokenUtils;
@@ -85,7 +80,7 @@ public class CommonUserJwtTokenFilter extends OncePerRequestFilter {
                 throw new BadCredentialsException("Already logged out user.");
             }
             // token validation 진행
-            UserDetails user = getUserFromAccessToken(userId, role);
+            UserDetails user = getUserFromAccessToken(userId);
             Authentication usernameToken = getAuthenticationToken(user);
             SecurityContextHolder.getContext().setAuthentication(usernameToken);
         } catch (ExpiredJwtException e) {
@@ -96,12 +91,10 @@ public class CommonUserJwtTokenFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private UserDetails getUserFromAccessToken(Long userId, Role role) {
-        return switch (role){
-            case ADMIN, SUPER_ADMIN -> adminRepository.findById(userId).orElseThrow(()-> new AuthenticationServiceException("cannot find admin"));
-            case USER ,CREATOR -> securityUserRepository.findById(userId).orElseThrow(
-                    () -> new AuthenticationCredentialsNotFoundException("Invalid access token"));
-        };
+    private UserDetails getUserFromAccessToken(Long userId) {
+        return securityUserRepository.findById(userId).orElseThrow(
+                () -> new EntityNotFoundException("Cannot find User entity")
+        );
     }
 
     private static Authentication getAuthenticationToken(UserDetails user) {

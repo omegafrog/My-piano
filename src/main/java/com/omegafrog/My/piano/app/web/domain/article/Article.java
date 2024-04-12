@@ -34,6 +34,8 @@ public class Article {
     @PositiveOrZero
     protected int likeCount=0;
 
+    protected boolean disabled=false;
+
     @ManyToOne
     @JoinColumn(name="AUTHOR_ID")
     protected User author;
@@ -105,8 +107,12 @@ public class Article {
         return comments.subList((int) offset, toIdx);
     }
 
-
-
+    public void disable(){
+        this.disabled=true;
+    }
+    public void enable(){
+        this.disabled=false;
+    }
 
     @Override
     public int hashCode() {

@@ -19,7 +19,7 @@ public class PhoneNum  {
     @Pattern(regexp = "010-([0-9]{3,4})-([0-9]{4})")
     @Nullable
     private String phoneNum;
-    private boolean isAuthorized=false;
+    private Boolean isAuthorized=false;
 
     @Builder
     public PhoneNum(String phoneNum) {

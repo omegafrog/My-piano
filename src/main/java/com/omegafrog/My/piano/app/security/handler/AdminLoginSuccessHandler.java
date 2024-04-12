@@ -1,13 +1,13 @@
 package com.omegafrog.My.piano.app.security.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.security.entity.authorities.Role;
 import com.omegafrog.My.piano.app.security.jwt.RefreshToken;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.security.jwt.TokenInfo;
 import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
 import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
-import com.omegafrog.My.piano.app.web.domain.admin.Admin;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -34,7 +34,7 @@ public class AdminLoginSuccessHandler implements AuthenticationSuccessHandler {
         log.debug("login success");
         PrintWriter writer = response.getWriter();
         Map<String, Object> data = new HashMap<>();
-        Admin user = (Admin) authentication.getPrincipal();
+        SecurityUser user = (SecurityUser) authentication.getPrincipal();
         TokenInfo tokenInfo = tokenUtils.generateToken(String.valueOf(user.getId()), user.getRole());
         Optional<RefreshToken> founded = refreshTokenRepository.findByRoleAndUserId(user.getId(), Role.ADMIN);
 

@@ -41,8 +41,8 @@ public class OrderService {
 
         buyer.pay(order);
         seller.receiveCash(orderDto.getTotalPrice());
-        orderDto.setBuyer(buyer.getUserProfile());
-        orderDto.setSeller(seller.getUserProfile());
+        orderDto.setBuyer(buyer.getUserInfo());
+        orderDto.setSeller(seller.getUserInfo());
         return orderDto;
     }
 

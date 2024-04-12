@@ -48,7 +48,7 @@ public class SecurityConfig {
     @Bean
     public RefreshTokenRepository refreshTokenRepository(){
         return new CommonUserRefreshTokenRepositoryImpl();
-    }
+    };
     @Bean
     public TokenUtils tokenUtils(){
         return new TokenUtils();
@@ -82,7 +82,7 @@ public class SecurityConfig {
 
     @Bean
     public AdminUserService adminUserService(){
-        return new AdminUserService(adminRepository,
+        return new AdminUserService(
                 passwordEncoder(),
                 userRepository,
                 refreshTokenRepository(),
@@ -108,7 +108,7 @@ public class SecurityConfig {
 
     @Bean
     public CommonUserJwtTokenFilter commonUserJwtTokenFilter() {
-        return new CommonUserJwtTokenFilter( securityUserRepository, refreshTokenRepository(),adminRepository );
+        return new CommonUserJwtTokenFilter( securityUserRepository, refreshTokenRepository() );
     }
 
 

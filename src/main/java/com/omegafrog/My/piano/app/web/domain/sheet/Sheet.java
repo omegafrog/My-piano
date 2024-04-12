@@ -73,7 +73,7 @@ public class Sheet  {
                 .pageNum(pageNum)
                 .isSolo(isSolo)
                 .title(title)
-                .user(user.getUserProfile())
+                .user(user.getUserInfo())
                 .build();
     }
 

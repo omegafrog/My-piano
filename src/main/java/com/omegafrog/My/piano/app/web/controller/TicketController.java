@@ -1,6 +1,7 @@
 package com.omegafrog.My.piano.app.web.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.utils.response.APIBadRequestResponse;
 import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
@@ -50,7 +51,7 @@ public class TicketController {
             Pageable pageable) throws JsonProcessingException {
         SearchTicketFilter filter = new SearchTicketFilter(id, type, status, startDate, endDate);
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        UserDetails userDetails = (UserDetails) auth.getPrincipal();
+        SecurityUser userDetails = (SecurityUser) auth.getPrincipal();
         Map<String, Object> data = new HashMap<>();
         List<TicketDto> tickets = ticketService.getTickets(userDetails, filter, pageable);
         data.put("count", tickets.size());

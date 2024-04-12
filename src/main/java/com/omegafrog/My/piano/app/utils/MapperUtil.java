@@ -4,7 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.external.tossPayment.*;
+import com.omegafrog.My.piano.app.security.entity.SecurityUser;
+import com.omegafrog.My.piano.app.security.service.DisablePostStrategy;
+import com.omegafrog.My.piano.app.security.service.UpdatePostStrategy;
 import com.omegafrog.My.piano.app.web.domain.cash.PaymentHistory;
+import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.ChangeUserDto;
 import com.omegafrog.My.piano.app.web.dto.RegisterSheetDto;
@@ -16,6 +20,8 @@ import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @RequiredArgsConstructor
 public class MapperUtil {
@@ -108,5 +114,29 @@ public class MapperUtil {
 
     public TossWebHookResult parseTossWebhook(String json) throws JsonProcessingException {
         return tossWebHookResultFactory.parse(json);
+    }
+
+    public List<UpdatePostStrategy> parseUpdatePostJson(String body) throws JsonProcessingException {
+        List<UpdatePostStrategy> strategies = new ArrayList<>();
+        JsonNode jsonNode = objectMapper.readTree(body);
+        jsonNode.fields().forEachRemaining(entry -> {
+            switch (entry.getKey()){
+                case DisablePostStrategy.optionName ->
+                        strategies.add(new DisablePostStrategy(entry.getValue().asBoolean()));
+            }
+        });
+        return strategies;
+    }
+
+    public Post parsePostNotiJson(String body, SecurityUser admin) throws JsonProcessingException {
+        JsonNode node = objectMapper.readTree(body);
+        String title = node.get("title").asText();
+        String content = node.get("content").asText();
+
+        return Post.builder()
+                .title(title)
+                .author(admin.getUser())
+                .content(content)
+                .build();
     }
 }

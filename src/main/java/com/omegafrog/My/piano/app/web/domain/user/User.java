@@ -14,6 +14,7 @@ import com.omegafrog.My.piano.app.web.domain.post.VideoPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.dto.ChangeUserDto;
 import com.omegafrog.My.piano.app.web.dto.user.UserInfo;
+import com.omegafrog.My.piano.app.web.dto.user.UserProfileDto;
 import com.omegafrog.My.piano.app.web.enums.OrderStatus;
 import com.omegafrog.My.piano.app.utils.exception.payment.NotEnoughCashException;
 import com.omegafrog.My.piano.app.utils.exception.payment.PaymentException;
@@ -310,7 +311,7 @@ public class User {
         return purchasedItemList.stream().anyMatch(purchasedItem -> purchasedItem.equals(item));
     }
 
-    public UserInfo getUserProfile() {
+    public UserInfo getUserInfo() {
         return UserInfo.builder()
                 .id(id)
                 .name(name)
@@ -322,6 +323,9 @@ public class User {
                 .enabled(!securityUser.isLocked())
                 .cash(cash)
                 .build();
+    }
+    public UserProfileDto getUserProfileDto() {
+        return new UserProfileDto(id, securityUser.getUsername(), profileSrc);
     }
 
 

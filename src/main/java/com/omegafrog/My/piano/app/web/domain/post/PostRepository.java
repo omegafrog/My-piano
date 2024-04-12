@@ -1,6 +1,8 @@
 package com.omegafrog.My.piano.app.web.domain.post;
 
 
+import com.omegafrog.My.piano.app.web.dto.post.SearchPostFilter;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
@@ -19,6 +21,7 @@ public interface PostRepository  {
     void deleteAll();
 
     List<Post> findAll(Pageable pageable, Sort sort);
+    Page<Post> findAll(SearchPostFilter filter, Pageable pageable);
 
     Long count();
 }

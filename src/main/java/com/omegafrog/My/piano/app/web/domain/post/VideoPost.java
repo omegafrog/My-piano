@@ -53,7 +53,7 @@ public class VideoPost extends Article {
                 .id(id)
                 .title(title)
                 .content(content)
-                .author(author.getUserProfile())
+                .author(author.getUserProfileDto())
                 .likeCount(likeCount)
                 .viewCount(viewCount)
                 .createdAt(createdAt)

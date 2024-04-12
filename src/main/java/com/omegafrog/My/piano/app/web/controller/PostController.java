@@ -27,9 +27,9 @@ public class PostController {
     }
 
     @GetMapping("/{id}")
-    public JsonAPIResponse<ReturnPostDto> findPost(@PathVariable Long id)
+    public JsonAPIResponse<PostDto> findPost(@PathVariable Long id)
             throws JsonProcessingException {
-        ReturnPostDto postById = postApplicationService.findPostById(id);
+        PostDto postById = postApplicationService.findPostById(id);
         return new APISuccessResponse<>("Find post success", postById);
     }
 

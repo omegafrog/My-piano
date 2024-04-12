@@ -15,8 +15,9 @@ public record TicketDto(Long id, LocalDateTime createdAt, UserProfileDto author,
     public TicketDto(Ticket ticket){
         this(ticket.getId(), ticket.getCreatedAt(),
                 new UserProfileDto(
-                        ticket.getAuthor().getUserProfile().getUsername(),
-                        ticket.getAuthor().getUserProfile().getProfileSrc()),
+                        ticket.getAuthor().getId(),
+                        ticket.getAuthor().getUserInfo().getUsername(),
+                        ticket.getAuthor().getUserInfo().getProfileSrc()),
                 ticket.getType(), ticket.getTitle(),ticket.getContent(),
                 ticket.getClosedAt(), ticket.getStatus(),
                 ticket.getReply().stream().map(r-> new ReplyDto(r.getContent(), r.getAuthorName(), r.getCreatedAt())

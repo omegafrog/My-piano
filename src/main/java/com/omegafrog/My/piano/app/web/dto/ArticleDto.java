@@ -2,6 +2,7 @@ package com.omegafrog.My.piano.app.web.dto;
 
 import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
 import com.omegafrog.My.piano.app.web.dto.user.UserInfo;
+import com.omegafrog.My.piano.app.web.dto.user.UserProfileDto;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
@@ -23,15 +24,17 @@ public abstract class ArticleDto {
     @NotNull
     private LocalDateTime createdAt;
     @NotNull
-    private UserInfo author;
+    private UserProfileDto author;
     @NotNull
     private int likeCount;
     @NotNull
     private int viewCount;
     @NotNull
     private List<CommentDto> comments;
+    private boolean disabled = false;
 
-    protected ArticleDto(Long id, String title, String content, LocalDateTime createdAt, UserInfo author, int likeCount, int viewCount, List<CommentDto> comments) {
+    protected ArticleDto(Long id, String title, String content, LocalDateTime createdAt, UserProfileDto author, int likeCount, int viewCount, List<CommentDto> comments,
+                         boolean disabled) {
         this.id = id;
         this.title = title;
         this.content = content;
@@ -40,5 +43,6 @@ public abstract class ArticleDto {
         this.likeCount = likeCount;
         this.viewCount = viewCount;
         this.comments = comments;
+        this.disabled = disabled;
     }
 }

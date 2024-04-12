@@ -43,11 +43,11 @@ public class PostApplicationService implements CommentHandler {
         return saved.toDto();
     }
 
-    public ReturnPostDto findPostById(Long id) {
+    public PostDto findPostById(Long id) {
         Post founded = postRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_POST + id));
         founded.increaseViewCount();
-        return new ReturnPostDto(founded, founded.getAuthor());
+        return new PostDto(founded, founded.getAuthor());
     }
 
     public PostDto updatePost(Long id, UpdatePostDto updatePostDto, User loggedInUser) {

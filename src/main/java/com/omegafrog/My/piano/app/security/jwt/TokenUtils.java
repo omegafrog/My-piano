@@ -10,6 +10,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.AuthenticationException;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.UUID;
@@ -38,6 +39,7 @@ public class TokenUtils {
                         .payload(refreshToken)
                         .expiration(Long.parseLong(refreshTokenExpirationPeriod))
                         .role(role)
+                        .createdAt(LocalDateTime.now())
                         .build())
                 .build();
     }

@@ -55,7 +55,7 @@ public class UserApplicationService {
     public UserInfo getUserProfile(User loggedInUser){
         User user = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER));
-        return user.getUserProfile();
+        return user.getUserInfo();
     }
 
 
@@ -101,7 +101,7 @@ public class UserApplicationService {
     public List<UserInfo> getFollowingFollower(User loggedInUser) {
         User user = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInUser.getId()));
-        return user.getFollowed().stream().map(User::getUserProfile).toList();
+        return user.getFollowed().stream().map(User::getUserInfo).toList();
     }
 
     public List<LessonDto> getPurchasedLessons(User loggedInUserProfile) {
@@ -156,6 +156,6 @@ public class UserApplicationService {
         }
 
         user.update(changeUserDto);
-        return user.getUserProfile();
+        return user.getUserInfo();
     }
 }

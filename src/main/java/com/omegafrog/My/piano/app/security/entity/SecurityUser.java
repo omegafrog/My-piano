@@ -7,11 +7,12 @@ import com.omegafrog.My.piano.app.web.domain.user.User;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import jakarta.persistence.*;
+
+import javax.annotation.Nullable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -44,7 +45,7 @@ public class SecurityUser implements UserDetails {
     private User user;
 
     @Builder
-    public SecurityUser(String username, String password, User user, Role role) {
+    public SecurityUser(String username, String password, @Nullable User user, Role role) {
         this.username = username;
         this.password = password;
         this.user = user;
@@ -73,12 +74,7 @@ public class SecurityUser implements UserDetails {
     public Collection<? extends GrantedAuthority> getAuthorities() {
         List<GrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new Authority(role.value));
-        if(role == Role.ADMIN){
-            authorities.add(new Authority(Role.USER.value));
-        }
-        if(role == Role.CREATOR){
-            authorities.add(new Authority(Role.CREATOR.value));
-        }
+
         return authorities;
     }
 
@@ -132,7 +128,7 @@ public class SecurityUser implements UserDetails {
         this.locked=false;
     }
     public void changePassword(String encodedPassword){
-        this.password = password;
+        this.password = encodedPassword;
     }
 
     public void changeRole(Role role) {

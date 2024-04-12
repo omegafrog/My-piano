@@ -32,17 +32,17 @@ public class TicketService {
     private final SecurityUserRepository securityUserRepository;
 
 
-    public List<TicketDto> getTickets(UserDetails userDetails,
+    public List<TicketDto> getTickets(SecurityUser userDetails,
 
                                       SearchTicketFilter filter, Pageable pageable) {
-        if(userDetails instanceof SecurityUser user){
-            securityUserRepository.findById(user.getUser().getId());
-            List<Ticket> byAuthorId = ticketRepository.findByAuthor_IdAndFilter(user.getUser().getId(), filter, pageable);
+        if(userDetails.getRole().equals(Role.USER) || userDetails.getRole().equals(Role.CREATOR)){
+            securityUserRepository.findById(userDetails.getUser().getId());
+            List<Ticket> byAuthorId = ticketRepository.findByAuthor_IdAndFilter(userDetails.getUser().getId(), filter, pageable);
             return byAuthorId.stream().map(TicketDto::new).toList();
-        }else if(userDetails instanceof Admin){
+        }else if(userDetails.getRole().equals(Role.ADMIN) || userDetails.getRole().equals(Role.SUPER_ADMIN)){
             Page<Ticket> all = ticketRepository.findAll(filter, pageable);
             return all.getContent().stream().map(TicketDto::new).toList();
-        } else throw new IllegalArgumentException("Invalid userDetails:" + userDetails.toString());
+        } else throw new IllegalArgumentException("Invalid userDetails:" + userDetails.getId());
     }
 
     public TicketDto createTicket(RequestTicketDto dto,  User loggedInUser) {
