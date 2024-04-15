@@ -3,7 +3,6 @@ package com.omegafrog.My.piano.app.security;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
 import com.omegafrog.My.piano.app.security.entity.authorities.Role;
-import com.omegafrog.My.piano.app.security.filter.AdminJwtTokenFilter;
 import com.omegafrog.My.piano.app.security.filter.JwtTokenExceptionFilter;
 import com.omegafrog.My.piano.app.security.filter.CommonUserJwtTokenFilter;
 import com.omegafrog.My.piano.app.security.handler.*;
@@ -16,7 +15,12 @@ import com.omegafrog.My.piano.app.security.reposiotry.InMemoryLogoutBlacklistRep
 import com.omegafrog.My.piano.app.security.service.AdminUserService;
 import com.omegafrog.My.piano.app.security.service.CommonUserService;
 
+import com.omegafrog.My.piano.app.utils.MapperUtil;
 import com.omegafrog.My.piano.app.web.domain.admin.AdminRepository;
+import com.omegafrog.My.piano.app.web.domain.post.PostRepository;
+import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
+import com.omegafrog.My.piano.app.web.infra.user.JpaUserRepositoryImpl;
+import com.omegafrog.My.piano.app.web.infra.user.SimpleJpaUserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -74,9 +78,25 @@ public class SecurityConfig {
     public CommonUserService commonUserService() {
         return new CommonUserService(passwordEncoder(), securityUserRepository, refreshTokenRepository());
     }
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private PostRepository postRepository;
+    @Autowired
+    private MapperUtil mapperUtil;
+
     @Bean
     public AdminUserService adminUserService(){
-        return new AdminUserService();
+        return new AdminUserService(
+                passwordEncoder(),
+                userRepository,
+                refreshTokenRepository(),
+                securityUserRepository,
+                postRepository,
+                mapperUtil
+        );
     }
 
 
@@ -96,8 +116,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public CommonUserJwtTokenFilter jwtTokenFilter() {
-        return new CommonUserJwtTokenFilter( securityUserRepository, refreshTokenRepository(),adminRepository );
+    public CommonUserJwtTokenFilter commonUserJwtTokenFilter() {
+        return new CommonUserJwtTokenFilter( securityUserRepository, refreshTokenRepository() );
     }
 
 
@@ -108,7 +128,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationEntryPoint UnAuthorizedEntryPoint() {
+    public AuthenticationEntryPoint unAuthorizedEntryPoint() {
         return new AuthenticationExceptionEntryPoint(objectMapper);
     }
 
@@ -127,21 +147,16 @@ public class SecurityConfig {
         http
                 .securityMatcher("/admin/**")
                 .authenticationProvider(adminAuthenticationProvider())
-                .authorizeHttpRequests()
-                .requestMatchers("/admin/login","/admin/register", "/admin/logout")
+                        .authorizeHttpRequests()
+                .requestMatchers("/admin/login", "/admin/register", "/admin/logout")
                 .permitAll()
                 .anyRequest()
                 .hasRole(Role.ADMIN.value)
                 .and()
-                /*
-                슈퍼 관리자 엔드포인트 권한 등록 필요
-                .authorizeHttpRequests()
-                .requestMatchers()
-                */
                 .formLogin()
                 .usernameParameter("username")
                 .passwordParameter("password")
-                .successHandler(new AdminLoginSuccessHandler(objectMapper, refreshTokenRepository(),tokenUtils()))
+                .successHandler(new AdminLoginSuccessHandler(objectMapper, refreshTokenRepository(), tokenUtils()))
                 .failureHandler(new CommonUserLoginFailureHandler(objectMapper))
                 .loginProcessingUrl("/admin/login")
                 .and()
@@ -149,12 +164,12 @@ public class SecurityConfig {
                 .logoutUrl("/admin/logout")
                 .addLogoutHandler(commonUserLogoutHandler())
                 .and()
-                .addFilterBefore(jwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(commonUserJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .exceptionHandling()
-                .authenticationEntryPoint(UnAuthorizedEntryPoint())
+                .authenticationEntryPoint(unAuthorizedEntryPoint())
                 .accessDeniedHandler(commonUserAccessDeniedHandler())
                 .and()
                 .csrf().disable()
@@ -184,14 +199,14 @@ public class SecurityConfig {
                 .permitAll()
                 .anyRequest().hasRole(Role.USER.value)
                 .and()
-                .addFilterBefore(jwtTokenFilter(),
+                .addFilterBefore(commonUserJwtTokenFilter(),
                         UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtTokenExceptionFilter(), CommonUserJwtTokenFilter.class)
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .exceptionHandling()
-                .authenticationEntryPoint(UnAuthorizedEntryPoint())
+                .authenticationEntryPoint(unAuthorizedEntryPoint())
                 .accessDeniedHandler(commonUserAccessDeniedHandler())
                 .and()
                 .csrf().disable()
@@ -223,14 +238,14 @@ public class SecurityConfig {
                 .logoutUrl("/user/logout").permitAll()
                 .addLogoutHandler(commonUserLogoutHandler())
                 .and()
-                .addFilterBefore(jwtTokenFilter(),
+                .addFilterBefore(commonUserJwtTokenFilter(),
                         UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtTokenExceptionFilter(), CommonUserJwtTokenFilter.class)
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .exceptionHandling()
-                .authenticationEntryPoint(UnAuthorizedEntryPoint())
+                .authenticationEntryPoint(unAuthorizedEntryPoint())
                 .accessDeniedHandler(commonUserAccessDeniedHandler())
                 .and()
                 .csrf().disable()
@@ -259,10 +274,10 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .exceptionHandling()
-                .authenticationEntryPoint(UnAuthorizedEntryPoint())
+                .authenticationEntryPoint(unAuthorizedEntryPoint())
                 .accessDeniedHandler(commonUserAccessDeniedHandler())
                 .and()
-                .addFilterBefore(jwtTokenFilter(),
+                .addFilterBefore(commonUserJwtTokenFilter(),
                         UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtTokenExceptionFilter(), CommonUserJwtTokenFilter.class)
                 .csrf().disable()
@@ -285,11 +300,11 @@ public class SecurityConfig {
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-                .addFilterBefore(jwtTokenFilter(),
+                .addFilterBefore(commonUserJwtTokenFilter(),
                         UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtTokenExceptionFilter(), CommonUserJwtTokenFilter.class)
                 .exceptionHandling()
-                .authenticationEntryPoint(UnAuthorizedEntryPoint())
+                .authenticationEntryPoint(unAuthorizedEntryPoint())
                 .accessDeniedHandler(commonUserAccessDeniedHandler())
                 .and()
                 .csrf().disable()
@@ -309,13 +324,13 @@ public class SecurityConfig {
                 .permitAll()
                 .anyRequest().hasRole(Role.USER.value)
                 .and()
-                .addFilterBefore(jwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(commonUserJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtTokenExceptionFilter(), CommonUserJwtTokenFilter.class)
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .exceptionHandling()
-                .authenticationEntryPoint(UnAuthorizedEntryPoint())
+                .authenticationEntryPoint(unAuthorizedEntryPoint())
                 .accessDeniedHandler(commonUserAccessDeniedHandler())
                 .and()
                 .csrf().disable()
@@ -338,10 +353,10 @@ public class SecurityConfig {
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-                .addFilterBefore(jwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(commonUserJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtTokenExceptionFilter(), CommonUserJwtTokenFilter.class)
                 .exceptionHandling()
-                .authenticationEntryPoint(UnAuthorizedEntryPoint())
+                .authenticationEntryPoint(unAuthorizedEntryPoint())
                 .accessDeniedHandler(commonUserAccessDeniedHandler())
                 .and()
                 .csrf().disable()
@@ -362,15 +377,37 @@ public class SecurityConfig {
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-                .addFilterBefore(jwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(commonUserJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtTokenExceptionFilter(), CommonUserJwtTokenFilter.class)
                 .exceptionHandling()
-                .authenticationEntryPoint(UnAuthorizedEntryPoint())
+                .authenticationEntryPoint(unAuthorizedEntryPoint())
                 .accessDeniedHandler(commonUserAccessDeniedHandler())
                 .and()
                 .csrf().disable()
                 .cors().configurationSource(corsConfigurationSource());
 
+        return http.build();
+    }
+    @Bean
+    SecurityFilterChain ticketAuthentication(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/tickets")
+                .authorizeHttpRequests()
+                .requestMatchers(HttpMethod.PUT, "/tickets")
+                .hasRole(Role.USER.value)
+                .anyRequest().permitAll()
+                .and()
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .addFilterBefore(commonUserJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtTokenExceptionFilter(), CommonUserJwtTokenFilter.class)
+                .exceptionHandling()
+                .authenticationEntryPoint(unAuthorizedEntryPoint())
+                .accessDeniedHandler(commonUserAccessDeniedHandler())
+                .and()
+                .csrf().disable()
+                .cors().configurationSource(corsConfigurationSource());
         return http.build();
     }
 

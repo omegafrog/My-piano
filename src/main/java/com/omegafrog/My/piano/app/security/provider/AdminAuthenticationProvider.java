@@ -1,7 +1,7 @@
 package com.omegafrog.My.piano.app.security.provider;
 
+import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.security.service.AdminUserService;
-import com.omegafrog.My.piano.app.web.domain.admin.Admin;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -21,7 +21,7 @@ public class AdminAuthenticationProvider implements AuthenticationProvider {
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         String username = (String) authentication.getPrincipal();
         String password = (String) authentication.getCredentials();
-        Admin user = adminUserService.loadUserByUsername(username);
+        SecurityUser user = adminUserService.loadUserByUsername(username);
 
         if(passwordEncoder.matches(password, user.getPassword()))
             return new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());

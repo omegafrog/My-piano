@@ -14,7 +14,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
-import org.springframework.validation.annotation.Validated;
 
 import javax.annotation.Nullable;
 
@@ -102,8 +101,8 @@ public class Order {
         }
         return OrderDto.builder()
                 .discountRate(discountRate)
-                .buyer(buyer.getUserProfile())
-                .seller(seller.getUserProfile())
+                .buyer(buyer.getUserInfo())
+                .seller(seller.getUserInfo())
                 .id(id)
                 .item(dto)
                 .coupon(coupon)

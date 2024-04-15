@@ -10,6 +10,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.AuthenticationException;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.UUID;
@@ -35,9 +36,10 @@ public class TokenUtils {
                 .refreshToken(RefreshToken.builder()
                         .id(role.value + "-" + UUID.randomUUID())
                         .userId(Long.valueOf(securityUserId))
-                        .refreshToken(refreshToken)
+                        .payload(refreshToken)
                         .expiration(Long.parseLong(refreshTokenExpirationPeriod))
                         .role(role)
+                        .createdAt(LocalDateTime.now())
                         .build())
                 .build();
     }
@@ -101,7 +103,7 @@ public class TokenUtils {
     }
 
     public  void setRefreshToken(HttpServletResponse response, TokenInfo tokenInfo) {
-        Cookie refreshToken = new Cookie("refreshToken", tokenInfo.getRefreshToken().getRefreshToken());
+        Cookie refreshToken = new Cookie("refreshToken", tokenInfo.getRefreshToken().getPayload());
         refreshToken.setPath("/");
         refreshToken.setHttpOnly(true);
         response.addCookie(refreshToken);

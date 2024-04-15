@@ -1,6 +1,7 @@
 package com.omegafrog.My.piano.app.security.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.omegafrog.My.piano.app.security.entity.authorities.Role;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
 import com.omegafrog.My.piano.app.utils.response.ResponseUtil;
@@ -34,7 +35,7 @@ public class CommonUserLogoutHandler implements LogoutHandler {
         String accessToken = tokenUtils.getAccessTokenStringFromHeaders(request);
         Claims claims = tokenUtils.extractClaims(accessToken);
         Long userId = Long.valueOf((String) claims.get("id"));
-        refreshTokenRepository.deleteByUserId(userId);
+        refreshTokenRepository.deleteByUserIdAndRole(userId, Role.valueOf((String)claims.get("role")));
         try {
             ResponseUtil.writeResponse(new APISuccessResponse("logout success"), response, objectMapper);
         } catch (IOException e) {

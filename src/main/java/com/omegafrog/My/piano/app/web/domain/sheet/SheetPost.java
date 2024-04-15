@@ -62,7 +62,7 @@ public class SheetPost extends SellableItem {
                 .viewCount(viewCount)
                 .discountRate(getDiscountRate())
                 .comments(comments.stream().map(Comment::toDto).toList())
-                .artist(author.getUserProfile())
+                .artist(author.getUserInfo())
                 .createdAt(createdAt)
                 .sheet(toInfoDto())
                 .price(getPrice())
@@ -80,7 +80,7 @@ public class SheetPost extends SellableItem {
                 .lyrics(sheet.isLyrics())
                 .difficulty(sheet.getDifficulty())
                 .sheetUrl(sheet.getFilePath())
-                .artist(author.getUserProfile())
+                .artist(author.getUserInfo())
                 .pageNum(sheet.getPageNum())
                 .createdAt(createdAt)
                 .build();

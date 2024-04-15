@@ -62,7 +62,7 @@ public class Comment {
     public CommentDto toDto(){
         return CommentDto.builder()
                 .id(id)
-                .author(author.getUserProfile())
+                .author(author.getUserInfo())
                 .content(content)
                 .createdAt(createdAt)
                 .likeCount(likeCount)
@@ -76,7 +76,7 @@ public class Comment {
                 .content(content)
                 .targetId(target.getId())
                 .likeCount(likeCount)
-                .author(author.getUserProfile())
+                .author(author.getUserInfo())
                 .createdAt(createdAt)
                 .build();
     }

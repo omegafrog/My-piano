@@ -46,7 +46,7 @@ public class Post extends Article {
                 .viewCount(viewCount)
                 .likeCount(likeCount)
                 .comments(comments)
-                .author(author.getUserProfile())
+                .author(author.getUserProfileDto())
                 .build();
     }
 }

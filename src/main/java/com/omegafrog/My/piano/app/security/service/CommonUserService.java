@@ -151,10 +151,11 @@ public class CommonUserService implements UserDetailsService {
         Optional<SecurityUser> founded = securityUserRepository.findById(userId);
         if (founded.isEmpty()) throw new AccessDeniedException("Unauthorized access token.");
 
-        RefreshToken refreshToken = refreshTokenRepository.findByUserId(userId).orElseThrow(() -> new AccessDeniedException("로그인이 만료되었습니다."));
+        RefreshToken refreshToken = refreshTokenRepository.findByRoleAndUserId(userId, founded.get().getRole())
+                .orElseThrow(() -> new AccessDeniedException("로그인이 만료되었습니다."));
 
         TokenInfo tokenInfo = tokenUtils.generateToken(String.valueOf(userId),founded.get().getRole());
-        refreshToken.updateRefreshToken(tokenInfo.getRefreshToken().getRefreshToken());
+        refreshToken.updateRefreshToken(tokenInfo.getRefreshToken().getPayload());
         return tokenInfo;
     }
 
