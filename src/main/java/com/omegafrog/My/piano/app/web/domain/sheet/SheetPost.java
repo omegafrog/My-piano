@@ -35,12 +35,12 @@ public class SheetPost extends SellableItem {
         super.updatePrice(dto.getPrice()==null?price:dto.getPrice());
         super.updateDiscountRate(dto.getDiscountRate()==null?discountRate:dto.getDiscountRate());
         this.title = dto.getTitle()==null?title:dto.getTitle();
-        if(dto.getSheetDto()!=null){
-            UpdateSheetDto sheetDto = dto.getSheetDto();
+        if(dto.getSheet()!=null){
+            UpdateSheetDto sheetDto = dto.getSheet();
             this.sheet = Sheet.builder()
                     .title(sheetDto.getTitle())
                     .genres(sheetDto.getGenres())
-                    .filePath(sheetDto.getFilePath())
+                    .sheetUrl(sheetDto.getSheetUrl())
                     .pageNum(sheetDto.getPageNum())
                     .difficulty(sheetDto.getDifficulty())
                     .instrument(sheetDto.getInstrument())
@@ -67,6 +67,7 @@ public class SheetPost extends SellableItem {
                 .sheet(toInfoDto())
                 .price(getPrice())
                 .build();
+
     }
 
     public SheetInfoDto toInfoDto(){
@@ -79,9 +80,10 @@ public class SheetPost extends SellableItem {
                 .isSolo(sheet.isSolo())
                 .lyrics(sheet.isLyrics())
                 .difficulty(sheet.getDifficulty())
-                .sheetUrl(sheet.getFilePath())
+                .sheetUrl(sheet.getSheetUrl())
                 .artist(author.getUserInfo())
                 .pageNum(sheet.getPageNum())
+                .originalFileName(sheet.getOriginalFileName())
                 .createdAt(createdAt)
                 .build();
     }

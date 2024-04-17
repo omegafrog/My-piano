@@ -10,9 +10,7 @@ import com.omegafrog.My.piano.app.security.service.UpdatePostStrategy;
 import com.omegafrog.My.piano.app.web.domain.cash.PaymentHistory;
 import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.user.User;
-import com.omegafrog.My.piano.app.web.dto.ChangeUserDto;
-import com.omegafrog.My.piano.app.web.dto.RegisterSheetDto;
-import com.omegafrog.My.piano.app.web.dto.RegisterUserDto;
+import com.omegafrog.My.piano.app.web.dto.*;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.RegisterSheetPostDto;
 import com.omegafrog.My.piano.app.web.enums.OrderStatus;
 import com.omegafrog.My.piano.app.web.enums.PaymentType;
@@ -137,6 +135,27 @@ public class MapperUtil {
                 .title(title)
                 .author(admin.getUser())
                 .content(content)
+                .build();
+    }
+
+    public UpdateSheetPostDto parseUpdateSheetPostJson(String dto) throws JsonProcessingException {
+        JsonNode node = objectMapper.readTree(dto);
+        JsonNode title = node.get("title");
+        assert title==null;
+        JsonNode content = node.get("content");
+        assert content==null;
+        JsonNode sheetDto = node.get("sheet");
+        assert sheetDto==null;
+        JsonNode price = node.get("price");
+        assert price==null;
+        JsonNode discountRate = node.get("discountRate");
+        assert discountRate==null;
+        return UpdateSheetPostDto.builder()
+                .title(title.asText())
+                .content(content.asText())
+                .sheet(objectMapper.convertValue(sheetDto, UpdateSheetDto.class))
+                .price(price.asInt())
+                .discountRate(discountRate.asDouble())
                 .build();
     }
 }

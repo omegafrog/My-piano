@@ -2,11 +2,8 @@ package com.omegafrog.My.piano.app.web.dto;
 
 import com.omegafrog.My.piano.app.web.domain.sheet.Genres;
 import com.omegafrog.My.piano.app.web.enums.Difficulty;
-import com.omegafrog.My.piano.app.web.enums.Genre;
 import com.omegafrog.My.piano.app.web.enums.Instrument;
 import lombok.*;
-
-import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -20,11 +17,11 @@ public class UpdateSheetDto {
     private Genres genres;
     private Boolean solo;
     private Boolean lyrics;
-    private String filePath;
+    private String sheetUrl;
     private int price;
 
     @Builder
-    public UpdateSheetDto(String title, int pageNum, Difficulty difficulty, Instrument instrument, Genres genres, boolean isSolo, boolean lyrics, String filePath, int price) {
+    public UpdateSheetDto(String title, int pageNum, Difficulty difficulty, Instrument instrument, Genres genres, boolean isSolo, boolean lyrics, String sheetUrl, int price) {
         this.title = title;
         this.pageNum = pageNum;
         this.difficulty = difficulty;
@@ -32,7 +29,7 @@ public class UpdateSheetDto {
         this.genres = genres;
         this.solo = isSolo;
         this.lyrics = lyrics;
-        this.filePath = filePath;
+        this.sheetUrl = sheetUrl;
         this.price = price;
     }
 

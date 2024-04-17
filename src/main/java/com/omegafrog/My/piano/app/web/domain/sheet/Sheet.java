@@ -28,7 +28,8 @@ public class Sheet  {
     private Genres genres;
     private boolean isSolo;
     private boolean lyrics;
-    private String filePath;
+    private String sheetUrl;
+    private String originalFileName;
 
     private LocalDateTime createdAt=LocalDateTime.now();
 
@@ -37,7 +38,7 @@ public class Sheet  {
     private User user;
 
     @Builder
-    public Sheet(String title, int pageNum, Difficulty difficulty, Instrument instrument,Genres genres, boolean isSolo, boolean lyrics, String filePath, User user) {
+    public Sheet(String title, int pageNum, Difficulty difficulty, Instrument instrument, Genres genres, boolean isSolo, boolean lyrics, String sheetUrl, User user) {
         this.title = title;
         this.pageNum = pageNum;
         this.difficulty = difficulty;
@@ -45,7 +46,7 @@ public class Sheet  {
         this.genres = genres;
         this.isSolo = isSolo;
         this.lyrics = lyrics;
-        this.filePath = filePath;
+        this.sheetUrl = sheetUrl;
         this.user = user;
     }
 
@@ -57,7 +58,7 @@ public class Sheet  {
         this.genres = dto.getGenres();
         this.isSolo = dto.isSolo();
         this.lyrics = dto.isLyrics();
-        this.filePath = dto.getFilePath();
+        this.sheetUrl = dto.getSheetUrl();
         return this;
     }
 
@@ -67,13 +68,15 @@ public class Sheet  {
                 .createdAt(createdAt)
                 .difficulty(difficulty)
                 .genres(genres)
-                .filePath(filePath)
+                .sheetUrl(sheetUrl)
+                .originalFileName(originalFileName)
                 .instrument(instrument)
                 .lyrics(lyrics)
                 .pageNum(pageNum)
                 .isSolo(isSolo)
                 .title(title)
                 .user(user.getUserInfo())
+                .originalFileName(originalFileName)
                 .build();
     }
 

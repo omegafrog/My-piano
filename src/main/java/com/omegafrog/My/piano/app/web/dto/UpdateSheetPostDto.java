@@ -1,6 +1,5 @@
 package com.omegafrog.My.piano.app.web.dto;
 
-import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import lombok.*;
 
 
@@ -8,18 +7,19 @@ import lombok.*;
 @NoArgsConstructor
 @Setter
 @Getter
+@ToString
 public class UpdateSheetPostDto {
     private String title;
     private String content;
-    private UpdateSheetDto sheetDto;
+    private UpdateSheetDto sheet;
     private Integer price;
     private Double discountRate;
 
     @Builder
-    public UpdateSheetPostDto(String title, String content, UpdateSheetDto sheetDto, int price, Double discountRate) {
+    public UpdateSheetPostDto(String title, String content, UpdateSheetDto sheet, int price, Double discountRate) {
         this.title = title;
         this.content = content;
-        this.sheetDto = sheetDto;
+        this.sheet = sheet;
         this.price = price;
         this.discountRate = discountRate;
     }

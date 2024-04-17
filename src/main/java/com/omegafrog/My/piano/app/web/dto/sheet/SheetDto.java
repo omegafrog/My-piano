@@ -31,14 +31,17 @@ public class SheetDto {
     @NotNull
     private Boolean lyrics;
     @NotNull
-    private String filePath;
+    private String sheetUrl;
     @NotNull
     private LocalDateTime createdAt;
     @NotNull
     private UserInfo user;
+    private String originalFileName;
+
 
     @Builder
-    public SheetDto(Long id, String title, int pageNum, Difficulty difficulty, Genres genres,Instrument instrument, Boolean isSolo, Boolean lyrics, String filePath, LocalDateTime createdAt, UserInfo user) {
+    public SheetDto(Long id, String title, int pageNum, Difficulty difficulty, Genres genres, Instrument instrument,
+                    Boolean isSolo, Boolean lyrics, String sheetUrl, LocalDateTime createdAt, UserInfo user, String originalFileName) {
         this.id = id;
         this.title = title;
         this.pageNum = pageNum;
@@ -47,8 +50,9 @@ public class SheetDto {
         this.isSolo = isSolo;
         this.genres = genres;
         this.lyrics = lyrics;
-        this.filePath = filePath;
+        this.sheetUrl = sheetUrl;
         this.createdAt = createdAt;
         this.user = user;
+        this.originalFileName = originalFileName;
     }
 }

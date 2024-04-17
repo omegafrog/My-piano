@@ -320,9 +320,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests()
                 .requestMatchers(HttpMethod.GET, "/order")
                 .permitAll()
-                .requestMatchers(HttpMethod.GET, "/order/{id:[0-9]+}")
-                .permitAll()
-                .anyRequest().hasRole(Role.USER.value)
+                .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value)
                 .and()
                 .addFilterBefore(commonUserJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtTokenExceptionFilter(), CommonUserJwtTokenFilter.class)
@@ -341,12 +339,13 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain sheetPostAuthentication(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/sheet/**")
+                .securityMatcher("/sheet-post/**")
                 .authenticationProvider(commonUserAuthenticationProvider())
                 .authorizeHttpRequests()
-                .requestMatchers(HttpMethod.GET, "/sheet/{id:[0-9]+}")
+                .requestMatchers(HttpMethod.GET, "/sheet-post/{id:[0-9]+}",
+                        "/sheet-post/{id:[0-9]+}/comments")
                 .permitAll()
-                .requestMatchers(HttpMethod.GET, "/sheet")
+                .requestMatchers(HttpMethod.GET, "/sheet-post")
                 .permitAll()
                 .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value)
                 .and()

@@ -12,6 +12,7 @@ import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import com.omegafrog.My.piano.app.web.dto.dateRange.DateRange;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 
 import java.io.IOException;
@@ -31,8 +32,6 @@ public class ElasticSearchInstance {
     @Autowired
     private SheetPostIndexRepository sheetPostIndexRepository;
 
-    private final Integer MAX_PAGE_SIZE = 20;
-
     private final String SHEET_POST_INDEX_NAME="sheetpost";
 
 
@@ -42,7 +41,7 @@ public class ElasticSearchInstance {
 
     }
 
-    public List<Long> searchSheetPost(Integer page, List<String> instruments, List<String> difficulties, List<String> genres) throws IOException {
+    public List<Long> searchSheetPost(List<String> instruments, List<String> difficulties, List<String> genres, Pageable pageable) throws IOException {
         List<Query> searchOptions = new ArrayList<>();
         if (!instruments.isEmpty()) {
             Query instrumentFilter = QueryBuilders.terms(t -> t
@@ -64,8 +63,10 @@ public class ElasticSearchInstance {
         }
         SearchResponse<SheetPostIndex> response = esClient.search(
                 s -> s.index(SHEET_POST_INDEX_NAME)
-                        .from(page * MAX_PAGE_SIZE)
-                        .size(MAX_PAGE_SIZE)
+                        .from((pageable.getPageNumber()) * pageable.getPageSize())
+                        .size(pageable.getPageSize())
+                        .sort(SortOptions.of(so -> so.field(FieldSort.of(f -> f.field("created_at")
+                                .order(SortOrder.Desc)))))
                         .query(q -> q
                                 .bool(b -> b.
                                         must(searchOptions))), SheetPostIndex.class

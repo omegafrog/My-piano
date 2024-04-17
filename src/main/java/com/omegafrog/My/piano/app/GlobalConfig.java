@@ -124,7 +124,7 @@ public class GlobalConfig {
 
     @Bean
     public S3UploadFileExecutor s3UploadFileExecutor() {
-        return new S3UploadFileExecutor(s3Template());
+        return new S3UploadFileExecutor(s3Template(), s3Client());
     }
 
     @Bean
