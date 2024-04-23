@@ -118,7 +118,7 @@ public class LessonService {
         return loggedUser.isScrappedLesson(lesson);
     }
 
-    public void scrapLesson(Long id, User loggedInUser) {
+    public void scrapLesson(Long id,  User loggedInUser) {
         Lesson lesson = lessonRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson Entity : " + id));
         User loggedUser = userRepository.findById(loggedInUser.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));

@@ -64,5 +64,4 @@ public class Lesson extends SellableItem {
                 .price(price)
                 .build();
     }
-
 }
