@@ -66,6 +66,7 @@ public class SheetPost extends SellableItem {
                 .createdAt(createdAt)
                 .sheet(toInfoDto())
                 .price(getPrice())
+                .disabled(disabled)
                 .build();
 
     }

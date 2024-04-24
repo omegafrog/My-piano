@@ -3,8 +3,11 @@ package com.omegafrog.My.piano.app.web.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.security.entity.authorities.Role;
-import com.omegafrog.My.piano.app.security.service.AdminUserService;
-import com.omegafrog.My.piano.app.security.service.UpdatePostStrategy;
+import com.omegafrog.My.piano.app.web.dto.lesson.LessonListDto;
+import com.omegafrog.My.piano.app.web.dto.lesson.SearchLessonFilter;
+import com.omegafrog.My.piano.app.web.enums.Difficulty;
+import com.omegafrog.My.piano.app.web.enums.Instrument;
+import com.omegafrog.My.piano.app.web.service.admin.AdminUserService;
 import com.omegafrog.My.piano.app.utils.MapperUtil;
 import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
 import com.omegafrog.My.piano.app.utils.response.JsonAPIResponse;
@@ -14,6 +17,8 @@ import com.omegafrog.My.piano.app.web.dto.ReturnSessionDto;
 import com.omegafrog.My.piano.app.web.dto.admin.SearchUserFilter;
 import com.omegafrog.My.piano.app.web.dto.post.PostListDto;
 import com.omegafrog.My.piano.app.web.dto.post.SearchPostFilter;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.SearchSheetPostFilter;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostListDto;
 import com.omegafrog.My.piano.app.web.dto.user.UserDto;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import lombok.RequiredArgsConstructor;
@@ -21,10 +26,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Nullable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -107,9 +115,8 @@ public class AdminController {
     }
 
     @PutMapping("/posts/{id}")
-    public JsonAPIResponse<Void> updatePost(@PathVariable Long id, @RequestBody String body) throws JsonProcessingException {
-        List<UpdatePostStrategy> strategies = mapperUtil.parseUpdatePostJson(body);
-        adminUserService.update(id, strategies);
+    public JsonAPIResponse<Void> updatePost(@PathVariable Long id, @RequestBody String options) throws JsonProcessingException {
+        adminUserService.update(id, options);
         return new APISuccessResponse<>("disable post success.");
     }
     @DeleteMapping("/posts/{id}")
@@ -123,5 +130,45 @@ public class AdminController {
         SecurityUser loggedInAdmin =(SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         adminUserService.writeNotiPost(body, loggedInAdmin);
         return new APISuccessResponse<>("write notice post success");
+    }
+
+    @GetMapping("/sheets")
+    public JsonAPIResponse< Page<SheetPostListDto>> getAllSheets(Pageable pageable,
+                                                          @Nullable @RequestParam Long id,
+                                                          @Nullable @RequestParam String title,
+                                                          @Nullable @RequestParam String username,
+                                                          @Nullable @RequestParam Long sheetId,
+                                                          @Nullable @RequestParam Instrument instrument,
+                                                          @Nullable @RequestParam Difficulty difficulty,
+                                                          @Nullable @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd")
+                                                                     LocalDate startDate,
+                                                          @Nullable @RequestParam  @DateTimeFormat(pattern = "yyyy-MM-dd")
+                                                                     LocalDate endDate
+                                                          ) throws JsonProcessingException {
+        Page<SheetPostListDto> data = adminUserService.getAllSheetPosts(pageable,
+                new SearchSheetPostFilter(id, title, username, sheetId, instrument, difficulty, startDate, endDate));
+        return new APISuccessResponse<>("Load all users success.", data);
+    }
+    @PutMapping("/sheets/{id}")
+    public JsonAPIResponse<Void> updateSheet(@PathVariable Long id, @RequestBody String options) throws JsonProcessingException {
+        adminUserService.updateSheetPost(id, options);
+        return new APISuccessResponse<>("update sheet post success.");
+    }
+    @DeleteMapping("/sheets/{id}")
+    public JsonAPIResponse<Void> deleteSheet(@PathVariable Long id){
+        adminUserService.deleteSheetPost(id);
+        return new APISuccessResponse<>("delete sheet post success.");
+    }
+    @GetMapping("/lessons")
+    public JsonAPIResponse<Page<LessonListDto>> getLessons(
+            Pageable pageable,
+            @Nullable @RequestParam Long id,
+            @Nullable @RequestParam String title,
+            @Nullable @RequestParam @DateTimeFormat(pattern="yyyy-MM-dd") LocalDate startDate,
+            @Nullable @RequestParam @DateTimeFormat(pattern="yyyy-MM-dd") LocalDate endDate
+    ) throws JsonProcessingException {
+        Page<LessonListDto> data = adminUserService.getAllLessons(pageable,
+                new SearchLessonFilter(id, title, startDate, endDate));
+        return new APISuccessResponse("get lessons success.", data);
     }
 }

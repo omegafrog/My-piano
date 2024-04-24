@@ -12,15 +12,15 @@ import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
 import com.omegafrog.My.piano.app.security.provider.AdminAuthenticationProvider;
 import com.omegafrog.My.piano.app.security.provider.CommonUserAuthenticationProvider;
 import com.omegafrog.My.piano.app.security.reposiotry.InMemoryLogoutBlacklistRepository;
-import com.omegafrog.My.piano.app.security.service.AdminUserService;
-import com.omegafrog.My.piano.app.security.service.CommonUserService;
+import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
+import com.omegafrog.My.piano.app.web.service.admin.AdminUserService;
+import com.omegafrog.My.piano.app.web.service.admin.CommonUserService;
 
 import com.omegafrog.My.piano.app.utils.MapperUtil;
 import com.omegafrog.My.piano.app.web.domain.admin.AdminRepository;
 import com.omegafrog.My.piano.app.web.domain.post.PostRepository;
+import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
-import com.omegafrog.My.piano.app.web.infra.user.JpaUserRepositoryImpl;
-import com.omegafrog.My.piano.app.web.infra.user.SimpleJpaUserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,7 +50,7 @@ public class SecurityConfig {
     @Bean
     public RefreshTokenRepository refreshTokenRepository(){
         return new CommonUserRefreshTokenRepositoryImpl();
-    };
+    }
     @Bean
     public TokenUtils tokenUtils(){
         return new TokenUtils();
@@ -81,9 +81,12 @@ public class SecurityConfig {
 
     @Autowired
     private UserRepository userRepository;
-
+    @Autowired
+    private LessonRepository lessonRepository;
     @Autowired
     private PostRepository postRepository;
+    @Autowired
+    private SheetPostRepository sheetPostRepository;
     @Autowired
     private MapperUtil mapperUtil;
 
@@ -95,7 +98,9 @@ public class SecurityConfig {
                 refreshTokenRepository(),
                 securityUserRepository,
                 postRepository,
-                mapperUtil
+                mapperUtil,
+                sheetPostRepository,
+                lessonRepository
         );
     }
 
@@ -147,11 +152,11 @@ public class SecurityConfig {
         http
                 .securityMatcher("/admin/**")
                 .authenticationProvider(adminAuthenticationProvider())
-                        .authorizeHttpRequests()
+                .authorizeHttpRequests()
                 .requestMatchers("/admin/login", "/admin/register", "/admin/logout")
                 .permitAll()
                 .anyRequest()
-                .hasRole(Role.ADMIN.value)
+                .hasAnyRole(Role.ADMIN.value, Role.SUPER_ADMIN.value)
                 .and()
                 .formLogin()
                 .usernameParameter("username")
@@ -165,6 +170,7 @@ public class SecurityConfig {
                 .addLogoutHandler(commonUserLogoutHandler())
                 .and()
                 .addFilterBefore(commonUserJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtTokenExceptionFilter(), CommonUserJwtTokenFilter.class)
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
@@ -320,7 +326,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests()
                 .requestMatchers(HttpMethod.GET, "/order")
                 .permitAll()
-                .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value)
+                .requestMatchers(HttpMethod.GET, "/order/{id:[0-9]+}")
+                .permitAll()
+                .anyRequest().hasAnyRole(Role.USER.value,Role.CREATOR.value)
                 .and()
                 .addFilterBefore(commonUserJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtTokenExceptionFilter(), CommonUserJwtTokenFilter.class)

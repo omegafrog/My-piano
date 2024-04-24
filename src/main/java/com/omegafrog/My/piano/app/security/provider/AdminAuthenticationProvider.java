@@ -1,7 +1,7 @@
 package com.omegafrog.My.piano.app.security.provider;
 
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
-import com.omegafrog.My.piano.app.security.service.AdminUserService;
+import com.omegafrog.My.piano.app.web.service.admin.AdminUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;

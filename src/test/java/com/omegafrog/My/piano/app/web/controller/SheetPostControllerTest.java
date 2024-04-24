@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
 import com.omegafrog.My.piano.app.security.exception.UsernameAlreadyExistException;
-import com.omegafrog.My.piano.app.security.service.CommonUserService;
+import com.omegafrog.My.piano.app.web.service.admin.CommonUserService;
 import com.omegafrog.My.piano.app.web.domain.sheet.Genres;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;

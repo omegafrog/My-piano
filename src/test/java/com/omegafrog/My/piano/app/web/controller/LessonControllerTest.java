@@ -6,7 +6,7 @@ import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
 import com.omegafrog.My.piano.app.security.jwt.RefreshToken;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
-import com.omegafrog.My.piano.app.security.service.CommonUserService;
+import com.omegafrog.My.piano.app.web.service.admin.CommonUserService;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonInformation;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;

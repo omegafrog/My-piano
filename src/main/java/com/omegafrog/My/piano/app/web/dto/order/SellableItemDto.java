@@ -20,5 +20,6 @@ public class SellableItemDto {
     protected int likeCount;
     protected LocalDateTime createdAt;
     protected List<CommentDto> comments;
+    protected Boolean disabled;
 
 }
