@@ -14,7 +14,9 @@ import jakarta.persistence.PersistenceException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.annotation.Validated;
@@ -54,6 +56,18 @@ public class CommentController {
         List<CommentDto> commentDtos = commentHandler.addComment(id, dto, loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", commentDtos);
         return new APISuccessResponse("Add Comment success.", data);
+    }
+
+    @PostMapping(value= {"/lesson/{id}/comment/{commentId}",
+            "/community/posts/{id}/comment/{commentId}",
+            "/community/video-post/{id}/comment/{commentId}",
+            "/sheet-post/{id}/comment/{commentId}"})
+    public JsonAPIResponse<CommentDto> replyComment(@PathVariable Long id,@PathVariable Long commentId, String content, HttpServletRequest request) throws MalformedURLException, JsonProcessingException {
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+        CommentHandler commentHandler = getCommentHandler(request.getRequestURI());
+
+        CommentDto dto = commentHandler.replyComment(id, commentId, content, loggedInUser);
+        return new APISuccessResponse<>("Reply Comment success.", dto);
     }
 
     @DeleteMapping(value = {"/lesson/{id}/comment/{comment-id}",
@@ -104,15 +118,14 @@ public class CommentController {
             "/community/posts/{id}/comments",
             "/community/video-post/{id}/comments",
             "/sheet-post/{id}/comments"})
-    public JsonAPIResponse getComments(
+    public JsonAPIResponse<Page<CommentDto>> getComments(
             @PathVariable Long id,
             @PageableDefault(size=10) Pageable pageable,
             HttpServletRequest request)
             throws PersistenceException, AccessDeniedException, JsonProcessingException, MalformedURLException {
         CommentHandler commentHandler = getCommentHandler(request.getRequestURI());
-        List<CommentDto> comments = commentHandler.getComments(id, pageable);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", comments);
-        return new APISuccessResponse("Get all comments success.", data);
+        Page<CommentDto> page = commentHandler.getComments(id, pageable);
+        return new APISuccessResponse("Get all comments success.", page);
     }
 
     private CommentHandler getCommentHandler(String url) throws MalformedURLException {

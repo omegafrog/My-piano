@@ -3,6 +3,7 @@ package com.omegafrog.My.piano.app.web.service;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
 import com.omegafrog.My.piano.app.web.dto.comment.RegisterCommentDto;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
@@ -13,5 +14,7 @@ public interface CommentHandler {
 
     void likeComment(Long articleId, Long commentId);
     void dislikeComment(Long articleId, Long commentId);
-    List<CommentDto> getComments(Long articleId, Pageable pageable);
+    Page<CommentDto> getComments(Long articleId, Pageable pageable);
+
+    CommentDto replyComment(Long id, Long commentId, String replyContent, User loggedInUser);
 }

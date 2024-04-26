@@ -2,6 +2,7 @@ package com.omegafrog.My.piano.app.web.service;
 
 import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
 import com.omegafrog.My.piano.app.web.domain.comment.Comment;
+import com.omegafrog.My.piano.app.web.domain.comment.CommentRepository;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
@@ -16,7 +17,9 @@ import com.omegafrog.My.piano.app.web.dto.lesson.LessonRegisterDto;
 import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +36,8 @@ public class LessonService implements CommentHandler {
     private LessonRepository lessonRepository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private CommentRepository commentRepository;
 
     public LessonDto createLesson(LessonRegisterDto lessonRegisterDto, User artist) {
         SheetPost sheetPost = sheetPostRepository.findBySheetId(lessonRegisterDto.getSheetId())
@@ -121,12 +126,17 @@ public class LessonService implements CommentHandler {
     }
 
     @Override
-    public List<CommentDto> getComments(Long id, Pageable pageable) {
+    public Page<CommentDto> getComments(Long id, Pageable pageable) {
         Lesson lesson = lessonRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find Lesson entity : " + id));
         int pageSize = pageable.getPageSize();
         long offset = pageable.getOffset();
-        return lesson.getComments().subList((int) offset, (int) offset + pageSize).stream().map(Comment::toDto).toList();
+        int toIdx = (int)offset+pageSize;
+        if (toIdx > lesson.getComments().size()) toIdx = lesson.getComments().size();
+        return PageableExecutionUtils.getPage(
+                lesson.getComments().subList((int) offset, toIdx).stream().map(Comment::toDto).toList(),
+                pageable,
+                () -> lesson.getComments().size());
     }
 
     @Override
@@ -209,5 +219,21 @@ public class LessonService implements CommentHandler {
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson Entity : " + id));
         User loggedUser = userRepository.findById(loggedInUser.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
         loggedUser.unScrapLesson(lesson);
+    }
+
+    @Override
+    public CommentDto replyComment(Long id,Long commentId, String replyContent, User loggedInUser) {
+        Lesson lesson = lessonRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson Entity : " + id));
+        Comment comment = lesson.getComments().stream().filter(item -> item.getId().equals(commentId))
+                .findFirst().orElseThrow(() -> new EntityNotFoundException("Cannot find comment entity : " + commentId));
+        commentRepository.findById(commentId)
+                        .orElseThrow(()->new EntityNotFoundException("Cannot find comment entity : " + commentId));
+        Comment reply = Comment.builder().content(replyContent)
+                .author(loggedInUser)
+                .build();
+        Comment saved = commentRepository.save(reply);
+        comment.addReply(saved);
+        return saved.toDto();
     }
 }

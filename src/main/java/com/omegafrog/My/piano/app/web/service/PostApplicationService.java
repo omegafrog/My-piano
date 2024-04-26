@@ -13,8 +13,10 @@ import com.omegafrog.My.piano.app.web.dto.comment.RegisterCommentDto;
 import com.omegafrog.My.piano.app.web.dto.post.*;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -136,10 +138,33 @@ public class PostApplicationService implements CommentHandler {
     }
 
     @Override
-    public List<CommentDto> getComments(Long articleId, Pageable pageable) {
+    public Page<CommentDto> getComments(Long articleId, Pageable pageable) {
         Post post = postRepository.findById(articleId)
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_POST));
-        return post.getComments().stream().map(Comment::toDto).toList();
+        long offset = pageable.getOffset();
+        int pageSize = pageable.getPageSize();
+        int toIdx = (int)offset+pageSize;
+        if (toIdx > post.getComments().size()) toIdx = post.getComments().size();
+        return PageableExecutionUtils.getPage(
+                post.getComments().subList((int) offset, toIdx).stream().map(Comment::toDto).toList(),
+                pageable,
+                () ->post.getComments().size());
+    }
+
+    @Override
+    public CommentDto replyComment(Long id, Long commentId, String replyContent, User loggedInUser) {
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_POST));
+        Comment comment = post.getComments().stream().filter(item -> item.getId().equals(commentId))
+                .findFirst().orElseThrow(() -> new EntityNotFoundException("Cannot find comment entity : " + commentId));
+        commentRepository.findById(commentId)
+                        .orElseThrow(()->new EntityNotFoundException("Cannot find comment entity : " + commentId));
+        Comment reply = Comment.builder().content(replyContent)
+                .author(loggedInUser)
+                .build();
+        Comment saved = commentRepository.save(reply);
+        comment.addReply(saved);
+        return saved.toDto();
     }
 
     public ReturnPostListDto findPosts(Pageable pageable) {
