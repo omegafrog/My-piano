@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -41,21 +42,33 @@ public class ElasticSearchInstance {
 
     }
 
-    public List<Long> searchSheetPost(List<String> instruments, List<String> difficulties, List<String> genres, Pageable pageable) throws IOException {
+    public List<Long> searchSheetPost(@Nullable String searchSentence,
+                                      @Nullable List<String> instruments,
+                                      @Nullable List<String> difficulties,
+                                      @Nullable List<String> genres,
+                                      Pageable pageable) throws IOException {
         List<Query> searchOptions = new ArrayList<>();
-        if (!instruments.isEmpty()) {
+        if(searchSentence!=null && !searchSentence.isEmpty()){
+           Query sentenceFilter = QueryBuilders.match(m -> m
+                   .field("title")
+                   .query(searchSentence)
+                   .field("content")
+                   .query(searchSentence));
+            searchOptions.add(sentenceFilter);
+        }
+        if (instruments!=null && !instruments.isEmpty()) {
             Query instrumentFilter = QueryBuilders.terms(t -> t
                     .field("instrument")
                     .terms(terms -> terms.value(instruments.stream().map(item -> FieldValue.of(item)).toList())));
             searchOptions.add(instrumentFilter);
         }
-        if (!difficulties.isEmpty()) {
+        if (difficulties!=null && !difficulties.isEmpty()) {
             Query instrumentFilter = QueryBuilders.terms(t -> t
                     .field("difficulty")
                     .terms(terms -> terms.value(difficulties.stream().map(item -> FieldValue.of(item)).toList())));
             searchOptions.add(instrumentFilter);
         }
-        if (!genres.isEmpty()) {
+        if (genres!=null && !genres.isEmpty()) {
             Query instrumentFilter = QueryBuilders.terms(t -> t
                     .field("genre")
                     .terms(terms -> terms.value(genres.stream().map(item -> FieldValue.of(item)).toList())));
