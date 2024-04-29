@@ -4,6 +4,7 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.*;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
+import co.elastic.clients.elasticsearch._types.query_dsl.QueryStringQuery;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.json.JsonData;
@@ -48,14 +49,6 @@ public class ElasticSearchInstance {
                                       @Nullable List<String> genres,
                                       Pageable pageable) throws IOException {
         List<Query> searchOptions = new ArrayList<>();
-        if(searchSentence!=null && !searchSentence.isEmpty()){
-           Query sentenceFilter = QueryBuilders.match(m -> m
-                   .field("title")
-                   .query(searchSentence)
-                   .field("content")
-                   .query(searchSentence));
-            searchOptions.add(sentenceFilter);
-        }
         if (instruments!=null && !instruments.isEmpty()) {
             Query instrumentFilter = QueryBuilders.terms(t -> t
                     .field("instrument")
@@ -80,10 +73,18 @@ public class ElasticSearchInstance {
                         .size(pageable.getPageSize())
                         .sort(SortOptions.of(so -> so.field(FieldSort.of(f -> f.field("created_at")
                                 .order(SortOrder.Desc)))))
-                        .query(q -> q
-                                .bool(b -> b.
-                                        must(searchOptions))), SheetPostIndex.class
-        );
+                        .query(q->
+                        {
+                            if (searchSentence != null && !searchSentence.isEmpty()) {
+                                return q.bool(b -> b
+                                        .must(q2 -> q2.queryString(qs -> qs.fields("title", "content").query("*" + searchSentence + "*")))
+                                        .must(searchOptions));
+                            } else {
+                                return q.bool(b -> b.must(searchOptions));
+                            }
+                        }
+                        ),SheetPostIndex.class);
+
         List<Hit<SheetPostIndex>> hits = response.hits().hits();
         List<Long> sheetPostIds = new ArrayList<>();
         for (Hit<SheetPostIndex> hit : hits) {
