@@ -17,5 +17,4 @@ public class SheetPostDto extends SellableItemDto {
     private UserInfo artist;
     private SheetInfoDto sheet;
     private boolean likePost;
-
 }

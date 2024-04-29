@@ -30,6 +30,10 @@ dependencies {
 
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
+	// https://mvnrepository.com/artifact/org.apache.pdfbox/pdfbox
+	implementation 'org.apache.pdfbox:pdfbox:3.0.2'
+
+
 // https://mvnrepository.com/artifact/io.awspring.cloud/spring-cloud-aws-starter
 	implementation 'io.awspring.cloud:spring-cloud-aws-starter:3.0.2'
 // https://mvnrepository.com/artifact/io.awspring.cloud/spring-cloud-aws-s3

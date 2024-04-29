@@ -25,11 +25,12 @@ public class SheetInfoDto {
     private boolean isSolo;
     private boolean lyrics;
     private String sheetUrl;
+    private String originalFileName;
 
     @Builder
     public SheetInfoDto(Long id, String title, String content,LocalDateTime createdAt, UserInfo artist,
                         Genres genres, int pageNum, Difficulty difficulty, Instrument instrument, boolean isSolo,
-                        boolean lyrics, String sheetUrl) {
+                        boolean lyrics, String sheetUrl, String originalFileName) {
         this.id = id;
         this.title = title;
         this.createdAt = createdAt;
@@ -42,5 +43,6 @@ public class SheetInfoDto {
         this.lyrics = lyrics;
         this.sheetUrl = sheetUrl;
         this.content = content;
+        this.originalFileName = originalFileName;
     }
 }

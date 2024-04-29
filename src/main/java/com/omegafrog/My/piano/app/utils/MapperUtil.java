@@ -5,17 +5,17 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.external.tossPayment.*;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
-import com.omegafrog.My.piano.app.security.service.DisablePostStrategy;
-import com.omegafrog.My.piano.app.security.service.UpdatePostStrategy;
+import com.omegafrog.My.piano.app.web.service.admin.option.DisablePostStrategy;
+import com.omegafrog.My.piano.app.web.service.admin.option.DisableSheetPostStrategy;
+import com.omegafrog.My.piano.app.web.service.admin.option.PostStrategy;
 import com.omegafrog.My.piano.app.web.domain.cash.PaymentHistory;
 import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.user.User;
-import com.omegafrog.My.piano.app.web.dto.ChangeUserDto;
-import com.omegafrog.My.piano.app.web.dto.RegisterSheetDto;
-import com.omegafrog.My.piano.app.web.dto.RegisterUserDto;
+import com.omegafrog.My.piano.app.web.dto.*;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.RegisterSheetPostDto;
 import com.omegafrog.My.piano.app.web.enums.OrderStatus;
 import com.omegafrog.My.piano.app.web.enums.PaymentType;
+import com.omegafrog.My.piano.app.web.service.admin.option.SheetPostStrategy;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import lombok.RequiredArgsConstructor;
 
@@ -116,12 +116,12 @@ public class MapperUtil {
         return tossWebHookResultFactory.parse(json);
     }
 
-    public List<UpdatePostStrategy> parseUpdatePostJson(String body) throws JsonProcessingException {
-        List<UpdatePostStrategy> strategies = new ArrayList<>();
+    public List<PostStrategy> parseUpdatePostOption(String body) throws JsonProcessingException {
+        List<PostStrategy> strategies = new ArrayList<>();
         JsonNode jsonNode = objectMapper.readTree(body);
         jsonNode.fields().forEachRemaining(entry -> {
             switch (entry.getKey()){
-                case DisablePostStrategy.optionName ->
+                case DisablePostStrategy.OPTION_NAME ->
                         strategies.add(new DisablePostStrategy(entry.getValue().asBoolean()));
             }
         });
@@ -138,5 +138,39 @@ public class MapperUtil {
                 .author(admin.getUser())
                 .content(content)
                 .build();
+    }
+
+    public UpdateSheetPostDto parseUpdateSheetPostJson(String dto) throws JsonProcessingException {
+        JsonNode node = objectMapper.readTree(dto);
+        JsonNode title = node.get("title");
+        assert title==null;
+        JsonNode content = node.get("content");
+        assert content==null;
+        JsonNode sheetDto = node.get("sheet");
+        assert sheetDto==null;
+        JsonNode price = node.get("price");
+        assert price==null;
+        JsonNode discountRate = node.get("discountRate");
+        assert discountRate==null;
+        return UpdateSheetPostDto.builder()
+                .title(title.asText())
+                .content(content.asText())
+                .sheet(objectMapper.convertValue(sheetDto, UpdateSheetDto.class))
+                .price(price.asInt())
+                .discountRate(discountRate.asDouble())
+                .build();
+    }
+
+    public List<SheetPostStrategy> parseUpdateSheetPostOption(String options) throws JsonProcessingException {
+        List<SheetPostStrategy> strategies = new ArrayList<>();
+        JsonNode nodes = objectMapper.readTree(options);
+        nodes.fields().forEachRemaining(entry->{
+            switch (entry.getKey()){
+                case (DisableSheetPostStrategy.OPTION_NAME) -> {
+                    strategies.add(new DisableSheetPostStrategy(entry.getValue().asBoolean()));
+                }
+            }
+        });
+        return strategies;
     }
 }

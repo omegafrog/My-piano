@@ -8,12 +8,7 @@ import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.RegisterSheetDto;
-import com.omegafrog.My.piano.app.web.dto.RegisterUserDto;
-import com.omegafrog.My.piano.app.web.dto.lesson.LessonRegisterDto;
-import com.omegafrog.My.piano.app.web.dto.sheet.SheetDto;
 import com.omegafrog.My.piano.app.web.enums.*;
-import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
-import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 
 import java.time.LocalTime;
 
@@ -22,7 +17,7 @@ public class DummyData {
         return SheetPost.builder()
                 .sheet(Sheet.builder()
                         .title("title")
-                        .filePath("path1")
+                        .sheetUrl("path1")
                         .genres(Genres.builder().genre1(Genre.BGM).build())
                         .user(artist)
                         .difficulty(Difficulty.MEDIUM)
@@ -63,7 +58,7 @@ public class DummyData {
     public static Sheet sheet(User artist){
         return Sheet.builder()
                 .title("title")
-                .filePath("path1")
+                .sheetUrl("path1")
                 .genres(Genres.builder().genre1(Genre.BGM).build())
                 .user(artist)
                 .difficulty(Difficulty.MEDIUM)
@@ -79,7 +74,7 @@ public class DummyData {
                 .title(sheet.getTitle())
                 .instrument(sheet.getInstrument().ordinal())
                 .lyrics(sheet.isLyrics())
-                .filePath(sheet.getFilePath())
+                .filePath(sheet.getSheetUrl())
                 .difficulty(sheet.getDifficulty().ordinal())
                 .genres(sheet.getGenres())
                 .isSolo(sheet.isSolo())

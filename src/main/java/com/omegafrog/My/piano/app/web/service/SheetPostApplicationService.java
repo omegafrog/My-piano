@@ -1,5 +1,8 @@
 package com.omegafrog.My.piano.app.web.service;
 
+import com.omegafrog.My.piano.app.external.elasticsearch.SheetPostIndexRepository;
+import com.omegafrog.My.piano.app.utils.MapperUtil;
+import com.omegafrog.My.piano.app.utils.exception.WrongFileExtensionException;
 import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
 import com.omegafrog.My.piano.app.external.elasticsearch.ElasticSearchInstance;
 import com.omegafrog.My.piano.app.web.domain.S3UploadFileExecutor;
@@ -19,16 +22,17 @@ import io.awspring.cloud.s3.ObjectMetadata;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
-import java.nio.channels.FileChannel;
-import java.nio.channels.ReadableByteChannel;
+import java.net.URL;
 import java.util.*;
 
 @Service
@@ -36,6 +40,7 @@ import java.util.*;
 @Transactional
 @Slf4j
 public class SheetPostApplicationService implements CommentHandler {
+    private final SheetPostIndexRepository sheetPostIndexRepository;
 
     private final SheetPostRepository sheetPostRepository;
     private final UserRepository userRepository;
@@ -44,10 +49,9 @@ public class SheetPostApplicationService implements CommentHandler {
 
     private final ElasticSearchInstance elasticSearchInstance;
     private final S3UploadFileExecutor uploadFileExecutor;
+    private final MapperUtil mapperUtil;
 
 
-
-    @Transactional
     public SheetPostDto getSheetPost(Long id) {
         SheetPost sheetPost = sheetPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find SheetPost entity : " + id));
@@ -55,61 +59,96 @@ public class SheetPostApplicationService implements CommentHandler {
         return sheetPost.toDto();
     }
 
-
-    public List<SheetPostDto> getSheetPosts(Pageable pageable) {
-        return sheetPostRepository.findAll(pageable).stream()
-                .map(SheetPost::toDto).toList();
-    }
-
     public SheetPostDto writeSheetPost(RegisterSheetPostDto dto, List<MultipartFile> files, User loggedInUser) throws IOException {
-        Sheet sheet = dto.getSheetDto().getEntityBuilderWithoutAuthor()
-                .user(loggedInUser).build();
-        SheetPost sheetPost = SheetPost.builder()
-                .title(dto.getTitle())
-                .sheet(sheet)
-                .artist(loggedInUser)
-                .price(dto.getPrice())
-                .content(dto.getContent())
-                .build();
+        try {
+            MultipartFile file = files.get(0);
 
-        SheetPost saved = sheetPostRepository.save(sheetPost);
-        try{
-            for(MultipartFile file : files){
-                List<String> filename = Arrays.stream(file.getOriginalFilename().split("\\.")).toList();
-                log.info("filename:{}", filename);
-                String contentType = switch (filename.get(1)) {
-                    case "jpg", "jpeg" -> MediaType.IMAGE_JPEG_VALUE;
-                    case "png" -> MediaType.IMAGE_PNG_VALUE;
-                    default -> throw new IllegalArgumentException("Wrong image type.");
-                };
-                ObjectMetadata metadata = ObjectMetadata.builder().contentType(contentType).build();
-                File temp = File.createTempFile("temp", ".data");
-                temp.deleteOnExit();
-                ReadableByteChannel src = file.getResource().readableChannel();
-                FileChannel dest = new FileOutputStream(temp).getChannel();
-                dest.transferFrom(src,0, file.getSize());
-                uploadFileExecutor.uploadSheet(temp, file.getOriginalFilename(), metadata);
-            }
-        }catch (IOException e){
+
+            SheetPostTempFile tempFile = getSheetPostTempFile(file);
+
+            uploadFileExecutor.uploadSheet(tempFile.temp(), file.getOriginalFilename(), tempFile.metadata);
+            uploadFileExecutor.uploadThumbnail(
+                    tempFile.document, tempFile.filename,
+                    new ObjectMetadata.Builder().contentType("jpg").build());
+
+            Sheet sheet = dto.getSheet().getEntityBuilderWithoutAuthor()
+                    .user(loggedInUser)
+                    .pageNum(tempFile.pageNum).build();
+
+            SheetPost sheetPost = SheetPost.builder()
+                    .title(dto.getTitle())
+                    .sheet(sheet)
+                    .artist(loggedInUser)
+                    .price(dto.getPrice())
+                    .content(dto.getContent())
+                    .build();
+
+            SheetPost saved = sheetPostRepository.save(sheetPost);
+            elasticSearchInstance.invertIndexingSheetPost(saved);
+            return saved.toDto();
+        } catch (IOException e) {
             e.printStackTrace();
             throw e;
         }
-
-        elasticSearchInstance.invertIndexingSheetPost(saved);
-        return saved.toDto();
     }
 
-    public SheetPostDto update(Long id, UpdateSheetPostDto dto, User loggedInUser) {
+    public SheetPostDto update(Long id, String dto, MultipartFile file, User loggedInUser) throws IOException {
         SheetPost sheetPost = sheetPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
+        UpdateSheetPostDto updateDto = mapperUtil.parseUpdateSheetPostJson(dto);
+        log.debug("updateDto : {}", updateDto);
         if (sheetPost.getAuthor().equals(loggedInUser)) {
-            return sheetPost.update(dto).toDto();
+            SheetPostTempFile tmp = getSheetPostTempFile(file);
+
+            // 기존 파일 삭제 후 다시 업로드
+            uploadFileExecutor.removeSheetPost(sheetPost);
+            uploadFileExecutor.uploadSheet(tmp.temp(), file.getOriginalFilename(), tmp.metadata());
+            uploadFileExecutor.uploadThumbnail(
+                    tmp.document(), tmp.filename(),
+                    new ObjectMetadata.Builder().contentType("jpg").build());
+
+            updateDto.getSheet().setPageNum(tmp.pageNum());
+            return sheetPost.update(updateDto).toDto();
         } else throw new AccessDeniedException("Cannot update other user's sheet post." + id);
+    }
+
+    private static SheetPostTempFile getSheetPostTempFile(MultipartFile file) throws IOException {
+        String filename = file.getOriginalFilename();
+        String contentType = filename.split("\\.")[1];
+        if (!contentType.equals("pdf"))
+            throw new WrongFileExtensionException("Cannot save file extension. " + filename);
+        ObjectMetadata metadata = ObjectMetadata.builder().contentType(contentType).build();
+
+        File temp = File.createTempFile("temp", ".data");
+        FileOutputStream dest = new FileOutputStream(temp);
+        dest.write(file.getBytes());
+        dest.close();
+
+        PDDocument document = Loader.loadPDF(temp);
+        int pageNum = document.getNumberOfPages();
+        temp.deleteOnExit();
+        return new SheetPostTempFile(filename, metadata, temp, document, pageNum);
+    }
+
+    public String getSheetUrl(Long id, User loggedInUser) {
+        SheetPost sheetPost = sheetPostRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find Sheetpost entity."));
+        User user = userRepository.findById(loggedInUser.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity."));
+        if(!user.isPurchased(sheetPost))
+            throw new BadCredentialsException("구매하지 않은 sheet post 를 조회할 수 없습니다.");
+        URL fileUrl = uploadFileExecutor.createFileUrl(sheetPost.getSheet().getSheetUrl());
+        return fileUrl.toString();
+    }
+
+    private record SheetPostTempFile(String filename, ObjectMetadata metadata, File temp, PDDocument document, int pageNum) {
     }
 
     public void delete(Long id, User loggedInUser) {
         SheetPost sheetPost = sheetPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
+        uploadFileExecutor.removeSheetPost(sheetPost);
+        sheetPostIndexRepository.deleteById(id);
         if (sheetPost.getAuthor().equals(loggedInUser))
             sheetPostRepository.deleteById(sheetPost.getId());
         else throw new AccessDeniedException("Cannot delete other user's sheet post entity : " + id);
@@ -196,12 +235,19 @@ public class SheetPostApplicationService implements CommentHandler {
         sheetPost.decreaseLikedCount();
     }
 
-    public List<SheetPostDto> getSheetPosts(Integer page, List<String> instrument, List<String> difficulty, List<String> genre) throws IOException {
-        instrument = instrument==null ? new ArrayList<>() : instrument;
-        difficulty = difficulty==null ? new ArrayList<>() : difficulty;
-        genre = genre==null ? new ArrayList<>() : genre;
-        List<Long> sheetPostIds = elasticSearchInstance.searchSheetPost(page, instrument, difficulty, genre);
-        return sheetPostIds.stream().map(id -> sheetPostRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity:" + id)).toDto()).toList();
+    public List<SheetPostDto> getSheetPosts(String searchSentence, List<String> instrument, List<String> difficulty, List<String> genre, Pageable pageable) throws IOException {
+        List<SheetPostDto> ret = new ArrayList<>();
+        List<Long> sheetPostIds = elasticSearchInstance.searchSheetPost(searchSentence, instrument, difficulty, genre, pageable);
+        for(Long id : sheetPostIds){
+            Optional<SheetPost> result = sheetPostRepository.findById(id).or(
+                    () -> {
+                        log.error("Cannot find Sheet post entity. id:", id);
+                        return Optional.empty();
+                    }
+            );
+            if(result.isEmpty()) continue;
+            ret.add(result.get().toDto());
+        }
+        return ret;
     }
 }

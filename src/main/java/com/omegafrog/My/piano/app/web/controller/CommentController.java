@@ -42,7 +42,7 @@ public class CommentController {
     @PostMapping(value = {"/lesson/{id}/comment",
             "/community/posts/{id}/comment",
             "/community/video-post/{id}/comment",
-            "/sheet/{id}/comment"})
+            "/sheet-post/{id}/comment"})
     public JsonAPIResponse addComment(
             @PathVariable Long id,
             @Validated @RequestBody RegisterCommentDto dto,
@@ -57,7 +57,7 @@ public class CommentController {
     }
 
     @DeleteMapping(value = {"/lesson/{id}/comment/{comment-id}",
-            "/sheet/{id}/comment/{comment-id}",
+            "/sheet-post/{id}/comment/{comment-id}",
             "/community/posts/{id}/comment/{comment-id}",
             "/community/video-post/{id}/comment/{comment-id}"})
     public JsonAPIResponse deleteComment(
@@ -73,7 +73,7 @@ public class CommentController {
     }
 
     @GetMapping(value = {"/lesson/{id}/comment/{comment-id}/like",
-            "/sheet/{id}/comment/{comment-id}/like",
+            "/sheet-post/{id}/comment/{comment-id}/like",
             "/community/posts/{id}/comment/{comment-id}/like",
             "/community/video-post/{id}/comment/{comment-id}/like"})
     public JsonAPIResponse likeComments(
@@ -87,7 +87,7 @@ public class CommentController {
     }
 
     @GetMapping(value = {"/lesson/{id}/comment/{comment-id}/dislike",
-            "/sheet/{id}/comment/{comment-id}/dislike",
+            "/sheet-post/{id}/comment/{comment-id}/dislike",
             "/community/posts/{id}/comment/{comment-id}/dislike",
             "/community/video-post/{id}/comment/{comment-id}/dislike"})
     public JsonAPIResponse dislikeComments(
@@ -103,7 +103,7 @@ public class CommentController {
     @GetMapping(value = {"/lesson/{id}/comments",
             "/community/posts/{id}/comments",
             "/community/video-post/{id}/comments",
-            "/sheet/{id}/comments"})
+            "/sheet-post/{id}/comments"})
     public JsonAPIResponse getComments(
             @PathVariable Long id,
             @PageableDefault(size=10) Pageable pageable,
@@ -128,7 +128,7 @@ public class CommentController {
                 return postApplicationService;
             case "video-post":
                 return videoPostApplicationService;
-            case "sheet":
+            case "sheet-post":
                 return sheetPostApplicationService;
             default:
                 throw new MalformedURLException("잘못된 mainResource입니다." + mainResource);
