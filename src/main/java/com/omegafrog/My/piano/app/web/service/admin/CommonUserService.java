@@ -1,4 +1,4 @@
-package com.omegafrog.My.piano.app.security.service;
+package com.omegafrog.My.piano.app.web.service.admin;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.omegafrog.My.piano.app.security.jwt.RefreshToken;

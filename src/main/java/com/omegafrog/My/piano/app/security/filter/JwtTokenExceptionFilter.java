@@ -3,6 +3,7 @@ package com.omegafrog.My.piano.app.security.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.utils.response.APIForbiddenResponse;
+import com.omegafrog.My.piano.app.utils.response.APIInternalServerResponse;
 import com.omegafrog.My.piano.app.utils.response.APIUnauthorizedResponse;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
@@ -37,6 +38,12 @@ public class JwtTokenExceptionFilter extends OncePerRequestFilter {
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
             response.getWriter().write(
                     objectMapper.writeValueAsString(new APIForbiddenResponse(ex.getMessage()))
+            );
+        }catch(RuntimeException e){
+            response.setCharacterEncoding("utf-8");
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            response.getWriter().write(
+                    objectMapper.writeValueAsString(new APIInternalServerResponse(e.getMessage()))
             );
         }
     }

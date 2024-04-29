@@ -11,6 +11,7 @@ import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.order.SellableItem;
 import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPost;
+import com.omegafrog.My.piano.app.web.domain.relation.*;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.dto.ChangeUserDto;
 import com.omegafrog.My.piano.app.web.dto.user.UserInfo;
@@ -81,29 +82,17 @@ public class User {
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "owner")
     private List<Coupon> coupons;
 
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "purchased_sheet",
-            joinColumns = @JoinColumn(name = "AUTHOR_ID"),
-            inverseJoinColumns = @JoinColumn(name = "SHEET_ID"))
-    private List<SheetPost> purchasedSheets = new ArrayList<>();
+    @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    private List<UserPurchasedSheetPost> purchasedSheets = new ArrayList<>();
 
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "purchased_lesson",
-            joinColumns = @JoinColumn(name = "AUTHOR_ID"),
-            inverseJoinColumns = @JoinColumn(name = "LESSON_ID"))
-    private List<Lesson> purchasedLessons = new ArrayList<>();
+    @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    private List<UserPurchasedLesson> purchasedLessons = new ArrayList<>();
 
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "scrapped_sheet",
-            joinColumns = @JoinColumn(name = "AUTHOR_ID"),
-            inverseJoinColumns = @JoinColumn(name = "SHEET_ID"))
-    private List<SheetPost> scrappedSheets = new ArrayList<>();
+    @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    private List<UserScrappedSheetPost> scrappedSheets = new ArrayList<>();
 
-    @ManyToMany
-    @JoinTable(name = "scrapped_lesson",
-            joinColumns = @JoinColumn(name = "USER_ID"),
-            inverseJoinColumns = @JoinColumn(name = "LESSON_ID"))
-    private List<Lesson> scrappedLesson = new ArrayList<>();
+    @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    private List<UserScrappedLesson> scrappedLesson = new ArrayList<>();
 
     @OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "author")
     private List<SheetPost> uploadedSheets = new ArrayList<>();
@@ -114,39 +103,23 @@ public class User {
     @OneToMany(mappedBy = "author", cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     private List<Post> uploadedPosts = new ArrayList<>();
 
-    @OneToMany(mappedBy = "author")
+    @OneToMany(mappedBy = "author", cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     private List<VideoPost> uploadedVideoPosts = new ArrayList<>();
 
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "followed",
-            joinColumns = @JoinColumn(name = "FOLLOWER_ID"),
-            inverseJoinColumns = @JoinColumn(name = "FOLLOWEE_ID")
-    )
-    private List<User> followed = new CopyOnWriteArrayList<>();
+    @OneToMany(mappedBy = "follower", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    private List<FollowedUser> followed = new CopyOnWriteArrayList<>();
 
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "liked_post",
-            joinColumns = @JoinColumn(name = "USER_ID"),
-            inverseJoinColumns = @JoinColumn(name = "POST_ID"))
-    private List<Post> likedPosts = new ArrayList<>();
+    @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST})
+    private List<UserLikedPost> likedPosts = new ArrayList<>();
 
-    @ManyToMany
-    @JoinTable(name = "liked_sheet_post",
-            joinColumns = @JoinColumn(name = "USER_ID"),
-            inverseJoinColumns = @JoinColumn(name = "SHEET_POST_ID"))
-    private List<SheetPost> likedSheetPosts = new ArrayList<>();
+    @OneToMany(mappedBy = "user", cascade = CascadeType.PERSIST)
+    private List<UserLikedSheetPost> likedSheetPosts = new ArrayList<>();
 
-    @ManyToMany
-    @JoinTable(name = "liked_videoPost",
-            joinColumns = @JoinColumn(name = "USER_ID"),
-            inverseJoinColumns = @JoinColumn(name = "VIDEO_POST_ID"))
-    private List<VideoPost> likedVideoPosts = new ArrayList<>();
+    @OneToMany(mappedBy = "user", cascade = CascadeType.PERSIST)
+    private List<UserLikedVideoPost> likedVideoPosts = new ArrayList<>();
 
-    @ManyToMany
-    @JoinTable(name = "liked_lesson",
-            joinColumns = @JoinColumn(name = "USER_ID"),
-            inverseJoinColumns = @JoinColumn(name = "LESSON_ID"))
-    private List<Lesson> likedLessons = new ArrayList<>();
+    @OneToMany(mappedBy = "user", cascade = CascadeType.PERSIST)
+    private List<UserLikedLesson> likedLessons = new ArrayList<>();
 
 
     @OneToMany(mappedBy = "author", orphanRemoval = true, cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
@@ -184,15 +157,26 @@ public class User {
     public void scrapLesson(Lesson lesson) {
         if (isScrappedLesson(lesson))
             throw new EntityExistsException("이미 스크랩한 레슨입니다. id:" + lesson.getId());
-        scrappedLesson.add(lesson);
+        scrappedLesson.add(
+                UserScrappedLesson.builder()
+                        .lesson(lesson)
+                        .user(this)
+                        .build());
     }
 
     public void addScrappedSheetPost(SheetPost sheetPost) {
-        scrappedSheets.add(sheetPost);
+        scrappedSheets.add(
+                UserScrappedSheetPost.builder()
+                        .sheetPost(sheetPost)
+                        .user(this)
+                        .build());
     }
 
     public void addLikedSheetPost(SheetPost sheetPost) {
-        likedSheetPosts.add(sheetPost);
+        likedSheetPosts.add(UserLikedSheetPost.builder()
+                .user(this)
+                .sheetPost(sheetPost)
+                .build());
         sheetPost.increaseLikedCount();
     }
 
@@ -209,7 +193,10 @@ public class User {
     public void likeVideoPost(VideoPost videoPost) {
         if (likedVideoPosts.contains(videoPost))
             throw new EntityExistsException(ExceptionMessage.ENTITY_EXISTS);
-        likedVideoPosts.add(videoPost);
+        likedVideoPosts.add(UserLikedVideoPost.builder()
+                .videoPost(videoPost)
+                .user(this)
+                .build());
         videoPost.increaseLikedCount();
     }
 
@@ -257,14 +244,18 @@ public class User {
 
     public void likePost(Post post) {
         assert likedPosts.stream().anyMatch(p -> p.equals(post));
-        likedPosts.add(post);
+        likedPosts.add(UserLikedPost.builder()
+                .post(post)
+                .user(this)
+                .build());
     }
 
     public void dislikePost(Post dislikedPost) {
         likedPosts.forEach(
                 post ->
                 {
-                    if (post.equals(dislikedPost)) post.decreaseLikedCount();
+                    Post entity = post.getPost();
+                    if (entity.equals(dislikedPost)) entity.decreaseLikedCount();
                 }
         );
         likedPosts.removeIf(post -> post.equals(dislikedPost));
@@ -284,9 +275,19 @@ public class User {
         cash -= order.getTotalPrice();
         order.setStatus(OrderStatus.IN_PROGRESS);
         if (order.getItem() instanceof Lesson item)
-            purchasedLessons.add(item);
+            purchasedLessons.add(
+                    UserPurchasedLesson.builder()
+                            .lesson(item)
+                            .user(this)
+                            .build()
+            );
         else if (order.getItem() instanceof SheetPost item)
-            purchasedSheets.add(item);
+            purchasedSheets.add(
+                    UserPurchasedSheetPost.builder()
+                            .sheetPost(item)
+                            .user(this)
+                            .build()
+            );
         else
             throw new ClassCastException("Cannot cast this class to child class.");
     }
@@ -301,7 +302,7 @@ public class User {
      * @return 구매한 상품이라면 true, 구매하지 않은 상품이라면 false
      */
     public boolean isPurchased(SellableItem item) {
-        List<? extends SellableItem> purchasedItemList;
+        List<? extends PurchasedSheetPost> purchasedItemList;
         if (item instanceof SheetPost)
             purchasedItemList = purchasedSheets;
         else if (item instanceof Lesson)
@@ -337,7 +338,10 @@ public class User {
     public void likeLesson(Lesson lesson) {
         if (likedLessons.stream().anyMatch(item -> item.equals(lesson)))
             throw new EntityExistsException("이미 좋아요를 누른 글입니다.");
-        likedLessons.add(lesson);
+        likedLessons.add(UserLikedLesson.builder()
+                .lesson(lesson)
+                .user(this)
+                .build());
     }
 
     public boolean isLikedLesson(Lesson lesson) {

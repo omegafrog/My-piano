@@ -21,10 +21,7 @@ import java.util.Optional;
 @Repository
 public class SecurityUserRepositoryImpl implements SecurityUserRepository {
 
-    @Override
-    public Long count() {
-        return null;
-    }
+
 
     private final JpaSecurityUserRepository jpaRepository;
     private final JPAQueryFactory factory;
@@ -32,6 +29,10 @@ public class SecurityUserRepositoryImpl implements SecurityUserRepository {
     @Override
     public SecurityUser save(SecurityUser securityUser) {
         return jpaRepository.save(securityUser);
+    }
+    @Override
+    public Long count() {
+        return jpaRepository.count();
     }
 
     @Override

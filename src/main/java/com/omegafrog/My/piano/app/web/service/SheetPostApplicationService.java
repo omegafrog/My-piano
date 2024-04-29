@@ -19,7 +19,6 @@ import com.omegafrog.My.piano.app.web.dto.comment.RegisterCommentDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.RegisterSheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
 import io.awspring.cloud.s3.ObjectMetadata;
-import io.awspring.cloud.s3.S3Template;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -72,7 +71,7 @@ public class SheetPostApplicationService implements CommentHandler {
                     tempFile.document, tempFile.filename,
                     new ObjectMetadata.Builder().contentType("jpg").build());
 
-            Sheet sheet = dto.getSheetDto().getEntityBuilderWithoutAuthor()
+            Sheet sheet = dto.getSheet().getEntityBuilderWithoutAuthor()
                     .user(loggedInUser)
                     .pageNum(tempFile.pageNum).build();
 
@@ -236,12 +235,9 @@ public class SheetPostApplicationService implements CommentHandler {
         sheetPost.decreaseLikedCount();
     }
 
-    public List<SheetPostDto> getSheetPosts(List<String> instrument, List<String> difficulty, List<String> genre, Pageable pageable) throws IOException {
-        instrument = instrument==null ? new ArrayList<>() : instrument;
-        difficulty = difficulty==null ? new ArrayList<>() : difficulty;
-        genre = genre==null ? new ArrayList<>() : genre;
+    public List<SheetPostDto> getSheetPosts(String searchSentence, List<String> instrument, List<String> difficulty, List<String> genre, Pageable pageable) throws IOException {
         List<SheetPostDto> ret = new ArrayList<>();
-        List<Long> sheetPostIds = elasticSearchInstance.searchSheetPost( instrument, difficulty, genre, pageable);
+        List<Long> sheetPostIds = elasticSearchInstance.searchSheetPost(searchSentence, instrument, difficulty, genre, pageable);
         for(Long id : sheetPostIds){
             Optional<SheetPost> result = sheetPostRepository.findById(id).or(
                     () -> {

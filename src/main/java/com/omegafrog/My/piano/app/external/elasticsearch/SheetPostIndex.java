@@ -26,6 +26,8 @@ public class SheetPostIndex {
         private String name;
         @Field(type = FieldType.Text)
         private String title;
+        @Field(type = FieldType.Text)
+        private String content;
         @Field(type = FieldType.Keyword)
         private List<String> genre;
         @Field(type = FieldType.Keyword)
@@ -40,6 +42,8 @@ public class SheetPostIndex {
         private String _class;
         @Field(type=FieldType.Date)
         private String created_at;
+        @Field(type=FieldType.Date)
+        private String updated_at;
 
         public static SheetPostIndex of(SheetPost sheetPost){
                 return SheetPostIndex.builder()
@@ -51,6 +55,8 @@ public class SheetPostIndex {
                         .difficulty(sheetPost.getSheet().getDifficulty().name())
                         .creator(sheetPost.getSheet().getUser().getId())
                         .created_at(sheetPost.getCreatedAt().toString())
+                        .content(sheetPost.getContent())
+                        .updated_at(sheetPost.getCreatedAt().toString())
                         .viewCount(sheetPost.getViewCount())
                         .build();
 

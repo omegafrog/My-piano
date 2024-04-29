@@ -44,11 +44,12 @@ public class SheetPostController {
     }
 
     @GetMapping("")
-    public JsonAPIResponse<Page<SheetPostDto>> getSheetPosts( @Nullable @RequestParam List<String> instrument,
-                                         @Nullable @RequestParam List<String> difficulty,
-                                         @Nullable @RequestParam List<String> genre,
-                                         Pageable pageable) throws IOException {
-        List<SheetPostDto> sheetPosts = sheetPostService.getSheetPosts( instrument, difficulty, genre, pageable);
+    public JsonAPIResponse<Page<SheetPostDto>> getSheetPosts(@Nullable @RequestParam String searchSentence,
+                                                             @Nullable @RequestParam List<String> instrument,
+                                                             @Nullable @RequestParam List<String> difficulty,
+                                                             @Nullable @RequestParam List<String> genre,
+                                                             Pageable pageable) throws IOException {
+        List<SheetPostDto> sheetPosts = sheetPostService.getSheetPosts(searchSentence, instrument, difficulty, genre, pageable);
         Page<SheetPostDto> data = PageableExecutionUtils.getPage(sheetPosts, pageable, sheetPosts::size);
         return new APISuccessResponse<>("Get sheet posts success.", data);
     }
@@ -118,6 +119,6 @@ public class SheetPostController {
             throws AccessDeniedException, PersistenceException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         sheetPostService.delete(id, loggedInUser);
-        return new APISuccessResponse<>("Delete sheet post success.");
+    return new APISuccessResponse<>("Delete sheet post success.");
     }
 }

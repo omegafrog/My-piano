@@ -16,7 +16,7 @@ import com.omegafrog.My.piano.app.utils.response.*;
 import com.omegafrog.My.piano.app.web.dto.RegisterUserDto;
 import com.omegafrog.My.piano.app.web.dto.SecurityUserDto;
 import com.omegafrog.My.piano.app.security.exception.UsernameAlreadyExistException;
-import com.omegafrog.My.piano.app.security.service.CommonUserService;
+import com.omegafrog.My.piano.app.web.service.admin.CommonUserService;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import io.awspring.cloud.s3.S3Exception;
 import io.jsonwebtoken.Claims;

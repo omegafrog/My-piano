@@ -4,6 +4,7 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.*;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
+import co.elastic.clients.elasticsearch._types.query_dsl.QueryStringQuery;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.json.JsonData;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -41,21 +43,25 @@ public class ElasticSearchInstance {
 
     }
 
-    public List<Long> searchSheetPost(List<String> instruments, List<String> difficulties, List<String> genres, Pageable pageable) throws IOException {
+    public List<Long> searchSheetPost(@Nullable String searchSentence,
+                                      @Nullable List<String> instruments,
+                                      @Nullable List<String> difficulties,
+                                      @Nullable List<String> genres,
+                                      Pageable pageable) throws IOException {
         List<Query> searchOptions = new ArrayList<>();
-        if (!instruments.isEmpty()) {
+        if (instruments!=null && !instruments.isEmpty()) {
             Query instrumentFilter = QueryBuilders.terms(t -> t
                     .field("instrument")
                     .terms(terms -> terms.value(instruments.stream().map(item -> FieldValue.of(item)).toList())));
             searchOptions.add(instrumentFilter);
         }
-        if (!difficulties.isEmpty()) {
+        if (difficulties!=null && !difficulties.isEmpty()) {
             Query instrumentFilter = QueryBuilders.terms(t -> t
                     .field("difficulty")
                     .terms(terms -> terms.value(difficulties.stream().map(item -> FieldValue.of(item)).toList())));
             searchOptions.add(instrumentFilter);
         }
-        if (!genres.isEmpty()) {
+        if (genres!=null && !genres.isEmpty()) {
             Query instrumentFilter = QueryBuilders.terms(t -> t
                     .field("genre")
                     .terms(terms -> terms.value(genres.stream().map(item -> FieldValue.of(item)).toList())));
@@ -67,10 +73,18 @@ public class ElasticSearchInstance {
                         .size(pageable.getPageSize())
                         .sort(SortOptions.of(so -> so.field(FieldSort.of(f -> f.field("created_at")
                                 .order(SortOrder.Desc)))))
-                        .query(q -> q
-                                .bool(b -> b.
-                                        must(searchOptions))), SheetPostIndex.class
-        );
+                        .query(q->
+                        {
+                            if (searchSentence != null && !searchSentence.isEmpty()) {
+                                return q.bool(b -> b
+                                        .must(q2 -> q2.queryString(qs -> qs.fields("title", "content").query("*" + searchSentence + "*")))
+                                        .must(searchOptions));
+                            } else {
+                                return q.bool(b -> b.must(searchOptions));
+                            }
+                        }
+                        ),SheetPostIndex.class);
+
         List<Hit<SheetPostIndex>> hits = response.hits().hits();
         List<Long> sheetPostIds = new ArrayList<>();
         for (Hit<SheetPostIndex> hit : hits) {

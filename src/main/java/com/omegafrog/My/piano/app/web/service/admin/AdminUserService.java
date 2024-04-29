@@ -1,4 +1,4 @@
-package com.omegafrog.My.piano.app.security.service;
+package com.omegafrog.My.piano.app.web.service.admin;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
@@ -8,16 +8,26 @@ import com.omegafrog.My.piano.app.security.jwt.RefreshToken;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.utils.MapperUtil;
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
+import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
+import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
 import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.post.PostRepository;
+import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
+import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.admin.ControlUserDto;
 import com.omegafrog.My.piano.app.web.dto.ReturnSessionDto;
 import com.omegafrog.My.piano.app.web.dto.admin.SearchUserFilter;
+import com.omegafrog.My.piano.app.web.dto.lesson.LessonListDto;
+import com.omegafrog.My.piano.app.web.dto.lesson.SearchLessonFilter;
 import com.omegafrog.My.piano.app.web.dto.post.PostListDto;
 import com.omegafrog.My.piano.app.web.dto.post.SearchPostFilter;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.SearchSheetPostFilter;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostListDto;
 import com.omegafrog.My.piano.app.web.dto.user.UserDto;
+import com.omegafrog.My.piano.app.web.service.admin.option.PostStrategy;
+import com.omegafrog.My.piano.app.web.service.admin.option.SheetPostStrategy;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 import jakarta.persistence.EntityNotFoundException;
@@ -25,11 +35,13 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -43,7 +55,8 @@ public class AdminUserService implements UserDetailsService {
     private final SecurityUserRepository securityUserRepository;
     private final PostRepository postRepository;
     private final MapperUtil mapperUtil;
-
+    private final SheetPostRepository sheetPostRepository;
+    private final LessonRepository lessonRepository;
 
     @Override
     public SecurityUser loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -138,9 +151,10 @@ public class AdminUserService implements UserDetailsService {
         postRepository.deleteById(id);
     }
 
-    public void update(Long id, List<UpdatePostStrategy> strategies) {
+    public void update(Long id, String options) throws JsonProcessingException {
+        List<PostStrategy> strategies = mapperUtil.parseUpdatePostOption(options);
         Post post = postRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Cannot find Post entity. id : " + id));
-        for(UpdatePostStrategy s : strategies){
+        for (PostStrategy s : strategies) {
             s.update(post);
         }
     }
@@ -148,5 +162,39 @@ public class AdminUserService implements UserDetailsService {
     public void writeNotiPost(String body, SecurityUser admin) throws JsonProcessingException {
         Post post = mapperUtil.parsePostNotiJson(body, admin);
         postRepository.save(post);
+    }
+
+    public Page<SheetPostListDto> getAllSheetPosts(Pageable pageable, SearchSheetPostFilter searchUserFilter) {
+        Page<SheetPost> all = sheetPostRepository.findAll(pageable, searchUserFilter);
+        return PageableExecutionUtils.getPage(all.stream().map(item ->
+                new SheetPostListDto(
+                        item.getId(),
+                        item.getTitle(),
+                        item.getAuthor().getName(),
+                        item.getSheet().getTitle(),
+                        item.getSheet().getDifficulty(),
+                        item.getSheet().getGenres(),
+                        item.getSheet().getInstrument(),
+                        item.getCreatedAt(),
+                        item.getPrice())).toList(),pageable, ()->all.getTotalElements());
+
+    }
+
+    public void updateSheetPost(Long id, String options) throws JsonProcessingException {
+        SheetPost sheetPost = sheetPostRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find Sheet post Entity"));
+        List<SheetPostStrategy> strategies = mapperUtil.parseUpdateSheetPostOption(options);
+        strategies.forEach(s -> s.update(sheetPost));
+    }
+
+    public void deleteSheetPost(Long id) {
+        sheetPostRepository.deleteById(id);
+    }
+
+
+    public Page<LessonListDto> getAllLessons(Pageable pageable, SearchLessonFilter searchLessonFilter) {
+        Page<Lesson> all = lessonRepository.findAll(pageable, searchLessonFilter);
+        List<LessonListDto> result = all.map(item -> new LessonListDto(item)).toList();
+        return PageableExecutionUtils.getPage(result, pageable, all::getTotalElements);
     }
 }
