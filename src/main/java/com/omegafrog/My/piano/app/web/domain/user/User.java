@@ -118,7 +118,7 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.PERSIST)
     private List<UserLikedVideoPost> likedVideoPosts = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
     private List<UserLikedLesson> likedLessons = new ArrayList<>();
 
 
@@ -162,6 +162,12 @@ public class User {
                         .lesson(lesson)
                         .user(this)
                         .build());
+    }
+
+    public void unScrapLesson(Lesson lesson) {
+        if (!isScrappedLesson(lesson))
+            throw new EntityNotFoundException("스크랩하지 않은 레슨을 취소하려고 합니다." + lesson.getId());
+        scrappedLesson = scrappedLesson.stream().filter(item->!item.getLesson().equals(lesson)).toList();
     }
 
     public void addScrappedSheetPost(SheetPost sheetPost) {
@@ -243,7 +249,7 @@ public class User {
     }
 
     public void likePost(Post post) {
-        assert likedPosts.stream().anyMatch(p -> p.equals(post));
+        assert likedPosts.stream().anyMatch(p -> p.getPost().equals(post));
         likedPosts.add(UserLikedPost.builder()
                 .post(post)
                 .user(this)
@@ -251,14 +257,7 @@ public class User {
     }
 
     public void dislikePost(Post dislikedPost) {
-        likedPosts.forEach(
-                post ->
-                {
-                    Post entity = post.getPost();
-                    if (entity.equals(dislikedPost)) entity.decreaseLikedCount();
-                }
-        );
-        likedPosts.removeIf(post -> post.equals(dislikedPost));
+        likedPosts = likedPosts.stream().filter(p -> p.getPost().equals(dislikedPost)).toList();
     }
 
     public void addCash(int cash) {
@@ -336,7 +335,7 @@ public class User {
     }
 
     public void likeLesson(Lesson lesson) {
-        if (likedLessons.stream().anyMatch(item -> item.equals(lesson)))
+        if (likedLessons.stream().anyMatch(item -> item.getLesson().equals(lesson)))
             throw new EntityExistsException("이미 좋아요를 누른 글입니다.");
         likedLessons.add(UserLikedLesson.builder()
                 .lesson(lesson)
@@ -345,19 +344,13 @@ public class User {
     }
 
     public boolean isLikedLesson(Lesson lesson) {
-        return likedLessons.stream().anyMatch(item -> item.equals(lesson));
+        return likedLessons.stream().anyMatch(item -> item.getLesson().equals(lesson));
     }
 
     public void dislikeLesson(Lesson lesson) {
-        likedLessons.remove(lesson);
+        likedLessons.removeIf(item->item.getLesson().equals(lesson));
     }
 
-    public void unScrapLesson(Lesson lesson) {
-        if (!isScrappedLesson(lesson))
-            throw new EntityNotFoundException("스크랩하지 않은 레슨을 취소하려고 합니다." + lesson.getId());
-        scrappedLesson.remove(lesson);
-
-    }
 
     @Override
     public boolean equals(Object o) {
