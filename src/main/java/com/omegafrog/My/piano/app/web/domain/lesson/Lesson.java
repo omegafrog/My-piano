@@ -3,7 +3,6 @@ package com.omegafrog.My.piano.app.web.domain.lesson;
 import com.omegafrog.My.piano.app.web.domain.order.SellableItem;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.dto.UpdateLessonDto;
-import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
 import jakarta.validation.constraints.NotNull;
@@ -27,7 +26,6 @@ public class Lesson extends SellableItem {
     @JoinColumn(name = "SHEET_POST_ID")
     private SheetPost sheetPost;
 
-
     @Builder
     public Lesson(String title, String subTitle, Integer price, VideoInformation videoInformation,
                   User lessonProvider, SheetPost sheetPost, LessonInformation lessonInformation) {
@@ -46,20 +44,19 @@ public class Lesson extends SellableItem {
         this.lessonInformation = dto.getLessonInformation();
         return this;
     }
-
-    public LessonDto toDto(){
-        return LessonDto.builder()
-                .id(id)
-                .title(title)
-                .sheetPost(this.sheetPost.toDto())
-                .subTitle(content)
-                .lessonInformation(this.lessonInformation)
-                .videoInformation(this.videoInformation)
-                .artist(author.getUserInfo())
-                .viewCount(viewCount)
-                .likeCount(likeCount)
-                .createdAt(createdAt)
-                .price(price)
-                .build();
+    public LessonDto toDto(){ return LessonDto.builder()
+            .id(id)
+            .title(title)
+            .sheet(sheetPost.getSheet().toSheetDto())
+            .subTitle(content)
+            .lessonInformation(lessonInformation)
+            .videoInformation(videoInformation)
+            .sheetPostId(sheetPost.getId())
+            .artist(author.getUserInfo())
+            .viewCount(viewCount)
+            .likeCount(likeCount)
+            .createdAt(createdAt)
+            .price(price)
+            .build();
     }
 }
