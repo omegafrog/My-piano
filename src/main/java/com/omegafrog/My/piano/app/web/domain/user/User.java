@@ -193,8 +193,9 @@ public class User {
         return likedSheetPosts.stream().anyMatch(item -> item.getSheetPost().equals(sheetPost));
     }
 
-    public void deleteLikedSheetPost(SheetPost sheetPost) {
-        likedSheetPosts.remove(sheetPost);
+    public void dislikeSheetPost(SheetPost sheetPost) {
+        boolean removed = likedSheetPosts.removeIf(item -> item.getSheetPost().equals(sheetPost));
+        if(!removed) throw new EntityNotFoundException("sheetPost entity를 찾을 수 없습니다.id:" + sheetPost.getId());
         sheetPost.decreaseLikedCount();
     }
 

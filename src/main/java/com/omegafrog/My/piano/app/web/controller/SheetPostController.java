@@ -62,14 +62,14 @@ public class SheetPostController {
     @GetMapping("/{id}/like")
     public JsonAPIResponse<Map<String, Object>> isLikePost(@PathVariable Long id) throws JsonProcessingException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        boolean isLiked= sheetPostService.isLikedPost(id, loggedInUser);
+        boolean isLiked= sheetPostService.isLikedSheetPost(id, loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("isLiked", isLiked);
         return new APISuccessResponse<>("Check liked sheet post success.", data);
     }
     @DeleteMapping("/{id}/like")
     public JsonAPIResponse<Void> dislikePost(@PathVariable Long id){
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        sheetPostService.dislikePost(id, loggedInUser);
+        sheetPostService.dislikeSheetPost(id, loggedInUser);
         return new APISuccessResponse<>("Dislike this sheet post success.");
     }
 
