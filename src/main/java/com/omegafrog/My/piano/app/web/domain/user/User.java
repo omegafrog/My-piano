@@ -1,7 +1,8 @@
 package com.omegafrog.My.piano.app.web.domain.user;
 
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
-import com.omegafrog.My.piano.app.utils.exception.AlreadyLikedException;
+import com.omegafrog.My.piano.app.utils.exception.AlreadyScrappedEntityException;
+import com.omegafrog.My.piano.app.utils.exception.AlreadyLikedEntityException;
 import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
 
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
@@ -90,7 +91,7 @@ public class User {
     private final List<UserPurchasedLesson> purchasedLessons = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    private final List<UserScrappedSheetPost> scrappedSheets = new ArrayList<>();
+    private final List<UserScrappedSheetPost> scrappedSheetPosts = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
     private final List<UserScrappedLesson> scrappedLesson = new ArrayList<>();
@@ -171,17 +172,23 @@ public class User {
         scrappedLesson.removeIf(l -> l.getLesson().equals(lesson));
     }
 
-    public void addScrappedSheetPost(SheetPost sheetPost) {
-        scrappedSheets.add(
+    public void scrapSheetPost(SheetPost sheetPost) {
+        if(isScrappedSheetPost(sheetPost))
+            throw new AlreadyScrappedEntityException("이미 스크랩한 entity입니다.");
+        scrappedSheetPosts.add(
                 UserScrappedSheetPost.builder()
                         .sheetPost(sheetPost)
                         .user(this)
                         .build());
     }
 
+    public boolean isScrappedSheetPost(SheetPost sheetPost) {
+        return scrappedSheetPosts.stream().anyMatch(item -> item.getSheetPost().equals(sheetPost));
+    }
+
     public void likeSheetPost(SheetPost sheetPost) {
         if(isLikedSheetPost(sheetPost))
-            throw new AlreadyLikedException("이미 좋아요를 누른 entity입니다.");
+            throw new AlreadyLikedEntityException();
         likedSheetPosts.add(UserLikedSheetPost.builder()
                 .user(this)
                 .sheetPost(sheetPost)

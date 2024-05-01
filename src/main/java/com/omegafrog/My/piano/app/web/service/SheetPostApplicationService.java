@@ -177,14 +177,16 @@ public class SheetPostApplicationService {
         sheetPost.decreaseLikedCount();
     }
     public void scrapSheetPost(Long id, User loggedInUser) {
-        SheetPost sheetPost = sheetPostRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity:"+ id));
-        User user = userRepository.findById(loggedInUser.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
-        user.addScrappedSheetPost(sheetPost);
+        SheetPost sheetPost = sheetPostRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity:"+ id));
+        User user = userRepository.findById(loggedInUser.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
+        user.scrapSheetPost(sheetPost);
     }
     public boolean isScrappedSheetPost(Long id, User loggedInUser){
         SheetPost targetSheetPost = sheetPostRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
         User user = userRepository.findById(loggedInUser.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
-        return user.getScrappedSheets().stream().anyMatch(item -> item.equals(targetSheetPost));
+        return user.getScrappedSheetPosts().stream().anyMatch(item -> item.equals(targetSheetPost));
     }
 
 

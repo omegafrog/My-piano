@@ -120,7 +120,7 @@ public class UserApplicationService {
     public List<SheetInfoDto> getScrappedSheets(User loggedInUser) {
         User user = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInUser.getId()));
-        return user.getScrappedSheets().stream().map(sheetPost->sheetPost.getSheetPost().toInfoDto()).toList();
+        return user.getScrappedSheetPosts().stream().map(sheetPost->sheetPost.getSheetPost().toInfoDto()).toList();
     }
 
     public List<UserInfo> getFollowingFollower(User loggedInUser) {
