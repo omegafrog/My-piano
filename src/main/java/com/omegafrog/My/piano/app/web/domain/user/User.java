@@ -80,50 +80,50 @@ public class User {
     private Cart cart;
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "owner")
-    private List<Coupon> coupons;
+    private List<Coupon> coupons = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    private List<UserPurchasedSheetPost> purchasedSheets = new ArrayList<>();
+    private final List<UserPurchasedSheetPost> purchasedSheets = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    private List<UserPurchasedLesson> purchasedLessons = new ArrayList<>();
+    private final List<UserPurchasedLesson> purchasedLessons = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    private List<UserScrappedSheetPost> scrappedSheets = new ArrayList<>();
-
-    @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    private List<UserScrappedLesson> scrappedLesson = new ArrayList<>();
-
-    @OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "author")
-    private List<SheetPost> uploadedSheetPosts = new ArrayList<>();
-
-    @OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "author")
-    private List<Lesson> uploadedLessons = new ArrayList<>();
-
-    @OneToMany(mappedBy = "author", cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
-    private List<Post> uploadedPosts = new ArrayList<>();
-
-    @OneToMany(mappedBy = "author", cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
-    private List<VideoPost> uploadedVideoPosts = new ArrayList<>();
-
-    @OneToMany(mappedBy = "follower", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    private List<FollowedUser> followed = new CopyOnWriteArrayList<>();
-
-    @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST})
-    private List<UserLikedPost> likedPosts = new ArrayList<>();
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.PERSIST)
-    private List<UserLikedSheetPost> likedSheetPosts = new ArrayList<>();
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.PERSIST)
-    private List<UserLikedVideoPost> likedVideoPosts = new ArrayList<>();
+    private final List<UserScrappedSheetPost> scrappedSheets = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
-    private List<UserLikedLesson> likedLessons = new ArrayList<>();
+    private final List<UserScrappedLesson> scrappedLesson = new ArrayList<>();
+
+    @OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "author")
+    private final List<SheetPost> uploadedSheetPosts = new ArrayList<>();
+
+    @OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "author")
+    private final List<Lesson> uploadedLessons = new ArrayList<>();
+
+    @OneToMany(mappedBy = "author", cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
+    private final List<Post> uploadedPosts = new ArrayList<>();
+
+    @OneToMany(mappedBy = "author", cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
+    private final List<VideoPost> uploadedVideoPosts = new ArrayList<>();
+
+    @OneToMany(mappedBy = "follower", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    private final List<FollowedUser> followed = new CopyOnWriteArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST})
+    private final List<UserLikedPost> likedPosts = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.PERSIST)
+    private final List<UserLikedSheetPost> likedSheetPosts = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.PERSIST)
+    private final List<UserLikedVideoPost> likedVideoPosts = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    private final List<UserLikedLesson> likedLessons = new ArrayList<>();
 
 
     @OneToMany(mappedBy = "author", orphanRemoval = true, cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-    private List<Comment> wroteComments = new ArrayList<>();
+    private final List<Comment> wroteComments = new ArrayList<>();
 
     public int chargeCash(int cash) {
         this.cash += cash;
@@ -167,7 +167,7 @@ public class User {
     public void unScrapLesson(Lesson lesson) {
         if (!isScrappedLesson(lesson))
             throw new EntityNotFoundException("스크랩하지 않은 레슨을 취소하려고 합니다." + lesson.getId());
-        scrappedLesson = scrappedLesson.stream().filter(item->!item.getLesson().equals(lesson)).toList();
+        scrappedLesson.removeIf(l -> l.getLesson().equals(lesson));
     }
 
     public void addScrappedSheetPost(SheetPost sheetPost) {
@@ -257,7 +257,7 @@ public class User {
     }
 
     public void dislikePost(Post dislikedPost) {
-        likedPosts = likedPosts.stream().filter(p -> p.getPost().equals(dislikedPost)).toList();
+        likedPosts.removeIf(item -> item.getPost().equals(dislikedPost));
     }
 
     public void addCash(int cash) {
