@@ -17,9 +17,7 @@ import com.omegafrog.My.piano.app.web.dto.lesson.LessonRegisterDto;
 import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -93,7 +91,7 @@ public class LessonService {
         lessonRepository.deleteById(lessonId);
     }
 
-    @Override
+
     public List<CommentDto> addComment(Long lessonId, RegisterCommentDto dto, User loggedInUser) {
         Lesson lesson = getLesson(lessonId);
         User user = userRepository.findById(loggedInUser.getId())
@@ -105,28 +103,6 @@ public class LessonService {
         return lessonRepository.save(lesson).getComments().stream().map(Comment::toDto).toList();
     }
 
-    @Override
-    public List<CommentDto> deleteComment(Long lessonId, Long commentId, User loggedInUser) {
-        Lesson lesson = getLesson(lessonId);
-
-        boolean isCommentRemoved = lesson.getComments().removeIf(
-                comment -> {
-                    if (isCommentIdEquals(commentId, comment)) {
-                        if (isCommentAuthorEquals(loggedInUser, comment))
-                            return true;
-                        else throw new AccessDeniedException("Cannot delete other user's comment : " + commentId);
-                    }
-                    return false;
-                }
-        );
-        if (isCommentRemoved) {
-            Lesson saved = lessonRepository.save(lesson);
-            return saved.getComments().stream().map(Comment::toDto).toList();
-        } else throw new EntityNotFoundException("Cannot find Comment entity : " + commentId);
-    }
-
-
-    @Override
     public void likeComment(Long id, Long commentId) {
         Lesson lesson = lessonRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson entity : " + id));
@@ -138,7 +114,7 @@ public class LessonService {
         );
     }
 
-    @Override
+
     public void dislikeComment(Long id, Long commentId) {
         Lesson lesson = lessonRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson entity : " + id));
@@ -208,7 +184,7 @@ public class LessonService {
         loggedUser.unScrapLesson(lesson);
     }
 
-    @Override
+
     public CommentDto replyComment(Long id,Long commentId, String replyContent, User loggedInUser) {
         Lesson lesson = lessonRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson Entity : " + id));

@@ -8,6 +8,7 @@ import com.omegafrog.My.piano.app.utils.response.JsonAPIResponse;
 import com.omegafrog.My.piano.app.utils.response.ResponseUtil;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
+import com.omegafrog.My.piano.app.web.dto.comment.CommentTargetType;
 import com.omegafrog.My.piano.app.web.dto.comment.RegisterCommentDto;
 import com.omegafrog.My.piano.app.web.service.*;
 import jakarta.persistence.PersistenceException;
@@ -39,6 +40,8 @@ public class CommentController {
     private LessonService lessonService;
     @Autowired
     private SheetPostApplicationService sheetPostApplicationService;
+    @Autowired
+    private CommentApplicationService commentApplicationService;
 
 
     @PostMapping(value = {"/lesson/{id}/comment",
@@ -52,10 +55,13 @@ public class CommentController {
     ) throws JsonProcessingException, MalformedURLException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
 
-        CommentHandler commentHandler = getCommentHandler(request.getRequestURI());
-        List<CommentDto> commentDtos = commentHandler.addComment(id, dto, loggedInUser);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", commentDtos);
-        return new APISuccessResponse("Add Comment success.", data);
+        List<CommentDto> comments= commentApplicationService.addComment(
+                CommentTargetType.of(request),
+                id,
+                dto,
+                loggedInUser);
+
+        return new APISuccessResponse<>("Add Comment success.", comments);
     }
 
     @PostMapping(value= {"/lesson/{id}/comment/{commentId}",
@@ -74,16 +80,14 @@ public class CommentController {
             "/sheet-post/{id}/comment/{comment-id}",
             "/community/posts/{id}/comment/{comment-id}",
             "/community/video-post/{id}/comment/{comment-id}"})
-    public JsonAPIResponse deleteComment(
+    public JsonAPIResponse<Void> deleteComment(
             @PathVariable Long id,
             @PathVariable(name = "comment-id") Long commentId,
             HttpServletRequest request
     ) throws JsonProcessingException, MalformedURLException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        CommentHandler commentHandler = getCommentHandler(request.getRequestURI());
-        List<CommentDto> commentDtos = commentHandler.deleteComment(id, commentId, loggedInUser);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("comments", commentDtos);
-        return new APISuccessResponse("Delete Comment success.", data);
+        commentApplicationService.deleteComment(id, commentId, loggedInUser);
+        return new APISuccessResponse("Delete Comment success.");
     }
 
     @GetMapping(value = {"/lesson/{id}/comment/{comment-id}/like",
@@ -120,11 +124,9 @@ public class CommentController {
             "/sheet-post/{id}/comments"})
     public JsonAPIResponse<Page<CommentDto>> getComments(
             @PathVariable Long id,
-            @PageableDefault(size=10) Pageable pageable,
-            HttpServletRequest request)
-            throws PersistenceException, AccessDeniedException, JsonProcessingException, MalformedURLException {
-        CommentHandler commentHandler = getCommentHandler(request.getRequestURI());
-        Page<CommentDto> page = commentHandler.getComments(id, pageable);
+            @PageableDefault(size=10) Pageable pageable)
+            throws PersistenceException, AccessDeniedException, JsonProcessingException{
+        Page<CommentDto> page = commentApplicationService.getComments(id, pageable);
         return new APISuccessResponse("Get all comments success.", page);
     }
 
@@ -134,18 +136,7 @@ public class CommentController {
             url = url.substring(url.indexOf("/", 1));
             mainResource = url.substring(1, url.indexOf("/", 1));
         }
-        switch (mainResource) {
-            case "lesson":
-                return lessonService;
-            case "posts":
-                return postApplicationService;
-            case "video-post":
-                return videoPostApplicationService;
-            case "sheet-post":
-                return sheetPostApplicationService;
-            default:
-                throw new MalformedURLException("잘못된 mainResource입니다." + mainResource);
-        }
+        return null;
     }
 
 }

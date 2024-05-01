@@ -22,12 +22,9 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class JpaCommentRepositoryImpl implements CommentRepository {
 
-    @PersistenceContext
-    private EntityManagerFactory emf;
 
     private final JPAQueryFactory queryFactory;
-    private JpaRepository<Comment, Long> jpaRepository =
-            new SimpleJpaRepository<>(Comment.class, emf.createEntityManager());
+    private final JpaRepository<Comment, Long> jpaRepository;
 
     public Comment save(Comment comment){
         return jpaRepository.save(comment);

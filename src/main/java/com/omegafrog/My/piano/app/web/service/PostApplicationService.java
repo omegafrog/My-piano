@@ -90,7 +90,7 @@ public class PostApplicationService {
         return !founded.getLikedPosts().stream().filter(post -> post.getId().equals(id)).findFirst().isEmpty();
     }
 
-    @Override
+
     public List<CommentDto> addComment(Long id,  RegisterCommentDto dto,User loggedInUser) {
         User user = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER));
@@ -102,14 +102,6 @@ public class PostApplicationService {
         return saved.getComments().stream().map(Comment::toDto).toList();
     }
 
-    @Override
-    public List<CommentDto> deleteComment(Long id, Long commentId, User loggedInUser) {
-        Post post = getPostById(id);
-        if (!isCommentRemoved(commentId, loggedInUser, post))
-            throw new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_COMMENT + commentId);
-        return post.getComments().stream().map(Comment::toDto).toList();
-    }
-
     private static boolean isCommentRemoved(Long commentId, User loggedInUser, Post post) {
         return post.getComments().removeIf(comment -> {
             if (comment.getId().equals(commentId)) {
@@ -119,7 +111,7 @@ public class PostApplicationService {
         });
     }
 
-    @Override
+
     public void likeComment(Long articleId, Long commentId) {
         Post post = postRepository.findById(articleId)
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_POST));
@@ -128,7 +120,7 @@ public class PostApplicationService {
         foundedComment.increaseLikeCount();
     }
 
-    @Override
+
     public void dislikeComment(Long articleId, Long commentId) {
         Post post = postRepository.findById(articleId)
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_POST));
@@ -137,7 +129,7 @@ public class PostApplicationService {
         foundedComment.decreaseLikeCount();
     }
 
-    @Override
+
     public CommentDto replyComment(Long id, Long commentId, String replyContent, User loggedInUser) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_POST));

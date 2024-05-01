@@ -42,7 +42,7 @@ import java.util.*;
 @RequiredArgsConstructor
 @Transactional
 @Slf4j
-public class SheetPostApplicationService implements CommentHandler {
+public class SheetPostApplicationService {
     private final SheetPostIndexRepository sheetPostIndexRepository;
 
     private final SheetPostRepository sheetPostRepository;
@@ -158,24 +158,13 @@ public class SheetPostApplicationService implements CommentHandler {
     }
 
 
-    @Override
-    public List<CommentDto> deleteComment(Long id, Long commentId, User loggedInUser) {
-        User user = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_COMMENT));
-        SheetPost sheetPost = sheetPostRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find Sheet post entity : " + id));
-        sheetPost.deleteComment(commentId, user);
-        return sheetPost.getComments().stream().map(Comment::toDto).toList();
-    }
 
-    @Override
     public void likeComment(Long id, Long commentId) {
         SheetPost sheetPost = sheetPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity : " + id));
         sheetPost.increaseCommentLikeCount(commentId);
     }
 
-    @Override
     public void dislikeComment(Long id, Long commentId) {
         SheetPost sheetPost = sheetPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity : " + id));
@@ -231,7 +220,6 @@ public class SheetPostApplicationService implements CommentHandler {
         }
         return ret;
     }
-    @Override
     public CommentDto replyComment(Long id, Long commentId, String replyContent, User loggedInUser) {
         SheetPost post = sheetPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));

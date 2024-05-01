@@ -25,7 +25,8 @@ import java.util.List;
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class VideoPestApplicationService {
+public class VideoPostApplicationService {
+
 
     private final UserRepository userRepository;
     private final VideoPostRepository videoPostRepository;
@@ -76,7 +77,7 @@ public class VideoPestApplicationService {
         return !videoPost.getAuthor().equals(user);
     }
 
-    @Override
+
     public List<CommentDto> addComment(Long articleId, RegisterCommentDto dto, User loggedInUser) {
         User user = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER));
@@ -90,23 +91,13 @@ public class VideoPestApplicationService {
         return videoPost.getComments().stream().map(Comment::toDto).toList();
     }
 
-    @Override
-    public List<CommentDto> deleteComment(Long id, Long commentId, User loggedInUser) {
-        User user = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER));
-        VideoPost videoPost = videoPostRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_VIDEO_POST));
-        videoPost.deleteComment(commentId, user);
-        return videoPost.getComments().stream().map(Comment::toDto).toList();
-    }
 
-    @Override
     public void likeComment(Long id, Long commentId) {
         VideoPost videoPost = videoPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity : " + id));
         videoPost.increaseCommentLikeCount(commentId);
     }
-    @Override
+
     public void dislikeComment(Long id, Long commentId) {
         VideoPost videoPost = videoPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity : " + id));
@@ -134,7 +125,7 @@ public class VideoPestApplicationService {
         return videoPostRepository.findAll(pageable).getContent().stream().map(VideoPost::toDto).toList();
     }
 
-    @Override
+
     public CommentDto replyComment(Long id, Long commentId, String replyContent, User loggedInUser) {
         VideoPost post = videoPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity : " + id));
