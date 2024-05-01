@@ -184,9 +184,11 @@ public class SheetPostApplicationService {
         user.scrapSheetPost(sheetPost);
     }
     public boolean isScrappedSheetPost(Long id, User loggedInUser){
-        SheetPost targetSheetPost = sheetPostRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
-        User user = userRepository.findById(loggedInUser.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
-        return user.getScrappedSheetPosts().stream().anyMatch(item -> item.equals(targetSheetPost));
+        SheetPost targetSheetPost = sheetPostRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
+        User user = userRepository.findById(loggedInUser.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
+        return user.getScrappedSheetPosts().stream().anyMatch(item -> item.getSheetPost().equals(targetSheetPost));
     }
 
 

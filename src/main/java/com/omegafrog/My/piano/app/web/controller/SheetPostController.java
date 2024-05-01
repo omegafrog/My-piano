@@ -93,10 +93,11 @@ public class SheetPostController {
     }
 
     @GetMapping("/{id}/scrap")
-    public JsonAPIResponse<Boolean> isScrappedSheetPost(@PathVariable Long id) throws JsonProcessingException {
+    public JsonAPIResponse<Map<String, Object>> isScrappedSheetPost(@PathVariable Long id) throws JsonProcessingException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         boolean isScrapped = sheetPostService.isScrappedSheetPost(id, loggedInUser);
-        return new APISuccessResponse<>("Check sheet post scrap success.", isScrapped);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("isScrapped", isScrapped);
+        return new APISuccessResponse<>("Check sheet post scrap success.", data);
     }
 
 
