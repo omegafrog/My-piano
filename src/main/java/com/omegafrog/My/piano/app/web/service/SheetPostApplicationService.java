@@ -157,36 +157,6 @@ public class SheetPostApplicationService implements CommentHandler {
         else throw new AccessDeniedException("Cannot delete other user's sheet post entity : " + id);
     }
 
-    @Override
-    public Page<CommentDto> getComments(Long articleId, Pageable pageable) {
-        SheetPost sheetPost = sheetPostRepository.findById(articleId)
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + articleId));
-
-        long offset = pageable.getOffset();
-        int pageSize = pageable.getPageSize();
-        int toIdx = (int)offset+pageSize;
-        if (toIdx > sheetPost.getComments().size()) toIdx = sheetPost.getComments().size();
-        return PageableExecutionUtils.getPage(
-                sheetPost.getComments().subList((int) offset, toIdx).stream().map(Comment::toDto).toList(),
-                pageable,
-                () -> sheetPost.getComments().size());
-    }
-
-    @Override
-    public List<CommentDto> addComment(Long id, RegisterCommentDto dto, User loggedInUser) {
-        SheetPost sheetPost = sheetPostRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
-        User user = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER));
-
-        Comment savedComment = commentRepository.save(
-                Comment.builder()
-                        .content(dto.getContent())
-                        .author(user)
-                        .build());
-        sheetPost.addComment(savedComment);
-        return sheetPost.getComments().stream().map(Comment::toDto).toList();
-    }
 
     @Override
     public List<CommentDto> deleteComment(Long id, Long commentId, User loggedInUser) {

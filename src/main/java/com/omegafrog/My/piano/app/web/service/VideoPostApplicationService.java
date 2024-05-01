@@ -1,12 +1,10 @@
 package com.omegafrog.My.piano.app.web.service;
 
-import com.omegafrog.My.piano.app.utils.exception.CommentIndexOutOfBoundsException;
 import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
 import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.comment.CommentRepository;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPost;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPostRepository;
-import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
@@ -16,9 +14,7 @@ import com.omegafrog.My.piano.app.web.dto.videoPost.VideoPostDto;
 import com.omegafrog.My.piano.app.web.dto.videoPost.VideoPostRegisterDto;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,7 +25,7 @@ import java.util.List;
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class VideoPostApplicationService implements CommentHandler {
+public class VideoPestApplicationService {
 
     private final UserRepository userRepository;
     private final VideoPostRepository videoPostRepository;
@@ -117,19 +113,6 @@ public class VideoPostApplicationService implements CommentHandler {
         videoPost.decreaseCommentLikeCount(commentId);
     }
 
-    @Override
-    public Page<CommentDto> getComments(Long articleId, Pageable pageable) {
-        VideoPost videoPost = videoPostRepository.findById(articleId)
-                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_VIDEO_POST));
-        long offset = pageable.getOffset();
-        int pageSize = pageable.getPageSize();
-        int toIdx = (int)offset+pageSize;
-        if (toIdx > videoPost.getComments().size()) toIdx = videoPost.getComments().size();
-        return PageableExecutionUtils.getPage(
-                videoPost.getComments().subList((int) offset, toIdx).stream().map(Comment::toDto).toList(),
-                pageable,
-                () -> videoPost.getComments().size());
-    }
 
     public void likePost(Long id, User loggedInUser) {
         User user = userRepository.findById(loggedInUser.getId())

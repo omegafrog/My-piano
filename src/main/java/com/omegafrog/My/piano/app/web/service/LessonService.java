@@ -28,7 +28,7 @@ import java.util.List;
 
 @Service
 @Transactional
-public class LessonService implements CommentHandler {
+public class LessonService {
 
     @Autowired
     private SheetPostRepository sheetPostRepository;
@@ -125,19 +125,6 @@ public class LessonService implements CommentHandler {
         } else throw new EntityNotFoundException("Cannot find Comment entity : " + commentId);
     }
 
-    @Override
-    public Page<CommentDto> getComments(Long id, Pageable pageable) {
-        Lesson lesson = lessonRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find Lesson entity : " + id));
-        int pageSize = pageable.getPageSize();
-        long offset = pageable.getOffset();
-        int toIdx = (int)offset+pageSize;
-        if (toIdx > lesson.getComments().size()) toIdx = lesson.getComments().size();
-        return PageableExecutionUtils.getPage(
-                lesson.getComments().subList((int) offset, toIdx).stream().map(Comment::toDto).toList(),
-                pageable,
-                () -> lesson.getComments().size());
-    }
 
     @Override
     public void likeComment(Long id, Long commentId) {

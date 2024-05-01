@@ -26,7 +26,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class PostApplicationService implements CommentHandler {
+public class PostApplicationService {
 
     private final UserRepository userRepository;
     private final PostRepository postRepository;
@@ -135,20 +135,6 @@ public class PostApplicationService implements CommentHandler {
         Comment foundedComment = post.getComments().stream().filter(comment -> comment.getId().equals(commentId)).findFirst()
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_COMMENT));
         foundedComment.decreaseLikeCount();
-    }
-
-    @Override
-    public Page<CommentDto> getComments(Long articleId, Pageable pageable) {
-        Post post = postRepository.findById(articleId)
-                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_POST));
-        long offset = pageable.getOffset();
-        int pageSize = pageable.getPageSize();
-        int toIdx = (int)offset+pageSize;
-        if (toIdx > post.getComments().size()) toIdx = post.getComments().size();
-        return PageableExecutionUtils.getPage(
-                post.getComments().subList((int) offset, toIdx).stream().map(Comment::toDto).toList(),
-                pageable,
-                () ->post.getComments().size());
     }
 
     @Override
