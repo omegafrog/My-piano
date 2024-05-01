@@ -151,7 +151,7 @@ public class User {
     }
 
     public boolean isScrappedLesson(Lesson lesson) {
-        return scrappedLesson.stream().anyMatch(item -> item.equals(lesson));
+        return scrappedLesson.stream().anyMatch(item -> item.getLesson().equals(lesson));
     }
 
     public void scrapLesson(Lesson lesson) {

@@ -132,7 +132,7 @@ public class UserApplicationService {
     public List<LessonDto> getPurchasedLessons(User loggedInUserProfile) {
         User userProfile = userRepository.findById(loggedInUserProfile.getId())
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInUserProfile.getId()));
-       return userProfile.getPurchasedLessons().stream().map(lesson->lesson.getLesson().toDto()).toList();
+       return userProfile.getPurchasedLessons().stream().map(purchasedLesson->purchasedLesson.getLesson().toDto()).toList();
     }
 
 
