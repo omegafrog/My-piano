@@ -159,9 +159,12 @@ public class SheetPostApplicationService {
     }
 
     public boolean isLikedPost(Long id, User loggedInUser) {
-        SheetPost targetSheetPost = sheetPostRepository.findById(id).orElseThrow(() -> new EntityNotFoundException(("Cannot find SheetPost entity:" + id)));
-        User user = userRepository.findById(loggedInUser.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find user entity:" + id));
-        return user.getLikedSheetPosts().stream().anyMatch(sheetPost -> sheetPost.equals(targetSheetPost));
+        SheetPost targetSheetPost = sheetPostRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(("Cannot find SheetPost entity:" + id)));
+        User user = userRepository.findById(loggedInUser.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find user entity:" + id));
+        return user.getLikedSheetPosts()
+                .stream().anyMatch(likedSheetPost-> likedSheetPost.getSheetPost().equals(targetSheetPost));
     }
 
     public void scrapSheetPost(Long id, User loggedInUser) {

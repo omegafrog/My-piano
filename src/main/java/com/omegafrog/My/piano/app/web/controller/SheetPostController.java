@@ -2,6 +2,7 @@ package com.omegafrog.My.piano.app.web.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.omegafrog.My.piano.app.utils.MapperUtil;
+import com.omegafrog.My.piano.app.utils.response.ResponseUtil;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.RegisterSheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
@@ -59,9 +60,10 @@ public class SheetPostController {
         return new APISuccessResponse<>("Increase like count success.");
     }
     @GetMapping("/{id}/like")
-    public JsonAPIResponse<Boolean> isLikePost(@PathVariable Long id) throws JsonProcessingException {
+    public JsonAPIResponse<Map<String, Object>> isLikePost(@PathVariable Long id) throws JsonProcessingException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        boolean data = sheetPostService.isLikedPost(id, loggedInUser);
+        boolean isLiked= sheetPostService.isLikedPost(id, loggedInUser);
+        Map<String, Object> data = ResponseUtil.getStringObjectMap("isLiked", isLiked);
         return new APISuccessResponse<>("Check liked sheet post success.", data);
     }
     @DeleteMapping("/{id}/like")
