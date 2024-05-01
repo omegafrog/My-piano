@@ -82,4 +82,7 @@ public class Comment {
     }
 
 
+    public void addReply(Comment saved) {
+        replies.add(saved);
+    }
 }

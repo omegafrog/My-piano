@@ -6,6 +6,5 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class CommentApplicationService {
-    private CommentHandler commentHandler;
 
 }
