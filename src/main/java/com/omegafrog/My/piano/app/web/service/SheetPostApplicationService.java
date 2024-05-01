@@ -67,7 +67,7 @@ public class SheetPostApplicationService {
                     tempFile.document, tempFile.filename,
                     new ObjectMetadata.Builder().contentType("jpg").build());
 
-            Sheet sheet = dto.getSheetDto().getEntityBuilderWithoutAuthor()
+            Sheet sheet = dto.getSheet().getEntityBuilderWithoutAuthor()
                     .user(loggedInUser)
                     .pageNum(tempFile.pageNum).build();
 
