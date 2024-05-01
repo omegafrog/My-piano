@@ -1,6 +1,7 @@
 package com.omegafrog.My.piano.app.web.domain.user;
 
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
+import com.omegafrog.My.piano.app.utils.exception.AlreadyLikedException;
 import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
 
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
@@ -178,12 +179,18 @@ public class User {
                         .build());
     }
 
-    public void addLikedSheetPost(SheetPost sheetPost) {
+    public void likeSheetPost(SheetPost sheetPost) {
+        if(isLikedSheetPost(sheetPost))
+            throw new AlreadyLikedException("이미 좋아요를 누른 entity입니다.");
         likedSheetPosts.add(UserLikedSheetPost.builder()
                 .user(this)
                 .sheetPost(sheetPost)
                 .build());
         sheetPost.increaseLikedCount();
+    }
+
+    private boolean isLikedSheetPost(SheetPost sheetPost) {
+        return likedSheetPosts.stream().anyMatch(item -> item.getSheetPost().equals(sheetPost));
     }
 
     public void deleteLikedSheetPost(SheetPost sheetPost) {

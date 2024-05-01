@@ -155,7 +155,7 @@ public class SheetPostApplicationService {
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity:" + id));
         User user = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find user entity:" + id));
-        user.addLikedSheetPost(sheetPost);
+        user.likeSheetPost(sheetPost);
     }
 
     public boolean isLikedPost(Long id, User loggedInUser) {
