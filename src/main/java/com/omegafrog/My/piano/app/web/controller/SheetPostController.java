@@ -100,7 +100,12 @@ public class SheetPostController {
         return new APISuccessResponse<>("Check sheet post scrap success.", data);
     }
 
-
+    @DeleteMapping("/{id}/scrap")
+    public JsonAPIResponse<Map<String, Object>> unScrapSheetPost(@PathVariable Long id){
+        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+        sheetPostService.unScrapSheetPost(id, loggedInUser);
+        return new APISuccessResponse<>("Unscrap sheet post success.");
+    }
     @PutMapping("{id}")
     public JsonAPIResponse<SheetPostDto> updateSheetPost(@PathVariable Long id, @RequestParam String dto, @RequestPart MultipartFile file)
             throws AccessDeniedException, PersistenceException, IOException {

@@ -191,6 +191,14 @@ public class SheetPostApplicationService {
         return user.getScrappedSheetPosts().stream().anyMatch(item -> item.getSheetPost().equals(targetSheetPost));
     }
 
+    public void unScrapSheetPost(Long id, User loggedInUser) {
+        SheetPost sheetPost = sheetPostRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
+        User user = userRepository.findById(loggedInUser.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + id));
+
+        user.unScrapSheetPost(sheetPost);
+    }
 
     public List<SheetPostDto> getSheetPosts(String searchSentence, List<String> instrument, List<String> difficulty, List<String> genre, Pageable pageable) throws IOException {
         List<SheetPostDto> ret = new ArrayList<>();

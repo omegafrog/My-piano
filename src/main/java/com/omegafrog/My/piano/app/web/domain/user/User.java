@@ -379,4 +379,9 @@ public class User {
     public int hashCode() {
         return id.hashCode();
     }
+
+    public void unScrapSheetPost(SheetPost sheetPost) {
+        boolean removed = scrappedSheetPosts.removeIf(item -> item.getSheetPost().equals(sheetPost));
+        if(!removed) throw new EntityNotFoundException("스크랩하지 않았습니다.");
+    }
 }
