@@ -297,9 +297,15 @@ public class SecurityConfig {
                 .securityMatcher("/lesson/**")
                 .authenticationProvider(commonUserAuthenticationProvider())
                 .authorizeHttpRequests()
-                .requestMatchers(HttpMethod.GET, "/lesson/{id:[0-9]+}","/lesson/{id:[0-9]+}/comments")
+                .requestMatchers(HttpMethod.GET,
+                        "/lesson",
+                        "/lesson/{id:[0-9]+}",
+                        "/lesson/{id:[0-9]+}/comments",
+                        "/lesson/{id:[0-9]+}/scrap")
                 .permitAll()
-                .requestMatchers(HttpMethod.GET, "/lesson")
+                .requestMatchers(HttpMethod.PUT, "/lesson/{id:[0-9]+}/scrap")
+                .permitAll()
+                .requestMatchers(HttpMethod.DELETE, "/lesson/{id:[0-9]+}/scrap")
                 .permitAll()
                 .anyRequest().hasRole(Role.CREATOR.value)
                 .and()

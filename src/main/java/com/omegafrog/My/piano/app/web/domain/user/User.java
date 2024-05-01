@@ -80,50 +80,50 @@ public class User {
     private Cart cart;
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "owner")
-    private List<Coupon> coupons;
+    private List<Coupon> coupons = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    private List<UserPurchasedSheetPost> purchasedSheets = new ArrayList<>();
+    private final List<UserPurchasedSheetPost> purchasedSheets = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    private List<UserPurchasedLesson> purchasedLessons = new ArrayList<>();
+    private final List<UserPurchasedLesson> purchasedLessons = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    private List<UserScrappedSheetPost> scrappedSheets = new ArrayList<>();
+    private final List<UserScrappedSheetPost> scrappedSheets = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    private List<UserScrappedLesson> scrappedLesson = new ArrayList<>();
+    @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    private final List<UserScrappedLesson> scrappedLesson = new ArrayList<>();
 
     @OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "author")
-    private List<SheetPost> uploadedSheets = new ArrayList<>();
+    private final List<SheetPost> uploadedSheetPosts = new ArrayList<>();
 
     @OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "author")
-    private List<Lesson> uploadedLessons = new ArrayList<>();
+    private final List<Lesson> uploadedLessons = new ArrayList<>();
 
     @OneToMany(mappedBy = "author", cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
-    private List<Post> uploadedPosts = new ArrayList<>();
+    private final List<Post> uploadedPosts = new ArrayList<>();
 
     @OneToMany(mappedBy = "author", cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
-    private List<VideoPost> uploadedVideoPosts = new ArrayList<>();
+    private final List<VideoPost> uploadedVideoPosts = new ArrayList<>();
 
     @OneToMany(mappedBy = "follower", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    private List<FollowedUser> followed = new CopyOnWriteArrayList<>();
+    private final List<FollowedUser> followed = new CopyOnWriteArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST})
-    private List<UserLikedPost> likedPosts = new ArrayList<>();
+    private final List<UserLikedPost> likedPosts = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.PERSIST)
-    private List<UserLikedSheetPost> likedSheetPosts = new ArrayList<>();
+    private final List<UserLikedSheetPost> likedSheetPosts = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.PERSIST)
-    private List<UserLikedVideoPost> likedVideoPosts = new ArrayList<>();
+    private final List<UserLikedVideoPost> likedVideoPosts = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.PERSIST)
-    private List<UserLikedLesson> likedLessons = new ArrayList<>();
+    @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    private final List<UserLikedLesson> likedLessons = new ArrayList<>();
 
 
     @OneToMany(mappedBy = "author", orphanRemoval = true, cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-    private List<Comment> wroteComments = new ArrayList<>();
+    private final List<Comment> wroteComments = new ArrayList<>();
 
     public int chargeCash(int cash) {
         this.cash += cash;
@@ -151,7 +151,7 @@ public class User {
     }
 
     public boolean isScrappedLesson(Lesson lesson) {
-        return scrappedLesson.stream().anyMatch(item -> item.equals(lesson));
+        return scrappedLesson.stream().anyMatch(item -> item.getLesson().equals(lesson));
     }
 
     public void scrapLesson(Lesson lesson) {
@@ -162,6 +162,12 @@ public class User {
                         .lesson(lesson)
                         .user(this)
                         .build());
+    }
+
+    public void unScrapLesson(Lesson lesson) {
+        if (!isScrappedLesson(lesson))
+            throw new EntityNotFoundException("스크랩하지 않은 레슨을 취소하려고 합니다." + lesson.getId());
+        scrappedLesson.removeIf(l -> l.getLesson().equals(lesson));
     }
 
     public void addScrappedSheetPost(SheetPost sheetPost) {
@@ -243,7 +249,7 @@ public class User {
     }
 
     public void likePost(Post post) {
-        assert likedPosts.stream().anyMatch(p -> p.equals(post));
+        assert likedPosts.stream().anyMatch(p -> p.getPost().equals(post));
         likedPosts.add(UserLikedPost.builder()
                 .post(post)
                 .user(this)
@@ -251,14 +257,7 @@ public class User {
     }
 
     public void dislikePost(Post dislikedPost) {
-        likedPosts.forEach(
-                post ->
-                {
-                    Post entity = post.getPost();
-                    if (entity.equals(dislikedPost)) entity.decreaseLikedCount();
-                }
-        );
-        likedPosts.removeIf(post -> post.equals(dislikedPost));
+        likedPosts.removeIf(item -> item.getPost().equals(dislikedPost));
     }
 
     public void addCash(int cash) {
@@ -336,7 +335,7 @@ public class User {
     }
 
     public void likeLesson(Lesson lesson) {
-        if (likedLessons.stream().anyMatch(item -> item.equals(lesson)))
+        if (likedLessons.stream().anyMatch(item -> item.getLesson().equals(lesson)))
             throw new EntityExistsException("이미 좋아요를 누른 글입니다.");
         likedLessons.add(UserLikedLesson.builder()
                 .lesson(lesson)
@@ -345,19 +344,13 @@ public class User {
     }
 
     public boolean isLikedLesson(Lesson lesson) {
-        return likedLessons.stream().anyMatch(item -> item.equals(lesson));
+        return likedLessons.stream().anyMatch(item -> item.getLesson().equals(lesson));
     }
 
     public void dislikeLesson(Lesson lesson) {
-        likedLessons.remove(lesson);
+        likedLessons.removeIf(item->item.getLesson().equals(lesson));
     }
 
-    public void unScrapLesson(Lesson lesson) {
-        if (!isScrappedLesson(lesson))
-            throw new EntityNotFoundException("스크랩하지 않은 레슨을 취소하려고 합니다." + lesson.getId());
-        scrappedLesson.remove(lesson);
-
-    }
 
     @Override
     public boolean equals(Object o) {

@@ -1,10 +1,7 @@
 package com.omegafrog.My.piano.app.web.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
-import com.omegafrog.My.piano.app.utils.response.ResponseKeyName;
-import com.omegafrog.My.piano.app.utils.response.ResponseUtil;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.ReturnCommentDto;
@@ -19,7 +16,8 @@ import com.omegafrog.My.piano.app.web.service.UserApplicationService;
 import jakarta.persistence.PersistenceException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,7 +25,6 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -75,10 +72,11 @@ public class UserController {
     }
 
     @GetMapping("/uploadedSheets")
-    public JsonAPIResponse<List<SheetInfoDto>> getUploadedSheets()
+    public JsonAPIResponse<Page<SheetPostDto>> getUploadedSheets(Pageable pageable, @RequestParam boolean unPaged)
         throws JsonProcessingException, PersistenceException, AccessDeniedException{
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        List<SheetInfoDto> data = userService.uploadedSheets(loggedInUser);
+        if(unPaged) pageable = Pageable.unpaged();
+        Page<SheetPostDto> data = userService.uploadedSheetPost(loggedInUser,pageable);
         return new APISuccessResponse<>("Get all uploaded sheets success.", data);
     }
 

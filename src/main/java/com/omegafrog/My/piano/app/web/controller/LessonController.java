@@ -10,7 +10,7 @@ import com.omegafrog.My.piano.app.web.dto.lesson.LessonRegisterDto;
 import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
 import com.omegafrog.My.piano.app.utils.response.JsonAPIResponse;
 import com.omegafrog.My.piano.app.utils.response.ResponseUtil;
-import com.omegafrog.My.piano.app.web.service.LessonService;
+import com.omegafrog.My.piano.app.web.service.lesson.LessonService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -102,7 +102,7 @@ public class LessonController {
     }
 
     @PutMapping("/lesson/{id}/scrap")
-    public JsonAPIResponse scrapLesson(@PathVariable Long id){
+    public JsonAPIResponse scrapLesson(@PathVariable Long id ){
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         lessonService.scrapLesson(id, loggedInUser);
         return new APISuccessResponse("Scrap lesson success.");

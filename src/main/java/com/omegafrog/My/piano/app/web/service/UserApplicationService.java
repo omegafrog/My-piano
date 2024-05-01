@@ -4,8 +4,6 @@ import com.omegafrog.My.piano.app.utils.MapperUtil;
 import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
 import com.omegafrog.My.piano.app.web.domain.S3UploadFileExecutor;
 import com.omegafrog.My.piano.app.web.domain.comment.Comment;
-import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
-import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.relation.UserLikedSheetPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.user.User;
@@ -23,6 +21,9 @@ import jakarta.persistence.PersistenceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -87,10 +88,33 @@ public class UserApplicationService {
 
     }
 
-    public List<SheetInfoDto> uploadedSheets(User loggedInUser) {
+    public Page<SheetPostDto> uploadedSheetPost(User loggedInUser, Pageable pageable) {
         User user = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInUser.getId()));
-        return user.getUploadedSheets().stream().map(SheetPost::toInfoDto).toList();
+        List<SheetPost> uploadedSheetPosts = user.getUploadedSheetPosts();
+
+        if(pageable.isUnpaged())
+            return getAllUploadedSheetPost(pageable, uploadedSheetPosts);
+
+        return getUploadedSheetPostByPageable(pageable, uploadedSheetPosts);
+    }
+
+    private static Page<SheetPostDto> getUploadedSheetPostByPageable(Pageable pageable, List<SheetPost> uploadedSheetPosts) {
+        long fromIdx = pageable.getOffset();
+        int toIdx = (pageable.getPageNumber() + 1) * pageable.getPageSize();
+        if( toIdx >= uploadedSheetPosts.size())
+            toIdx = uploadedSheetPosts.size();
+        List<SheetPostDto> sheetPosts = uploadedSheetPosts.subList((int) fromIdx, toIdx)
+                .stream().map(SheetPost::toDto).toList();
+
+        return PageableExecutionUtils.getPage(sheetPosts, pageable, uploadedSheetPosts::size);
+    }
+
+    private static Page<SheetPostDto> getAllUploadedSheetPost(Pageable pageable, List<SheetPost> uploadedSheetPosts) {
+        return PageableExecutionUtils.getPage(
+                uploadedSheetPosts.stream().map(SheetPost::toDto).toList(),
+                pageable,
+                uploadedSheetPosts::size);
     }
 
     public List<SheetInfoDto> getScrappedSheets(User loggedInUser) {
@@ -108,7 +132,7 @@ public class UserApplicationService {
     public List<LessonDto> getPurchasedLessons(User loggedInUserProfile) {
         User userProfile = userRepository.findById(loggedInUserProfile.getId())
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInUserProfile.getId()));
-       return userProfile.getPurchasedLessons().stream().map(lesson->lesson.getLesson().toDto()).toList();
+       return userProfile.getPurchasedLessons().stream().map(purchasedLesson->purchasedLesson.getLesson().toDto()).toList();
     }
 
 

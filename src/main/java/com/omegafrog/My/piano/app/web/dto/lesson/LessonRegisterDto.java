@@ -26,7 +26,7 @@ public class LessonRegisterDto {
     @PositiveOrZero
     private int viewCount;
 
-    private Long sheetId;
+    private Long sheetPostId;
 
     private int price;
 
@@ -36,7 +36,7 @@ public class LessonRegisterDto {
         this.subTitle = subTitle;
         this.videoInformation = videoInformation;
         this.viewCount =0;
-        this.sheetId = sheetId;
+        this.sheetPostId = sheetId;
         this.lessonInformation = lessonInformation;
         this.price = price;
     }
