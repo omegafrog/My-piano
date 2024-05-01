@@ -67,7 +67,7 @@ public class SheetPostApplicationService {
                     tempFile.document, tempFile.filename,
                     new ObjectMetadata.Builder().contentType("jpg").build());
 
-            Sheet sheet = dto.getSheetDto().getEntityBuilderWithoutAuthor()
+            Sheet sheet = dto.getSheet().getEntityBuilderWithoutAuthor()
                     .user(loggedInUser)
                     .pageNum(tempFile.pageNum).build();
 
@@ -155,32 +155,49 @@ public class SheetPostApplicationService {
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity:" + id));
         User user = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find user entity:" + id));
-        user.addLikedSheetPost(sheetPost);
+        user.likeSheetPost(sheetPost);
     }
 
-    public boolean isLikedPost(Long id, User loggedInUser) {
-        SheetPost targetSheetPost = sheetPostRepository.findById(id).orElseThrow(() -> new EntityNotFoundException(("Cannot find SheetPost entity:" + id)));
-        User user = userRepository.findById(loggedInUser.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find user entity:" + id));
-        return user.getLikedSheetPosts().stream().anyMatch(sheetPost -> sheetPost.equals(targetSheetPost));
+    public boolean isLikedSheetPost(Long id, User loggedInUser) {
+        SheetPost targetSheetPost = sheetPostRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(("Cannot find SheetPost entity:" + id)));
+        User user = userRepository.findById(loggedInUser.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find user entity:" + id));
+        return user.getLikedSheetPosts()
+                .stream().anyMatch(likedSheetPost-> likedSheetPost.getSheetPost().equals(targetSheetPost));
     }
 
+    public void dislikeSheetPost(Long id, User loggedInUser) {
+        SheetPost sheetPost = sheetPostRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
+        User user = userRepository.findById(loggedInUser.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
+        boolean removed = user.getLikedSheetPosts().removeIf(item -> item.getSheetPost().getId().equals(id));
+        if(!removed) throw new EntityNotFoundException("좋아요를 누르지 않았습니다." + id);
+        sheetPost.decreaseLikedCount();
+    }
     public void scrapSheetPost(Long id, User loggedInUser) {
-        SheetPost sheetPost = sheetPostRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity:"+ id));
-        User user = userRepository.findById(loggedInUser.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
-        user.addScrappedSheetPost(sheetPost);
+        SheetPost sheetPost = sheetPostRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity:"+ id));
+        User user = userRepository.findById(loggedInUser.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
+        user.scrapSheetPost(sheetPost);
     }
     public boolean isScrappedSheetPost(Long id, User loggedInUser){
-        SheetPost targetSheetPost = sheetPostRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
-        User user = userRepository.findById(loggedInUser.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
-        return user.getScrappedSheets().stream().anyMatch(item -> item.equals(targetSheetPost));
+        SheetPost targetSheetPost = sheetPostRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
+        User user = userRepository.findById(loggedInUser.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
+        return user.getScrappedSheetPosts().stream().anyMatch(item -> item.getSheetPost().equals(targetSheetPost));
     }
 
-    public void dislikePost(Long id, User loggedInUser) {
-        SheetPost sheetPost = sheetPostRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
-        User user = userRepository.findById(loggedInUser.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
-        boolean isRemoved = user.getLikedSheetPosts().remove(sheetPost);
-        if(!isRemoved) throw new IllegalArgumentException("Cannot find liked sheet post:"+id);
-        sheetPost.decreaseLikedCount();
+    public void unScrapSheetPost(Long id, User loggedInUser) {
+        SheetPost sheetPost = sheetPostRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
+        User user = userRepository.findById(loggedInUser.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + id));
+
+        user.unScrapSheetPost(sheetPost);
     }
 
     public List<SheetPostDto> getSheetPosts(String searchSentence, List<String> instrument, List<String> difficulty, List<String> genre, Pageable pageable) throws IOException {

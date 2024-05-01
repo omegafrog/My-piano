@@ -54,7 +54,7 @@ public class MapperUtil {
                 .price(node.get("price").asInt())
                 .discountRate(node.get("discountRate").asDouble())
                 .artistId(loggedInUser.getId())
-                .sheetDto(objectMapper.convertValue(node.get("sheetDto"), RegisterSheetDto.class))
+                .sheetDto(objectMapper.convertValue(node.get("sheet"), RegisterSheetDto.class))
                 .build();
     }
 
