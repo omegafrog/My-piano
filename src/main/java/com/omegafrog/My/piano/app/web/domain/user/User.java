@@ -95,7 +95,7 @@ public class User {
     private List<UserScrappedLesson> scrappedLesson = new ArrayList<>();
 
     @OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "author")
-    private List<SheetPost> uploadedSheets = new ArrayList<>();
+    private List<SheetPost> uploadedSheetPosts = new ArrayList<>();
 
     @OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "author")
     private List<Lesson> uploadedLessons = new ArrayList<>();

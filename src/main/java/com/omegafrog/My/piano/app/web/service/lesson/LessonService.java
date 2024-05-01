@@ -1,4 +1,4 @@
-package com.omegafrog.My.piano.app.web.service;
+package com.omegafrog.My.piano.app.web.service.lesson;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
@@ -30,13 +30,12 @@ public class LessonService {
     private UserRepository userRepository;
 
     public LessonDto createLesson(LessonRegisterDto lessonRegisterDto, User artist) {
-        SheetPost sheetPost = sheetPostRepository.findBySheetId(lessonRegisterDto.getSheetId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity : " + lessonRegisterDto.getSheetId()));
+        SheetPost sheetPost = sheetPostRepository.findById(lessonRegisterDto.getSheetPostId())
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity : " + lessonRegisterDto.getSheetPostId()));
         User user = userRepository.findById(artist.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + artist.getId()));
-        Sheet sheet = sheetPost.getSheet();
         Lesson lesson = Lesson.builder()
-                .sheet(sheet)
+                .sheetPost(sheetPost)
                 .lessonProvider(artist)
                 .title(lessonRegisterDto.getTitle())
                 .subTitle(lessonRegisterDto.getSubTitle())
@@ -71,8 +70,7 @@ public class LessonService {
 
         SheetPost sheetPost = sheetPostRepository.findBySheetId(updateLessonDto.getSheetId())
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + updateLessonDto.getSheetId()));
-        Sheet sheet = sheetPost.getSheet();
-        Lesson updated = lesson.update(updateLessonDto, sheet);
+        Lesson updated = lesson.update(updateLessonDto, sheetPost);
         return updated.toDto();
     }
 
