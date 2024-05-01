@@ -3,20 +3,15 @@ package com.omegafrog.My.piano.app.web.service;
 import com.omegafrog.My.piano.app.external.elasticsearch.SheetPostIndexRepository;
 import com.omegafrog.My.piano.app.utils.MapperUtil;
 import com.omegafrog.My.piano.app.utils.exception.WrongFileExtensionException;
-import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
 import com.omegafrog.My.piano.app.external.elasticsearch.ElasticSearchInstance;
 import com.omegafrog.My.piano.app.web.domain.S3UploadFileExecutor;
-import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.comment.CommentRepository;
-import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.UpdateSheetPostDto;
-import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
-import com.omegafrog.My.piano.app.web.dto.comment.RegisterCommentDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.RegisterSheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
 import io.awspring.cloud.s3.ObjectMetadata;
@@ -25,9 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
@@ -74,7 +67,7 @@ public class SheetPostApplicationService {
                     tempFile.document, tempFile.filename,
                     new ObjectMetadata.Builder().contentType("jpg").build());
 
-            Sheet sheet = dto.getSheet().getEntityBuilderWithoutAuthor()
+            Sheet sheet = dto.getSheetDto().getEntityBuilderWithoutAuthor()
                     .user(loggedInUser)
                     .pageNum(tempFile.pageNum).build();
 
@@ -157,21 +150,6 @@ public class SheetPostApplicationService {
         else throw new AccessDeniedException("Cannot delete other user's sheet post entity : " + id);
     }
 
-
-
-    public void likeComment(Long id, Long commentId) {
-        SheetPost sheetPost = sheetPostRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity : " + id));
-        sheetPost.increaseCommentLikeCount(commentId);
-    }
-
-    public void dislikeComment(Long id, Long commentId) {
-        SheetPost sheetPost = sheetPostRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity : " + id));
-        sheetPost.decreaseCommentLikeCount(commentId);
-
-    }
-
     public void likePost(Long id, User loggedInUser) {
         SheetPost sheetPost = sheetPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity:" + id));
@@ -220,19 +198,4 @@ public class SheetPostApplicationService {
         }
         return ret;
     }
-    public CommentDto replyComment(Long id, Long commentId, String replyContent, User loggedInUser) {
-        SheetPost post = sheetPostRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
-        Comment comment = post.getComments().stream().filter(item -> item.getId().equals(commentId))
-                .findFirst().orElseThrow(() -> new EntityNotFoundException("Cannot find comment entity : " + commentId));
-        commentRepository.findById(commentId)
-                .orElseThrow(()->new EntityNotFoundException("Cannot find comment entity : " + commentId));
-        Comment reply = Comment.builder().content(replyContent)
-                .author(loggedInUser)
-                .build();
-        Comment saved = commentRepository.save(reply);
-        comment.addReply(saved);
-        return saved.toDto();
-    }
-
 }

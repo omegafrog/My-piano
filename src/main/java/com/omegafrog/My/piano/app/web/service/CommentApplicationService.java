@@ -78,6 +78,19 @@ public class CommentApplicationService {
         sheetPost.deleteComment(commentId, loggedInUser);
         return sheetPost.getComments().stream().map(Comment::toDto).toList();
     }
+
+    public CommentDto replyComment(Long commentId, String replyContent, User loggedInUser) {
+        User user = userRepository.findById(loggedInUser.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity : " + loggedInUser.getId()));
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find comment entity : " + commentId));
+        Comment reply = Comment.builder().content(replyContent)
+                .author(user)
+                .build();
+        Comment saved = commentRepository.save(reply);
+        comment.addReply(saved);
+        return saved.toDto();
+    }
     private Article getTarget(CommentTargetType type, Long targetId) {
         return
             switch (type) {

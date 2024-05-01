@@ -1,14 +1,11 @@
 package com.omegafrog.My.piano.app.web.service;
 
 import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
-import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.comment.CommentRepository;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPost;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
-import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
-import com.omegafrog.My.piano.app.web.dto.comment.RegisterCommentDto;
 import com.omegafrog.My.piano.app.web.dto.post.UpdateVideoPostDto;
 import com.omegafrog.My.piano.app.web.dto.videoPost.VideoPostDto;
 import com.omegafrog.My.piano.app.web.dto.videoPost.VideoPostRegisterDto;
@@ -77,34 +74,6 @@ public class VideoPostApplicationService {
         return !videoPost.getAuthor().equals(user);
     }
 
-
-    public List<CommentDto> addComment(Long articleId, RegisterCommentDto dto, User loggedInUser) {
-        User user = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER));
-        VideoPost videoPost = videoPostRepository.findById(articleId)
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + articleId));
-        Comment savedComment = commentRepository.save(Comment.builder()
-                .content(dto.getContent())
-                .author(user)
-                .build());
-        videoPost.addComment(savedComment);
-        return videoPost.getComments().stream().map(Comment::toDto).toList();
-    }
-
-
-    public void likeComment(Long id, Long commentId) {
-        VideoPost videoPost = videoPostRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity : " + id));
-        videoPost.increaseCommentLikeCount(commentId);
-    }
-
-    public void dislikeComment(Long id, Long commentId) {
-        VideoPost videoPost = videoPostRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity : " + id));
-        videoPost.decreaseCommentLikeCount(commentId);
-    }
-
-
     public void likePost(Long id, User loggedInUser) {
         User user = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER));
@@ -125,20 +94,5 @@ public class VideoPostApplicationService {
         return videoPostRepository.findAll(pageable).getContent().stream().map(VideoPost::toDto).toList();
     }
 
-
-    public CommentDto replyComment(Long id, Long commentId, String replyContent, User loggedInUser) {
-        VideoPost post = videoPostRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity : " + id));
-        Comment comment = post.getComments().stream().filter(item -> item.getId().equals(commentId))
-                .findFirst().orElseThrow(() -> new EntityNotFoundException("Cannot find comment entity : " + commentId));
-        commentRepository.findById(commentId)
-                .orElseThrow(()->new EntityNotFoundException("Cannot find comment entity : " + commentId));
-        Comment reply = Comment.builder().content(replyContent)
-                .author(loggedInUser)
-                .build();
-        Comment saved = commentRepository.save(reply);
-        comment.addReply(saved);
-        return saved.toDto();
-    }
 }
 
