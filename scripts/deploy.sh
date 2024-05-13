@@ -32,6 +32,7 @@ sudo chmod +x $JAR_NAME
 aws s3 cp s3://mypiano-deploy/certs/http_ca.crt ./http_ca.crt
 sudo keytool -import -trustcacerts -keystore /usr/lib/jvm/java-17-amazon-corretto.x86_64/lib/security/cacerts -storepass changeit -noprompt -alias elasticCA -file ~/build/http_ca.crt
 sleep 5
+aws s3 cp s3://mypiano-deploy/certs/cert.p12 $REPOSITORY/build/libs/cert.p12
 
 nohup java -jar \
   -Dspring.config.location=$REPOSITORY/config/application-prod.properties \
