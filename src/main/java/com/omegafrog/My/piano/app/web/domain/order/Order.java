@@ -83,8 +83,6 @@ public class Order {
         return this;
     }
 
-
-
     public void calculateTotalPrice(){
         Double couponDiscountRate = (coupon != null) ? coupon.getDiscountRate() : 0f;
         Double totalDiscountRate = couponDiscountRate + discountRate;

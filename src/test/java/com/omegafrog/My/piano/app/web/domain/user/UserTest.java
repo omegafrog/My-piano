@@ -10,7 +10,6 @@ import com.omegafrog.My.piano.app.web.dto.ChangeUserDto;
 import com.omegafrog.My.piano.app.web.enums.PostType;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
-import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Order;
@@ -128,7 +127,7 @@ class UserTest {
 
     @Test
     @DisplayName("유저 엔티티는 스크랩한 sheet post를 List에 추가해야 한다")
-    void addScrappedSheetPost() {
+    void scrapSheetPost() {
         User user = User.builder()
                 .name("hi")
                 .loginMethod(LoginMethod.EMAIL)
@@ -138,13 +137,13 @@ class UserTest {
                 .build();
         ReflectionTestUtils.setField(user, "id", 1L);
         SheetPost post = new SheetPost();
-        user.addScrappedSheetPost(post);
-        Assertions.assertThat(user.getScrappedSheets()).contains(post);
+        user.scrapSheetPost(post);
+        Assertions.assertThat(user.getScrappedSheetPosts()).contains(post);
     }
 
     @Test
     @DisplayName("유저 엔티티는 좋아요를 누른 sheet post를 저장해야 한다.")
-    void addLikedSheetPost() {
+    void likeSheetPost() {
         User user = User.builder()
                 .name("hi")
                 .loginMethod(LoginMethod.EMAIL)
@@ -154,13 +153,13 @@ class UserTest {
                 .build();
         ReflectionTestUtils.setField(user, "id", 1L);
         SheetPost post = new SheetPost();
-        user.addLikedSheetPost(post);
+        user.likeSheetPost(post);
         Assertions.assertThat(user.getLikedSheetPosts()).contains(post);
     }
 
     @Test
     @DisplayName("유저 엔티티는 좋아요를 누른 sheet post를 취소할 수 있어야 한다.")
-    void deleteLikedSheetPost() {
+    void dislikeSheetPost() {
         User user = User.builder()
                 .name("hi")
                 .loginMethod(LoginMethod.EMAIL)
@@ -170,8 +169,8 @@ class UserTest {
                 .build();
         ReflectionTestUtils.setField(user, "id", 1L);
         SheetPost post = new SheetPost();
-        user.addLikedSheetPost(post);
-        user.deleteLikedSheetPost(post);
+        user.likeSheetPost(post);
+        user.dislikeSheetPost(post);
         Assertions.assertThat(user.getLikedSheetPosts()).doesNotContain(post);
     }
 

@@ -18,5 +18,6 @@ public class LessonDto extends SellableItemDto {
     private VideoInformation videoInformation;
     private UserInfo artist;
     private SheetDto sheet;
+    private Long sheetPostId;
     private LessonInformation lessonInformation;
 }

@@ -16,7 +16,7 @@ public record LessonListDto(
         boolean disabled
 ) {
     public LessonListDto(Lesson lesson){
-        this(lesson.getId(), lesson.getTitle(), lesson.getAuthor().getUserInfo(), lesson.getSheet().toSheetDto(),
+        this(lesson.getId(), lesson.getTitle(), lesson.getAuthor().getUserInfo(), lesson.getSheetPost().getSheet().toSheetDto(),
                 lesson.getCreatedAt(), lesson.getPrice(), lesson.isDisabled());
     }
 

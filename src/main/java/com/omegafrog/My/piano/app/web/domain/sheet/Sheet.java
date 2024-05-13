@@ -31,6 +31,9 @@ public class Sheet  {
     private String sheetUrl;
     private String originalFileName;
 
+    @OneToOne(mappedBy ="sheet")
+    private SheetPost sheetPost;
+
     private LocalDateTime createdAt=LocalDateTime.now();
 
     @OneToOne(cascade = { CascadeType.MERGE})
@@ -38,7 +41,17 @@ public class Sheet  {
     private User user;
 
     @Builder
-    public Sheet(String title, int pageNum, Difficulty difficulty, Instrument instrument, Genres genres, boolean isSolo, boolean lyrics, String sheetUrl, User user) {
+    public Sheet(String title,
+                 int pageNum,
+                 Difficulty difficulty,
+                 Instrument instrument,
+                 Genres genres,
+                 boolean isSolo,
+                 boolean lyrics,
+                 String sheetUrl,
+                 User user,
+                 String originalFileName,
+                 SheetPost sheetPost) {
         this.title = title;
         this.pageNum = pageNum;
         this.difficulty = difficulty;
@@ -48,6 +61,8 @@ public class Sheet  {
         this.lyrics = lyrics;
         this.sheetUrl = sheetUrl;
         this.user = user;
+        this.originalFileName = originalFileName;
+        this.sheetPost = sheetPost;
     }
 
     public Sheet update(UpdateSheetDto dto){
@@ -59,6 +74,7 @@ public class Sheet  {
         this.isSolo = dto.isSolo();
         this.lyrics = dto.isLyrics();
         this.sheetUrl = dto.getSheetUrl();
+        this.originalFileName = dto.getOriginalFileName();
         return this;
     }
 

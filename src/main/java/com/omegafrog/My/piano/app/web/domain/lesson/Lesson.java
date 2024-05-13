@@ -1,9 +1,8 @@
 package com.omegafrog.My.piano.app.web.domain.lesson;
 
-import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.order.SellableItem;
+import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.dto.UpdateLessonDto;
-import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
 import jakarta.validation.constraints.NotNull;
@@ -23,46 +22,41 @@ public class Lesson extends SellableItem {
     @NotNull
     private LessonInformation lessonInformation;
 
-
     @OneToOne(cascade = { CascadeType.MERGE})
-    @JoinColumn(name = "SHEET_ID")
-    private Sheet sheet;
-
+    @JoinColumn(name = "SHEET_POST_ID")
+    private SheetPost sheetPost;
 
     @Builder
     public Lesson(String title, String subTitle, Integer price, VideoInformation videoInformation,
-                  User lessonProvider, Sheet sheet, LessonInformation lessonInformation) {
+                  User lessonProvider, SheetPost sheetPost, LessonInformation lessonInformation) {
         super(lessonProvider, title, subTitle, price);
         this.videoInformation = videoInformation;
-        this.sheet = sheet;
+        this.sheetPost = sheetPost;
         this.lessonInformation = lessonInformation;
     }
 
-    public Lesson update(UpdateLessonDto dto, Sheet sheet){
+    public Lesson update(UpdateLessonDto dto, SheetPost sheetPost ){
         title = dto.getTitle();
         content = dto.getSubTitle();
         this.updatePrice(dto.getPrice());
         this.videoInformation = dto.getVideoInformation();
-        this.sheet = sheet;
+        this.sheetPost = sheetPost;
         this.lessonInformation = dto.getLessonInformation();
         return this;
     }
-
-    public LessonDto toDto(){
-        return LessonDto.builder()
-                .id(id)
-                .title(title)
-                .sheet(this.sheet.toSheetDto())
-                .subTitle(content)
-                .lessonInformation(this.lessonInformation)
-                .videoInformation(this.videoInformation)
-                .artist(author.getUserInfo())
-                .viewCount(viewCount)
-                .likeCount(likeCount)
-                .createdAt(createdAt)
-                .comments(comments.stream().map(Comment::toDto).toList())
-                .price(price)
-                .build();
+    public LessonDto toDto(){ return LessonDto.builder()
+            .id(id)
+            .title(title)
+            .sheet(sheetPost.getSheet().toSheetDto())
+            .subTitle(content)
+            .lessonInformation(lessonInformation)
+            .videoInformation(videoInformation)
+            .sheetPostId(sheetPost.getId())
+            .artist(author.getUserInfo())
+            .viewCount(viewCount)
+            .likeCount(likeCount)
+            .createdAt(createdAt)
+            .price(price)
+            .build();
     }
-
 }

@@ -23,7 +23,7 @@ public class RegisterSheetPostDto {
     @NotNull
     private Long artistId;
     @NotNull
-    private RegisterSheetDto sheetDto;
+    private RegisterSheetDto sheet;
 
     @Builder
     public RegisterSheetPostDto(String title, String content, int price, Double discountRate, Long artistId, RegisterSheetDto sheetDto) {
@@ -32,6 +32,6 @@ public class RegisterSheetPostDto {
         this.price = price;
         this.discountRate = discountRate;
         this.artistId = artistId;
-        this.sheetDto = sheetDto;
+        this.sheet= sheetDto;
     }
 }

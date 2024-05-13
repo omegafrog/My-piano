@@ -19,9 +19,19 @@ public class UpdateSheetDto {
     private Boolean lyrics;
     private String sheetUrl;
     private int price;
+    private String originalFileName;
 
     @Builder
-    public UpdateSheetDto(String title, int pageNum, Difficulty difficulty, Instrument instrument, Genres genres, boolean isSolo, boolean lyrics, String sheetUrl, int price) {
+    public UpdateSheetDto(String title,
+                          int pageNum,
+                          Difficulty difficulty,
+                          Instrument instrument,
+                          Genres genres,
+                          boolean isSolo,
+                          boolean lyrics,
+                          String sheetUrl,
+                          int price,
+                          String originalFileName) {
         this.title = title;
         this.pageNum = pageNum;
         this.difficulty = difficulty;
@@ -31,6 +41,7 @@ public class UpdateSheetDto {
         this.lyrics = lyrics;
         this.sheetUrl = sheetUrl;
         this.price = price;
+        this.originalFileName = originalFileName;
     }
 
     public boolean isSolo() {
