@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 
@@ -30,6 +31,7 @@ public class Article {
     @NotEmpty
     protected String content;
     @PositiveOrZero
+    @Setter
     protected int viewCount=0;
     @PositiveOrZero
     protected int likeCount=0;

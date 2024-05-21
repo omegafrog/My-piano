@@ -1,6 +1,7 @@
 package com.omegafrog.My.piano.app.web.service.lesson;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
+import com.omegafrog.My.piano.app.web.domain.lesson.LessonViewCountRepository;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
@@ -9,8 +10,10 @@ import com.omegafrog.My.piano.app.web.dto.UpdateLessonDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonRegisterDto;
 import jakarta.persistence.EntityNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,14 +22,14 @@ import java.util.List;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class LessonService {
 
-    @Autowired
-    private SheetPostRepository sheetPostRepository;
-    @Autowired
-    private LessonRepository lessonRepository;
-    @Autowired
-    private UserRepository userRepository;
+
+    private final SheetPostRepository sheetPostRepository;
+    private final LessonRepository lessonRepository;
+    private final UserRepository userRepository;
+    private final LessonViewCountRepository lessonViewCountRepository;
 
     public LessonDto createLesson(LessonRegisterDto lessonRegisterDto, User artist) {
         SheetPost sheetPost = sheetPostRepository.findById(lessonRegisterDto.getSheetPostId())
@@ -56,8 +59,12 @@ public class LessonService {
     public LessonDto getLessonById(Long id) {
         Lesson lesson = lessonRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson entity : " + id));
-        lesson.increaseViewCount();
-        return lesson.toDto();
+
+        LessonDto dto = lesson.toDto();
+
+        int incrementedViewCount = lessonViewCountRepository.incrementViewCount(lesson);
+        dto.setViewCount(incrementedViewCount);
+        return dto;
     }
 
     public LessonDto updateLesson(Long lessonId, UpdateLessonDto updateLessonDto, User user) {

@@ -1,4 +1,4 @@
-package com.omegafrog.My.piano.app.web.infra;
+package com.omegafrog.My.piano.app;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
