@@ -1,23 +1,20 @@
 package com.omegafrog.My.piano.app.web.domain.lesson;
 
+import com.omegafrog.My.piano.app.web.domain.article.ViewCount;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
 
 @RedisHash("lesson")
 @NoArgsConstructor
 @Getter
-public class LessonViewCount {
-
-    @Id
-    private Long lessonId;
-    private int viewCount;
+public class LessonViewCount extends ViewCount {
+    public static String KEY_NAME="lesson";
 
     @Builder
     public LessonViewCount(Long lessonId, int viewCount) {
-        this.lessonId = lessonId;
+        this.id= lessonId;
         this.viewCount = viewCount;
     }
 }
