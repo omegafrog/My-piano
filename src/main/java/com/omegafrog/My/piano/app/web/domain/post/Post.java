@@ -31,6 +31,7 @@ public class Post extends Article {
 
     @Builder
     public Post(User author, String title, String content, PostType type) {
+        super();
         this.author = author;
         this.title = title;
         this.content = content;
@@ -47,6 +48,7 @@ public class Post extends Article {
                 .likeCount(likeCount)
                 .comments(comments)
                 .author(author.getUserProfileDto())
+                .disable(disabled)
                 .build();
     }
 }

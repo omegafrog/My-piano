@@ -22,6 +22,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.filter.RequestContextFilter;
 
 import java.net.MalformedURLException;
 import java.util.List;
@@ -30,11 +31,12 @@ import java.util.Map;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(value={"/lesson/{id}/comments",
-        "/community/posts/{id}/comments",
+        "/posts/{id}/comments",
         "/community/video-post/{id}/comments",
         "/sheet-post/{id}/comments"})
 public class CommentController {
     private final CommentApplicationService commentApplicationService;
+    private final RequestContextFilter requestContextFilter;
 
     @PostMapping
     public JsonAPIResponse<List<CommentDto>> addComment(@PathVariable Long id,
@@ -64,9 +66,10 @@ public class CommentController {
     public JsonAPIResponse<Void> deleteComment(
             @PathVariable Long id,
             @PathVariable(name = "comment-id") Long commentId
-    ) throws JsonProcessingException{
+            ,HttpServletRequest request
+    ) {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        commentApplicationService.deleteComment(id, commentId, loggedInUser);
+        commentApplicationService.deleteComment(CommentTargetType.of(request),id, commentId, loggedInUser);
         return new APISuccessResponse<>("Delete Comment success.");
     }
 

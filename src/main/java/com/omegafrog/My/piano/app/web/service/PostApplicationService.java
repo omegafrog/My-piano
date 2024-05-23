@@ -4,6 +4,7 @@ package com.omegafrog.My.piano.app.web.service;
 import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
 import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.post.PostRepository;
+import com.omegafrog.My.piano.app.web.domain.post.PostViewCountRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.post.*;
@@ -24,6 +25,7 @@ public class PostApplicationService {
 
     private final UserRepository userRepository;
     private final PostRepository postRepository;
+    private final PostViewCountRepository postViewCountRepository;
 
     public PostDto writePost(PostRegisterDto post, User author) {
         User user = userRepository.findById(author.getId())
@@ -41,8 +43,10 @@ public class PostApplicationService {
     public PostDto findPostById(Long id) {
         Post founded = postRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_POST + id));
-        founded.increaseViewCount();
-        return new PostDto(founded, founded.getAuthor());
+        int incrementedViewCount = postViewCountRepository.incrementViewCount(founded);
+        PostDto postDto = new PostDto(founded, founded.getAuthor());
+        postDto.setViewCount(incrementedViewCount);
+        return postDto;
     }
 
     public PostDto updatePost(Long id, UpdatePostDto updatePostDto, User loggedInUser) {
@@ -61,7 +65,7 @@ public class PostApplicationService {
     }
     private Post getPostById(Long id) {
         return postRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_POST+ id));
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_POST + id));
     }
 
     public void likePost(Long postId, User user) {

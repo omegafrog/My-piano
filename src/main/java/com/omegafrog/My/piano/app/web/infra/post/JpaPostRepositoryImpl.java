@@ -45,7 +45,7 @@ public class JpaPostRepositoryImpl implements PostRepository {
         Post byId = findById(id).orElseThrow(() -> new EntityNotFoundException("Cannot find Post entity."));
         byId.getAuthor().deleteUploadedPost(byId);
 
-        postRepository.deleteAllLikedPostById(id);
+//        postRepository.deleteAllLikedPostById(id);
         postRepository.deleteById(id);
     }
 

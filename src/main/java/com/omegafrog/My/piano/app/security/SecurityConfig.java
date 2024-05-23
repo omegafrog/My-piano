@@ -11,7 +11,6 @@ import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
 import com.omegafrog.My.piano.app.security.provider.AdminAuthenticationProvider;
 import com.omegafrog.My.piano.app.security.provider.CommonUserAuthenticationProvider;
-import com.omegafrog.My.piano.app.security.reposiotry.InMemoryLogoutBlacklistRepository;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
 import com.omegafrog.My.piano.app.web.service.admin.AdminUserService;
 import com.omegafrog.My.piano.app.web.service.admin.CommonUserService;
@@ -113,11 +112,6 @@ public class SecurityConfig {
     @Bean
     public CommonUserAccessDeniedHandler commonUserAccessDeniedHandler() {
         return new CommonUserAccessDeniedHandler(objectMapper);
-    }
-
-    @Bean
-    public LogoutBlacklistRepository inMemoryLogoutBlackListRepository() {
-        return new InMemoryLogoutBlacklistRepository(jwtSecret);
     }
 
     @Bean
@@ -266,13 +260,12 @@ public class SecurityConfig {
                 .securityMatcher("/community/**")
                 .authenticationProvider(commonUserAuthenticationProvider())
                 .authorizeHttpRequests()
-                .requestMatchers(HttpMethod.GET, "/community/posts")
-                .permitAll()
-                .requestMatchers(HttpMethod.GET, "/community/video-post")
-                .permitAll()
-                .requestMatchers(HttpMethod.GET, "/community/posts/{id:[0-9]+}")
-                .permitAll()
-                .requestMatchers(HttpMethod.GET, "/community/video-post/{id:[0-9]+}")
+                .requestMatchers(HttpMethod.GET, "/posts",
+                        "/community/video-post",
+                        "/posts/{id:[0-9]+}",
+                        "/community/video-post/{id:[0-9]+}",
+                        "/community/video-post/{id:[0-9]+}/comments",
+        "/posts/{id:[0-9]+}/comments")
                 .permitAll()
                 .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value)
                 .and()

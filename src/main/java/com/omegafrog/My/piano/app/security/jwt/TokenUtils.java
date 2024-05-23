@@ -66,7 +66,7 @@ public class TokenUtils {
             if (verifyAccessTokenString(tokenSplit))
                 return tokenSplit[1];
         }
-        throw new AuthenticationCredentialsNotFoundException("Invalid Access token");
+        throw new AuthenticationCredentialsNotFoundException("Token string is null");
     }
 
     public  String getRefreshTokenStringFromCookies(HttpServletRequest request) throws AuthenticationException {
@@ -83,7 +83,7 @@ public class TokenUtils {
             String[] splitted = accessToken[1].split("\\.");
             return accessToken[0].equals("Bearer") && splitted.length == 3;
         } else {
-            throw new AuthenticationCredentialsNotFoundException("Invalid access token");
+            throw new AuthenticationCredentialsNotFoundException("Token string is wrong. token:"+accessToken);
         }
     }
 

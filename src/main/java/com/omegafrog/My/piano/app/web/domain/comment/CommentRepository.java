@@ -11,4 +11,5 @@ public interface CommentRepository {
     Optional<Comment> findById(Long id);
 
     Page<Comment> findAllByTargetId(Long targetId, Pageable pageable);
+    void deleteById(Long id);
 }

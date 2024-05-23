@@ -13,8 +13,8 @@ public enum CommentTargetType {
 
     public static CommentTargetType of(HttpServletRequest request){
         String[] split = request.getRequestURI().split("/");
-        return switch (split[split.length - 3]) {
-            case "post" -> CommentTargetType.POST;
+        return switch (split[1]) {
+            case "posts" -> CommentTargetType.POST;
             case "video-post" -> CommentTargetType.VIDEO_POST;
             case "sheet-post" -> CommentTargetType.SHEET_POST;
             case "lesson" -> CommentTargetType.LESSON;

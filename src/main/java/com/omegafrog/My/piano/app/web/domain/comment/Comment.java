@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -33,9 +34,11 @@ public class Comment {
 
     private int likeCount;
 
-    @OneToMany(cascade = {CascadeType.PERSIST,CascadeType.MERGE})
-    @JoinColumn(name = "PARENT_ID")
-    private List<Comment> replies = new CopyOnWriteArrayList<>();
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "parent",orphanRemoval = true)
+    private List<Comment> replies = new ArrayList<>();
+    @ManyToOne
+    @JoinColumn(name="PARENT_ID")
+    private Comment parent;
 
     @ManyToOne
     private Article target;
@@ -52,11 +55,12 @@ public class Comment {
     }
 
     @Builder
-    public Comment(Long id, User author, String content) {
+    public Comment(Long id, User author, String content, Comment parent) {
         this.id = id;
         this.author = author;
         this.content = content;
         this.likeCount = 0;
+        this.parent = parent;
     }
 
     public CommentDto toDto(){

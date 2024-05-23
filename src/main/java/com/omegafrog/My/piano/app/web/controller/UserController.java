@@ -39,7 +39,7 @@ public class UserController {
         int data = userService.chargeCash(cash, loggedInUser);
         return new APISuccessResponse<>("Charge cash " + cash + " success.", data);
     }
-    @GetMapping("/community/posts")
+    @GetMapping("/posts")
     public JsonAPIResponse<List<PostDto>> getMyCommunityPosts()
             throws AccessDeniedException, JsonProcessingException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();

@@ -52,8 +52,9 @@ public class CommonUserJwtTokenFilter extends OncePerRequestFilter {
                         AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/lesson/{regex:\\d+}"),
                         AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/lesson/{regex:\\d+}/comments"),
                         AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/lessons"),
-                        AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/community/posts"),
-                        AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/community/posts/{regex:\\d+}"),
+                        AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/posts"),
+                        AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/posts/{regex:\\d+}"),
+                        AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/posts/{regex:\\d+}/comments"),
                         AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/community/video-post"),
                         AntPathRequestMatcher.antMatcher("/h2-console/**"),
                         AntPathRequestMatcher.antMatcher("/oauth2/**"),
@@ -88,7 +89,7 @@ public class CommonUserJwtTokenFilter extends OncePerRequestFilter {
         } catch (ExpiredJwtException e) {
             // 만료되었을 때
             e.printStackTrace();
-            throw new BadCredentialsException("Access token is expired.");
+            throw new BadCredentialsException("Access token is expired.", e);
         }
         filterChain.doFilter(request, response);
     }
