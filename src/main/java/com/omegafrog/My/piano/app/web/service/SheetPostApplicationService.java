@@ -9,6 +9,7 @@ import com.omegafrog.My.piano.app.web.domain.comment.CommentRepository;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
+import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostViewCountRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.UpdateSheetPostDto;
@@ -46,19 +47,21 @@ public class SheetPostApplicationService {
     private final ElasticSearchInstance elasticSearchInstance;
     private final S3UploadFileExecutor uploadFileExecutor;
     private final MapperUtil mapperUtil;
+    private final SheetPostViewCountRepository sheetPostViewCountRepository;
 
 
     public SheetPostDto getSheetPost(Long id) {
         SheetPost sheetPost = sheetPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find SheetPost entity : " + id));
-        sheetPost.increaseViewCount();
-        return sheetPost.toDto();
+        int incremented = sheetPostViewCountRepository.incrementViewCount(sheetPost);
+        SheetPostDto dto = sheetPost.toDto();
+        dto.setViewCount(incremented);
+        return dto;
     }
 
     public SheetPostDto writeSheetPost(RegisterSheetPostDto dto, List<MultipartFile> files, User loggedInUser) throws IOException {
         try {
             MultipartFile file = files.get(0);
-
 
             SheetPostTempFile tempFile = getSheetPostTempFile(file);
 

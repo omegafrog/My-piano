@@ -13,8 +13,8 @@ public class LessonViewCount extends ViewCount {
     public static String KEY_NAME="lesson";
 
     @Builder
-    public LessonViewCount(Long lessonId, int viewCount) {
-        this.id= lessonId;
+    public LessonViewCount(Long id, int viewCount) {
+        this.id= id;
         this.viewCount = viewCount;
     }
 }

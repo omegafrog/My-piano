@@ -17,7 +17,7 @@ public class LessonViewCountRepositoryImpl implements com.omegafrog.My.piano.app
     public int incrementViewCount(Lesson lesson) {
         if(!exist(lesson.getId())) {
             LessonViewCount saved = save(LessonViewCount.builder()
-                    .lessonId(lesson.getId())
+                    .id(lesson.getId())
                     .viewCount(lesson.getViewCount() + 1).build());
             return saved.getViewCount();
         }
