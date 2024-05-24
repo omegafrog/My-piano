@@ -124,7 +124,7 @@ public class User {
     private final List<UserLikedLesson> likedLessons = new ArrayList<>();
 
 
-    @OneToMany(mappedBy = "author", orphanRemoval = true, cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    @OneToMany(mappedBy = "author", orphanRemoval = true, cascade = CascadeType.ALL)
     private final List<Comment> wroteComments = new ArrayList<>();
 
     public int chargeCash(int cash) {

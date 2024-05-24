@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 
 @RestController
-@RequestMapping("/community/posts")
+@RequestMapping("/posts")
 @RequiredArgsConstructor
 public class PostController {
 

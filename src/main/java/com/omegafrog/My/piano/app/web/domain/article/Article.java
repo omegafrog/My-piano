@@ -8,6 +8,8 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.hibernate.engine.spi.CascadeStyle;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 
@@ -30,6 +32,7 @@ public class Article {
     @NotEmpty
     protected String content;
     @PositiveOrZero
+    @Setter
     protected int viewCount=0;
     @PositiveOrZero
     protected int likeCount=0;
@@ -48,7 +51,7 @@ public class Article {
     @Temporal(TemporalType.TIMESTAMP)
     protected LocalDateTime modifiedAt = LocalDateTime.now();
 
-    @OneToMany(mappedBy = "target",cascade = {CascadeType.PERSIST,CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
+    @OneToMany(mappedBy = "target",cascade = CascadeType.ALL, orphanRemoval = true)
     protected List<Comment> comments = new ArrayList<>();
 
     public void increaseLikedCount(){
@@ -60,7 +63,6 @@ public class Article {
     }
 
     public void increaseViewCount(){viewCount++;}
-
     /**
      * 댓글을 추가한다.
      * @param comment  추가할 comment entity

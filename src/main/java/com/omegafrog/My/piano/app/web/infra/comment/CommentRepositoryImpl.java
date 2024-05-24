@@ -5,14 +5,9 @@ import com.omegafrog.My.piano.app.web.domain.comment.CommentRepository;
 import com.omegafrog.My.piano.app.web.domain.comment.QComment;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
 
@@ -20,11 +15,11 @@ import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
-public class JpaCommentRepositoryImpl implements CommentRepository {
+public class CommentRepositoryImpl implements CommentRepository {
 
 
     private final JPAQueryFactory queryFactory;
-    private final JpaRepository<Comment, Long> jpaRepository;
+    private final JpaCommentRepository jpaRepository;
 
     public Comment save(Comment comment){
         return jpaRepository.save(comment);
@@ -43,5 +38,10 @@ public class JpaCommentRepositoryImpl implements CommentRepository {
                 .limit(pageable.getPageSize());
         return PageableExecutionUtils.getPage(query.fetch(), pageable,
                 () -> query.fetchCount());
+    }
+
+    @Override
+    public void deleteById(Long id) {
+        jpaRepository.deleteById(id);
     }
 }

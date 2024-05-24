@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -72,11 +73,9 @@ public class CommentApplicationService {
         return target.getComments().stream().map(Comment::toDto).toList();
     }
 
-    public List<CommentDto> deleteComment(Long id, Long commentId, User loggedInUser) {
-        SheetPost sheetPost = sheetPostRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find Sheet post entity : " + id));
-        sheetPost.deleteComment(commentId, loggedInUser);
-        return sheetPost.getComments().stream().map(Comment::toDto).toList();
+    public void deleteComment(CommentTargetType type, Long targetId,  Long commentId, User loggedInUser) {
+        Article target = getTarget(type, targetId);
+        boolean removed = target.getComments().removeIf(comment -> comment.getId().equals(commentId));
     }
 
     public CommentDto replyComment(Long commentId, String replyContent, User loggedInUser) {
@@ -86,6 +85,7 @@ public class CommentApplicationService {
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find comment entity : " + commentId));
         Comment reply = Comment.builder().content(replyContent)
                 .author(user)
+                .parent(comment)
                 .build();
         Comment saved = commentRepository.save(reply);
         comment.addReply(saved);
