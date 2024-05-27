@@ -3,6 +3,8 @@ package com.omegafrog.My.piano.app.security.infrastructure;
 import com.omegafrog.My.piano.app.security.entity.QSecurityUser;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
+import com.omegafrog.My.piano.app.web.domain.user.QUser;
+import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.admin.SearchUserFilter;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
@@ -20,7 +22,6 @@ import java.util.Optional;
 @Slf4j
 @Repository
 public class SecurityUserRepositoryImpl implements SecurityUserRepository {
-
 
 
     private final JpaSecurityUserRepository jpaRepository;
@@ -59,5 +60,15 @@ public class SecurityUserRepositoryImpl implements SecurityUserRepository {
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
+    }
+
+    @Override
+    public Optional<SecurityUser> findByEmail(String email) {
+        QUser user = QUser.user;
+        User fetchedUser= factory.selectFrom(user)
+                .where(user.email.eq(email))
+                .fetchOne();
+        if(fetchedUser == null) return Optional.empty();
+        return Optional.of(fetchedUser.getSecurityUser());
     }
 }

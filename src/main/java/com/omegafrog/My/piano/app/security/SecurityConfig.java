@@ -1,6 +1,7 @@
 package com.omegafrog.My.piano.app.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
 import com.omegafrog.My.piano.app.security.entity.authorities.Role;
 import com.omegafrog.My.piano.app.security.filter.JwtTokenExceptionFilter;
@@ -58,6 +59,8 @@ public class SecurityConfig {
 
     @Autowired
     private SecurityUserRepository securityUserRepository;
+    @Autowired
+    private GooglePublicKeysManager googlePublicKeysManager;
 
     @Value("${security.passwordEncoder.secret}")
     private String secret;
@@ -76,7 +79,12 @@ public class SecurityConfig {
 
     @Bean
     public CommonUserService commonUserService() {
-        return new CommonUserService(passwordEncoder(), securityUserRepository, refreshTokenRepository());
+        return new CommonUserService(passwordEncoder(),
+                securityUserRepository,
+                refreshTokenRepository(),
+                objectMapper,
+                googlePublicKeysManager,
+                s3Client);
     }
 
     @Autowired

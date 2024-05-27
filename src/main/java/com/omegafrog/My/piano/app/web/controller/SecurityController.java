@@ -12,17 +12,16 @@ import com.omegafrog.My.piano.app.web.dto.user.SecurityUserDto;
 import com.omegafrog.My.piano.app.security.exception.DuplicatePropertyException;
 import com.omegafrog.My.piano.app.web.service.admin.CommonUserService;
 import io.awspring.cloud.s3.S3Exception;
-import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.HttpHeaders;
 import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -30,9 +29,8 @@ import javax.annotation.Nullable;
 import javax.security.auth.login.AccountExpiredException;
 import javax.security.auth.login.AccountLockedException;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -42,39 +40,28 @@ import java.util.Map;
 public class SecurityController {
 
     private final RefreshTokenRepository refreshTokenRepository;
-
     private final TokenUtils tokenUtils;
-
-
-    private final ObjectMapper objectMapper;
-
     private final CommonUserService commonUserService;
-
-    private final PasswordEncoder passwordEncoder;
-
-
-    private final GooglePublicKeysManager googlePublicKeysManager;
-
-
     private final MapperUtil mapperUtil;
 
 
     @GetMapping("/validate")
-    public JsonAPIResponse validateToken() {
-        return new APISuccessResponse("validate success.");
+    public JsonAPIResponse<Void> validateToken() {
+        return new APISuccessResponse<>("validate success.");
     }
 
     @GetMapping("/revalidate")
-    public JsonAPIResponse revalidateToken(HttpServletRequest request, HttpServletResponse response) throws JsonProcessingException {
-        String accessToken = tokenUtils.getAccessTokenStringFromHeaders(request);
+    public JsonAPIResponse revalidateToken(HttpServletRequest request, HttpServletResponse response)
+            throws JsonProcessingException {
+        String accessToken = tokenUtils.getAccessTokenString(request.getHeader(HttpHeaders.AUTHORIZATION));
+
         try {
-            Claims claims = tokenUtils.extractClaims(accessToken);
-        } catch (ExpiredJwtException e) {
+            tokenUtils.extractClaims(accessToken);
+        }catch (ExpiredJwtException e) {
             TokenInfo tokenInfo = commonUserService.getTokenInfo(e);
-            Map<String, Object> data = ResponseUtil.getStringObjectMap(
-                    "access token", tokenInfo.getGrantType() + " " + tokenInfo.getAccessToken());
+            String accessTokenString = tokenInfo.getGrantType() + " " + tokenInfo.getAccessToken();
             tokenUtils.setRefreshToken(response, tokenInfo);
-            return new APISuccessResponse("Token invalidating success.", data);
+            return new APISuccessResponse<>("Token revalidating success.", accessTokenString);
         }
         return new APIBadRequestResponse("Token is not expired yet.");
     }
@@ -86,15 +73,17 @@ public class SecurityController {
     }
 
     @PostMapping("/user/register")
-    public JsonAPIResponse registerCommonUser(@RequestParam(name = "profileImg") @Nullable MultipartFile profileImg, @RequestParam String registerInfo) throws IOException, UsernameAlreadyExistException {
+    public JsonAPIResponse<SecurityUserDto> registerCommonUser(
+            @RequestParam(name = "profileImg") @Nullable MultipartFile profileImg,
+            @RequestParam String registerInfo)
+            throws IOException, DuplicatePropertyException {
         RegisterUserDto dto = mapperUtil.parseRegisterUserInfo(registerInfo);
         SecurityUserDto securityUserDto;
         if (profileImg == null)
-            securityUserDto = commonUserService.registerUser(dto);
+            securityUserDto = commonUserService.registerUserWithoutProfile(dto);
         else
             securityUserDto = commonUserService.registerUser(dto, profileImg);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("user", securityUserDto);
-        return new APISuccessResponse("회원가입 성공.", data);
+        return new APISuccessResponse<>("회원가입 성공.", securityUserDto);
     }
 
 
@@ -105,52 +94,43 @@ public class SecurityController {
         return new APIForbiddenResponse(ex.getMessage());
     }
 
-
     @PostMapping("/oauth2/google")
-    public JsonAPIResponse registerOrLoginGoogleUser(HttpServletRequest request, HttpServletResponse
-            response, @RequestBody String code) throws GeneralSecurityException, IOException, URISyntaxException {
-        String parsedCode = objectMapper.readTree(code).get("code").asText();
-        GoogleIdToken parsed = GoogleIdToken.parse(GsonFactory.getDefaultInstance(), parsedCode);
-        if (!parsed.verify(new GoogleIdTokenVerifier(googlePublicKeysManager)))
-            return new APIBadRequestResponse("Google Id token Validation failed.");
-
+    public APIRedirectResponse registerOrLoginGoogleUser(
+             HttpServletResponse response, @RequestBody String code)
+            throws GeneralSecurityException, IOException{
         try {
-            SecurityUser user = (SecurityUser) commonUserService.loadUserByUsername(parsed.getPayload().getEmail());
+            SecurityUser user =  commonUserService.findGoogleUser(code);
+            validateEnabled(user);
 
-            if(!user.isEnabled()){
-                if(!user.isAccountNonExpired()) throw new AccountExpiredException("Account is expired. ");
-                if(!user.isCredentialsNonExpired())
-                    throw new CredentialsExpiredException("Credential is expired at : " +
-                            user.getCredentialChangedAt().plusMonths(user.getPasswordExpirationPeriod()));
-                if(user.isLocked()) throw new AccountLockedException("Accound is locked.");
-            }
-
-            TokenInfo tokenInfo = tokenUtils.generateToken(String.valueOf(user.getId()), user.getRole());
-            Optional<RefreshToken> foundedRefreshToken = refreshTokenRepository.findByRoleAndUserId(user.getId(), user.getRole());
-            if (foundedRefreshToken.isPresent()) {
-                foundedRefreshToken.get().updateRefreshToken(tokenInfo.getRefreshToken().getPayload());
-            } else
-                refreshTokenRepository.save(tokenInfo.getRefreshToken());
-            Map<String, Object> data = ResponseUtil.getStringObjectMap("access token", tokenInfo.getGrantType() + " " + tokenInfo.getAccessToken());
+            TokenInfo tokenInfo = commonUserService.loginGoogleUser(code );
             tokenUtils.setRefreshToken(response, tokenInfo);
-            return new APISuccessResponse("Google OAuth login success.", data);
-            // token만들어반환
+            Map<String, Object> data = new HashMap<>();
+            data.put("access token", tokenInfo.getGrantType() + " " + tokenInfo.getAccessToken());
+            data.put("redirect_url", "/user/login");
+            APIRedirectResponse<Map<String, Object>> stringAPIRedirectResponse = new APIRedirectResponse<>("Google OAuth login success.",
+                    "/user/login", data);
+            return stringAPIRedirectResponse;
         } catch (UsernameNotFoundException e) {
-            // 회원가입 해야함.
-            RegisterUserDto build = RegisterUserDto.builder()
-                    .email(parsed.getPayload().getEmail())
-                    .username(parsed.getPayload().getEmail())
-                    .loginMethod(LoginMethod.GOOGLE)
-                    .profileSrc(String.valueOf(parsed.getPayload().get("picture")))
-                    .name(String.valueOf(parsed.getPayload().get("name")))
-                    .build();
-            Map<String, Object> data = ResponseUtil.getStringObjectMap("userInfo", build);
-            URI uri = new URI(request.getRequestURL().toString());
-            String host = uri.getHost();
-            int port = uri.getPort();
-            return new APIRedirectResponse("You need to register first.", host + ":" + port + "/user/register", data);
+            RegisterUserDto userDto= commonUserService.parseGoogleUserInfo(code);
+Map<String, Object> data = new HashMap<>();
+            data.put("redirect_url", "/user/login");
+            data.put("registerUserInfo", userDto);
+            APIRedirectResponse<Map<String, Object>> apiRedirectResponse = new APIRedirectResponse<>("Google OAuth register success.",
+                    "/user/register", data);
+            return apiRedirectResponse;
         }
     }
+
+    private static void validateEnabled(SecurityUser user) throws AccountExpiredException, AccountLockedException {
+        if(!user.isEnabled()){
+            if(!user.isAccountNonExpired()) throw new AccountExpiredException("Account is expired. ");
+            if(!user.isCredentialsNonExpired())
+                throw new CredentialsExpiredException("Credential is expired at : " +
+                        user.getCredentialChangedAt().plusMonths(user.getPasswordExpirationPeriod()));
+            if(user.isLocked()) throw new AccountLockedException("Accound is locked.");
+        }
+    }
+
 
     @GetMapping("/user/signOut")
     public JsonAPIResponse signOutUser(Authentication auth) {
