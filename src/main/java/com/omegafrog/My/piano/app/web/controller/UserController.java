@@ -4,15 +4,19 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.user.User;
-import com.omegafrog.My.piano.app.web.dto.ReturnCommentDto;
+import com.omegafrog.My.piano.app.web.dto.comment.ReturnCommentDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
 import com.omegafrog.My.piano.app.web.dto.post.PostDto;
-import com.omegafrog.My.piano.app.web.dto.sheet.SheetInfoDto;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetInfoDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.user.UserInfo;
 import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
 import com.omegafrog.My.piano.app.utils.response.JsonAPIResponse;
 import com.omegafrog.My.piano.app.web.service.UserApplicationService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.persistence.PersistenceException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +30,7 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.List;
 
+@Tag(name="유저 컨트롤러", description = "유저 API 컨트롤러")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/user")
@@ -33,15 +38,14 @@ public class UserController {
 
     private final UserApplicationService userService;
 
-    @PostMapping("/cash")
-    public JsonAPIResponse<Integer> chargeCash(@RequestBody int cash) throws JsonProcessingException {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        int data = userService.chargeCash(cash, loggedInUser);
-        return new APISuccessResponse<>("Charge cash " + cash + " success.", data);
-    }
     @GetMapping("/posts")
+    @Operation(summary = "작성글 조회", description = "유저가 작성한 커뮤니티 글을 조회한다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200")
+    })
     public JsonAPIResponse<List<PostDto>> getMyCommunityPosts()
             throws AccessDeniedException, JsonProcessingException {
+
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         List<PostDto> data = userService.getMyCommunityPosts(loggedInUser);
         return new APISuccessResponse<>("Get community posts success.", data);

@@ -1,4 +1,4 @@
-package com.omegafrog.My.piano.app.web.dto;
+package com.omegafrog.My.piano.app.web.dto.comment;
 
 import com.omegafrog.My.piano.app.web.domain.Reply;
 

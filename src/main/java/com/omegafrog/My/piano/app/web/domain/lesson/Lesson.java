@@ -2,7 +2,7 @@ package com.omegafrog.My.piano.app.web.domain.lesson;
 
 import com.omegafrog.My.piano.app.web.domain.order.SellableItem;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
-import com.omegafrog.My.piano.app.web.dto.UpdateLessonDto;
+import com.omegafrog.My.piano.app.web.dto.lesson.UpdateLessonDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
 import jakarta.validation.constraints.NotNull;

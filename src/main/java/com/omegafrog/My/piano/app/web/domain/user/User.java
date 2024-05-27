@@ -15,7 +15,7 @@ import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPost;
 import com.omegafrog.My.piano.app.web.domain.relation.*;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
-import com.omegafrog.My.piano.app.web.dto.ChangeUserDto;
+import com.omegafrog.My.piano.app.web.dto.user.ChangeUserDto;
 import com.omegafrog.My.piano.app.web.dto.user.UserInfo;
 import com.omegafrog.My.piano.app.web.dto.user.UserProfileDto;
 import com.omegafrog.My.piano.app.web.enums.OrderStatus;

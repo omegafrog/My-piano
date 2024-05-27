@@ -22,10 +22,10 @@ import java.util.Map;
 @RestController
 @RequiredArgsConstructor
 @Slf4j
+@RequestMapping("/api/v1")
 public class OrderController {
 
     @Autowired
-    private ObjectMapper objectMapper;
     private final OrderService orderService;
 
     @PostMapping("/order/{mainResource}")

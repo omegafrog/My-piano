@@ -37,15 +37,16 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import software.amazon.awssdk.services.s3.S3Client;
 
 @EnableWebSecurity
 @Configuration
 @Slf4j
 public class SecurityConfig {
 
-    @Autowired
-    private AdminRepository adminRepository;
 
+    @Autowired
+    private S3Client s3Client;
     @Bean
     public RefreshTokenRepository refreshTokenRepository(){
         return new CommonUserRefreshTokenRepositoryImpl();
@@ -144,10 +145,10 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain adminAuthentication(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/admin/**")
+                .securityMatcher("/api/v1/admin/**")
                 .authenticationProvider(adminAuthenticationProvider())
                 .authorizeHttpRequests()
-                .requestMatchers("/admin/login", "/admin/register", "/admin/logout")
+                .requestMatchers("/api/v1/admin/login", "/api/v1/admin/register", "/api/v1/admin/logout")
                 .permitAll()
                 .anyRequest()
                 .hasAnyRole(Role.ADMIN.value, Role.SUPER_ADMIN.value)
@@ -157,10 +158,10 @@ public class SecurityConfig {
                 .passwordParameter("password")
                 .successHandler(new AdminLoginSuccessHandler(objectMapper, refreshTokenRepository(), tokenUtils()))
                 .failureHandler(new CommonUserLoginFailureHandler(objectMapper))
-                .loginProcessingUrl("/admin/login")
+                .loginProcessingUrl("/api/v1/admin/login")
                 .and()
                 .logout()
-                .logoutUrl("/admin/logout")
+                .logoutUrl("/api/v1/admin/logout")
                 .addLogoutHandler(commonUserLogoutHandler())
                 .and()
                 .addFilterBefore(commonUserJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
@@ -180,9 +181,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain oauth2Authentication(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/oauth2/**")
+                .securityMatcher("/api/v1/oauth2/**")
                 .authorizeHttpRequests()
-                .requestMatchers("/oauth2/**")
+                .requestMatchers("/api/v1/oauth2/**")
                 .permitAll()
                 .and()
                 .csrf().disable()
@@ -192,10 +193,10 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain cashApiAuthentication(HttpSecurity http) throws Exception {
-        http.securityMatcher("/cash/**")
+        http.securityMatcher("/api/v1/cash/**")
                 .authenticationProvider(commonUserAuthenticationProvider())
                 .authorizeHttpRequests()
-                .requestMatchers("/cash/webhook")
+                .requestMatchers("/api/v1/cash/webhook")
                 .permitAll()
                 .anyRequest().hasRole(Role.USER.value)
                 .and()
@@ -218,24 +219,24 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain commonUserAuthentication(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/user/**")
+                .securityMatcher("/api/v1/user/**")
                 .authenticationProvider(commonUserAuthenticationProvider())
                 .authorizeHttpRequests()
-                .requestMatchers("/user/register", "/user/profile/register")
+                .requestMatchers("/api/v1/user/register", "/api/v1/user/profile/register")
                 .permitAll()
-                .requestMatchers("/user/login/**", "/user/logout/**")
+                .requestMatchers("/api/v1/user/login/**", "/api/v1/user/logout/**")
                 .permitAll()
                 .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value)
                 .and()
                 .formLogin().permitAll()
-                .loginProcessingUrl("/user/login")
+                .loginProcessingUrl("/api/v1/user/login")
                 .usernameParameter("username")
                 .passwordParameter("password")
                 .successHandler(new CommonUserLoginSuccessHandler(objectMapper, refreshTokenRepository(), tokenUtils()))
                 .failureHandler(new CommonUserLoginFailureHandler(objectMapper))
                 .and()
                 .logout()
-                .logoutUrl("/user/logout").permitAll()
+                .logoutUrl("/api/v1/user/logout").permitAll()
                 .addLogoutHandler(commonUserLogoutHandler())
                 .and()
                 .addFilterBefore(commonUserJwtTokenFilter(),
@@ -257,15 +258,15 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain postAuthentication(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/community/**")
+                .securityMatcher("/api/v1/community/**")
                 .authenticationProvider(commonUserAuthenticationProvider())
                 .authorizeHttpRequests()
-                .requestMatchers(HttpMethod.GET, "/posts",
-                        "/community/video-post",
-                        "/posts/{id:[0-9]+}",
-                        "/community/video-post/{id:[0-9]+}",
-                        "/community/video-post/{id:[0-9]+}/comments",
-        "/posts/{id:[0-9]+}/comments")
+                .requestMatchers(HttpMethod.GET, "/api/v1/posts",
+                        "/api/v1/community/video-post",
+                        "/api/v1/posts/{id:[0-9]+}",
+                        "/api/v1/community/video-post/{id:[0-9]+}",
+                        "/api/v1/community/video-post/{id:[0-9]+}/comments",
+                        "/api/v1/posts/{id:[0-9]+}/comments")
                 .permitAll()
                 .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value)
                 .and()
@@ -287,18 +288,18 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain lessonAuthentication(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/lesson/**")
+                .securityMatcher("/api/v1/lesson/**")
                 .authenticationProvider(commonUserAuthenticationProvider())
                 .authorizeHttpRequests()
                 .requestMatchers(HttpMethod.GET,
-                        "/lesson",
-                        "/lesson/{id:[0-9]+}",
-                        "/lesson/{id:[0-9]+}/comments",
-                        "/lesson/{id:[0-9]+}/scrap")
+                        "/api/v1/lesson",
+                        "/api/v1/lesson/{id:[0-9]+}",
+                        "/api/v1/lesson/{id:[0-9]+}/comments",
+                        "/api/v1/lesson/{id:[0-9]+}/scrap")
                 .permitAll()
-                .requestMatchers(HttpMethod.PUT, "/lesson/{id:[0-9]+}/scrap")
+                .requestMatchers(HttpMethod.PUT, "/api/v1/lesson/{id:[0-9]+}/scrap")
                 .permitAll()
-                .requestMatchers(HttpMethod.DELETE, "/lesson/{id:[0-9]+}/scrap")
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/lesson/{id:[0-9]+}/scrap")
                 .permitAll()
                 .anyRequest().hasRole(Role.CREATOR.value)
                 .and()
@@ -320,12 +321,11 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain OrderAuthentication(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/order/**")
+                .securityMatcher("/api/v1/order/**")
                 .authenticationProvider(commonUserAuthenticationProvider())
                 .authorizeHttpRequests()
-                .requestMatchers(HttpMethod.GET, "/order")
-                .permitAll()
-                .requestMatchers(HttpMethod.GET, "/order/{id:[0-9]+}")
+                .requestMatchers(HttpMethod.GET, "/api/v1/order",
+                                                "/api/v1/order/{id:[0-9]+}")
                 .permitAll()
                 .anyRequest().hasAnyRole(Role.USER.value,Role.CREATOR.value)
                 .and()
@@ -346,13 +346,13 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain sheetPostAuthentication(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/sheet-post/**")
+                .securityMatcher("/api/v1/sheet-post/**")
                 .authenticationProvider(commonUserAuthenticationProvider())
                 .authorizeHttpRequests()
-                .requestMatchers(HttpMethod.GET, "/sheet-post/{id:[0-9]+}",
-                        "/sheet-post/{id:[0-9]+}/comments")
+                .requestMatchers(HttpMethod.GET, "/api/v1/sheet-post/{id:[0-9]+}",
+                        "/api/v1/sheet-post/{id:[0-9]+}/comments")
                 .permitAll()
-                .requestMatchers(HttpMethod.GET, "/sheet-post")
+                .requestMatchers(HttpMethod.GET, "/api/v1/sheet-post")
                 .permitAll()
                 .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value)
                 .and()
@@ -373,10 +373,10 @@ public class SecurityConfig {
     @Bean
     public  SecurityFilterChain cartAuthentication(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/cart/**")
+                .securityMatcher("/api/v1/cart/**")
                 .authenticationProvider(commonUserAuthenticationProvider())
                 .authorizeHttpRequests()
-                .requestMatchers("/cart")
+                .requestMatchers("/api/v1/cart")
                 .permitAll()
                 .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value)
                 .and()
@@ -397,9 +397,9 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain ticketAuthentication(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/tickets")
+                .securityMatcher("/api/v1/tickets")
                 .authorizeHttpRequests()
-                .requestMatchers(HttpMethod.PUT, "/tickets")
+                .requestMatchers(HttpMethod.PUT, "/api/v1/tickets")
                 .hasRole(Role.USER.value)
                 .anyRequest().permitAll()
                 .and()
@@ -432,7 +432,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain defaultConfig(HttpSecurity http) throws Exception {
         http.
-                securityMatcher("/**")
+                securityMatcher("/api/v1/**")
                 .authorizeHttpRequests()
                 .anyRequest().permitAll()
                 .and()

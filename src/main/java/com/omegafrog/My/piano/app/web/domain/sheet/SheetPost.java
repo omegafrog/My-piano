@@ -2,10 +2,10 @@ package com.omegafrog.My.piano.app.web.domain.sheet;
 
 import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.order.SellableItem;
-import com.omegafrog.My.piano.app.web.dto.UpdateSheetDto;
-import com.omegafrog.My.piano.app.web.dto.UpdateSheetPostDto;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.UpdateSheetDto;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.UpdateSheetPostDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
-import com.omegafrog.My.piano.app.web.dto.sheet.SheetInfoDto;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetInfoDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
 import lombok.Builder;
 import lombok.Getter;

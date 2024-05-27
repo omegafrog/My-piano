@@ -30,13 +30,12 @@ import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping(value={"/lesson/{id}/comments",
-        "/posts/{id}/comments",
-        "/community/video-post/{id}/comments",
-        "/sheet-post/{id}/comments"})
+@RequestMapping(value={"/api/v1/lesson/{id}/comments",
+        "/api/v1/posts/{id}/comments",
+        "/api/v1/community/video-post/{id}/comments",
+        "/api/v1/sheet-post/{id}/comments"})
 public class CommentController {
     private final CommentApplicationService commentApplicationService;
-    private final RequestContextFilter requestContextFilter;
 
     @PostMapping
     public JsonAPIResponse<List<CommentDto>> addComment(@PathVariable Long id,

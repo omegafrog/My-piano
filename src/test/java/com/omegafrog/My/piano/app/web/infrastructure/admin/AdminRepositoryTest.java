@@ -1,8 +1,7 @@
 package com.omegafrog.My.piano.app.web.infrastructure.admin;
 
 import com.omegafrog.My.piano.app.DataJpaUnitConfig;
-import com.omegafrog.My.piano.app.web.dto.AdminDto;
-import com.omegafrog.My.piano.app.web.dto.UpdateAdminDto;
+import com.omegafrog.My.piano.app.web.dto.admin.UpdateAdminDto;
 import com.omegafrog.My.piano.app.web.enums.Position;
 import com.omegafrog.My.piano.app.web.domain.admin.Admin;
 import com.omegafrog.My.piano.app.web.domain.admin.AdminRepository;

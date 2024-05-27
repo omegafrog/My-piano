@@ -5,13 +5,17 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.external.tossPayment.*;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.RegisterSheetDto;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.UpdateSheetDto;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.UpdateSheetPostDto;
+import com.omegafrog.My.piano.app.web.dto.user.ChangeUserDto;
+import com.omegafrog.My.piano.app.web.dto.user.RegisterUserDto;
 import com.omegafrog.My.piano.app.web.service.admin.option.DisablePostStrategy;
 import com.omegafrog.My.piano.app.web.service.admin.option.DisableSheetPostStrategy;
 import com.omegafrog.My.piano.app.web.service.admin.option.PostStrategy;
 import com.omegafrog.My.piano.app.web.domain.cash.PaymentHistory;
 import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.user.User;
-import com.omegafrog.My.piano.app.web.dto.*;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.RegisterSheetPostDto;
 import com.omegafrog.My.piano.app.web.enums.OrderStatus;
 import com.omegafrog.My.piano.app.web.enums.PaymentType;
@@ -172,5 +176,9 @@ public class MapperUtil {
             }
         });
         return strategies;
+    }
+
+    public String parseNotiClientToken(String clientToken) throws JsonProcessingException {
+        return objectMapper.readTree(clientToken).get("token").asText();
     }
 }

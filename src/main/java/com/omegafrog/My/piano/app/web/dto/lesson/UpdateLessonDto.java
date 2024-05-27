@@ -1,8 +1,7 @@
-package com.omegafrog.My.piano.app.web.dto;
+package com.omegafrog.My.piano.app.web.dto.lesson;
 
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonInformation;
 import com.omegafrog.My.piano.app.web.domain.lesson.VideoInformation;
-import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import lombok.*;
 
 @Getter

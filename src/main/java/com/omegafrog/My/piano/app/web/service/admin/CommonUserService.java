@@ -6,9 +6,8 @@ import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.security.jwt.TokenInfo;
 import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
-import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
-import com.omegafrog.My.piano.app.web.dto.RegisterUserDto;
-import com.omegafrog.My.piano.app.web.dto.SecurityUserDto;
+import com.omegafrog.My.piano.app.web.dto.user.RegisterUserDto;
+import com.omegafrog.My.piano.app.web.dto.user.SecurityUserDto;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
 import com.omegafrog.My.piano.app.security.entity.authorities.Role;
@@ -30,6 +29,9 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.ObjectCannedACL;
+import software.amazon.awssdk.services.s3.model.PutObjectAclRequest;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -80,7 +82,6 @@ public class CommonUserService implements UserDetailsService {
     }
 
     public SecurityUserDto registerUser(GoogleIdToken token){
-
         SecurityUser securityUser = SecurityUser.builder()
                 .username(token.getPayload().getEmail())
                 .role(Role.USER)
@@ -95,7 +96,6 @@ public class CommonUserService implements UserDetailsService {
                 .build();
         SecurityUser saved = securityUserRepository.save(securityUser);
         return saved.toDto();
-
     }
 
     public SecurityUserDto registerUser(RegisterUserDto dto) throws UsernameAlreadyExistException {

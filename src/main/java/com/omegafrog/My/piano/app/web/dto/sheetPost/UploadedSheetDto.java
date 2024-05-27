@@ -1,4 +1,4 @@
-package com.omegafrog.My.piano.app.web.dto.sheet;
+package com.omegafrog.My.piano.app.web.dto.sheetPost;
 
 import lombok.Data;
 import lombok.Getter;

@@ -1,15 +1,13 @@
-package com.omegafrog.My.piano.app.web.dto;
+package com.omegafrog.My.piano.app.web.dto.sheetPost;
 
 import com.omegafrog.My.piano.app.web.domain.sheet.Genres;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet.SheetBuilder;
 import com.omegafrog.My.piano.app.web.enums.Difficulty;
 import com.omegafrog.My.piano.app.web.enums.Instrument;
-import jakarta.validation.constraints.Positive;
 import lombok.*;
 import org.hibernate.validator.constraints.Range;
 
-import java.lang.reflect.Array;
 import java.util.Arrays;
 
 @Data

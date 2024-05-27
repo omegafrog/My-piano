@@ -1,8 +1,7 @@
 package com.omegafrog.My.piano.app.web.controller;
 
-import com.omegafrog.My.piano.app.web.dto.RegisterUserDto;
+import com.omegafrog.My.piano.app.web.dto.user.RegisterUserDto;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
-import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 
 public class TestLoginUtil {
     public static RegisterUserDto user1 = RegisterUserDto.builder()
