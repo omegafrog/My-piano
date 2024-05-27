@@ -1,10 +1,12 @@
 package com.omegafrog.My.piano.app.utils.response;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.Map;
 
 @Getter
+@NoArgsConstructor
 public abstract class JsonAPIResponse<T> {
     protected int status;
     protected String message;

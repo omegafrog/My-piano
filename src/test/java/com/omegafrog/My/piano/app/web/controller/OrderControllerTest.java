@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
 import com.omegafrog.My.piano.app.security.entity.authorities.Authority;
-import com.omegafrog.My.piano.app.security.exception.UsernameAlreadyExistException;
+import com.omegafrog.My.piano.app.security.exception.DuplicatePropertyException;
 import com.omegafrog.My.piano.app.web.service.admin.CommonUserService;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
@@ -85,16 +85,16 @@ class OrderControllerTest {
     }
 
     @BeforeAll
-    void register() throws Exception, UsernameAlreadyExistException {
+    void register() throws Exception, DuplicatePropertyException {
         securityUserRepository.deleteAll();
         RegisterUserDto user1 = TestLoginUtil.user1;
-        SecurityUserDto securityUserDto1 = commonUserService.registerUser(user1);
+        SecurityUserDto securityUserDto1 = commonUserService.registerUserWhitoutProfile(user1);
         testUser1Profile = ((SecurityUser) commonUserService.loadUserByUsername(securityUserDto1.getUsername()))
                 .getUser();
         testUser1Profile.chargeCash(20000);
         userRepository.save(testUser1Profile);
         RegisterUserDto user2 = TestLoginUtil.user2;
-        SecurityUserDto securityUserDto2 = commonUserService.registerUser(user2);
+        SecurityUserDto securityUserDto2 = commonUserService.registerUserWhitoutProfile(user2);
         artist = ((SecurityUser) commonUserService.loadUserByUsername(securityUserDto2.getUsername()))
                 .getUser();
         MvcResult mvcResult = mockMvc.perform(post("/user/login")

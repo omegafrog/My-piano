@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
-import com.omegafrog.My.piano.app.security.exception.UsernameAlreadyExistException;
+import com.omegafrog.My.piano.app.security.exception.DuplicatePropertyException;
 import com.omegafrog.My.piano.app.web.service.admin.CommonUserService;
 import com.omegafrog.My.piano.app.web.domain.sheet.Genres;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
@@ -84,14 +84,14 @@ class SheetPostControllerTest {
     }
 
     @BeforeEach
-    void login() throws Exception, UsernameAlreadyExistException {
-        SecurityUserDto securityUserDto1 = commonUserService.registerUser(TestLoginUtil.user1);
+    void login() throws Exception, DuplicatePropertyException {
+        SecurityUserDto securityUserDto1 = commonUserService.registerUserWhitoutProfile(TestLoginUtil.user1);
         User user = ((SecurityUser) commonUserService.loadUserByUsername(securityUserDto1.getUsername()))
                 .getUser();
         user.chargeCash(20000);
         userRepository.save(user);
 
-        SecurityUserDto securityUserDto2 = commonUserService.registerUser(TestLoginUtil.user2);
+        SecurityUserDto securityUserDto2 = commonUserService.registerUserWhitoutProfile(TestLoginUtil.user2);
         artist = ((SecurityUser) commonUserService.loadUserByUsername(securityUserDto2.getUsername()))
                 .getUser();
         MvcResult mvcResult = mockMvc.perform(post("/user/login")

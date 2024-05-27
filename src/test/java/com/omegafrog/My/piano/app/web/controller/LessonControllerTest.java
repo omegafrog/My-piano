@@ -77,8 +77,8 @@ class LessonControllerTest {
         securityUserRepository.deleteAll();
         refreshTokenRepository.deleteAll();
 
-        SecurityUserDto securityUserDto = commonUserService.registerUser(TestLoginUtil.user1);
-        commonUserService.registerUser(TestLoginUtil.user2);
+        SecurityUserDto securityUserDto = commonUserService.registerUserWhitoutProfile(TestLoginUtil.user1);
+        commonUserService.registerUserWhitoutProfile(TestLoginUtil.user2);
         artist = ((SecurityUser) commonUserService.loadUserByUsername(securityUserDto.getUsername())).getUser();
 
         savedSheetPost = sheetPostRepository.save(DummyData.sheetPost(artist));

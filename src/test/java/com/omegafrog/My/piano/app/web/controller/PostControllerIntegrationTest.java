@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
-import com.omegafrog.My.piano.app.security.exception.UsernameAlreadyExistException;
+import com.omegafrog.My.piano.app.security.exception.DuplicatePropertyException;
 import com.omegafrog.My.piano.app.web.service.admin.CommonUserService;
 import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
@@ -71,13 +71,13 @@ class PostControllerIntegrationTest {
      * 로그인해서 accessToken과 refreshToken을 가져옴.
      *
      * @throws Exception
-     * @throws UsernameAlreadyExistException
+     * @throws DuplicatePropertyException
      */
     @BeforeAll
-    void getTokens() throws Exception, UsernameAlreadyExistException {
+    void getTokens() throws Exception, DuplicatePropertyException {
 
-        commonUserService.registerUser(TestLoginUtil.user1);
-        commonUserService.registerUser(TestLoginUtil.user2);
+        commonUserService.registerUserWhitoutProfile(TestLoginUtil.user1);
+        commonUserService.registerUserWhitoutProfile(TestLoginUtil.user2);
         MvcResult mvcResult = mockMvc.perform(post("/user/login")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content("username=user1&password=password"))

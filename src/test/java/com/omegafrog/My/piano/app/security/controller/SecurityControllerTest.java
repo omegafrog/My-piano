@@ -5,7 +5,7 @@ import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.web.dto.user.RegisterUserDto;
 import com.omegafrog.My.piano.app.web.dto.user.SecurityUserDto;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
-import com.omegafrog.My.piano.app.security.exception.UsernameAlreadyExistException;
+import com.omegafrog.My.piano.app.security.exception.DuplicatePropertyException;
 import com.omegafrog.My.piano.app.web.service.admin.CommonUserService;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
@@ -92,7 +92,7 @@ class SecurityControllerTest {
 
     @Test
     @DisplayName("/user/register로 유저 회원가입을 할 수 있어야 한다.")
-    void registerUserTest() throws Exception, UsernameAlreadyExistException {
+    void registerUserTest() throws Exception, DuplicatePropertyException {
         String s = objectMapper.writeValueAsString(dto);
         mockMvc.perform(post("/user/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -105,9 +105,9 @@ class SecurityControllerTest {
 
     @Test
     @DisplayName("중복된 username으로 회원가입시 회원가입에 실패해야 한다.")
-    void usernameExistTest() throws UsernameAlreadyExistException, Exception {
+    void usernameExistTest() throws DuplicatePropertyException, Exception {
 
-        SecurityUserDto securityUserDto = commonUserService.registerUser(dto);
+        SecurityUserDto securityUserDto = commonUserService.registerUserWhitoutProfile(dto);
         String s = objectMapper.writeValueAsString(dto);
         mockMvc.perform(post("/user/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -121,8 +121,8 @@ class SecurityControllerTest {
 
     @Test
     @DisplayName("유저는 자신을 인증하고  토큰을 발급받아야 한다.")
-    void loginTest() throws Exception, UsernameAlreadyExistException {
-        SecurityUserDto securityUserDto = commonUserService.registerUser(dto);
+    void loginTest() throws Exception, DuplicatePropertyException {
+        SecurityUserDto securityUserDto = commonUserService.registerUserWhitoutProfile(dto);
         String s = objectMapper.writeValueAsString(dto);
         mockMvc.perform(post("/user/login")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
@@ -134,8 +134,8 @@ class SecurityControllerTest {
 
     @Test
     @DisplayName("유저가 로그인에 실패할 경우 올바른 에러를 리턴해야 한다.")
-    void loginFailedTest() throws Exception, UsernameAlreadyExistException {
-        SecurityUserDto securityUserDto = commonUserService.registerUser(dto);
+    void loginFailedTest() throws Exception, DuplicatePropertyException {
+        SecurityUserDto securityUserDto = commonUserService.registerUserWhitoutProfile(dto);
         String s = objectMapper.writeValueAsString(dto);
         mockMvc.perform(post("/user/login")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
@@ -148,8 +148,8 @@ class SecurityControllerTest {
     // TODO : 로그아웃하려면 블랙리스트를 만들어야 하는데 이거는 추가로 repository를 넣어야 해서 힘들듯?
     @Test
     @DisplayName("유저는 로그아웃 할 수 있어야 한다.")
-    void logoutTest() throws Exception, UsernameAlreadyExistException {
-        SecurityUserDto securityUserDto = commonUserService.registerUser(dto);
+    void logoutTest() throws Exception, DuplicatePropertyException {
+        SecurityUserDto securityUserDto = commonUserService.registerUserWhitoutProfile(dto);
         String s = objectMapper.writeValueAsString(dto);
         MvcResult mvcResult = mockMvc.perform(post("/user/login")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
@@ -187,8 +187,8 @@ class SecurityControllerTest {
 
     @Test
     @DisplayName("로그인한 사용자는 회원탈퇴할 수 있어야 한다.")
-    void signOutTest() throws Exception, UsernameAlreadyExistException {
-        SecurityUserDto securityUserDto = commonUserService.registerUser(dto);
+    void signOutTest() throws Exception, DuplicatePropertyException {
+        SecurityUserDto securityUserDto = commonUserService.registerUserWhitoutProfile(dto);
         MvcResult mvcResult = mockMvc.perform(post("/user/login")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content("username=username&password=password"))

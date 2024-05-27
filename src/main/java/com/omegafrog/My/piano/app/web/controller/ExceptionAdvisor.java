@@ -1,7 +1,7 @@
-package com.omegafrog.My.piano.app.web.controller.advisor;
+package com.omegafrog.My.piano.app.web.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.omegafrog.My.piano.app.security.exception.UsernameAlreadyExistException;
+import com.omegafrog.My.piano.app.security.exception.DuplicatePropertyException;
 import com.omegafrog.My.piano.app.utils.exception.payment.PaymentException;
 import com.omegafrog.My.piano.app.utils.response.APIBadRequestResponse;
 import com.omegafrog.My.piano.app.utils.response.APIInternalServerResponse;
@@ -9,6 +9,7 @@ import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceException;
 import jakarta.validation.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
@@ -18,7 +19,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.List;
 
-@RestControllerAdvice()
+@RestControllerAdvice
 public class ExceptionAdvisor {
 
     /**
@@ -63,9 +64,8 @@ public class ExceptionAdvisor {
     @ExceptionHandler({
             EntityNotFoundException.class,
             EntityExistsException.class, PaymentException.class,
-            UsernameAlreadyExistException.class})
+            DuplicatePropertyException.class})
     public Object clientRequestError(RuntimeException ex) {
-
         ex.printStackTrace();
         return new APIBadRequestResponse(ex.getMessage());
     }
@@ -78,6 +78,11 @@ public class ExceptionAdvisor {
                 violation-> builder.append(violation.getMessage()).append("\n")
         );
         return new APIBadRequestResponse(builder.toString());
+    }
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public Object JDBCBindingViolationExceptionHandler(DataIntegrityViolationException ex) {
+        ex.printStackTrace();
+        return new APIBadRequestResponse(ex.getCause().getCause().getMessage());
     }
 
 }

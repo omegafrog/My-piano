@@ -59,10 +59,9 @@ public class TokenUtils {
 
 
 
-    public  String getAccessTokenStringFromHeaders(HttpServletRequest request) throws AuthenticationException {
-        String tokenString = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (tokenString != null) {
-            String[] tokenSplit = tokenString.split(" ");
+    public  String getAccessTokenString(String authHeader) throws AuthenticationException {
+        if (authHeader!= null) {
+            String[] tokenSplit = authHeader.split(" ");
             if (verifyAccessTokenString(tokenSplit))
                 return tokenSplit[1];
         }
@@ -88,11 +87,11 @@ public class TokenUtils {
     }
 
     public  Claims extractClaims(String token) {
-        return Jwts.parser().setSigningKey(secret).parseClaimsJws(token).getBody();
+        return Jwts.parserBuilder().setSigningKey(secret).build()
+                .parseClaimsJws(token).getBody();
     }
 
 
-    //토큰 유효성 검증
     public  boolean isNonExpired(String token) {
         try{
             Claims body = extractClaims(token);

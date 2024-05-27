@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -73,7 +74,7 @@ public class CommonUserJwtTokenFilter extends OncePerRequestFilter {
 
         try {
             // token 추출
-            String accessToken = tokenUtils.getAccessTokenStringFromHeaders(request);
+            String accessToken = tokenUtils.getAccessTokenString(request.getHeader(HttpHeaders.AUTHORIZATION));
             //token으로부터 유저 추출
             Claims claims = tokenUtils.extractClaims(accessToken);
             Long userId = Long.valueOf((String) claims.get("id"));
