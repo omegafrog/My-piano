@@ -28,7 +28,7 @@ import java.util.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/sheet-post")
+@RequestMapping("/api/v1/sheet-post")
 @Slf4j
 public class SheetPostController {
 
