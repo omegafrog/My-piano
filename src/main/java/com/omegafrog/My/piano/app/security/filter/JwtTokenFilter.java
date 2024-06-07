@@ -25,8 +25,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-import static com.omegafrog.My.piano.app.security.entity.QSecurityUser.securityUser;
-
 @RequiredArgsConstructor
 @Slf4j
 public class JwtTokenFilter extends OncePerRequestFilter {
@@ -50,9 +48,9 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             user = securityUserRepository.findById(userId).orElseThrow(EntityNotFoundException::new);
             refreshToken = refreshTokenRepository.findByRoleAndUserId(userId, Role.valueOf((String) claims.get("role"))).orElseThrow(EntityNotFoundException::new);
             TokenInfo tokenInfo = new TokenInfo(GrantType.JWT_BEARER.getValue(), accessTokenString,refreshToken );
-            JwtFilterToken jwtFilterToken = new JwtFilterToken(user.getAuthorities(),tokenInfo,user);
-            jwtFilterToken.setAuthenticated(true);
-            SecurityContextHolder.getContext().setAuthentication(jwtFilterToken);
+            JwtAuthenticationToken jwtAuthenticationToken = new JwtAuthenticationToken(user.getAuthorities(),tokenInfo,user);
+            jwtAuthenticationToken.setAuthenticated(true);
+            SecurityContextHolder.getContext().setAuthentication(jwtAuthenticationToken);
         }catch (EntityNotFoundException e){
             log.error("{} token:{}",e.getMessage(),accessTokenString);
             if(refreshToken == null)

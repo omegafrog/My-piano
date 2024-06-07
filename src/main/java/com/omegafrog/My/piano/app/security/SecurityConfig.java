@@ -5,8 +5,6 @@ import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
 import com.omegafrog.My.piano.app.security.entity.authorities.Role;
 import com.omegafrog.My.piano.app.security.filter.JwtTokenFilter;
-import com.omegafrog.My.piano.app.security.filter.JwtTokenExceptionFilter;
-import com.omegafrog.My.piano.app.security.filter.CommonUserJwtTokenFilter;
 import com.omegafrog.My.piano.app.security.handler.*;
 import com.omegafrog.My.piano.app.security.infrastructure.redis.CommonUserRefreshTokenRepositoryImpl;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
@@ -129,13 +127,6 @@ public class SecurityConfig {
     }
 
     @Bean
-    public CommonUserJwtTokenFilter commonUserJwtTokenFilter() {
-        return new CommonUserJwtTokenFilter( securityUserRepository, refreshTokenRepository() );
-    }
-
-
-
-    @Bean
     public CommonUserLogoutHandler commonUserLogoutHandler() {
         return new CommonUserLogoutHandler(objectMapper, refreshTokenRepository());
     }
@@ -150,10 +141,6 @@ public class SecurityConfig {
         return new AdminAuthenticationProvider(adminUserService(), passwordEncoder());
     }
 
-    @Bean
-    public JwtTokenExceptionFilter jwtTokenExceptionFilter() {
-        return new JwtTokenExceptionFilter();
-    }
 
     @Bean
     public SecurityFilterChain adminAuthentication(HttpSecurity http) throws Exception {
