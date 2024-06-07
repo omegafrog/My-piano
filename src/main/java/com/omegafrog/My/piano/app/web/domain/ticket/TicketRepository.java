@@ -1,6 +1,6 @@
 package com.omegafrog.My.piano.app.web.domain.ticket;
 
-import com.omegafrog.My.piano.app.web.dto.SearchTicketFilter;
+import com.omegafrog.My.piano.app.web.dto.ticket.SearchTicketFilter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
@@ -32,7 +33,7 @@ public class CommonUserLogoutHandler implements LogoutHandler {
     @Transactional
     public void logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
         // refreshTokenRepository에서 로그아웃한 유저의 refresh token을 삭제하면 됨.
-        String accessToken = tokenUtils.getAccessTokenStringFromHeaders(request);
+        String accessToken = tokenUtils.getAccessTokenString(request.getHeader(HttpHeaders.AUTHORIZATION));
         Claims claims = tokenUtils.extractClaims(accessToken);
         Long userId = Long.valueOf((String) claims.get("id"));
         refreshTokenRepository.deleteByUserIdAndRole(userId, Role.valueOf((String)claims.get("role")));

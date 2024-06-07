@@ -15,7 +15,7 @@ import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
-import com.omegafrog.My.piano.app.web.dto.RegisterUserDto;
+import com.omegafrog.My.piano.app.web.dto.user.RegisterUserDto;
 import com.omegafrog.My.piano.app.web.dto.order.OrderRegisterDto;
 import com.omegafrog.My.piano.app.web.enums.*;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;

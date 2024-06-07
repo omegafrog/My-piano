@@ -7,7 +7,7 @@ import com.omegafrog.My.piano.app.web.domain.sheet.Genres;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.user.User;
-import com.omegafrog.My.piano.app.web.dto.RegisterSheetDto;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.RegisterSheetDto;
 import com.omegafrog.My.piano.app.web.enums.*;
 
 import java.time.LocalTime;

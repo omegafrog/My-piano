@@ -12,7 +12,7 @@ import com.omegafrog.My.piano.app.web.domain.cash.CashOrderRepository;
 import com.omegafrog.My.piano.app.web.domain.cash.PaymentHistory;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
-import com.omegafrog.My.piano.app.web.dto.CashOrderDto;
+import com.omegafrog.My.piano.app.web.dto.order.CashOrderDto;
 import com.omegafrog.My.piano.app.web.enums.OrderStatus;
 import com.omegafrog.My.piano.app.web.dto.dateRange.CustomDateRange;
 import com.omegafrog.My.piano.app.web.dto.dateRange.DateRangeFactory;

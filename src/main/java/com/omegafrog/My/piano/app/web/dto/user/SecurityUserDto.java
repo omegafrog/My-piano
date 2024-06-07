@@ -1,4 +1,4 @@
-package com.omegafrog.My.piano.app.web.dto;
+package com.omegafrog.My.piano.app.web.dto.user;
 
 import com.omegafrog.My.piano.app.security.entity.authorities.Role;
 import lombok.Builder;

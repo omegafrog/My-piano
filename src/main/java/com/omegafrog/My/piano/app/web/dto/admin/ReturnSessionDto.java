@@ -1,4 +1,4 @@
-package com.omegafrog.My.piano.app.web.dto;
+package com.omegafrog.My.piano.app.web.dto.admin;
 import com.omegafrog.My.piano.app.security.entity.authorities.Role;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 

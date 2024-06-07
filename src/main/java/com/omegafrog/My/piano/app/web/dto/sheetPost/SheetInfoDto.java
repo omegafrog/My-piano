@@ -1,4 +1,4 @@
-package com.omegafrog.My.piano.app.web.dto.sheet;
+package com.omegafrog.My.piano.app.web.dto.sheetPost;
 
 import com.omegafrog.My.piano.app.web.domain.sheet.Genres;
 import com.omegafrog.My.piano.app.web.dto.user.UserInfo;

@@ -1,10 +1,8 @@
-package com.omegafrog.My.piano.app.web.dto;
+package com.omegafrog.My.piano.app.web.dto.user;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 import lombok.*;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.parameters.P;
 
 @Data
 @Getter

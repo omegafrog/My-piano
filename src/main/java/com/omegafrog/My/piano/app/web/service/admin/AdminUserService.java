@@ -17,7 +17,7 @@ import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.admin.ControlUserDto;
-import com.omegafrog.My.piano.app.web.dto.ReturnSessionDto;
+import com.omegafrog.My.piano.app.web.dto.admin.ReturnSessionDto;
 import com.omegafrog.My.piano.app.web.dto.admin.SearchUserFilter;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonListDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.SearchLessonFilter;
@@ -41,7 +41,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @RequiredArgsConstructor

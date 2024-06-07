@@ -20,7 +20,7 @@ import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/community/video-post")
+@RequestMapping("/api/v1/video-post")
 public class VideoPostController {
     private final ObjectMapper objectMapper;
     private final VideoPostApplicationService videoPostApplicationService;

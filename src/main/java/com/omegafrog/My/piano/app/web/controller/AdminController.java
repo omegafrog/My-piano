@@ -11,9 +11,9 @@ import com.omegafrog.My.piano.app.web.service.admin.AdminUserService;
 import com.omegafrog.My.piano.app.utils.MapperUtil;
 import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
 import com.omegafrog.My.piano.app.utils.response.JsonAPIResponse;
-import com.omegafrog.My.piano.app.web.dto.AdminDto;
+import com.omegafrog.My.piano.app.web.dto.admin.AdminDto;
 import com.omegafrog.My.piano.app.web.dto.admin.ControlUserDto;
-import com.omegafrog.My.piano.app.web.dto.ReturnSessionDto;
+import com.omegafrog.My.piano.app.web.dto.admin.ReturnSessionDto;
 import com.omegafrog.My.piano.app.web.dto.admin.SearchUserFilter;
 import com.omegafrog.My.piano.app.web.dto.post.PostListDto;
 import com.omegafrog.My.piano.app.web.dto.post.SearchPostFilter;
@@ -32,14 +32,13 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Nullable;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/admin")
+@RequestMapping("/api/v1/admin")
 @Slf4j
 public class AdminController {
 

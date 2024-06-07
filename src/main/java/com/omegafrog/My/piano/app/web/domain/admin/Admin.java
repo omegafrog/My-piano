@@ -3,9 +3,8 @@ package com.omegafrog.My.piano.app.web.domain.admin;
 
 import com.omegafrog.My.piano.app.security.entity.authorities.Authority;
 import com.omegafrog.My.piano.app.security.entity.authorities.Role;
-import com.omegafrog.My.piano.app.web.dto.AdminDto;
-import com.omegafrog.My.piano.app.web.dto.UpdateAdminDto;
-import com.omegafrog.My.piano.app.web.enums.Position;
+import com.omegafrog.My.piano.app.web.dto.admin.AdminDto;
+import com.omegafrog.My.piano.app.web.dto.admin.UpdateAdminDto;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;

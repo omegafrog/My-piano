@@ -16,4 +16,6 @@ public interface SecurityUserRepository {
     List<SecurityUser> findAll(Pageable pageable, SearchUserFilter filter);
 
     Long count();
+
+    Optional<SecurityUser> findByEmail(String email);
 }

@@ -2,7 +2,7 @@ package com.omegafrog.My.piano.app.web.dto.ticket;
 
 import com.omegafrog.My.piano.app.web.domain.ticket.Ticket;
 import com.omegafrog.My.piano.app.web.domain.ticket.TicketStatus;
-import com.omegafrog.My.piano.app.web.dto.ReplyDto;
+import com.omegafrog.My.piano.app.web.dto.comment.ReplyDto;
 import com.omegafrog.My.piano.app.web.dto.user.UserProfileDto;
 import com.omegafrog.My.piano.app.web.enums.TicketType;
 

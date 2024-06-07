@@ -2,16 +2,22 @@ package com.omegafrog.My.piano.app.web.domain.sheet;
 
 import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.order.SellableItem;
-import com.omegafrog.My.piano.app.web.dto.UpdateSheetDto;
-import com.omegafrog.My.piano.app.web.dto.UpdateSheetPostDto;
+import com.omegafrog.My.piano.app.web.domain.relation.UserLikedSheetPost;
+import com.omegafrog.My.piano.app.web.domain.relation.UserPurchasedSheetPost;
+import com.omegafrog.My.piano.app.web.domain.relation.UserScrappedSheetPost;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.UpdateSheetDto;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.UpdateSheetPostDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
-import com.omegafrog.My.piano.app.web.dto.sheet.SheetInfoDto;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetInfoDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @NoArgsConstructor
@@ -22,7 +28,12 @@ public class SheetPost extends SellableItem {
     @JoinColumn(name = "SHEET_ID")
     private Sheet sheet;
 
-
+    @OneToMany(mappedBy = "sheetPost", cascade =CascadeType.ALL, orphanRemoval = true)
+    private final List<UserLikedSheetPost> likedUsers = new ArrayList<>();
+    @OneToMany(mappedBy = "sheetPost", cascade = CascadeType.ALL, orphanRemoval = true)
+    private final List<UserScrappedSheetPost> scrappedUsers = new ArrayList<>();
+    @OneToMany(mappedBy = "sheetPost", cascade =CascadeType.ALL, orphanRemoval = true)
+    private final List<UserPurchasedSheetPost> purchasedUsers = new ArrayList<>();
     @Builder
     public SheetPost(String title, String content, User artist, Sheet sheet, int price) {
         super(artist, title, content, price);

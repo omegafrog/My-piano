@@ -2,7 +2,7 @@ package com.omegafrog.My.piano.app.web.domain.cash;
 
 import com.omegafrog.My.piano.app.utils.exception.payment.CashOrderCalculateFailureException;
 import com.omegafrog.My.piano.app.web.domain.user.User;
-import com.omegafrog.My.piano.app.web.dto.CashOrderDto;
+import com.omegafrog.My.piano.app.web.dto.order.CashOrderDto;
 import com.omegafrog.My.piano.app.web.enums.OrderStatus;
 import com.omegafrog.My.piano.app.web.enums.PaymentType;
 import jakarta.persistence.Entity;

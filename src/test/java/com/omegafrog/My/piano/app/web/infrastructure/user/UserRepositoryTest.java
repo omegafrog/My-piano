@@ -2,7 +2,7 @@ package com.omegafrog.My.piano.app.web.infrastructure.user;
 
 import com.omegafrog.My.piano.app.DataJpaUnitConfig;
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
-import com.omegafrog.My.piano.app.web.dto.ChangeUserDto;
+import com.omegafrog.My.piano.app.web.dto.user.ChangeUserDto;
 import com.omegafrog.My.piano.app.web.infra.user.JpaUserRepositoryImpl;
 import com.omegafrog.My.piano.app.web.infra.user.SimpleJpaUserRepository;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;

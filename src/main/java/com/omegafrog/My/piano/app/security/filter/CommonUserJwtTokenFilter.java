@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -43,25 +44,26 @@ public class CommonUserJwtTokenFilter extends OncePerRequestFilter {
 
         List<AntPathRequestMatcher> ignoredPatterns = new ArrayList<>(
                 Arrays.asList(
-                        AntPathRequestMatcher.antMatcher("/**/login/**"),
-                        AntPathRequestMatcher.antMatcher("/**/register/**"),
-                        AntPathRequestMatcher.antMatcher("/user/profile/register"),
-                        AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/sheet-post"),
-                        AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/sheet-post/{regex:\\d+}"),
-                        AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/sheet-post/{regex:\\d+}/comments"),
-                        AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/lesson/{regex:\\d+}"),
-                        AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/lesson/{regex:\\d+}/comments"),
-                        AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/lessons"),
-                        AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/posts"),
-                        AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/posts/{regex:\\d+}"),
-                        AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/posts/{regex:\\d+}/comments"),
-                        AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/community/video-post"),
+                        AntPathRequestMatcher.antMatcher("/api/v1/**/login/**"),
+                        AntPathRequestMatcher.antMatcher("/api/v1/**/register/**"),
+                        AntPathRequestMatcher.antMatcher("/api/v1/user/profile/register"),
+                        AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/api/v1/sheet-post"),
+                        AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/api/v1/sheet-post/{regex:\\d+}"),
+                        AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/api/v1/sheet-post/{regex:\\d+}/comments"),
+                        AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/api/v1/lesson/{regex:\\d+}"),
+                        AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/api/v1/lesson/{regex:\\d+}/comments"),
+                        AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/api/v1/lessons"),
+                        AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/api/v1/posts"),
+                        AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/api/v1/posts/{regex:\\d+}/comments"),
+                        AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/api/v1/community/video-post"),
                         AntPathRequestMatcher.antMatcher("/h2-console/**"),
-                        AntPathRequestMatcher.antMatcher("/oauth2/**"),
-                        AntPathRequestMatcher.antMatcher("/revalidate"),
+                        AntPathRequestMatcher.antMatcher("/api/v1/oauth2/google/callback"),
+                        AntPathRequestMatcher.antMatcher("/api/v1/revalidate"),
                         AntPathRequestMatcher.antMatcher("/api/v1/popular"),
                         AntPathRequestMatcher.antMatcher("/healthcheck"),
-                        AntPathRequestMatcher.antMatcher("/cash/webhook")
+                        AntPathRequestMatcher.antMatcher("/api/v1/cash/webhook"),
+                        AntPathRequestMatcher.antMatcher("/swagger-ui/**"),
+                        AntPathRequestMatcher.antMatcher("/api-docs/**")
                 ));
         for (AntPathRequestMatcher pathMatcher : ignoredPatterns) {
             if (pathMatcher.matches(request)) {
@@ -72,7 +74,7 @@ public class CommonUserJwtTokenFilter extends OncePerRequestFilter {
 
         try {
             // token 추출
-            String accessToken = tokenUtils.getAccessTokenStringFromHeaders(request);
+            String accessToken = tokenUtils.getAccessTokenString(request.getHeader(HttpHeaders.AUTHORIZATION));
             //token으로부터 유저 추출
             Claims claims = tokenUtils.extractClaims(accessToken);
             Long userId = Long.valueOf((String) claims.get("id"));

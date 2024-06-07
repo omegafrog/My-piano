@@ -1,4 +1,4 @@
-package com.omegafrog.My.piano.app.web.dto;
+package com.omegafrog.My.piano.app.web.dto.ticket;
 
 import com.omegafrog.My.piano.app.web.domain.ticket.QTicket;
 import com.omegafrog.My.piano.app.web.enums.TicketType;

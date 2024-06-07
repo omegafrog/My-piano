@@ -15,7 +15,7 @@ import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPost;
 import com.omegafrog.My.piano.app.web.domain.relation.*;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
-import com.omegafrog.My.piano.app.web.dto.ChangeUserDto;
+import com.omegafrog.My.piano.app.web.dto.user.ChangeUserDto;
 import com.omegafrog.My.piano.app.web.dto.user.UserInfo;
 import com.omegafrog.My.piano.app.web.dto.user.UserProfileDto;
 import com.omegafrog.My.piano.app.web.enums.OrderStatus;
@@ -111,16 +111,16 @@ public class User {
     @OneToMany(mappedBy = "follower", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private final List<FollowedUser> followed = new CopyOnWriteArrayList<>();
 
-    @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST})
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<UserLikedPost> likedPosts = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.PERSIST, orphanRemoval = true)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<UserLikedSheetPost> likedSheetPosts = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<UserLikedVideoPost> likedVideoPosts = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<UserLikedLesson> likedLessons = new ArrayList<>();
 
 

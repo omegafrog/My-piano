@@ -1,18 +1,21 @@
 package com.omegafrog.My.piano.app.web.service.admin;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
+import com.google.api.client.json.gson.GsonFactory;
 import com.omegafrog.My.piano.app.security.jwt.RefreshToken;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.security.jwt.TokenInfo;
 import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
-import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
-import com.omegafrog.My.piano.app.web.dto.RegisterUserDto;
-import com.omegafrog.My.piano.app.web.dto.SecurityUserDto;
+import com.omegafrog.My.piano.app.web.dto.user.RegisterUserDto;
+import com.omegafrog.My.piano.app.web.dto.user.SecurityUserDto;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
 import com.omegafrog.My.piano.app.security.entity.authorities.Role;
-import com.omegafrog.My.piano.app.security.exception.UsernameAlreadyExistException;
+import com.omegafrog.My.piano.app.security.exception.DuplicatePropertyException;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import io.awspring.cloud.s3.ObjectMetadata;
@@ -30,8 +33,12 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.ObjectCannedACL;
+import software.amazon.awssdk.services.s3.model.PutObjectAclRequest;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -42,22 +49,19 @@ public class CommonUserService implements UserDetailsService {
 
     @Lazy
     private final PasswordEncoder passwordEncoder;
-
     private final SecurityUserRepository securityUserRepository;
-
     private final RefreshTokenRepository refreshTokenRepository;
-
-    @Autowired
-    private  UserRepository userRepository;
-
+    private final ObjectMapper objectMapper;
+    private final GooglePublicKeysManager googlePublicKeysManager;
     @Autowired
     private S3Template s3Template;
     @Value("${spring.cloud.aws.bucket.name}")
     private String bucketName;
-
+    @Value("${spring.cloud.aws.region.static}")
+    private String regionName;
     @Value("${security.jwt.secret}")
     private String jwtSecret;
-
+    private final S3Client s3Client;
     @Autowired
     private TokenUtils tokenUtils;
 
@@ -80,7 +84,6 @@ public class CommonUserService implements UserDetailsService {
     }
 
     public SecurityUserDto registerUser(GoogleIdToken token){
-
         SecurityUser securityUser = SecurityUser.builder()
                 .username(token.getPayload().getEmail())
                 .role(Role.USER)
@@ -95,46 +98,48 @@ public class CommonUserService implements UserDetailsService {
                 .build();
         SecurityUser saved = securityUserRepository.save(securityUser);
         return saved.toDto();
-
     }
 
-    public SecurityUserDto registerUser(RegisterUserDto dto) throws UsernameAlreadyExistException {
+    public SecurityUserDto registerUserWithoutProfile(RegisterUserDto dto) throws DuplicatePropertyException {
         User user = dto.toEntity();
         SecurityUser.SecurityUserBuilder builder = SecurityUser.builder()
                 .username(dto.getUsername())
                 .role(Role.USER)
                 .user(user);
         if (dto.getLoginMethod().equals(LoginMethod.EMAIL) && dto.getPassword()==null)
-            throw new IllegalArgumentException("Password cannot be null.");
+            throw new IllegalArgumentException("비밀번호는 비어있지 않아야 합니다.");
         if(dto.getPassword() == null) dto.setPassword("");
         SecurityUser securityUser = builder.password(passwordEncoder.encode(dto.getPassword())).build();
         Optional<SecurityUser> founded = securityUserRepository.findByUsername(securityUser.getUsername());
-        if (founded.isEmpty()) {
-            SecurityUser saved = securityUserRepository.save(securityUser);
-            return saved.toDto();
-        } else {
-            throw new UsernameAlreadyExistException("중복된 ID가 존재합니다.");
-        }
+        Optional<SecurityUser> byEmail = securityUserRepository.findByEmail(securityUser.getUser().getEmail());
+        if (founded.isPresent())
+            throw new DuplicatePropertyException("중복된 ID가 존재합니다.");
+        if(byEmail.isPresent())
+            throw new DuplicatePropertyException("중복된 이메일이 존재합니다.");
+
+        SecurityUser saved = securityUserRepository.save(securityUser);
+        return saved.toDto();
     }
 
-    public SecurityUserDto registerUser(RegisterUserDto dto, MultipartFile profileImg) throws UsernameAlreadyExistException, IOException {
-        SecurityUserDto securityUserDto = registerUser(dto);
+    public SecurityUserDto registerUser(RegisterUserDto dto, MultipartFile profileImg) throws DuplicatePropertyException, IOException {
         List<String> nameList = Arrays.asList(profileImg.getOriginalFilename().split("\\."));
-        if (nameList.size() <2) throw new IllegalArgumentException("Wrong image type.");
-        String contentType;
-        switch (nameList.get(nameList.size()-1)) {
-            case "jpg", "jpeg":
-                contentType = MediaType.IMAGE_JPEG_VALUE;
-                break;
-            case "png":
-                contentType = MediaType.IMAGE_PNG_VALUE;
-                break;
-            default:
-                throw new IllegalArgumentException("Wrong image type.");
-        }
+        if (nameList.size() <2) throw new IllegalArgumentException("잘못된 파일 형식입니다.");
 
-        s3Template.upload(bucketName, profileImg.getOriginalFilename(), profileImg.getInputStream(), ObjectMetadata.builder()
-                .contentType(contentType).build());
+        MediaType mediaType = MediaType.valueOf(profileImg.getContentType());
+        if(!(mediaType.equals(MediaType.IMAGE_JPEG) || mediaType.equals(MediaType.IMAGE_PNG)))
+                throw new IllegalArgumentException("잘못된 파일 형식입니다.");
+
+        String profileSrc = "https://"+bucketName+".s3."+regionName+".amazonaws.com/"+profileImg.getOriginalFilename();
+        dto.setProfileSrc(profileSrc);
+        SecurityUserDto securityUserDto = registerUserWithoutProfile(dto);
+
+
+        s3Template.upload(bucketName,profileImg.getOriginalFilename() , profileImg.getInputStream(), ObjectMetadata.builder()
+                .contentType(mediaType.toString()).build());
+        s3Client.putObjectAcl(PutObjectAclRequest.builder()
+                .bucket(bucketName)
+                .key(profileImg.getOriginalFilename())
+                .acl(ObjectCannedACL.PUBLIC_READ).build());
         return securityUserDto;
     }
 
@@ -157,6 +162,36 @@ public class CommonUserService implements UserDetailsService {
         TokenInfo tokenInfo = tokenUtils.generateToken(String.valueOf(userId),founded.get().getRole());
         refreshToken.updateRefreshToken(tokenInfo.getRefreshToken().getPayload());
         return tokenInfo;
+    }
+
+    public TokenInfo loginGoogleUser(String idToken  ) throws GeneralSecurityException, IOException {
+        GoogleIdToken parsed = getGoogleIdToken(idToken);
+        verifyGoogleIdToken(parsed);
+
+        SecurityUser user = (SecurityUser) loadUserByUsername(parsed.getPayload().getEmail());
+
+        TokenInfo tokenInfo = tokenUtils.generateToken(String.valueOf(user.getId()), user.getRole());
+        Optional<RefreshToken> foundedRefreshToken = refreshTokenRepository.findByRoleAndUserId(user.getId(), user.getRole());
+        if (foundedRefreshToken.isPresent()) {
+            foundedRefreshToken.get().updateRefreshToken(tokenInfo.getRefreshToken().getPayload());
+        } else
+            refreshTokenRepository.save(tokenInfo.getRefreshToken());
+        return tokenInfo;
+    }
+
+    public SecurityUser findGoogleUser(String idToken) throws IOException, GeneralSecurityException {
+        GoogleIdToken googleIdToken = getGoogleIdToken(idToken);
+        verifyGoogleIdToken(googleIdToken);
+        return (SecurityUser) loadUserByUsername(googleIdToken.getPayload().getEmail());
+    }
+    private void verifyGoogleIdToken(GoogleIdToken parsed) throws GeneralSecurityException, IOException {
+        if (!parsed.verify(new GoogleIdTokenVerifier(googlePublicKeysManager)))
+            throw new GeneralSecurityException("Google Id token Validation failed.");
+    }
+
+    private GoogleIdToken getGoogleIdToken(String idToken) throws IOException {
+        GoogleIdToken parsed = GoogleIdToken.parse(GsonFactory.getDefaultInstance(), idToken);
+        return parsed;
     }
 
 }

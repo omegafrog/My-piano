@@ -12,7 +12,7 @@ import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostViewCountRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
-import com.omegafrog.My.piano.app.web.dto.UpdateSheetPostDto;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.UpdateSheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.RegisterSheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
 import io.awspring.cloud.s3.ObjectMetadata;

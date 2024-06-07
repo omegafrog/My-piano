@@ -14,8 +14,8 @@ import com.omegafrog.My.piano.app.web.domain.lesson.VideoInformation;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
-import com.omegafrog.My.piano.app.web.dto.SecurityUserDto;
-import com.omegafrog.My.piano.app.web.dto.UpdateLessonDto;
+import com.omegafrog.My.piano.app.web.dto.user.SecurityUserDto;
+import com.omegafrog.My.piano.app.web.dto.lesson.UpdateLessonDto;
 import com.omegafrog.My.piano.app.web.dto.comment.RegisterCommentDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonRegisterDto;
@@ -77,8 +77,8 @@ class LessonControllerTest {
         securityUserRepository.deleteAll();
         refreshTokenRepository.deleteAll();
 
-        SecurityUserDto securityUserDto = commonUserService.registerUser(TestLoginUtil.user1);
-        commonUserService.registerUser(TestLoginUtil.user2);
+        SecurityUserDto securityUserDto = commonUserService.registerUserWhitoutProfile(TestLoginUtil.user1);
+        commonUserService.registerUserWhitoutProfile(TestLoginUtil.user2);
         artist = ((SecurityUser) commonUserService.loadUserByUsername(securityUserDto.getUsername())).getUser();
 
         savedSheetPost = sheetPostRepository.save(DummyData.sheetPost(artist));

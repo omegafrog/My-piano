@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.web.domain.user.User;
-import com.omegafrog.My.piano.app.web.dto.UpdateLessonDto;
+import com.omegafrog.My.piano.app.web.dto.lesson.UpdateLessonDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonRegisterDto;
 import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
@@ -25,12 +25,10 @@ import java.util.Map;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
+@RequestMapping("/api/v1")
 public class LessonController {
 
     private final LessonService lessonService;
-    @Autowired
-    private ObjectMapper objectMapper;
-
     @PostMapping("/lesson")
     public JsonAPIResponse createLesson(@Validated @RequestBody LessonRegisterDto lessonRegisterDto)
             throws JsonProcessingException {

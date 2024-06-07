@@ -3,7 +3,7 @@ package com.omegafrog.My.piano.app.web.infra.ticket;
 import com.omegafrog.My.piano.app.web.domain.ticket.QTicket;
 import com.omegafrog.My.piano.app.web.domain.ticket.Ticket;
 import com.omegafrog.My.piano.app.web.domain.ticket.TicketRepository;
-import com.omegafrog.My.piano.app.web.dto.SearchTicketFilter;
+import com.omegafrog.My.piano.app.web.dto.ticket.SearchTicketFilter;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQuery;
@@ -15,7 +15,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 

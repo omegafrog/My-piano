@@ -1,6 +1,7 @@
 package com.omegafrog.My.piano.app.web.domain.post;
 
 import com.omegafrog.My.piano.app.web.domain.article.Article;
+import com.omegafrog.My.piano.app.web.domain.relation.UserLikedPost;
 import com.omegafrog.My.piano.app.web.dto.post.PostDto;
 import com.omegafrog.My.piano.app.web.dto.post.UpdatePostDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
@@ -10,6 +11,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -28,6 +32,9 @@ public class Post extends Article {
         super.content = post.getContent();
         return this;
     }
+
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private final List<UserLikedPost> likedUsers = new ArrayList<>();
 
     @Builder
     public Post(User author, String title, String content, PostType type) {
