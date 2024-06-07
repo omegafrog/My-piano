@@ -266,7 +266,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain postAuthentication(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/api/v1/community/**")
+                .securityMatcher("/api/v1/posts/**")
                 .authenticationProvider(commonUserAuthenticationProvider())
                 .authorizeHttpRequests()
                 .requestMatchers(HttpMethod.GET, "/api/v1/posts",

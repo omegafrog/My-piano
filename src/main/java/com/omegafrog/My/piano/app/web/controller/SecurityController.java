@@ -1,6 +1,10 @@
 package com.omegafrog.My.piano.app.web.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeTokenRequest;
+import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.security.jwt.TokenInfo;
@@ -18,10 +22,15 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpHeaders;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,6 +40,7 @@ import javax.security.auth.login.AccountLockedException;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -43,6 +53,13 @@ public class SecurityController {
     private final TokenUtils tokenUtils;
     private final CommonUserService commonUserService;
     private final MapperUtil mapperUtil;
+
+    @Value("${spring.security.oauth2.client.registration.google.client-id}")
+    private String clientId;
+    @Value("${spring.security.oauth2.client.registration.google.client-secret}")
+    private String clientSecret;
+    @Value("${spring.security.oauth2.client.registration.google.redirect-uri}")
+    private String redirectUri;
 
 
     @GetMapping("/validate")
@@ -86,39 +103,47 @@ public class SecurityController {
         return new APISuccessResponse<>("회원가입 성공.", securityUserDto);
     }
 
-
-
     @ExceptionHandler(AuthenticationException.class)
     public APIForbiddenResponse authenticationErrorResponse(AuthenticationException ex){
         ex.printStackTrace();
         return new APIForbiddenResponse(ex.getMessage());
     }
 
-    @PostMapping("/oauth2/google")
-    public APIRedirectResponse registerOrLoginGoogleUser(
-             HttpServletResponse response, @RequestBody String code)
+    @GetMapping("/oauth2/google/callback")
+    public ResponseEntity<Map<String, Object>> registerOrLoginGoogleUser(
+            HttpServletResponse response,
+            @RequestParam("code") String code)
             throws GeneralSecurityException, IOException{
+        String idToken = getGoogleIdToken(code);
+        Map<String, Object> data = new HashMap<>();
+        ResponseEntity<Map<String, Object>> apiRedirectResponse = null;
         try {
-            SecurityUser user =  commonUserService.findGoogleUser(code);
+            SecurityUser user =  commonUserService.findGoogleUser(idToken);
             validateEnabled(user);
 
-            TokenInfo tokenInfo = commonUserService.loginGoogleUser(code );
+            TokenInfo tokenInfo = commonUserService.loginGoogleUser(idToken );
             tokenUtils.setRefreshToken(response, tokenInfo);
-            Map<String, Object> data = new HashMap<>();
-            data.put("access token", tokenInfo.getGrantType() + " " + tokenInfo.getAccessToken());
-            data.put("redirect_url", "/user/login");
-            APIRedirectResponse<Map<String, Object>> stringAPIRedirectResponse = new APIRedirectResponse<>("Google OAuth login success.",
-                    "/user/login", data);
-            return stringAPIRedirectResponse;
+            data.put("status", 302);
+            data.put("message", "Google OAuth login success.");
+            MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+            headers.put(HttpHeaders.LOCATION, List.of("http://localhost:3000/oauth2/google/login?access-token="
+                    + tokenInfo.getGrantType() + " " + tokenInfo.getAccessToken()));
+            apiRedirectResponse = new ResponseEntity<>(data,headers, HttpStatus.TEMPORARY_REDIRECT);
         } catch (UsernameNotFoundException e) {
-            RegisterUserDto userDto= commonUserService.parseGoogleUserInfo(code);
-Map<String, Object> data = new HashMap<>();
-            data.put("redirect_url", "/user/login");
-            data.put("registerUserInfo", userDto);
-            APIRedirectResponse<Map<String, Object>> apiRedirectResponse = new APIRedirectResponse<>("Google OAuth register success.",
-                    "/user/register", data);
-            return apiRedirectResponse;
+            data.put("status", 302);
+            MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+            headers.put(HttpHeaders.LOCATION, List.of("http://localhost:3000/user/register?id-token="+idToken));
+            apiRedirectResponse = new ResponseEntity<>(data,headers, HttpStatus.TEMPORARY_REDIRECT);
         }
+        return apiRedirectResponse;
+    }
+
+    private String getGoogleIdToken(String code) throws IOException {
+        GoogleTokenResponse executed = new GoogleAuthorizationCodeTokenRequest(
+                new NetHttpTransport(), new GsonFactory(), clientId, clientSecret, code,redirectUri)
+                .execute();
+        String idToken= executed.getIdToken();
+        return idToken;
     }
 
     private static void validateEnabled(SecurityUser user) throws AccountExpiredException, AccountLockedException {

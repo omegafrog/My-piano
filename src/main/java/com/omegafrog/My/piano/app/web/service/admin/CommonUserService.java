@@ -164,8 +164,8 @@ public class CommonUserService implements UserDetailsService {
         return tokenInfo;
     }
 
-    public TokenInfo loginGoogleUser(String code  ) throws GeneralSecurityException, IOException {
-        GoogleIdToken parsed = getGoogleIdToken(code);
+    public TokenInfo loginGoogleUser(String idToken  ) throws GeneralSecurityException, IOException {
+        GoogleIdToken parsed = getGoogleIdToken(idToken);
         verifyGoogleIdToken(parsed);
 
         SecurityUser user = (SecurityUser) loadUserByUsername(parsed.getPayload().getEmail());
@@ -179,21 +179,8 @@ public class CommonUserService implements UserDetailsService {
         return tokenInfo;
     }
 
-    public RegisterUserDto parseGoogleUserInfo(String code) throws IOException, GeneralSecurityException {
-        GoogleIdToken parsed = getGoogleIdToken(code);
-        if (!parsed.verify(new GoogleIdTokenVerifier(googlePublicKeysManager)))
-            throw new GeneralSecurityException("Google Id token Validation failed.");
-
-        return RegisterUserDto.builder()
-                .email(parsed.getPayload().getEmail())
-                .username(parsed.getPayload().getEmail())
-                .loginMethod(LoginMethod.GOOGLE)
-                .profileSrc(String.valueOf(parsed.getPayload().get("picture")))
-                .name(String.valueOf(parsed.getPayload().get("name")))
-                .build();
-    }
-    public SecurityUser findGoogleUser(String code) throws IOException, GeneralSecurityException {
-        GoogleIdToken googleIdToken = getGoogleIdToken(code);
+    public SecurityUser findGoogleUser(String idToken) throws IOException, GeneralSecurityException {
+        GoogleIdToken googleIdToken = getGoogleIdToken(idToken);
         verifyGoogleIdToken(googleIdToken);
         return (SecurityUser) loadUserByUsername(googleIdToken.getPayload().getEmail());
     }
@@ -202,9 +189,8 @@ public class CommonUserService implements UserDetailsService {
             throw new GeneralSecurityException("Google Id token Validation failed.");
     }
 
-    private GoogleIdToken getGoogleIdToken(String code) throws IOException {
-        String parsedCode = objectMapper.readTree(code).get("code").asText();
-        GoogleIdToken parsed = GoogleIdToken.parse(GsonFactory.getDefaultInstance(), parsedCode);
+    private GoogleIdToken getGoogleIdToken(String idToken) throws IOException {
+        GoogleIdToken parsed = GoogleIdToken.parse(GsonFactory.getDefaultInstance(), idToken);
         return parsed;
     }
 
