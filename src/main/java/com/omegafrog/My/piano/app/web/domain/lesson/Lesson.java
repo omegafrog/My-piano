@@ -1,6 +1,9 @@
 package com.omegafrog.My.piano.app.web.domain.lesson;
 
 import com.omegafrog.My.piano.app.web.domain.order.SellableItem;
+import com.omegafrog.My.piano.app.web.domain.relation.UserLikedLesson;
+import com.omegafrog.My.piano.app.web.domain.relation.UserPurchasedLesson;
+import com.omegafrog.My.piano.app.web.domain.relation.UserScrappedLesson;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.dto.lesson.UpdateLessonDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
@@ -11,6 +14,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @NoArgsConstructor
@@ -26,6 +32,13 @@ public class Lesson extends SellableItem {
     @JoinColumn(name = "SHEET_POST_ID")
     private SheetPost sheetPost;
 
+    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
+    private final List<UserLikedLesson> likedUsers = new ArrayList<>();
+
+    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
+    private final List<UserScrappedLesson> scrappedUsers = new ArrayList<>();
+    @OneToMany(mappedBy = "lesson", cascade =CascadeType.ALL,orphanRemoval = true)
+    private final List<UserPurchasedLesson> purchasedUsers= new ArrayList<>();
     @Builder
     public Lesson(String title, String subTitle, Integer price, VideoInformation videoInformation,
                   User lessonProvider, SheetPost sheetPost, LessonInformation lessonInformation) {
