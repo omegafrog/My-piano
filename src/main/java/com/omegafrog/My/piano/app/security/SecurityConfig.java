@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
 import com.omegafrog.My.piano.app.security.entity.authorities.Role;
+import com.omegafrog.My.piano.app.security.filter.JwtTokenFilter;
 import com.omegafrog.My.piano.app.security.filter.JwtTokenExceptionFilter;
 import com.omegafrog.My.piano.app.security.filter.CommonUserJwtTokenFilter;
 import com.omegafrog.My.piano.app.security.handler.*;
@@ -17,7 +18,6 @@ import com.omegafrog.My.piano.app.web.service.admin.AdminUserService;
 import com.omegafrog.My.piano.app.web.service.admin.CommonUserService;
 
 import com.omegafrog.My.piano.app.utils.MapperUtil;
-import com.omegafrog.My.piano.app.web.domain.admin.AdminRepository;
 import com.omegafrog.My.piano.app.web.domain.post.PostRepository;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
@@ -34,6 +34,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -57,6 +58,10 @@ public class SecurityConfig {
         return new TokenUtils();
     }
 
+    @Bean
+    public JwtTokenFilter jwtFilter(){
+        return new JwtTokenFilter(tokenUtils(), securityUserRepository, refreshTokenRepository());
+    }
     @Autowired
     private SecurityUserRepository securityUserRepository;
     @Autowired
@@ -172,8 +177,7 @@ public class SecurityConfig {
                 .logoutUrl("/api/v1/admin/logout")
                 .addLogoutHandler(commonUserLogoutHandler())
                 .and()
-                .addFilterBefore(commonUserJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(jwtTokenExceptionFilter(), CommonUserJwtTokenFilter.class)
+                .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
@@ -208,9 +212,7 @@ public class SecurityConfig {
                 .permitAll()
                 .anyRequest().hasRole(Role.USER.value)
                 .and()
-                .addFilterBefore(commonUserJwtTokenFilter(),
-                        UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(jwtTokenExceptionFilter(), CommonUserJwtTokenFilter.class)
+                .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
@@ -247,9 +249,7 @@ public class SecurityConfig {
                 .logoutUrl("/api/v1/user/logout").permitAll()
                 .addLogoutHandler(commonUserLogoutHandler())
                 .and()
-                .addFilterBefore(commonUserJwtTokenFilter(),
-                        UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(jwtTokenExceptionFilter(), CommonUserJwtTokenFilter.class)
+                .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
@@ -285,9 +285,7 @@ public class SecurityConfig {
                 .authenticationEntryPoint(unAuthorizedEntryPoint())
                 .accessDeniedHandler(commonUserAccessDeniedHandler())
                 .and()
-                .addFilterBefore(commonUserJwtTokenFilter(),
-                        UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(jwtTokenExceptionFilter(), CommonUserJwtTokenFilter.class)
+                .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
                 .csrf().disable()
                 .cors().configurationSource(corsConfigurationSource());
         return http.build();
@@ -314,9 +312,7 @@ public class SecurityConfig {
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-                .addFilterBefore(commonUserJwtTokenFilter(),
-                        UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(jwtTokenExceptionFilter(), CommonUserJwtTokenFilter.class)
+                .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
                 .exceptionHandling()
                 .authenticationEntryPoint(unAuthorizedEntryPoint())
                 .accessDeniedHandler(commonUserAccessDeniedHandler())
@@ -337,8 +333,7 @@ public class SecurityConfig {
                 .permitAll()
                 .anyRequest().hasAnyRole(Role.USER.value,Role.CREATOR.value)
                 .and()
-                .addFilterBefore(commonUserJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(jwtTokenExceptionFilter(), CommonUserJwtTokenFilter.class)
+                .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
@@ -367,8 +362,7 @@ public class SecurityConfig {
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-                .addFilterBefore(commonUserJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(jwtTokenExceptionFilter(), CommonUserJwtTokenFilter.class)
+                .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
                 .exceptionHandling()
                 .authenticationEntryPoint(unAuthorizedEntryPoint())
                 .accessDeniedHandler(commonUserAccessDeniedHandler())
@@ -391,8 +385,7 @@ public class SecurityConfig {
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-                .addFilterBefore(commonUserJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(jwtTokenExceptionFilter(), CommonUserJwtTokenFilter.class)
+                .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
                 .exceptionHandling()
                 .authenticationEntryPoint(unAuthorizedEntryPoint())
                 .accessDeniedHandler(commonUserAccessDeniedHandler())
@@ -414,8 +407,7 @@ public class SecurityConfig {
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-                .addFilterBefore(commonUserJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(jwtTokenExceptionFilter(), CommonUserJwtTokenFilter.class)
+                .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
                 .exceptionHandling()
                 .authenticationEntryPoint(unAuthorizedEntryPoint())
                 .accessDeniedHandler(commonUserAccessDeniedHandler())
