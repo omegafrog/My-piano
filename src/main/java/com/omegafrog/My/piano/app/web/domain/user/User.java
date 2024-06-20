@@ -77,7 +77,6 @@ public class User {
     private SecurityUser securityUser;
 
     @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
-    @JoinColumn(name = "USER_ID")
     @NotNull
     private Cart cart;
 
