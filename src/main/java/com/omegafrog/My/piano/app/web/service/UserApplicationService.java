@@ -56,7 +56,7 @@ public class UserApplicationService {
 
     public UserInfo getUserProfile(User loggedInUser){
         User user = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER));
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInUser.getId()));
         return user.getUserInfo();
     }
 

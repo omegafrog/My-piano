@@ -11,6 +11,8 @@ import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
 import com.omegafrog.My.piano.app.utils.response.JsonAPIResponse;
 import jakarta.persistence.PersistenceException;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,8 +51,7 @@ public class SheetPostController {
                                                              @Nullable @RequestParam List<String> difficulty,
                                                              @Nullable @RequestParam List<String> genre,
                                                              Pageable pageable) throws IOException {
-        List<SheetPostDto> sheetPosts = sheetPostService.getSheetPosts(searchSentence, instrument, difficulty, genre, pageable);
-        Page<SheetPostDto> data = PageableExecutionUtils.getPage(sheetPosts, pageable, sheetPosts::size);
+        Page<SheetPostDto> data= sheetPostService.getSheetPosts(searchSentence, instrument, difficulty, genre, pageable);
         return new APISuccessResponse<>("Get sheet posts success.", data);
     }
     @PutMapping("/{id}/like")
@@ -73,8 +74,8 @@ public class SheetPostController {
         return new APISuccessResponse<>("Dislike this sheet post success.");
     }
 
-    @PostMapping("write")
-    public JsonAPIResponse<SheetPostDto> writeSheetPost(@RequestPart(name = "sheetFiles") List<MultipartFile> file,
+    @PostMapping()
+    public JsonAPIResponse<SheetPostDto> writeSheetPost(@RequestPart(name = "sheetFiles") @Valid @NotNull List<MultipartFile> file,
                                           @RequestPart(name = "sheetInfo") String registerSheetInfo)
             throws IOException, PersistenceException, AccessDeniedException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();

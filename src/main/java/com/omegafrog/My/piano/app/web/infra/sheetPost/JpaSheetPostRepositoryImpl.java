@@ -1,8 +1,11 @@
 package com.omegafrog.My.piano.app.web.infra.sheetPost;
 
+import com.omegafrog.My.piano.app.web.domain.comment.QComment;
+import com.omegafrog.My.piano.app.web.domain.sheet.QSheet;
 import com.omegafrog.My.piano.app.web.domain.sheet.QSheetPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
+import com.omegafrog.My.piano.app.web.domain.user.QUser;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SearchSheetPostFilter;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
@@ -55,10 +58,28 @@ public class JpaSheetPostRepositoryImpl implements SheetPostRepository {
                 .limit(pageable.getPageSize())
                 .orderBy(sheetPost.createdAt.desc());
 
-        return PageableExecutionUtils.getPage(query.fetch(), pageable, ()->query.fetchCount());
+        return PageableExecutionUtils.getPage(query.fetch(), pageable, this::count);
 
     }
 
+    @Override
+    public Page<SheetPost> findByIds(List<Long> sheetPostIds, Pageable pageable) {
+        QSheetPost sheetPost = QSheetPost.sheetPost;
+        QSheet sheet = QSheet.sheet;
+        QComment comment = QComment.comment;
+        QUser user = QUser.user;
+        BooleanExpression expressions = sheetPost.id.in(sheetPostIds);
+        JPAQuery<SheetPost> query = factory.selectFrom(sheetPost)
+                .join(sheetPost.sheet, sheet).fetchJoin()
+                .leftJoin(sheetPost.comments, comment).fetchJoin()
+                .leftJoin(sheetPost.author, user)
+                .where(expressions)
+                .orderBy(sheetPost.createdAt.desc());
+
+        return PageableExecutionUtils.getPage(query.fetch(),pageable , () -> factory.select(sheetPost.count())
+                .from(sheetPost)
+                .fetchOne());
+    }
 
     @Override
     public void deleteById(Long id) {

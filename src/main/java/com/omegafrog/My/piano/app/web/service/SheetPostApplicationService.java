@@ -21,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -203,19 +204,10 @@ public class SheetPostApplicationService {
         user.unScrapSheetPost(sheetPost);
     }
 
-    public List<SheetPostDto> getSheetPosts(String searchSentence, List<String> instrument, List<String> difficulty, List<String> genre, Pageable pageable) throws IOException {
-        List<SheetPostDto> ret = new ArrayList<>();
+    public Page<SheetPostDto> getSheetPosts(String searchSentence, List<String> instrument, List<String> difficulty, List<String> genre, Pageable pageable) throws IOException {
         List<Long> sheetPostIds = elasticSearchInstance.searchSheetPost(searchSentence, instrument, difficulty, genre, pageable);
-        for(Long id : sheetPostIds){
-            Optional<SheetPost> result = sheetPostRepository.findById(id).or(
-                    () -> {
-                        log.error("Cannot find Sheet post entity. id:", id);
-                        return Optional.empty();
-                    }
-            );
-            if(result.isEmpty()) continue;
-            ret.add(result.get().toDto());
-        }
-        return ret;
+        Page<SheetPostDto> res = sheetPostRepository.findByIds(sheetPostIds,pageable)
+                .map(SheetPost::toDto);
+        return res;
     }
 }
