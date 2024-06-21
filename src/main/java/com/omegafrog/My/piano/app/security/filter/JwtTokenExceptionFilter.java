@@ -19,8 +19,7 @@ import java.io.IOException;
 @RequiredArgsConstructor
 @Slf4j
 public class JwtTokenExceptionFilter extends OncePerRequestFilter {
-    @Autowired
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
     private String responseBody=null;
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {

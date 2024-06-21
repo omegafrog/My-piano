@@ -13,7 +13,7 @@ class CommentTest {
     @DisplayName("Comment의 likeCount가 증가해야 한다")
     void increaseLikeCount() {
         //given
-        Comment comment = new Comment(1L, new User(), "test comment");
+        Comment comment = new Comment(1L, new User(), "test comment", null);
 
         //when
         comment.increaseLikeCount();
@@ -25,7 +25,7 @@ class CommentTest {
     @DisplayName("Comment의 likeCount가 감소해야 한다")
     void decreaseLikeCount() {
         //given
-        Comment comment = new Comment(1L, new User(), "test comment");
+        Comment comment = new Comment(1L, new User(), "test comment",null);
         ReflectionTestUtils.setField(comment, "likeCount", 2);
         //when
         comment.decreaseLikeCount();

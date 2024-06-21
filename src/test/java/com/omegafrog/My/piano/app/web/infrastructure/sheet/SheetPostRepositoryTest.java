@@ -74,12 +74,12 @@ class SheetPostRepositoryTest {
         SheetPost saved = sheetPostRepository.save(DummyData.sheetPost(a));
         //when
         UpdateSheetPostDto updated = UpdateSheetPostDto.builder()
-                .sheetDto(UpdateSheetDto.builder()
+                .sheet(UpdateSheetDto.builder()
                         .genres(Genres.builder().genre1(Genre.BGM).build())
                         .isSolo(false)
                         .difficulty(Difficulty.MEDIUM)
                         .lyrics(false)
-                        .filePath("changed")
+                        .sheetUrl("changed")
                         .pageNum(5)
                         .instrument(Instrument.GUITAR_BASE)
                         .build())

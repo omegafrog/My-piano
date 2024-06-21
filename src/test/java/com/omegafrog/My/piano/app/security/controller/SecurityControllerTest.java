@@ -67,7 +67,6 @@ class SecurityControllerTest {
 
     @BeforeEach
     void makeDto(){
-        securityUserRepository.deleteAll();
         dto = RegisterUserDto.builder()
                 .username("username")
                 .password("password")
@@ -77,17 +76,6 @@ class SecurityControllerTest {
                 .loginMethod(LoginMethod.EMAIL)
                 .phoneNum("010-1111-2222")
                 .build();
-    }
-    @AfterEach
-    void deleteRepo(){
-        securityUserRepository.deleteAll();
-    }
-    @AfterAll
-    void deleteRepository(){
-        securityUserRepository.deleteAll();
-        List<SecurityUser> all = securityUserRepository.findAll();
-        all.forEach(user -> System.out.println("user = " + user));
-        System.out.println("SecurityController : securityUserRepository.count() = " + securityUserRepository.count());
     }
 
     @Test
@@ -107,7 +95,7 @@ class SecurityControllerTest {
     @DisplayName("중복된 username으로 회원가입시 회원가입에 실패해야 한다.")
     void usernameExistTest() throws DuplicatePropertyException, Exception {
 
-        SecurityUserDto securityUserDto = commonUserService.registerUserWhitoutProfile(dto);
+        SecurityUserDto securityUserDto = commonUserService.registerUserWithoutProfile(dto);
         String s = objectMapper.writeValueAsString(dto);
         mockMvc.perform(post("/user/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -122,7 +110,7 @@ class SecurityControllerTest {
     @Test
     @DisplayName("유저는 자신을 인증하고  토큰을 발급받아야 한다.")
     void loginTest() throws Exception, DuplicatePropertyException {
-        SecurityUserDto securityUserDto = commonUserService.registerUserWhitoutProfile(dto);
+        SecurityUserDto securityUserDto = commonUserService.registerUserWithoutProfile(dto);
         String s = objectMapper.writeValueAsString(dto);
         mockMvc.perform(post("/user/login")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
@@ -135,7 +123,7 @@ class SecurityControllerTest {
     @Test
     @DisplayName("유저가 로그인에 실패할 경우 올바른 에러를 리턴해야 한다.")
     void loginFailedTest() throws Exception, DuplicatePropertyException {
-        SecurityUserDto securityUserDto = commonUserService.registerUserWhitoutProfile(dto);
+        SecurityUserDto securityUserDto = commonUserService.registerUserWithoutProfile(dto);
         String s = objectMapper.writeValueAsString(dto);
         mockMvc.perform(post("/user/login")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
@@ -149,7 +137,7 @@ class SecurityControllerTest {
     @Test
     @DisplayName("유저는 로그아웃 할 수 있어야 한다.")
     void logoutTest() throws Exception, DuplicatePropertyException {
-        SecurityUserDto securityUserDto = commonUserService.registerUserWhitoutProfile(dto);
+        SecurityUserDto securityUserDto = commonUserService.registerUserWithoutProfile(dto);
         String s = objectMapper.writeValueAsString(dto);
         MvcResult mvcResult = mockMvc.perform(post("/user/login")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
@@ -188,7 +176,7 @@ class SecurityControllerTest {
     @Test
     @DisplayName("로그인한 사용자는 회원탈퇴할 수 있어야 한다.")
     void signOutTest() throws Exception, DuplicatePropertyException {
-        SecurityUserDto securityUserDto = commonUserService.registerUserWhitoutProfile(dto);
+        SecurityUserDto securityUserDto = commonUserService.registerUserWithoutProfile(dto);
         MvcResult mvcResult = mockMvc.perform(post("/user/login")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content("username=username&password=password"))

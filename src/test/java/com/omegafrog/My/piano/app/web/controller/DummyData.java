@@ -33,9 +33,9 @@ public class DummyData {
                 .build();
     }
 
-    public static Lesson lesson(Sheet sheet, User artist){
+    public static Lesson lesson(SheetPost sheet, User artist){
         return Lesson.builder()
-                .sheet(sheet)
+                .sheetPost(sheet)
                 .title("lesson1")
                 .price(2000)
                 .lessonInformation(LessonInformation.builder()

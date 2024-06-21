@@ -73,8 +73,8 @@ class VideoPostControllerTest {
 
     @BeforeAll
     void getTokens() throws Exception, DuplicatePropertyException {
-        commonUserService.registerUserWhitoutProfile(TestLoginUtil.user1);
-        commonUserService.registerUserWhitoutProfile(TestLoginUtil.user2);
+        commonUserService.registerUserWithoutProfile(TestLoginUtil.user1);
+        commonUserService.registerUserWithoutProfile(TestLoginUtil.user2);
         MvcResult mvcResult = mockMvc.perform(post("/user/login")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content("username=user1&password=password"))
@@ -423,8 +423,5 @@ class VideoPostControllerTest {
         Assertions.assertThat(user.getWroteComments().get(1).getContent()).isEqualTo("content2");
 
     }
-    @AfterAll
-    void getsdfas(){
-        securityUserRepository.deleteAll();
-    }
+
 }

@@ -76,8 +76,8 @@ class PostControllerIntegrationTest {
     @BeforeAll
     void getTokens() throws Exception, DuplicatePropertyException {
 
-        commonUserService.registerUserWhitoutProfile(TestLoginUtil.user1);
-        commonUserService.registerUserWhitoutProfile(TestLoginUtil.user2);
+        commonUserService.registerUserWithoutProfile(TestLoginUtil.user1);
+        commonUserService.registerUserWithoutProfile(TestLoginUtil.user2);
         MvcResult mvcResult = mockMvc.perform(post("/user/login")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content("username=user1&password=password"))
@@ -91,14 +91,6 @@ class PostControllerIntegrationTest {
     /**
      * 유저를 모두 삭제함.
      */
-    @AfterAll
-    void deleteusers() {
-        System.out.println("PostController : securityUserRepository.count() = " + securityUserRepository.count());
-        List<SecurityUser> all = securityUserRepository.findAll();
-        all.forEach(user -> System.out.println("user = " + user));
-        securityUserRepository.deleteAll();
-        SecurityContextHolder.clearContext();
-    }
 
     @Test
     @DisplayName("로그인한 유저는 커뮤니티 글을 작성하고 조회할 수 있어야 한다.")

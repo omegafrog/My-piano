@@ -85,13 +85,13 @@ class SheetPostControllerTest {
 
     @BeforeEach
     void login() throws Exception, DuplicatePropertyException {
-        SecurityUserDto securityUserDto1 = commonUserService.registerUserWhitoutProfile(TestLoginUtil.user1);
+        SecurityUserDto securityUserDto1 = commonUserService.registerUserWithoutProfile(TestLoginUtil.user1);
         User user = ((SecurityUser) commonUserService.loadUserByUsername(securityUserDto1.getUsername()))
                 .getUser();
         user.chargeCash(20000);
         userRepository.save(user);
 
-        SecurityUserDto securityUserDto2 = commonUserService.registerUserWhitoutProfile(TestLoginUtil.user2);
+        SecurityUserDto securityUserDto2 = commonUserService.registerUserWithoutProfile(TestLoginUtil.user2);
         artist = ((SecurityUser) commonUserService.loadUserByUsername(securityUserDto2.getUsername()))
                 .getUser();
         MvcResult mvcResult = mockMvc.perform(post("/user/login")
@@ -144,9 +144,9 @@ class SheetPostControllerTest {
         UpdateSheetPostDto updateBuild = UpdateSheetPostDto.builder()
                 .title("changed")
                 .content("changedContent")
-                .sheetDto(UpdateSheetDto.builder()
+                .sheet(UpdateSheetDto.builder()
                         .title("changedSheet")
-                        .filePath("path1")
+                        .sheetUrl("path1")
                         .genres(Genres.builder().genre1(Genre.BGM).build())
                         .difficulty(Difficulty.MEDIUM)
                         .instrument(Instrument.GUITAR_ACOUSTIC)

@@ -67,7 +67,7 @@ class LessonRepositoryTest {
         //given
 
         //when
-        Lesson saved = lessonRepository.save(DummyData.lesson(savedSheetPost.getSheet(), author));
+        Lesson saved = lessonRepository.save(DummyData.lesson(savedSheetPost, author));
 
         //then
         Optional<Lesson> founded = lessonRepository.findById(saved.getId());
@@ -79,7 +79,7 @@ class LessonRepositoryTest {
     void updateTest() {
         //given
 
-        Lesson saved = lessonRepository.save(DummyData.lesson(savedSheetPost.getSheet(), author));
+        Lesson saved = lessonRepository.save(DummyData.lesson(savedSheetPost, author));
         //when
         Lesson updated = saved.update(UpdateLessonDto.builder()
                 .title("changedTitle")
@@ -97,8 +97,8 @@ class LessonRepositoryTest {
                         .runningTime(LocalTime.of(1, 12, 40))
                         .build()
                 )
-                .sheetId(saved.getSheet().getId())
-                .build(), saved.getSheet());
+                .sheetId(saved.getSheetPost().getId())
+                .build(), saved.getSheetPost());
         //then
         Assertions.assertThat(updated).isEqualTo(saved);
     }
@@ -107,7 +107,7 @@ class LessonRepositoryTest {
     @DisplayName("레슨을 삭제할 수 있어야 한다.")
     void deleteTest() {
         //given
-        Lesson saved = lessonRepository.save(DummyData.lesson(savedSheetPost.getSheet(), author));
+        Lesson saved = lessonRepository.save(DummyData.lesson(savedSheetPost, author));
         //when
         lessonRepository.deleteById(saved.getId());
         //then

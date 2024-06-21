@@ -28,14 +28,6 @@ class CommonUserServiceTestProfile {
 
     private final PasswordEncoder passwordEncoder = new Pbkdf2PasswordEncoder("test", 32, 256, Pbkdf2PasswordEncoder.SecretKeyFactoryAlgorithm.PBKDF2WithHmacSHA256);
 
-    @AfterAll
-    public void deleteUsers(){
-        List<SecurityUser> all = securityUserRepository.findAll();
-        all.forEach(user -> System.out.println("user = " + user));
-        securityUserRepository.deleteAll();
-    }
-
-
     @Test
     @DisplayName("username으로 User를 조회할 수 있어야 한다.")
     void loadUserByUsername() {
