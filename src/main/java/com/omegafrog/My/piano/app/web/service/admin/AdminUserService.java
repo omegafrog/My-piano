@@ -41,6 +41,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -79,18 +80,22 @@ public class AdminUserService implements UserDetailsService {
         return admin;
     }
 
-    public List<ReturnSessionDto> getLoggedInUsers(Pageable pageable) {
+    public Page<ReturnSessionDto> getLoggedInUsers(Pageable pageable) {
         Role[] roles = {Role.USER, Role.CREATOR};
-        List<RefreshToken> list = refreshTokenRepository.findAllByRole(roles, pageable);
-        return list.stream().map(r -> {
-            SecurityUser founded = securityUserRepository.findById(Long.valueOf(r.getId()))
-                    .orElseThrow(() -> new EntityNotFoundException("Cannot find SecurityUser entity. id : " + r.getId()));
+        Page<RefreshToken> token= refreshTokenRepository.findAllByRole(roles, pageable);
+        Page<SecurityUser> allById = securityUserRepository.findAllByUserId(
+                token.stream().map(RefreshToken::getUserId).toList(),
+                pageable);
+        return PageableExecutionUtils.getPage(
+                allById.stream().map(item -> new ReturnSessionDto(item, getLoggedInTime(item, token))).toList(),
+                pageable,
+                allById::getTotalElements);
+    }
 
-            return new ReturnSessionDto(
-                    founded.getUser().getId(), founded.getUser().getName(), founded.getUsername(),
-                    founded.getUser().getLoginMethod(), r.getCreatedAt(), founded.getCreatedAt(),
-                     founded.getRole());
-        }).toList();
+    private static LocalDateTime getLoggedInTime(SecurityUser item, Page<RefreshToken> sessions) {
+        return sessions.getContent().stream().
+                filter(session -> session.getUserId().equals(item.getUser().getId()))
+                .findFirst().get().getCreatedAt();
     }
 
     public void disableUser(Long id) {
@@ -115,9 +120,9 @@ public class AdminUserService implements UserDetailsService {
         refreshTokenRepository.deleteByUserIdAndRole(userId, role);
     }
 
-    public List<UserDto> getAllUsers(Pageable pageable, SearchUserFilter filter) {
-        List<SecurityUser> all = securityUserRepository.findAll(pageable, filter);
-        return all.stream().map(UserDto::new).toList();
+    public Page<UserDto> getAllUsers(Pageable pageable, SearchUserFilter filter) {
+        Page<SecurityUser> all = securityUserRepository.findAllByFilter(pageable, filter);
+        return all.map(UserDto::new);
     }
 
     public Long countAllUsers() {
