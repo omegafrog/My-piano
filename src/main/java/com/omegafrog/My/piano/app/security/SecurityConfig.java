@@ -197,7 +197,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests()
                 .requestMatchers("/api/v1/cash/webhook")
                 .permitAll()
-                .anyRequest().hasRole(Role.USER.value)
+                .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value)
                 .and()
                 .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
                 .sessionManagement()

@@ -120,7 +120,7 @@ class CartControllerTest {
         SheetPost sheetPost = SheetPost.builder()
                 .sheet(Sheet.builder()
                         .title("title")
-                        .filePath("path1")
+                        .sheetUrl("path1")
                         .genres(Genres.builder().genre1(Genre.BGM).build())
                         .user(user.getUser())
                         .difficulty(Difficulty.MEDIUM)
@@ -137,7 +137,7 @@ class CartControllerTest {
 
         savedSheetPost = sheetPostRepository.save(sheetPost);
         Lesson lesson = Lesson.builder()
-                .sheet(savedSheetPost.getSheet())
+                .sheetPost(savedSheetPost)
                 .title("lesson1")
                 .price(2000)
                 .lessonInformation(LessonInformation.builder()
@@ -296,14 +296,5 @@ class CartControllerTest {
         Optional<User> byId = userRepository.findById(user.getUser().getId());
         System.out.println("byId.get().getCash() = " + byId.get().getCash());
         Assertions.assertThat(byId.get().getCash()).isLessThan(20000);
-    }
-
-    @AfterAll
-    void deleteRepository() {
-        System.out.println("lesson:" + lessonRepository.count());
-        System.out.println("Sheetpost:" + sheetPostRepository.count());
-        lessonRepository.deleteAll();
-        sheetPostRepository.deleteAll();
-        securityUserRepository.deleteAll();
     }
 }

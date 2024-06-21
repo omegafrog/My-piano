@@ -3,8 +3,8 @@ package com.omegafrog.My.piano.app.web.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.omegafrog.My.piano.app.security.exception.DuplicatePropertyException;
 import com.omegafrog.My.piano.app.utils.exception.payment.PaymentException;
-import com.omegafrog.My.piano.app.utils.response.APIBadRequestResponse;
-import com.omegafrog.My.piano.app.utils.response.APIInternalServerResponse;
+import com.omegafrog.My.piano.app.web.response.APIBadRequestSuccessResponse;
+import com.omegafrog.My.piano.app.web.response.APIInternalServerSuccessResponse;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceException;
@@ -37,7 +37,7 @@ public class ExceptionAdvisor {
             FieldError fieldError = (FieldError) objectError;
             builder.append(fieldError.getField()).append(" ").append(fieldError.getDefaultMessage());
         });
-        return new APIBadRequestResponse(builder.toString());
+        return new APIBadRequestSuccessResponse(builder.toString());
     }
 
 
@@ -51,7 +51,7 @@ public class ExceptionAdvisor {
     @ExceptionHandler(value = {JsonProcessingException.class, PersistenceException.class})
     public Object internalServerError(Throwable ex) {
         ex.printStackTrace();
-        return new APIInternalServerResponse(ex.getMessage());
+        return new APIInternalServerSuccessResponse(ex.getMessage());
     }
 
     /**
@@ -67,7 +67,7 @@ public class ExceptionAdvisor {
             DuplicatePropertyException.class})
     public Object clientRequestError(RuntimeException ex) {
         ex.printStackTrace();
-        return new APIBadRequestResponse(ex.getMessage());
+        return new APIBadRequestSuccessResponse(ex.getMessage());
     }
 
     @ExceptionHandler({ConstraintViolationException.class })
@@ -77,12 +77,18 @@ public class ExceptionAdvisor {
         ex.getConstraintViolations().forEach(
                 violation-> builder.append(violation.getMessage()).append("\n")
         );
-        return new APIBadRequestResponse(builder.toString());
+        return new APIBadRequestSuccessResponse(builder.toString());
     }
     @ExceptionHandler(DataIntegrityViolationException.class)
     public Object JDBCBindingViolationExceptionHandler(DataIntegrityViolationException ex) {
         ex.printStackTrace();
-        return new APIBadRequestResponse(ex.getCause().getCause().getMessage());
+        return new APIBadRequestSuccessResponse(ex.getCause().getCause().getMessage());
+    }
+
+    @ExceptionHandler(Exception.class)
+    public Object exceptionHandler(Exception ex) {
+        ex.printStackTrace();
+        return new APIInternalServerSuccessResponse(ex.getMessage());
     }
 
 }

@@ -55,7 +55,7 @@ public class CartApplicationService {
     public void payAll(User loggedInUser) throws PaymentException{
         User user = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInUser.getId()));
-        user.getCart().payContents();
+        user.getCart().payAllContents();
     }
 
     public boolean isItemInCart(String mainResource, Long id, User loggedInUser) {

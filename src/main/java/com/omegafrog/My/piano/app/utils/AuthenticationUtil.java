@@ -18,13 +18,4 @@ public class AuthenticationUtil {
         }
         return ((SecurityUser) authentication.getPrincipal()).getUser();
     }
-
-    public static Admin getLoggedInAdmin(){
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null) {
-            log.error("authentication is null");
-            throw new AccessDeniedException("authentication is null");
-        }
-        return (Admin) authentication.getPrincipal();
-    }
 }

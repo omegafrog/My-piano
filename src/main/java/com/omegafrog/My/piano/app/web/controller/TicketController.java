@@ -3,9 +3,9 @@ package com.omegafrog.My.piano.app.web.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
-import com.omegafrog.My.piano.app.utils.response.APIBadRequestResponse;
-import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
-import com.omegafrog.My.piano.app.utils.response.JsonAPIResponse;
+import com.omegafrog.My.piano.app.web.response.APIBadRequestSuccessResponse;
+import com.omegafrog.My.piano.app.web.response.success.ApiSuccessResponse;
+import com.omegafrog.My.piano.app.web.response.success.JsonAPISuccessResponse;
 import com.omegafrog.My.piano.app.web.domain.ticket.TicketStatus;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.comment.ReplyDto;
@@ -37,12 +37,12 @@ public class TicketController {
     private final TicketService ticketService;
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public JsonAPIResponse<Void> handleIllegalArgumentException(IllegalArgumentException ex) {
-        return new APIBadRequestResponse(ex.getMessage());
+    public JsonAPISuccessResponse<Void> handleIllegalArgumentException(IllegalArgumentException ex) {
+        return new APIBadRequestSuccessResponse(ex.getMessage());
     }
 
     @GetMapping("")
-    public JsonAPIResponse<Map<String, Object>> getTickets(
+    public JsonAPISuccessResponse<Map<String, Object>> getTickets(
             @RequestParam @Nullable Long id,
             @RequestParam @Nullable TicketType type,
             @RequestParam @Nullable TicketStatus status,
@@ -56,38 +56,38 @@ public class TicketController {
         List<TicketDto> tickets = ticketService.getTickets(userDetails, filter, pageable);
         data.put("count", tickets.size());
         data.put("data", tickets);
-        return new APISuccessResponse<>("Get tickets success.", data);
+        return new ApiSuccessResponse<>("Get tickets success.", data);
 
     }
 
     @PutMapping("")
-    public JsonAPIResponse<TicketDto> createTicket(@RequestBody RequestTicketDto dto ) throws JsonProcessingException {
+    public JsonAPISuccessResponse<TicketDto> createTicket(@RequestBody RequestTicketDto dto ) throws JsonProcessingException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         TicketDto data = ticketService.createTicket(dto,  loggedInUser);
-        return new APISuccessResponse<>("Create ticket success.", data);
+        return new ApiSuccessResponse<>("Create ticket success.", data);
     }
 
     @DeleteMapping("{id}")
-    public JsonAPIResponse<Void> closeTicket(@PathVariable Long id){
+    public JsonAPISuccessResponse<Void> closeTicket(@PathVariable Long id){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails userdetails = (UserDetails) authentication.getPrincipal();
         ticketService.closeTicket(id, userdetails);
-        return new APISuccessResponse<>("Close ticket success.");
+        return new ApiSuccessResponse<>("Close ticket success.");
     }
 
     @PutMapping("{id}")
-    public JsonAPIResponse<ReplyDto> replyTo(@PathVariable Long id, @RequestBody RequestTicketDto dto) throws JsonProcessingException {
+    public JsonAPISuccessResponse<ReplyDto> replyTo(@PathVariable Long id, @RequestBody RequestTicketDto dto) throws JsonProcessingException {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         UserDetails principal =  (UserDetails) auth.getPrincipal();
         ReplyDto data = ticketService.replyTo(id, dto, principal);
-        return new APISuccessResponse<>("Reply to ticket success.", data);
+        return new ApiSuccessResponse<>("Reply to ticket success.", data);
     }
 
     @GetMapping("{id}")
-    public JsonAPIResponse<TicketDto> getTicket(@PathVariable Long id) throws JsonProcessingException {
+    public JsonAPISuccessResponse<TicketDto> getTicket(@PathVariable Long id) throws JsonProcessingException {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         UserDetails principal = (UserDetails) auth.getPrincipal();
         TicketDto data = ticketService.getTicket(id,principal);
-        return new APISuccessResponse<>("Get ticket success.", data);
+        return new ApiSuccessResponse<>("Get ticket success.", data);
     }
 }

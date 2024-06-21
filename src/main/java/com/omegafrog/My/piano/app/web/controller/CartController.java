@@ -9,9 +9,9 @@ import com.omegafrog.My.piano.app.web.dto.order.OrderDto;
 import com.omegafrog.My.piano.app.web.dto.order.OrderRegisterDto;
 import com.omegafrog.My.piano.app.web.service.CartApplicationService;
 import com.omegafrog.My.piano.app.web.service.OrderService;
-import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
-import com.omegafrog.My.piano.app.utils.response.JsonAPIResponse;
-import com.omegafrog.My.piano.app.utils.response.ResponseUtil;
+import com.omegafrog.My.piano.app.web.response.success.ApiSuccessResponse;
+import com.omegafrog.My.piano.app.web.response.success.JsonAPISuccessResponse;
+import com.omegafrog.My.piano.app.web.response.ResponseUtil;
 import jakarta.persistence.PersistenceException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -37,43 +37,43 @@ public class CartController {
     private final SellableItemFactory sellableItemFactory;
 
     @PostMapping("{mainResource}")
-    public JsonAPIResponse addToCart(@RequestBody OrderRegisterDto dto, @PathVariable String mainResource, HttpServletRequest request)
+    public JsonAPISuccessResponse addToCart(@RequestBody OrderRegisterDto dto, @PathVariable String mainResource, HttpServletRequest request)
             throws JsonProcessingException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         OrderDto createdOrder = orderService.makeOrder(mainResource, dto);
         List<OrderDto> orderDtos = cartService.addToCart(createdOrder, loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("contents", orderDtos);
-        return new APISuccessResponse("Add order to cart success.", data);
+        return new ApiSuccessResponse("Add order to cart success.", data);
     }
 
     @DeleteMapping("/{id}")
-    public JsonAPIResponse deleteFromCart(@PathVariable Long id){
+    public JsonAPISuccessResponse deleteFromCart(@PathVariable Long id){
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         cartService.deleteFromCart(id, loggedInUser);
-        return new APISuccessResponse("Delete order from cart success.");
+        return new ApiSuccessResponse("Delete order from cart success.");
     }
 
     @GetMapping("")
-    public JsonAPIResponse getAllContentFromCart() throws JsonProcessingException , PersistenceException {
+    public JsonAPISuccessResponse getAllContentFromCart() throws JsonProcessingException , PersistenceException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         List<OrderDto> allContentFromCart = cartService.getAllContentFromCart(loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("contents", allContentFromCart);
-        return new APISuccessResponse("Get all cart contents success.", data);
+        return new ApiSuccessResponse("Get all cart contents success.", data);
     }
     @GetMapping("{mainResource}/{id}")
-    public JsonAPIResponse isItemInCart(@PathVariable String mainResource, @PathVariable Long id) throws JsonProcessingException {
+    public JsonAPISuccessResponse isItemInCart(@PathVariable String mainResource, @PathVariable Long id) throws JsonProcessingException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         boolean isInCart = cartService.isItemInCart(mainResource, id, loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("isInCart", isInCart);
-        return new APISuccessResponse("Check item is in cart success.", data);
+        return new ApiSuccessResponse("Check item is in cart success.", data);
     }
 
     @PatchMapping("")
-    public JsonAPIResponse purchaseInCart(@RequestParam(name="orderId") Set<Long> orderId) throws JsonProcessingException {
+    public JsonAPISuccessResponse purchaseInCart(@RequestParam(name="orderId") Set<Long> orderId) throws JsonProcessingException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         int payCnt = cartService.purchaseInCart(orderId, loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("payCnt", payCnt);
-        return new APISuccessResponse("Purchase all content in cart success.", data);
+        return new ApiSuccessResponse("Purchase all content in cart success.", data);
     }
 
 }

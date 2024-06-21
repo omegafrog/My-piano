@@ -4,8 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.omegafrog.My.piano.app.external.tossPayment.PaymentStatusChangedResult;
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.utils.MapperUtil;
-import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
-import com.omegafrog.My.piano.app.utils.response.JsonAPIResponse;
+import com.omegafrog.My.piano.app.web.response.success.ApiSuccessResponse;
+import com.omegafrog.My.piano.app.web.response.success.JsonAPISuccessResponse;
 import com.omegafrog.My.piano.app.web.domain.cash.PaymentHistory;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.service.CashOrderApplicationService;
@@ -33,10 +33,10 @@ public class CashController {
     }
 
     @GetMapping("/info")
-    public JsonAPIResponse createCashOrder(String orderId, int amount, String name) {
+    public JsonAPISuccessResponse createCashOrder(String orderId, int amount, String name) {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         cashOrderService.createCashOrder(orderId, amount, name, loggedInUser);
-        return new APISuccessResponse("Create cash order success.");
+        return new ApiSuccessResponse("Create cash order success.");
     }
 
     @Setter
@@ -50,16 +50,16 @@ public class CashController {
     }
 
     @PostMapping("/request")
-    public JsonAPIResponse requestCashOrder(@RequestBody CashOrderDto cashOrder) throws JsonProcessingException {
+    public JsonAPISuccessResponse requestCashOrder(@RequestBody CashOrderDto cashOrder) throws JsonProcessingException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         cashOrderService.requestCashOrder(cashOrder.paymentKey, cashOrder.orderId, cashOrder.amount, loggedInUser);
-        return new APISuccessResponse("Request cash order success.");
+        return new ApiSuccessResponse("Request cash order success.");
     }
 
     @GetMapping
-    public JsonAPIResponse<List<PaymentHistory>> getPaymentHistory(@Nullable @RequestParam LocalDate start,@Nullable @RequestParam LocalDate end, Pageable pageable) throws JsonProcessingException {
+    public JsonAPISuccessResponse<List<PaymentHistory>> getPaymentHistory(@Nullable @RequestParam LocalDate start, @Nullable @RequestParam LocalDate end, Pageable pageable) throws JsonProcessingException {
         List<PaymentHistory> paymentHistory =
                 cashOrderService.getPaymentHistory( start, end, AuthenticationUtil.getLoggedInUser(), pageable);
-        return new APISuccessResponse("get payment history success.", paymentHistory);
+        return new ApiSuccessResponse("get payment history success.", paymentHistory);
     }
 }

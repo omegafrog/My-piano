@@ -1,7 +1,7 @@
 package com.omegafrog.My.piano.app.web.controller;
 
-import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
-import com.omegafrog.My.piano.app.utils.response.JsonAPIResponse;
+import com.omegafrog.My.piano.app.web.response.success.ApiSuccessResponse;
+import com.omegafrog.My.piano.app.web.response.success.JsonAPISuccessResponse;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class SystemController {
 
     @GetMapping("/healthcheck")
-    public JsonAPIResponse<Void> checkHealth(){
-        return new APISuccessResponse<>("hello world");
+    public JsonAPISuccessResponse<Void> checkHealth(){
+        return new ApiSuccessResponse<>("hello world");
 
     }
 }

@@ -1,7 +1,7 @@
 package com.omegafrog.My.piano.app.security.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.omegafrog.My.piano.app.utils.response.APIUnauthorizedResponse;
+import com.omegafrog.My.piano.app.web.response.APIUnauthorizedSuccessResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -22,7 +22,7 @@ public class AuthenticationExceptionEntryPoint implements AuthenticationEntryPoi
         response.setCharacterEncoding("utf-8");
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.getWriter().write(
-                objectMapper.writeValueAsString(new APIUnauthorizedResponse(authException.getMessage()))
+                objectMapper.writeValueAsString(new APIUnauthorizedSuccessResponse(authException.getMessage()))
         );
     }
 }

@@ -7,7 +7,7 @@ import com.omegafrog.My.piano.app.security.jwt.RefreshToken;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.security.jwt.TokenInfo;
 import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
-import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
+import com.omegafrog.My.piano.app.web.response.success.ApiSuccessResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -45,7 +45,7 @@ public class AdminLoginSuccessHandler implements AuthenticationSuccessHandler {
 
         data.put("access token", tokenInfo.getGrantType() + " " + tokenInfo.getAccessToken());
         tokenUtils.setRefreshToken(response, tokenInfo);
-        APISuccessResponse loginSuccess = new APISuccessResponse("login success", data);
+        ApiSuccessResponse loginSuccess = new ApiSuccessResponse("login success", data);
         String s = objectMapper.writeValueAsString(loginSuccess);
 
         writer.write(s);

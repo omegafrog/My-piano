@@ -3,9 +3,9 @@ package com.omegafrog.My.piano.app.web.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
-import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
-import com.omegafrog.My.piano.app.utils.response.JsonAPIResponse;
-import com.omegafrog.My.piano.app.utils.response.ResponseUtil;
+import com.omegafrog.My.piano.app.web.response.success.ApiSuccessResponse;
+import com.omegafrog.My.piano.app.web.response.success.JsonAPISuccessResponse;
+import com.omegafrog.My.piano.app.web.response.ResponseUtil;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.post.UpdateVideoPostDto;
 import com.omegafrog.My.piano.app.web.dto.videoPost.VideoPostDto;
@@ -26,56 +26,56 @@ public class VideoPostController {
     private final VideoPostApplicationService videoPostApplicationService;
 
     @PostMapping("")
-    public JsonAPIResponse writePost(@RequestBody VideoPostRegisterDto videoPost)
+    public JsonAPISuccessResponse writePost(@RequestBody VideoPostRegisterDto videoPost)
             throws JsonProcessingException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         VideoPostDto videoPostDto = videoPostApplicationService.writePost(videoPost, loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("videoPost", videoPostDto);
-        return new APISuccessResponse("Write videoPost success", data);
+        return new ApiSuccessResponse("Write videoPost success", data);
     }
 
     @GetMapping("/{id}")
-    public JsonAPIResponse findPost(@PathVariable Long id)
+    public JsonAPISuccessResponse findPost(@PathVariable Long id)
             throws JsonProcessingException {
         VideoPostDto postById = videoPostApplicationService.findPostById(id);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("videoPost", postById);
-        return new APISuccessResponse("Find videoPost success", data);
+        return new ApiSuccessResponse("Find videoPost success", data);
     }
     @GetMapping
-    public JsonAPIResponse findAllPosts(Pageable pageable) throws JsonProcessingException {
+    public JsonAPISuccessResponse findAllPosts(Pageable pageable) throws JsonProcessingException {
         List<VideoPostDto> allVideoPosts = videoPostApplicationService.findAllVideoPosts(pageable);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("videoPosts", allVideoPosts);
-        return new APISuccessResponse("Find all videoPosts success", data);
+        return new ApiSuccessResponse("Find all videoPosts success", data);
     }
 
     @PostMapping("/{id}")
-    public JsonAPIResponse updatePost(@PathVariable Long id, @RequestBody UpdateVideoPostDto post)
+    public JsonAPISuccessResponse updatePost(@PathVariable Long id, @RequestBody UpdateVideoPostDto post)
             throws JsonProcessingException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         VideoPostDto postDto = videoPostApplicationService.updatePost(id, post, loggedInUser);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("videoPost", postDto);
-        return new APISuccessResponse("Update video post success", data);
+        return new ApiSuccessResponse("Update video post success", data);
     }
 
     @DeleteMapping("/{id}")
-    public JsonAPIResponse deletePost(@PathVariable Long id) {
+    public JsonAPISuccessResponse deletePost(@PathVariable Long id) {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         videoPostApplicationService.deletePost(id, loggedInUser);
-        return new APISuccessResponse("delete video post success");
+        return new ApiSuccessResponse("delete video post success");
     }
 
     @GetMapping("/{id}/like")
-    public JsonAPIResponse likePost(@PathVariable Long id) {
+    public JsonAPISuccessResponse likePost(@PathVariable Long id) {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         videoPostApplicationService.likePost(id, loggedInUser);
-        return new APISuccessResponse("Like video post success.");
+        return new ApiSuccessResponse("Like video post success.");
     }
 
     @DeleteMapping("/{id}/like")
-    public JsonAPIResponse dislikePost(@PathVariable Long id) {
+    public JsonAPISuccessResponse dislikePost(@PathVariable Long id) {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         videoPostApplicationService.dislikePost(id, loggedInUser);
-        return new APISuccessResponse("Dislike video post success");
+        return new ApiSuccessResponse("Dislike video post success");
     }
 
 }

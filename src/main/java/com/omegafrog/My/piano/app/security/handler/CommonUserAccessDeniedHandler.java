@@ -1,8 +1,8 @@
 package com.omegafrog.My.piano.app.security.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.omegafrog.My.piano.app.utils.response.APIForbiddenResponse;
-import com.omegafrog.My.piano.app.utils.response.APIUnauthorizedResponse;
+import com.omegafrog.My.piano.app.web.response.APIForbiddenSuccessResponse;
+import com.omegafrog.My.piano.app.web.response.APIUnauthorizedSuccessResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -25,9 +25,9 @@ public class CommonUserAccessDeniedHandler implements AccessDeniedHandler {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         String body;
         if(accessDeniedException.getCause() instanceof AuthenticationCredentialsNotFoundException){
-            body = objectMapper.writeValueAsString(new APIUnauthorizedResponse(accessDeniedException.getMessage()));
+            body = objectMapper.writeValueAsString(new APIUnauthorizedSuccessResponse(accessDeniedException.getMessage()));
         }else{
-            body = objectMapper.writeValueAsString(new APIForbiddenResponse(accessDeniedException.getMessage()));
+            body = objectMapper.writeValueAsString(new APIForbiddenSuccessResponse(accessDeniedException.getMessage()));
         }
         response.getWriter().write(body);
     }

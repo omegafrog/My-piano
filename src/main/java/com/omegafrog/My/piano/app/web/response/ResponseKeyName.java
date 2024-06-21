@@ -1,4 +1,4 @@
-package com.omegafrog.My.piano.app.utils.response;
+package com.omegafrog.My.piano.app.web.response;
 
 public enum ResponseKeyName {
     UPLOADED_COMMUNITY_POSTS("posts", "올린 커뮤니티 포스트"),

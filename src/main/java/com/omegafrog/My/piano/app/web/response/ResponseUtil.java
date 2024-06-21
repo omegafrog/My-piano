@@ -1,6 +1,7 @@
-package com.omegafrog.My.piano.app.utils.response;
+package com.omegafrog.My.piano.app.web.response;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.omegafrog.My.piano.app.web.response.success.JsonAPISuccessResponse;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
@@ -13,7 +14,7 @@ import java.util.Map;
 public class ResponseUtil {
 
     public static void writeResponse(
-            JsonAPIResponse apiResponse, HttpServletResponse response, ObjectMapper objectMapper) throws IOException {
+            JsonAPISuccessResponse apiResponse, HttpServletResponse response, ObjectMapper objectMapper) throws IOException {
         PrintWriter writer = response.getWriter();
         writer.write(objectMapper.writeValueAsString(apiResponse));
         writer.flush();

@@ -2,7 +2,7 @@ package com.omegafrog.My.piano.app.security.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
-import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
+import com.omegafrog.My.piano.app.web.response.success.ApiSuccessResponse;
 import com.omegafrog.My.piano.app.security.jwt.RefreshToken;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.security.jwt.TokenInfo;
@@ -45,7 +45,7 @@ public class CommonUserLoginSuccessHandler implements AuthenticationSuccessHandl
 
         data.put("access token", tokenInfo.getGrantType() + " " + tokenInfo.getAccessToken());
         tokenUtils.setRefreshToken(response, tokenInfo);
-        APISuccessResponse loginSuccess = new APISuccessResponse("login success", data);
+        ApiSuccessResponse loginSuccess = new ApiSuccessResponse("login success", data);
         String s = objectMapper.writeValueAsString(loginSuccess);
 
         writer.write(s);

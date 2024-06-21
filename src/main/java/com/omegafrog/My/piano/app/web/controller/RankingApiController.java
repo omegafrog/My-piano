@@ -1,8 +1,8 @@
 package com.omegafrog.My.piano.app.web.controller;
 
-import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
-import com.omegafrog.My.piano.app.utils.response.JsonAPIResponse;
-import com.omegafrog.My.piano.app.utils.response.ResponseUtil;
+import com.omegafrog.My.piano.app.web.response.success.ApiSuccessResponse;
+import com.omegafrog.My.piano.app.web.response.success.JsonAPISuccessResponse;
+import com.omegafrog.My.piano.app.web.response.ResponseUtil;
 import com.omegafrog.My.piano.app.web.domain.ranking.PopularRankingItem;
 import com.omegafrog.My.piano.app.web.enums.DateRangeType;
 import com.omegafrog.My.piano.app.web.service.ranking.RankingApiApplicationService;
@@ -25,11 +25,11 @@ public class RankingApiController {
     private RankingApiApplicationService rankingService;
 
     @GetMapping("popular")
-    public JsonAPIResponse getPopularSheetPost(@RequestParam DateRangeType range, @RequestParam String limit)
+    public JsonAPISuccessResponse getPopularSheetPost(@RequestParam DateRangeType range, @RequestParam String limit)
             throws IOException, TimeoutException {
         List<PopularRankingItem> popularSheetPost = rankingService.getPopularSheetPost(range, limit);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("popular", popularSheetPost);
-        return new APISuccessResponse("Get popular sheet post success.", data);
+        return new ApiSuccessResponse("Get popular sheet post success.", data);
     }
 
 }

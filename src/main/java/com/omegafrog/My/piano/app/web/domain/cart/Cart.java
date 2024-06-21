@@ -1,5 +1,6 @@
 package com.omegafrog.My.piano.app.web.domain.cart;
 
+import com.omegafrog.My.piano.app.utils.exception.cart.DuplicateItemOrderException;
 import com.omegafrog.My.piano.app.web.domain.order.Order;
 import com.omegafrog.My.piano.app.utils.exception.payment.PaymentException;
 import jakarta.persistence.*;
@@ -26,6 +27,8 @@ public class Cart {
     private List<Order> contents = new ArrayList<>();
 
     public void addContent(Order order) {
+        boolean removed = contents.stream().anyMatch(o -> o.getItem().equals(order.getItem()));
+        if(removed) throw new DuplicateItemOrderException(order.getItem().getId(), order.getId());
         contents.add(order);
         totalPrice += order.getTotalPrice();
     }
@@ -36,7 +39,7 @@ public class Cart {
             throw new EntityNotFoundException("Cannot find Order entity : " + orderId);
     }
 
-    public void payContents() throws PaymentException {
+    public void payAllContents() throws PaymentException {
         contents.forEach(content -> content.getBuyer().pay(content));
     }
     public int payContents(Set<Long> orderIds){

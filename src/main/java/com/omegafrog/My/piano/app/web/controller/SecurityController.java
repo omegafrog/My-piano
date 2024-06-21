@@ -10,10 +10,13 @@ import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.security.jwt.TokenInfo;
 import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
 import com.omegafrog.My.piano.app.utils.MapperUtil;
-import com.omegafrog.My.piano.app.utils.response.*;
 import com.omegafrog.My.piano.app.web.dto.user.RegisterUserDto;
 import com.omegafrog.My.piano.app.web.dto.user.SecurityUserDto;
 import com.omegafrog.My.piano.app.security.exception.DuplicatePropertyException;
+import com.omegafrog.My.piano.app.web.response.APIBadRequestSuccessResponse;
+import com.omegafrog.My.piano.app.web.response.APIForbiddenSuccessResponse;
+import com.omegafrog.My.piano.app.web.response.success.ApiSuccessResponse;
+import com.omegafrog.My.piano.app.web.response.success.JsonAPISuccessResponse;
 import com.omegafrog.My.piano.app.web.service.admin.CommonUserService;
 import io.awspring.cloud.s3.S3Exception;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -63,12 +66,12 @@ public class SecurityController {
 
 
     @GetMapping("/validate")
-    public JsonAPIResponse<Void> validateToken() {
-        return new APISuccessResponse<>("validate success.");
+    public JsonAPISuccessResponse<Void> validateToken() {
+        return new ApiSuccessResponse<>("validate success.");
     }
 
     @GetMapping("/revalidate")
-    public JsonAPIResponse revalidateToken(HttpServletRequest request, HttpServletResponse response)
+    public JsonAPISuccessResponse revalidateToken(HttpServletRequest request, HttpServletResponse response)
             throws JsonProcessingException {
         String accessToken = tokenUtils.getAccessTokenString(request.getHeader(HttpHeaders.AUTHORIZATION));
 
@@ -78,19 +81,19 @@ public class SecurityController {
             TokenInfo tokenInfo = commonUserService.getTokenInfo(e);
             String accessTokenString = tokenInfo.getGrantType() + " " + tokenInfo.getAccessToken();
             tokenUtils.setRefreshToken(response, tokenInfo);
-            return new APISuccessResponse<>("Token revalidating success.", accessTokenString);
+            return new ApiSuccessResponse<>("Token revalidating success.", accessTokenString);
         }
-        return new APIBadRequestResponse("Token is not expired yet.");
+        return new APIBadRequestSuccessResponse("Token is not expired yet.");
     }
 
 
     @ExceptionHandler(S3Exception.class)
-    public APIBadRequestResponse S3ExceptionHandler(S3Exception ex) {
-        return new APIBadRequestResponse(ex.getMessage());
+    public APIBadRequestSuccessResponse S3ExceptionHandler(S3Exception ex) {
+        return new APIBadRequestSuccessResponse(ex.getMessage());
     }
 
     @PostMapping("/user/register")
-    public JsonAPIResponse<SecurityUserDto> registerCommonUser(
+    public JsonAPISuccessResponse<SecurityUserDto> registerCommonUser(
             @RequestParam(name = "profileImg") @Nullable MultipartFile profileImg,
             @RequestParam String registerInfo)
             throws IOException, DuplicatePropertyException {
@@ -100,13 +103,13 @@ public class SecurityController {
             securityUserDto = commonUserService.registerUserWithoutProfile(dto);
         else
             securityUserDto = commonUserService.registerUser(dto, profileImg);
-        return new APISuccessResponse<>("회원가입 성공.", securityUserDto);
+        return new ApiSuccessResponse<>("회원가입 성공.", securityUserDto);
     }
 
     @ExceptionHandler(AuthenticationException.class)
-    public APIForbiddenResponse authenticationErrorResponse(AuthenticationException ex){
+    public APIForbiddenSuccessResponse authenticationErrorResponse(AuthenticationException ex){
         ex.printStackTrace();
-        return new APIForbiddenResponse(ex.getMessage());
+        return new APIForbiddenSuccessResponse(ex.getMessage());
     }
 
     @GetMapping("/oauth2/google/callback")
@@ -158,10 +161,10 @@ public class SecurityController {
 
 
     @GetMapping("/user/signOut")
-    public JsonAPIResponse signOutUser(Authentication auth) {
+    public JsonAPISuccessResponse signOutUser(Authentication auth) {
         SecurityUser user = (SecurityUser) auth.getPrincipal();
         commonUserService.signOutUser(user.getUsername());
-        return new APISuccessResponse("회원탈퇴 성공.");
+        return new ApiSuccessResponse("회원탈퇴 성공.");
     }
 }
 
