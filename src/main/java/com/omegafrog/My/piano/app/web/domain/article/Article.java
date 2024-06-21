@@ -1,5 +1,6 @@
 package com.omegafrog.My.piano.app.web.domain.article;
 
+import com.omegafrog.My.piano.app.utils.exception.article.CannotDecreaseLikeCountException;
 import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
 import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.user.User;
@@ -59,6 +60,7 @@ public class Article {
     }
 
     public void decreaseLikedCount(){
+        if(likeCount==0) throw new CannotDecreaseLikeCountException("Like count is already 0");
         likeCount--;
     }
 
