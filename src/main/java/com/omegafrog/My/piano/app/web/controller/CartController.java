@@ -25,41 +25,35 @@ import java.util.Set;
 public class CartController {
 
     private final CartApplicationService cartService;
-
-
     private final OrderService orderService;
 
     @PostMapping("{mainResource}")
     public JsonAPISuccessResponse addToCart(@RequestBody OrderRegisterDto dto, @PathVariable String mainResource)  {
         OrderDto createdOrder = orderService.makeOrder(mainResource, dto);
-        List<OrderDto> orderDtoList = cartService.addToCart(createdOrder, loggedInUser);
+        List<OrderDto> orderDtoList = cartService.addToCart(createdOrder);
         return new ApiSuccessResponse("Add order to cart success.", orderDtoList);
     }
 
     @DeleteMapping("/{id}")
     public JsonAPISuccessResponse deleteFromCart(@NotNull @PathVariable Long id){
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        cartService.deleteFromCart(id, loggedInUser);
+        cartService.deleteFromCart(id);
         return new ApiSuccessResponse("Delete order from cart success.");
     }
 
     @GetMapping("")
     public JsonAPISuccessResponse getAllContentFromCart() throws PersistenceException {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        List<OrderDto> allContentFromCart = cartService.getAllContentFromCart(loggedInUser);
+        List<OrderDto> allContentFromCart = cartService.getAllContentFromCart();
         return new ApiSuccessResponse("Get all cart contents success.", allContentFromCart);
     }
     @GetMapping("{mainResource}/{id}")
     public JsonAPISuccessResponse isItemInCart(@PathVariable String mainResource, @PathVariable Long id) throws JsonProcessingException {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        boolean isInCart = cartService.isItemInCart(mainResource, id, loggedInUser);
+        boolean isInCart = cartService.isItemInCart(mainResource, id);
         return new ApiSuccessResponse("Check item is in cart success.", isInCart);
     }
 
     @PatchMapping("")
     public JsonAPISuccessResponse purchaseInCart(@RequestParam(name="orderId") Set<Long> orderId) throws JsonProcessingException {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        int payCnt = cartService.purchaseInCart(orderId, loggedInUser);
+        int payCnt = cartService.purchaseInCart(orderId);
         return new ApiSuccessResponse("Purchase all content in cart success.",payCnt);
     }
 

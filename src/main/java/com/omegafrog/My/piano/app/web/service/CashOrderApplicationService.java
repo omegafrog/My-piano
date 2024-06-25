@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.omegafrog.My.piano.app.external.tossPayment.Payment;
 import com.omegafrog.My.piano.app.external.tossPayment.PaymentStatusChangedResult;
 import com.omegafrog.My.piano.app.external.tossPayment.TossPaymentInstance;
+import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.web.exception.payment.CashOrderCalculateFailureException;
 import com.omegafrog.My.piano.app.web.exception.payment.CashOrderConfirmFailedException;
 import com.omegafrog.My.piano.app.web.exception.payment.TossAPIException;
@@ -35,20 +36,15 @@ import java.util.List;
 public class CashOrderApplicationService {
 
     private final CashOrderRepository cashOrderRepository;
-
-    private final UserRepository userRepository;
-
     @PersistenceUnit
     private EntityManagerFactory emf;
-
-
     private final DateRangeFactory dateRangeFactory;
-
-
     private final TossPaymentInstance paymentInstance;
+    private final AuthenticationUtil authenticationUtil;
 
     @Transactional
-    public CashOrderDto createCashOrder(String orderId, int amount, String name, User loggedInUser) {
+    public CashOrderDto createCashOrder(String orderId, int amount, String name) {
+        User loggedInUser = authenticationUtil.getLoggedInUser();
         CashOrder cashOrder = new CashOrder(orderId, name, amount, loggedInUser);
         CashOrder saved = cashOrderRepository.save(cashOrder);
         return saved.toDto();
@@ -83,9 +79,10 @@ public class CashOrderApplicationService {
      * @param amount       : 총 결제 금액
      * @param loggedInUser : 결제 요청 유저
      */
-    public void requestCashOrder(String paymentKey, String orderId, int amount, User loggedInUser) throws JsonProcessingException {
+    public void requestCashOrder(String paymentKey, String orderId, int amount) throws JsonProcessingException {
         CashOrder byOrderId;
         User user;
+        User loggedInUser = authenticationUtil.getLoggedInUser();
 
         EntityManager entityManager = emf.createEntityManager();
         EntityTransaction tx = entityManager.getTransaction();
@@ -130,7 +127,8 @@ public class CashOrderApplicationService {
         }
     }
     @Transactional
-    public List<PaymentHistory> getPaymentHistory(LocalDate start, LocalDate end, User loggedInUser, @Nullable Pageable pageable) {
+    public List<PaymentHistory> getPaymentHistory(LocalDate start, LocalDate end, @Nullable Pageable pageable) {
+        User loggedInUser = authenticationUtil.getLoggedInUser();
         // expired handling
         List<CashOrder> expired = cashOrderRepository.findExpired(loggedInUser.getId(), new CustomDateRange(LocalDate.now(), LocalDate.now()));
         for(CashOrder order : expired)

@@ -26,7 +26,6 @@ import java.util.List;
 public class CashController {
 
     private final CashOrderApplicationService cashOrderService;
-
     private final MapperUtil mapperUtil;
 
     @PostMapping("/webhook")
@@ -37,8 +36,7 @@ public class CashController {
 
     @GetMapping("/info")
     public JsonAPISuccessResponse createCashOrder(String orderId, int amount, String name) {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        cashOrderService.createCashOrder(orderId, amount, name, loggedInUser);
+        cashOrderService.createCashOrder(orderId, amount, name);
         return new ApiSuccessResponse("Create cash order success.");
     }
 
@@ -57,15 +55,14 @@ public class CashController {
 
     @PostMapping("/request")
     public JsonAPISuccessResponse requestCashOrder(@Valid @RequestBody CashOrderDto cashOrder) throws JsonProcessingException {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        cashOrderService.requestCashOrder(cashOrder.paymentKey, cashOrder.orderId, cashOrder.amount, loggedInUser);
+        cashOrderService.requestCashOrder(cashOrder.paymentKey, cashOrder.orderId, cashOrder.amount);
         return new ApiSuccessResponse("Request cash order success.");
     }
 
     @GetMapping
     public JsonAPISuccessResponse<List<PaymentHistory>> getPaymentHistory(@Nullable @RequestParam LocalDate start, @Nullable @RequestParam LocalDate end, Pageable pageable) throws JsonProcessingException {
         List<PaymentHistory> paymentHistory =
-                cashOrderService.getPaymentHistory( start, end, AuthenticationUtil.getLoggedInUser(), pageable);
+                cashOrderService.getPaymentHistory( start, end, pageable);
         return new ApiSuccessResponse("get payment history success.", paymentHistory);
     }
 }
