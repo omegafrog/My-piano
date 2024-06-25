@@ -19,9 +19,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.persistence.PersistenceException;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -43,84 +45,65 @@ public class UserController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200")
     })
-    public JsonAPISuccessResponse<List<PostDto>> getMyCommunityPosts()
-            throws AccessDeniedException, JsonProcessingException {
-
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        List<PostDto> data = userService.getMyCommunityPosts(loggedInUser);
+    public JsonAPISuccessResponse<List<PostDto>> getMyCommunityPosts() {
+        List<PostDto> data = userService.getMyCommunityPosts();
         return new ApiSuccessResponse<>("Get community posts success.", data);
     }
 
     @GetMapping("/lesson")
-    public JsonAPISuccessResponse<List<LessonDto>> getPurchasedLessons()
-        throws AccessDeniedException, JsonProcessingException{
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        List<LessonDto> data = userService.getPurchasedLessons(loggedInUser);
+    public JsonAPISuccessResponse<List<LessonDto>> getPurchasedLessons() {
+        List<LessonDto> data = userService.getPurchasedLessons();
         return new ApiSuccessResponse<>("Get purchased lessons success.", data);
     }
 
     @GetMapping("/comments")
-    public JsonAPISuccessResponse<List<ReturnCommentDto>> getMyComments()
-            throws JsonProcessingException {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        List<ReturnCommentDto> data = userService.getMyComments(loggedInUser);
+    public JsonAPISuccessResponse<List<ReturnCommentDto>> getMyComments() {
+        List<ReturnCommentDto> data = userService.getMyComments();
         return new ApiSuccessResponse<>("Get all comments success.", data);
     }
 
     @GetMapping("/purchasedSheets")
-    public JsonAPISuccessResponse<List<SheetPostDto>> getPurchasedSheets()
-            throws JsonProcessingException{
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        List<SheetPostDto> data = userService.getPurchasedSheets(loggedInUser);
+    public JsonAPISuccessResponse<List<SheetPostDto>> getPurchasedSheets() {
+        List<SheetPostDto> data = userService.getPurchasedSheets();
         return new ApiSuccessResponse<>("Get all purchased sheets success.", data);
     }
 
     @GetMapping("/uploadedSheets")
-    public JsonAPISuccessResponse<Page<SheetPostDto>> getUploadedSheets(Pageable pageable, @RequestParam boolean unPaged)
-        throws JsonProcessingException, PersistenceException, AccessDeniedException{
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        if(unPaged) pageable = Pageable.unpaged();
-        Page<SheetPostDto> data = userService.uploadedSheetPost(loggedInUser,pageable);
+    public JsonAPISuccessResponse<Page<SheetPostDto>> getUploadedSheets(
+            @Valid @NotNull @PageableDefault(size = 10,page = 0) Pageable pageable){
+        Page<SheetPostDto> data = userService.uploadedSheetPost(pageable);
         return new ApiSuccessResponse<>("Get all uploaded sheets success.", data);
     }
 
     @GetMapping("/likedSheets")
-    public JsonAPISuccessResponse<List<SheetPost>> getLikedSheets() throws JsonProcessingException {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        List<SheetPost> data = userService.getLikedSheets(loggedInUser);
+    public JsonAPISuccessResponse<List<SheetPost>> getLikedSheets() {
+        List<SheetPost> data = userService.getLikedSheets();
         return new ApiSuccessResponse<>("Get liked sheet post success.", data);
     }
 
     @GetMapping("/scrappedSheets")
-    public JsonAPISuccessResponse<List<SheetInfoDto>> getScrappedSheets()
-            throws JsonProcessingException{
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        List<SheetInfoDto> data = userService.getScrappedSheets(loggedInUser);
+    public JsonAPISuccessResponse<List<SheetInfoDto>> getScrappedSheets() {
+        List<SheetInfoDto> data = userService.getScrappedSheets();
         return new ApiSuccessResponse<>("Get all scrapped sheets success.", data);
     }
 
     @GetMapping("/follow")
-    public JsonAPISuccessResponse<List<UserInfo>> getFollowingFollower()
-        throws JsonProcessingException{
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        List<UserInfo> data = userService.getFollowingFollower(loggedInUser);
+    public JsonAPISuccessResponse<List<UserInfo>> getFollowingFollower() {
+        List<UserInfo> data = userService.getFollowingFollower();
         return new ApiSuccessResponse<>("Get all follower success.", data);
     }
 
-
-
     @GetMapping("")
-    public JsonAPISuccessResponse<UserInfo> getUserInformation() throws JsonProcessingException {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        UserInfo data = userService.getUserProfile(loggedInUser);
+    public JsonAPISuccessResponse<UserInfo> getUserInformation() {
+        UserInfo data = userService.getUserProfile();
         return new ApiSuccessResponse<>("Get user profile success.", data);
     }
 
     @PostMapping(value = "")
-    public JsonAPISuccessResponse<UserInfo> changeUserInfo(@Valid @RequestParam(name = "updateInfo") String dto, @RequestParam(name = "profileImg") @Nullable MultipartFile profileImg) throws IOException {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        UserInfo data = userService.changeUserInfo(dto, loggedInUser, profileImg);
+    public JsonAPISuccessResponse<UserInfo> changeUserInfo(
+            @Valid @NotNull @RequestParam(name = "updateInfo") String dto,
+            @Valid @NotNull @RequestParam(name = "profileImg") @Nullable MultipartFile profileImg) throws IOException {
+        UserInfo data = userService.changeUserInfo(dto, profileImg);
         return new ApiSuccessResponse<>("Update User profile success.", data);
     }
-
 }

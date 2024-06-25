@@ -26,7 +26,6 @@ public class NotificationApplicationService {
     /**
      * 구독한 유저의 토큰을 저장한다.
      * @param token : 구독 요청을 전송한 유저의 토큰
-     * @param userId : 구독 요청을 전송한 유저의 id
      */
     public void subscribeUser(String token) {
         User loggedInUser = authenticationUtil.getLoggedInUser();
