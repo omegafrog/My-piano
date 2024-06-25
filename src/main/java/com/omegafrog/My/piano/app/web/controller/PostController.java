@@ -23,7 +23,7 @@ public class PostController {
     private final PostApplicationService postApplicationService;
     @PostMapping("")
     public JsonAPISuccessResponse<Void> writePost(
-            @Valid @NotNull  @RequestBody PostRegisterDto post) {
+            @Valid @NotNull @RequestBody PostRegisterDto post) {
         postApplicationService.writePost(post);
         return new ApiSuccessResponse<>("Write post success");
     }

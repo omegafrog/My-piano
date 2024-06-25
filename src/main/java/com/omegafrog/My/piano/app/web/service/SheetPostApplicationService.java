@@ -1,6 +1,7 @@
 package com.omegafrog.My.piano.app.web.service;
 
 import com.omegafrog.My.piano.app.external.elasticsearch.SheetPostIndexRepository;
+import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.utils.MapperUtil;
 import com.omegafrog.My.piano.app.web.exception.WrongFileExtensionException;
 import com.omegafrog.My.piano.app.external.elasticsearch.ElasticSearchInstance;
@@ -49,6 +50,7 @@ public class SheetPostApplicationService {
     private final S3UploadFileExecutor uploadFileExecutor;
     private final MapperUtil mapperUtil;
     private final SheetPostViewCountRepository sheetPostViewCountRepository;
+    private final AuthenticationUtil authenticationUtil;
 
 
     public SheetPostDto getSheetPost(Long id) {
@@ -60,7 +62,10 @@ public class SheetPostApplicationService {
         return dto;
     }
 
-    public SheetPostDto writeSheetPost(RegisterSheetPostDto dto, List<MultipartFile> files, User loggedInUser) throws IOException {
+    public SheetPostDto writeSheetPost(
+            RegisterSheetPostDto dto,
+            List<MultipartFile> files) throws IOException {
+        User loggedInUser = authenticationUtil.getLoggedInUser();
         try {
             MultipartFile file = files.get(0);
 
@@ -92,7 +97,8 @@ public class SheetPostApplicationService {
         }
     }
 
-    public SheetPostDto update(Long id, String dto, MultipartFile file, User loggedInUser) throws IOException {
+    public SheetPostDto update(Long id, String dto, MultipartFile file) throws IOException {
+        User loggedInUser = authenticationUtil.getLoggedInUser();
         SheetPost sheetPost = sheetPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
         UpdateSheetPostDto updateDto = mapperUtil.parseUpdateSheetPostJson(dto);
@@ -130,7 +136,8 @@ public class SheetPostApplicationService {
         return new SheetPostTempFile(filename, metadata, temp, document, pageNum);
     }
 
-    public String getSheetUrl(Long id, User loggedInUser) {
+    public String getSheetUrl(Long id) {
+        User loggedInUser = authenticationUtil.getLoggedInUser();
         SheetPost sheetPost = sheetPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find Sheetpost entity."));
         User user = userRepository.findById(loggedInUser.getId())
@@ -144,7 +151,8 @@ public class SheetPostApplicationService {
     private record SheetPostTempFile(String filename, ObjectMetadata metadata, File temp, PDDocument document, int pageNum) {
     }
 
-    public void delete(Long id, User loggedInUser) {
+    public void delete(Long id) {
+        User loggedInUser = authenticationUtil.getLoggedInUser();
         SheetPost sheetPost = sheetPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
         uploadFileExecutor.removeSheetPost(sheetPost);
@@ -154,7 +162,8 @@ public class SheetPostApplicationService {
         else throw new AccessDeniedException("Cannot delete other user's sheet post entity : " + id);
     }
 
-    public void likePost(Long id, User loggedInUser) {
+    public void likePost(Long id) {
+        User loggedInUser = authenticationUtil.getLoggedInUser();
         SheetPost sheetPost = sheetPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity:" + id));
         User user = userRepository.findById(loggedInUser.getId())
@@ -162,7 +171,8 @@ public class SheetPostApplicationService {
         user.likeSheetPost(sheetPost);
     }
 
-    public boolean isLikedSheetPost(Long id, User loggedInUser) {
+    public boolean isLikedSheetPost(Long id) {
+        User loggedInUser = authenticationUtil.getLoggedInUser();
         SheetPost targetSheetPost = sheetPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(("Cannot find SheetPost entity:" + id)));
         User user = userRepository.findById(loggedInUser.getId())
@@ -171,7 +181,8 @@ public class SheetPostApplicationService {
                 .stream().anyMatch(likedSheetPost-> likedSheetPost.getSheetPost().equals(targetSheetPost));
     }
 
-    public void dislikeSheetPost(Long id, User loggedInUser) {
+    public void dislikeSheetPost(Long id) {
+        User loggedInUser = authenticationUtil.getLoggedInUser();
         SheetPost sheetPost = sheetPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
         User user = userRepository.findById(loggedInUser.getId())
@@ -180,14 +191,16 @@ public class SheetPostApplicationService {
         if(!removed) throw new EntityNotFoundException("좋아요를 누르지 않았습니다." + id);
         sheetPost.decreaseLikedCount();
     }
-    public void scrapSheetPost(Long id, User loggedInUser) {
+    public void scrapSheetPost(Long id) {
+        User loggedInUser = authenticationUtil.getLoggedInUser();
         SheetPost sheetPost = sheetPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity:"+ id));
         User user = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
         user.scrapSheetPost(sheetPost);
     }
-    public boolean isScrappedSheetPost(Long id, User loggedInUser){
+    public boolean isScrappedSheetPost(Long id){
+        User loggedInUser = authenticationUtil.getLoggedInUser();
         SheetPost targetSheetPost = sheetPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
         User user = userRepository.findById(loggedInUser.getId())
@@ -195,7 +208,8 @@ public class SheetPostApplicationService {
         return user.getScrappedSheetPosts().stream().anyMatch(item -> item.getSheetPost().equals(targetSheetPost));
     }
 
-    public void unScrapSheetPost(Long id, User loggedInUser) {
+    public void unScrapSheetPost(Long id) {
+        User loggedInUser = authenticationUtil.getLoggedInUser();
         SheetPost sheetPost = sheetPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
         User user = userRepository.findById(loggedInUser.getId())
@@ -204,8 +218,14 @@ public class SheetPostApplicationService {
         user.unScrapSheetPost(sheetPost);
     }
 
-    public Page<SheetPostDto> getSheetPosts(String searchSentence, List<String> instrument, List<String> difficulty, List<String> genre, Pageable pageable) throws IOException {
-        List<Long> sheetPostIds = elasticSearchInstance.searchSheetPost(searchSentence, instrument, difficulty, genre, pageable);
+    public Page<SheetPostDto> getSheetPosts(
+            String searchSentence,
+            List<String> instrument,
+            List<String> difficulty,
+            List<String> genre,
+            Pageable pageable) throws IOException {
+        List<Long> sheetPostIds = elasticSearchInstance.searchSheetPost(
+                searchSentence, instrument, difficulty, genre, pageable);
         Page<SheetPostDto> res = sheetPostRepository.findByIds(sheetPostIds,pageable)
                 .map(SheetPost::toDto);
         return res;

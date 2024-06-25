@@ -34,12 +34,12 @@ import java.util.*;
 public class SheetPostController {
 
     private final SheetPostApplicationService sheetPostService;
-    @Autowired
-    private MapperUtil mapperUtil;
+
+    private final MapperUtil mapperUtil;
 
     @GetMapping("/{id}")
-    public JsonAPISuccessResponse<SheetPostDto> getSheetPost(@PathVariable Long id)
-            throws JsonProcessingException, PersistenceException, AccessDeniedException {
+    public JsonAPISuccessResponse<SheetPostDto> getSheetPost(
+            @Valid @NotNull @PathVariable Long id) {
         SheetPostDto data = sheetPostService.getSheetPost(id);
         return new ApiSuccessResponse<>("Get Sheet post success.", data);
     }
@@ -55,77 +55,75 @@ public class SheetPostController {
     }
     @PutMapping("/{id}/like")
     public JsonAPISuccessResponse<Void> likePost(@PathVariable Long id){
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        sheetPostService.likePost(id, loggedInUser);
+        sheetPostService.likePost(id);
         return new ApiSuccessResponse<>("Increase like count success.");
     }
     @GetMapping("/{id}/like")
-    public JsonAPISuccessResponse<Map<String, Object>> isLikePost(@PathVariable Long id) throws JsonProcessingException {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        boolean isLiked= sheetPostService.isLikedSheetPost(id, loggedInUser);
+    public JsonAPISuccessResponse<Map<String, Object>> isLikePost(@PathVariable Long id){
+        boolean isLiked= sheetPostService.isLikedSheetPost(id);
         Map<String, Object> data = ResponseUtil.getStringObjectMap("isLiked", isLiked);
         return new ApiSuccessResponse<>("Check liked sheet post success.", data);
     }
     @DeleteMapping("/{id}/like")
     public JsonAPISuccessResponse<Void> dislikePost(@PathVariable Long id){
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        sheetPostService.dislikeSheetPost(id, loggedInUser);
+        sheetPostService.dislikeSheetPost(id);
         return new ApiSuccessResponse<>("Dislike this sheet post success.");
     }
 
     @PostMapping()
-    public JsonAPISuccessResponse<SheetPostDto> writeSheetPost(@RequestPart(name = "sheetFiles") @Valid @NotNull List<MultipartFile> file,
-                                                               @RequestPart(name = "sheetInfo") String registerSheetInfo)
-            throws IOException, PersistenceException, AccessDeniedException {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+    public JsonAPISuccessResponse<SheetPostDto> writeSheetPost(
+            @RequestPart(name = "sheetFiles") @Valid @NotNull List<MultipartFile> file,
+            @RequestPart(name = "sheetInfo") String registerSheetInfo)
+            throws IOException{
 
-        RegisterSheetPostDto dto = mapperUtil.parseRegisterSheetPostInfo(registerSheetInfo, loggedInUser);
-        SheetPostDto data = sheetPostService.writeSheetPost(dto, file, loggedInUser);
+        RegisterSheetPostDto dto = mapperUtil.parseRegisterSheetPostInfo(registerSheetInfo);
+        SheetPostDto data = sheetPostService.writeSheetPost(dto, file);
 
         return new ApiSuccessResponse<>("Write sheet post success.", data);
     }
 
     @PutMapping("/{id}/scrap")
-    public JsonAPISuccessResponse<Void> scrapSheetPost(@PathVariable Long id){
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        sheetPostService.scrapSheetPost(id, loggedInUser);
+    public JsonAPISuccessResponse<Void> scrapSheetPost(
+            @Valid @NotNull @PathVariable Long id){
+        sheetPostService.scrapSheetPost(id);
         return new ApiSuccessResponse<>("Scrap sheet post success.");
     }
 
     @GetMapping("/{id}/scrap")
-    public JsonAPISuccessResponse<Map<String, Object>> isScrappedSheetPost(@PathVariable Long id) throws JsonProcessingException {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        boolean isScrapped = sheetPostService.isScrappedSheetPost(id, loggedInUser);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("isScrapped", isScrapped);
-        return new ApiSuccessResponse<>("Check sheet post scrap success.", data);
+    public JsonAPISuccessResponse isScrappedSheetPost(
+            @Valid @NotNull @PathVariable Long id) {
+        boolean isScrapped = sheetPostService.isScrappedSheetPost(id);
+        return new ApiSuccessResponse<>("Check sheet post scrap success.", isScrapped);
     }
 
     @DeleteMapping("/{id}/scrap")
-    public JsonAPISuccessResponse<Map<String, Object>> unScrapSheetPost(@PathVariable Long id){
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        sheetPostService.unScrapSheetPost(id, loggedInUser);
+    public JsonAPISuccessResponse unScrapSheetPost(
+            @Valid @NotNull @PathVariable Long id){
+        sheetPostService.unScrapSheetPost(id);
         return new ApiSuccessResponse<>("Unscrap sheet post success.");
     }
     @PutMapping("{id}")
-    public JsonAPISuccessResponse<SheetPostDto> updateSheetPost(@PathVariable Long id, @RequestParam String dto, @RequestPart MultipartFile file)
-            throws AccessDeniedException, PersistenceException, IOException {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        SheetPostDto data = sheetPostService.update(id, dto, file, loggedInUser);
+    public JsonAPISuccessResponse<SheetPostDto> updateSheetPost(
+            @Valid @NotNull @PathVariable Long id,
+            @Valid @Nullable @RequestPart MultipartFile file,
+            @Valid @Nullable @RequestParam String dto)
+            throws IOException {
+        SheetPostDto data = sheetPostService.update(id, dto, file);
         return new ApiSuccessResponse<>("Update sheet post success.", data);
     }
 
     @GetMapping("{id}/sheet")
-    public JsonAPISuccessResponse<String> getSheetFileUrl(@PathVariable Long id) throws JsonProcessingException {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        String url = sheetPostService.getSheetUrl(id, loggedInUser);
+    public JsonAPISuccessResponse<String> getSheetFileUrl(
+            @Valid @NotNull @PathVariable Long id) {
+        String url = sheetPostService.getSheetUrl(id);
         return new ApiSuccessResponse<>("Get sheet url success", url);
     }
 
     @DeleteMapping("{id}")
-    public JsonAPISuccessResponse<Void> deleteSheetPost(@PathVariable Long id)
+    public JsonAPISuccessResponse<Void> deleteSheetPost(
+            @Valid @NotNull @PathVariable Long id)
             throws AccessDeniedException, PersistenceException {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        sheetPostService.delete(id, loggedInUser);
+        sheetPostService.delete(id);
     return new ApiSuccessResponse<>("Delete sheet post success.");
     }
 }
