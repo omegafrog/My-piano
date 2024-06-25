@@ -10,9 +10,12 @@ import com.omegafrog.My.piano.app.web.response.success.ApiSuccessResponse;
 import com.omegafrog.My.piano.app.web.response.success.JsonAPISuccessResponse;
 import com.omegafrog.My.piano.app.web.response.ResponseUtil;
 import com.omegafrog.My.piano.app.web.service.lesson.LessonService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,86 +31,77 @@ public class LessonController {
 
     private final LessonService lessonService;
     @PostMapping("/lesson")
-    public JsonAPISuccessResponse createLesson(@Validated @RequestBody LessonRegisterDto lessonRegisterDto)
-            throws JsonProcessingException {
-        User user = AuthenticationUtil.getLoggedInUser();
-        LessonDto lessonDto = lessonService.createLesson(lessonRegisterDto, user);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("lesson", lessonDto);
-        return new ApiSuccessResponse("Create new Lesson success", data);
+    public JsonAPISuccessResponse createLesson(@Validated @NotNull @RequestBody LessonRegisterDto lessonRegisterDto) {
+        LessonDto lessonDto = lessonService.createLesson(lessonRegisterDto);
+        return new ApiSuccessResponse("Create new Lesson success", lessonDto);
     }
 
     @GetMapping("/lessons")
-    public JsonAPISuccessResponse getLessons(Pageable pageable) throws JsonProcessingException {
+    public JsonAPISuccessResponse getLessons(@PageableDefault(page=0,size = 10) Pageable pageable) {
         List<LessonDto> allLessons = lessonService.getAllLessons(pageable);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("lessons", allLessons);
-        return new ApiSuccessResponse("Success load all lessons.", data);
+        return new ApiSuccessResponse("Success load all lessons.", allLessons);
     }
 
     @GetMapping("/lesson/{id}")
-    public JsonAPISuccessResponse getLesson(@PathVariable Long id) throws JsonProcessingException {
+    public JsonAPISuccessResponse getLesson(@Valid @NotNull @PathVariable Long id){
         LessonDto lessonById = lessonService.getLessonById(id);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("lesson", lessonById);
-        return new ApiSuccessResponse("Success load lesson" + id + ".", data);
+        return new ApiSuccessResponse("Success load lesson" + id + ".", lessonById);
     }
 
     @PostMapping("/lesson/{id}")
     public JsonAPISuccessResponse updateLesson(
-            @Validated @RequestBody UpdateLessonDto updateLessonDto, @PathVariable Long id)
-            throws JsonProcessingException {
-        User user = AuthenticationUtil.getLoggedInUser();
-        LessonDto updated = lessonService.updateLesson(id, updateLessonDto, user);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("lesson", updated);
-        return new ApiSuccessResponse("Lesson update success", data);
+            @Valid @NotNull @RequestBody UpdateLessonDto updateLessonDto,
+            @Valid @NotNull @PathVariable Long id) {
+        LessonDto updated = lessonService.updateLesson(id, updateLessonDto);
+        return new ApiSuccessResponse("Lesson update success", updated);
     }
 
     @DeleteMapping("/lesson/{id}")
-    public JsonAPISuccessResponse deleteLesson(@PathVariable Long id) {
-        User user = AuthenticationUtil.getLoggedInUser();
-        lessonService.deleteLesson(id, user);
+    public JsonAPISuccessResponse deleteLesson(
+            @Valid @NotNull @PathVariable Long id) {
+        lessonService.deleteLesson(id);
         return new ApiSuccessResponse("Lesson delete success");
     }
 
     @PutMapping("/lesson/{id}/like")
-    public JsonAPISuccessResponse likeLesson(@PathVariable Long id){
-        User user = AuthenticationUtil.getLoggedInUser();
-        lessonService.likeLesson(id, user);
+    public JsonAPISuccessResponse likeLesson(
+            @Valid @NotNull @PathVariable Long id){
+        lessonService.likeLesson(id);
         return new ApiSuccessResponse("Like lesson success");
     }
 
     @GetMapping("/lesson/{id}/like")
-    public JsonAPISuccessResponse isLikeLesson(@PathVariable Long id) throws JsonProcessingException {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        boolean isLiked = lessonService.isLikedLesson(id, loggedInUser);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("isLiked", isLiked);
-        return new ApiSuccessResponse("Check Lesson is liked success.", data);
+    public JsonAPISuccessResponse isLikeLesson(
+            @Valid @NotNull @PathVariable Long id) {
+        boolean isLiked = lessonService.isLikedLesson(id);
+        return new ApiSuccessResponse("Check Lesson is liked success.",isLiked);
     }
 
     @DeleteMapping("/lesson/{id}/like")
-    public JsonAPISuccessResponse dislikeLesson(@PathVariable Long id){
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        lessonService.dislikeLesson(id, loggedInUser);
+    public JsonAPISuccessResponse dislikeLesson(
+            @Valid @NotNull @PathVariable Long id){
+        lessonService.dislikeLesson(id);
         return new ApiSuccessResponse("Dislike lesson success.");
     }
 
     @GetMapping("/lesson/{id}/scrap")
-    public JsonAPISuccessResponse isScrappedLesson(@PathVariable Long id) throws JsonProcessingException {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        boolean scrappedLesson = lessonService.isScrappedLesson(id, loggedInUser);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("isScrapped", scrappedLesson);
-        return new ApiSuccessResponse("Check lesson is scrapped success.", data);
+    public JsonAPISuccessResponse isScrappedLesson(
+            @Valid @NotNull @PathVariable Long id){
+        boolean scrappedLesson = lessonService.isScrappedLesson(id);
+        return new ApiSuccessResponse("Check lesson is scrapped success.", scrappedLesson);
     }
 
     @PutMapping("/lesson/{id}/scrap")
-    public JsonAPISuccessResponse scrapLesson(@PathVariable Long id ){
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        lessonService.scrapLesson(id, loggedInUser);
+    public JsonAPISuccessResponse scrapLesson(
+            @Valid @NotNull @PathVariable Long id ){
+        lessonService.scrapLesson(id);
         return new ApiSuccessResponse("Scrap lesson success.");
     }
 
     @DeleteMapping("/lesson/{id}/scrap")
-    public JsonAPISuccessResponse unScrapLesson(@PathVariable Long id){
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        lessonService.unScrapLesson(id, loggedInUser);
+    public JsonAPISuccessResponse unScrapLesson(
+            @Valid @NotNull @PathVariable Long id){
+        lessonService.unScrapLesson(id);
         return new ApiSuccessResponse("Cancel scrap lesson success.");
     }
 }

@@ -34,8 +34,8 @@ public class CommentController {
 
     @PostMapping
     public JsonAPISuccessResponse<List<CommentDto>> addComment(
-            @PathVariable Long id,
-            @Validated @RequestBody RegisterCommentDto dto,
+            @Valid @NotNull @PathVariable Long id,
+            @Valid @NotNull @RequestBody RegisterCommentDto dto,
             HttpServletRequest request
     ){
         List<CommentDto> comments= commentApplicationService.addComment(CommentTargetType.of(request), id, dto);
@@ -53,8 +53,8 @@ public class CommentController {
 
     @DeleteMapping("{comment-id}")
     public JsonAPISuccessResponse<Void> deleteComment(
-            @PathVariable Long id,
-            @PathVariable(name = "comment-id") Long commentId,
+            @Valid @NotNull @PathVariable Long id,
+            @Valid @NotNull @PathVariable(name = "comment-id") Long commentId,
             HttpServletRequest request
     ) {
         commentApplicationService.deleteComment(CommentTargetType.of(request),id, commentId);

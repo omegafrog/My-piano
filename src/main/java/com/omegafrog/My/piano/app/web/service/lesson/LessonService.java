@@ -1,4 +1,5 @@
 package com.omegafrog.My.piano.app.web.service.lesson;
+import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonViewCountRepository;
@@ -11,8 +12,11 @@ import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonRegisterDto;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,28 +28,32 @@ import java.util.List;
 public class LessonService {
 
 
+    private static final Logger log = LoggerFactory.getLogger(LessonService.class);
     private final SheetPostRepository sheetPostRepository;
     private final LessonRepository lessonRepository;
     private final UserRepository userRepository;
     private final LessonViewCountRepository lessonViewCountRepository;
+    private final AuthenticationUtil authenticationUtil;
 
-    public LessonDto createLesson(LessonRegisterDto lessonRegisterDto, User artist) {
+    public LessonDto createLesson(LessonRegisterDto lessonRegisterDto) {
+        User loggedInUser = authenticationUtil.getLoggedInUser();
+
         SheetPost sheetPost = sheetPostRepository.findById(lessonRegisterDto.getSheetPostId())
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity : " + lessonRegisterDto.getSheetPostId()));
-        User user = userRepository.findById(artist.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + artist.getId()));
+
         Lesson lesson = Lesson.builder()
                 .sheetPost(sheetPost)
-                .lessonProvider(artist)
+                .lessonProvider(loggedInUser)
                 .title(lessonRegisterDto.getTitle())
                 .subTitle(lessonRegisterDto.getSubTitle())
                 .videoInformation(lessonRegisterDto.getVideoInformation())
                 .lessonInformation(lessonRegisterDto.getLessonInformation())
-                .lessonProvider(artist)
+                .lessonProvider(loggedInUser)
                 .price(lessonRegisterDto.getPrice())
                 .build();
+
         Lesson saved = lessonRepository.save(lesson);
-        user.getUploadedLessons().add(saved);
+        loggedInUser.getUploadedLessons().add(saved);
         return saved.toDto();
     }
 
@@ -65,12 +73,12 @@ public class LessonService {
         return dto;
     }
 
-    public LessonDto updateLesson(Long lessonId, UpdateLessonDto updateLessonDto, User user) {
+    public LessonDto updateLesson(Long lessonId, UpdateLessonDto updateLessonDto) {
+        User loggedInUser = authenticationUtil.getLoggedInUser();
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson entity : " + lessonId));
-        if (!lesson.getAuthor().equals(user)) {
+        if (!lesson.getAuthor().equals(loggedInUser))
             throw new AccessDeniedException("Cannot update other user's lesson.");
-        }
 
         SheetPost sheetPost = sheetPostRepository.findBySheetId(updateLessonDto.getSheetId())
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + updateLessonDto.getSheetId()));
@@ -78,9 +86,10 @@ public class LessonService {
         return updated.toDto();
     }
 
-    public void deleteLesson(Long lessonId, User user) {
+    public void deleteLesson(Long lessonId) {
+        User loggedInUser = authenticationUtil.getLoggedInUser();
         Lesson lesson = getLesson(lessonId);
-        if (!lesson.getAuthor().equals(user))
+        if (!lesson.getAuthor().equals(loggedInUser))
             throw new AccessDeniedException("Cannot update other user's lesson.");
         lessonRepository.deleteById(lessonId);
     }
@@ -90,44 +99,55 @@ public class LessonService {
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson Entity : " + lessonId));
     }
 
-    public void likeLesson(Long id, User user) {
+    public void likeLesson(Long id) {
+        User loggedInUser = authenticationUtil.getLoggedInUser();
         Lesson lesson = lessonRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson Entity : " + id));
         lesson.increaseLikedCount();
-        User loggedUser = userRepository.findById(user.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + user.getId()));
+
+        User loggedUser = userRepository.findById(loggedInUser.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
         loggedUser.likeLesson(lesson);
     }
-    public void dislikeLesson(Long id, User user){
+    public void dislikeLesson(Long id){
+        User loggedInUser = authenticationUtil.getLoggedInUser();
         Lesson lesson = lessonRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson Entity : " + id));
-        User loggedUser = userRepository.findById(user.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + user.getId()));
+        User loggedUser = userRepository.findById(loggedInUser.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
         if(!loggedUser.isLikedLesson(lesson)) throw new IllegalArgumentException("이 글에 좋아요를 누르지 않았습니다.");
+
         lesson.decreaseLikedCount();
         loggedUser.dislikeLesson(lesson);
     }
 
-    public boolean isLikedLesson(Long id, User loggedInUser) {
+    public boolean isLikedLesson(Long id){
+        User loggedInUser = authenticationUtil.getLoggedInUser();
         Lesson lesson = lessonRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson Entity : " + id));
-        User loggedUser = userRepository.findById(loggedInUser.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
+        User loggedUser = userRepository.findById(loggedInUser.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
         return loggedUser.isLikedLesson(lesson);
     }
 
-    public boolean isScrappedLesson(Long id, User loggedInUser) {
+    public boolean isScrappedLesson(Long id) {
+        User loggedInUser = authenticationUtil.getLoggedInUser();
         Lesson lesson = lessonRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson Entity : " + id));
         User loggedUser = userRepository.findById(loggedInUser.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
         return loggedUser.isScrappedLesson(lesson);
     }
 
-    public void scrapLesson(Long id,  User loggedInUser) {
+    public void scrapLesson(Long id) {
+        User loggedInUser = authenticationUtil.getLoggedInUser();
         Lesson lesson = lessonRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson Entity : " + id));
         User loggedUser = userRepository.findById(loggedInUser.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
         loggedUser.scrapLesson(lesson);
     }
 
-    public void unScrapLesson(Long id, User loggedInUser) {
+    public void unScrapLesson(Long id) {
+        User loggedInUser = authenticationUtil.getLoggedInUser();
         Lesson lesson = lessonRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson Entity : " + id));
         User loggedUser = userRepository.findById(loggedInUser.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
