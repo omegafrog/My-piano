@@ -14,8 +14,12 @@ import com.omegafrog.My.piano.app.web.dto.ticket.RequestTicketDto;
 import com.omegafrog.My.piano.app.web.dto.ticket.TicketDto;
 import com.omegafrog.My.piano.app.web.enums.TicketType;
 import com.omegafrog.My.piano.app.web.service.TicketService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -36,58 +40,46 @@ public class TicketController {
 
     private final TicketService ticketService;
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    public JsonAPISuccessResponse<Void> handleIllegalArgumentException(IllegalArgumentException ex) {
-        return new APIBadRequestSuccessResponse(ex.getMessage());
-    }
-
     @GetMapping("")
-    public JsonAPISuccessResponse<Map<String, Object>> getTickets(
-            @RequestParam @Nullable Long id,
-            @RequestParam @Nullable TicketType type,
-            @RequestParam @Nullable TicketStatus status,
-            @RequestParam @Nullable @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
-            @RequestParam @Nullable @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate ,
-            Pageable pageable) throws JsonProcessingException {
+    public JsonAPISuccessResponse getTickets(
+            @Valid @RequestParam @Nullable Long id,
+            @Valid @RequestParam @Nullable TicketType type,
+            @Valid @RequestParam @Nullable TicketStatus status,
+            @Valid @RequestParam @Nullable @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @Valid @RequestParam @Nullable @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate ,
+            @PageableDefault(page = 0,size = 30) Pageable pageable) {
         SearchTicketFilter filter = new SearchTicketFilter(id, type, status, startDate, endDate);
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        SecurityUser userDetails = (SecurityUser) auth.getPrincipal();
-        Map<String, Object> data = new HashMap<>();
-        List<TicketDto> tickets = ticketService.getTickets(userDetails, filter, pageable);
-        data.put("count", tickets.size());
-        data.put("data", tickets);
-        return new ApiSuccessResponse<>("Get tickets success.", data);
+        Page<TicketDto> tickets = ticketService.getTickets( filter, pageable);
+        return new ApiSuccessResponse<>("Get tickets success.", tickets);
 
     }
 
     @PutMapping("")
-    public JsonAPISuccessResponse<TicketDto> createTicket(@RequestBody RequestTicketDto dto ) throws JsonProcessingException {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        TicketDto data = ticketService.createTicket(dto,  loggedInUser);
+    public JsonAPISuccessResponse<TicketDto> createTicket(
+            @Valid @NotNull @RequestBody RequestTicketDto dto ) {
+        TicketDto data = ticketService.createTicket(dto);
         return new ApiSuccessResponse<>("Create ticket success.", data);
     }
 
     @DeleteMapping("{id}")
-    public JsonAPISuccessResponse<Void> closeTicket(@PathVariable Long id){
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetails userdetails = (UserDetails) authentication.getPrincipal();
-        ticketService.closeTicket(id, userdetails);
+    public JsonAPISuccessResponse<Void> closeTicket(
+            @Valid @NotNull@PathVariable Long id){
+        ticketService.closeTicket(id);
         return new ApiSuccessResponse<>("Close ticket success.");
     }
 
     @PutMapping("{id}")
-    public JsonAPISuccessResponse<ReplyDto> replyTo(@PathVariable Long id, @RequestBody RequestTicketDto dto) throws JsonProcessingException {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        UserDetails principal =  (UserDetails) auth.getPrincipal();
-        ReplyDto data = ticketService.replyTo(id, dto, principal);
+    public JsonAPISuccessResponse<ReplyDto> replyTo(
+            @Valid @NotNull @PathVariable Long id,
+            @Valid @NotNull @RequestBody RequestTicketDto dto) {
+        ReplyDto data = ticketService.replyTo(id, dto);
         return new ApiSuccessResponse<>("Reply to ticket success.", data);
     }
 
     @GetMapping("{id}")
-    public JsonAPISuccessResponse<TicketDto> getTicket(@PathVariable Long id) throws JsonProcessingException {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        UserDetails principal = (UserDetails) auth.getPrincipal();
-        TicketDto data = ticketService.getTicket(id,principal);
+    public JsonAPISuccessResponse<TicketDto> getTicket(
+            @Valid @NotNull @PathVariable Long id) {
+        TicketDto data = ticketService.getTicket(id);
         return new ApiSuccessResponse<>("Get ticket success.", data);
     }
 }

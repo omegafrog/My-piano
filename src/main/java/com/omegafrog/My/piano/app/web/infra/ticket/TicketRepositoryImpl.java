@@ -58,16 +58,20 @@ public class TicketRepositoryImpl implements TicketRepository {
     }
 
     @Override
-    public List<Ticket> findByAuthor_IdAndFilter(Long authorId, SearchTicketFilter filter, Pageable pageable) {
+    public Page<Ticket> findByAuthor_IdAndFilter(Long authorId, SearchTicketFilter filter, Pageable pageable) {
         QTicket ticket = QTicket.ticket;
         BooleanExpression expressions = Expressions.asBoolean(ticket.author.id.eq(authorId));
         expressions = expressions.and(filter.getQueryDslExpression());
 
-        return factory.selectFrom(QTicket.ticket)
-                .where(expressions)
+        JPAQuery<Ticket> query = factory.selectFrom(QTicket.ticket)
+                .where(expressions);
+        Long size =Long.valueOf( query.fetch().size());
+
+        List<Ticket> fetched = query
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .orderBy(ticket.createdAt.desc())
                 .fetch();
+        return PageableExecutionUtils.getPage(fetched, pageable, () -> size);
     }
 }
