@@ -22,6 +22,8 @@ import io.awspring.cloud.s3.S3Exception;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpHeaders;
@@ -52,7 +54,6 @@ import java.util.Map;
 @Slf4j
 public class SecurityController {
 
-    private final RefreshTokenRepository refreshTokenRepository;
     private final TokenUtils tokenUtils;
     private final CommonUserService commonUserService;
     private final MapperUtil mapperUtil;
@@ -71,8 +72,7 @@ public class SecurityController {
     }
 
     @GetMapping("/revalidate")
-    public JsonAPISuccessResponse revalidateToken(HttpServletRequest request, HttpServletResponse response)
-            throws JsonProcessingException {
+    public JsonAPISuccessResponse revalidateToken(HttpServletRequest request, HttpServletResponse response) {
         String accessToken = tokenUtils.getAccessTokenString(request.getHeader(HttpHeaders.AUTHORIZATION));
 
         try {
@@ -94,8 +94,8 @@ public class SecurityController {
 
     @PostMapping("/user/register")
     public JsonAPISuccessResponse<SecurityUserDto> registerCommonUser(
-            @RequestParam(name = "profileImg") @Nullable MultipartFile profileImg,
-            @RequestParam String registerInfo)
+            @Valid @RequestParam(name = "profileImg") @Nullable MultipartFile profileImg,
+            @Valid @NotNull @RequestParam String registerInfo)
             throws IOException, DuplicatePropertyException {
         RegisterUserDto dto = mapperUtil.parseRegisterUserInfo(registerInfo);
         SecurityUserDto securityUserDto;
@@ -106,17 +106,12 @@ public class SecurityController {
         return new ApiSuccessResponse<>("회원가입 성공.", securityUserDto);
     }
 
-    @ExceptionHandler(AuthenticationException.class)
-    public APIForbiddenSuccessResponse authenticationErrorResponse(AuthenticationException ex){
-        ex.printStackTrace();
-        return new APIForbiddenSuccessResponse(ex.getMessage());
-    }
-
     @GetMapping("/oauth2/google/callback")
     public ResponseEntity<Map<String, Object>> registerOrLoginGoogleUser(
             HttpServletResponse response,
-            @RequestParam("code") String code)
+            @Valid @NotNull @RequestParam("code") String code)
             throws GeneralSecurityException, IOException{
+
         String idToken = getGoogleIdToken(code);
         Map<String, Object> data = new HashMap<>();
         ResponseEntity<Map<String, Object>> apiRedirectResponse = null;
