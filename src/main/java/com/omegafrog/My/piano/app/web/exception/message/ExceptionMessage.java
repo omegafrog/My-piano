@@ -1,4 +1,4 @@
-package com.omegafrog.My.piano.app.utils.exception.message;
+package com.omegafrog.My.piano.app.web.exception.message;
 
 public class ExceptionMessage {
     public static final String ENTITY_NOT_FOUND_USER = "Cannot find User entity : ";

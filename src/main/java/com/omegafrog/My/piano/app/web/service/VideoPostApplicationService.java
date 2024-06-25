@@ -1,6 +1,6 @@
 package com.omegafrog.My.piano.app.web.service;
 
-import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
+import com.omegafrog.My.piano.app.web.exception.message.ExceptionMessage;
 import com.omegafrog.My.piano.app.web.domain.comment.CommentRepository;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPost;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPostRepository;

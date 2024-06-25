@@ -1,6 +1,6 @@
 package com.omegafrog.My.piano.app.web.domain.cart;
 
-import com.omegafrog.My.piano.app.utils.exception.cart.DuplicateItemOrderException;
+import com.omegafrog.My.piano.app.web.exception.cart.DuplicateItemOrderException;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonInformation;
 import com.omegafrog.My.piano.app.web.domain.lesson.VideoInformation;

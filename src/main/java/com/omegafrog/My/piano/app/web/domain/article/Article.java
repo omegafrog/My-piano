@@ -1,7 +1,7 @@
 package com.omegafrog.My.piano.app.web.domain.article;
 
-import com.omegafrog.My.piano.app.utils.exception.article.CannotDecreaseLikeCountException;
-import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
+import com.omegafrog.My.piano.app.web.exception.article.CannotDecreaseLikeCountException;
+import com.omegafrog.My.piano.app.web.exception.message.ExceptionMessage;
 import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import jakarta.persistence.*;
@@ -10,7 +10,6 @@ import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.engine.spi.CascadeStyle;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 

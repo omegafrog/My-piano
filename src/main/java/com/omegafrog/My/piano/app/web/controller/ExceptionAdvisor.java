@@ -2,7 +2,7 @@ package com.omegafrog.My.piano.app.web.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.omegafrog.My.piano.app.security.exception.DuplicatePropertyException;
-import com.omegafrog.My.piano.app.utils.exception.payment.PaymentException;
+import com.omegafrog.My.piano.app.web.exception.payment.PaymentException;
 import com.omegafrog.My.piano.app.web.response.APIBadRequestSuccessResponse;
 import com.omegafrog.My.piano.app.web.response.APIInternalServerSuccessResponse;
 import jakarta.persistence.EntityExistsException;

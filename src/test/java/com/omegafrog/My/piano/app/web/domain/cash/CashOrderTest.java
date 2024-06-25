@@ -1,6 +1,6 @@
 package com.omegafrog.My.piano.app.web.domain.cash;
 
-import com.omegafrog.My.piano.app.utils.exception.payment.CashOrderCalculateFailureException;
+import com.omegafrog.My.piano.app.web.exception.payment.CashOrderCalculateFailureException;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.enums.OrderStatus;
 import org.junit.jupiter.api.Assertions;

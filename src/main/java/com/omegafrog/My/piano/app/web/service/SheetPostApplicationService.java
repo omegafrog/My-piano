@@ -2,7 +2,7 @@ package com.omegafrog.My.piano.app.web.service;
 
 import com.omegafrog.My.piano.app.external.elasticsearch.SheetPostIndexRepository;
 import com.omegafrog.My.piano.app.utils.MapperUtil;
-import com.omegafrog.My.piano.app.utils.exception.WrongFileExtensionException;
+import com.omegafrog.My.piano.app.web.exception.WrongFileExtensionException;
 import com.omegafrog.My.piano.app.external.elasticsearch.ElasticSearchInstance;
 import com.omegafrog.My.piano.app.web.domain.S3UploadFileExecutor;
 import com.omegafrog.My.piano.app.web.domain.comment.CommentRepository;

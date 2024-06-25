@@ -1,4 +1,4 @@
-package com.omegafrog.My.piano.app.utils.exception.payment;
+package com.omegafrog.My.piano.app.web.exception.payment;
 
 /**
  * 토스 API에서 반환된 오류에 대한 예외

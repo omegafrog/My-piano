@@ -17,6 +17,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpHeaders;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
@@ -34,23 +35,32 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        if(request.getHeader(HttpHeaders.AUTHORIZATION) == null) {
+        String accessTokenString = null;
+        try{
+            accessTokenString = tokenUtils.getAccessTokenString(request.getHeader(HttpHeaders.AUTHORIZATION));
+        }catch (AuthenticationCredentialsNotFoundException e){
             filterChain.doFilter(request, response);
             return;
         }
-        String accessTokenString = tokenUtils.getAccessTokenString(request.getHeader(HttpHeaders.AUTHORIZATION));
-        RefreshToken refreshToken= null;
 
-        SecurityUser user=null;
+        RefreshToken refreshToken= null;
         try{
             Claims claims = tokenUtils.extractClaims(accessTokenString);
-            Long userId = Long.valueOf((String) claims.get("id"));
-            user = securityUserRepository.findById(userId).orElseThrow(EntityNotFoundException::new);
-            refreshToken = refreshTokenRepository.findByRoleAndUserId(userId, Role.valueOf((String) claims.get("role"))).orElseThrow(EntityNotFoundException::new);
-            TokenInfo tokenInfo = new TokenInfo(GrantType.JWT_BEARER.getValue(), accessTokenString,refreshToken );
-            JwtAuthenticationToken jwtAuthenticationToken = new JwtAuthenticationToken(user.getAuthorities(),tokenInfo,user);
+            Long securityUserId = Long.valueOf((String) claims.get("id"));
+            Role securityUserRole = Role.valueOf((String) claims.get("role"));
+
+            SecurityUser user = securityUserRepository.findById(securityUserId)
+                    .orElseThrow(EntityNotFoundException::new);
+            refreshToken = refreshTokenRepository.findByRoleAndUserId(securityUserId,securityUserRole )
+                    .orElseThrow(EntityNotFoundException::new);
+
+            TokenInfo tokenInfo = tokenUtils.wrap(accessTokenString, refreshToken);
+
+            JwtAuthenticationToken jwtAuthenticationToken =
+                    new JwtAuthenticationToken(user.getAuthorities(),tokenInfo,securityUserId);
             jwtAuthenticationToken.setAuthenticated(true);
             SecurityContextHolder.getContext().setAuthentication(jwtAuthenticationToken);
+
         }catch (EntityNotFoundException e){
             log.error("{} token:{}",e.getMessage(),accessTokenString);
             if(refreshToken == null)

@@ -1,6 +1,6 @@
 package com.omegafrog.My.piano.app.web.service;
 
-import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
+import com.omegafrog.My.piano.app.web.exception.message.ExceptionMessage;
 import com.omegafrog.My.piano.app.web.domain.order.Order;
 import com.omegafrog.My.piano.app.web.domain.order.OrderRepository;
 import com.omegafrog.My.piano.app.web.domain.order.SellableItem;
@@ -8,7 +8,7 @@ import com.omegafrog.My.piano.app.web.domain.order.SellableItemFactory;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.order.OrderDto;
-import com.omegafrog.My.piano.app.utils.exception.payment.PaymentException;
+import com.omegafrog.My.piano.app.web.exception.payment.PaymentException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;

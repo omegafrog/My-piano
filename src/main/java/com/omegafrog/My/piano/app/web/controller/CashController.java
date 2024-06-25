@@ -9,6 +9,9 @@ import com.omegafrog.My.piano.app.web.response.success.JsonAPISuccessResponse;
 import com.omegafrog.My.piano.app.web.domain.cash.PaymentHistory;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.service.CashOrderApplicationService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.*;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
@@ -44,13 +47,16 @@ public class CashController {
     @NoArgsConstructor
     @AllArgsConstructor
     private static class CashOrderDto {
+        @NotNull
         public String paymentKey;
+        @NotNull
         public String orderId;
+        @Positive
         public Integer amount;
     }
 
     @PostMapping("/request")
-    public JsonAPISuccessResponse requestCashOrder(@RequestBody CashOrderDto cashOrder) throws JsonProcessingException {
+    public JsonAPISuccessResponse requestCashOrder(@Valid @RequestBody CashOrderDto cashOrder) throws JsonProcessingException {
         User loggedInUser = AuthenticationUtil.getLoggedInUser();
         cashOrderService.requestCashOrder(cashOrder.paymentKey, cashOrder.orderId, cashOrder.amount, loggedInUser);
         return new ApiSuccessResponse("Request cash order success.");

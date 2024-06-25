@@ -1,8 +1,8 @@
 package com.omegafrog.My.piano.app.web.domain.cart;
 
-import com.omegafrog.My.piano.app.utils.exception.cart.DuplicateItemOrderException;
+import com.omegafrog.My.piano.app.web.exception.cart.DuplicateItemOrderException;
 import com.omegafrog.My.piano.app.web.domain.order.Order;
-import com.omegafrog.My.piano.app.utils.exception.payment.PaymentException;
+import com.omegafrog.My.piano.app.web.exception.payment.PaymentException;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

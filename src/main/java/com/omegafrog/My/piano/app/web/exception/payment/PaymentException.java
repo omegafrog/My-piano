@@ -1,4 +1,4 @@
-package com.omegafrog.My.piano.app.utils.exception.payment;
+package com.omegafrog.My.piano.app.web.exception.payment;
 
 import lombok.NoArgsConstructor;
 

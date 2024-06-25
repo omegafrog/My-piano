@@ -11,6 +11,8 @@ import com.omegafrog.My.piano.app.web.dto.comment.RegisterCommentDto;
 import com.omegafrog.My.piano.app.web.service.*;
 import jakarta.persistence.PersistenceException;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,45 +33,38 @@ public class CommentController {
     private final CommentApplicationService commentApplicationService;
 
     @PostMapping
-    public JsonAPISuccessResponse<List<CommentDto>> addComment(@PathVariable Long id,
-                                                               @Validated @RequestBody RegisterCommentDto dto,
-                                                               HttpServletRequest request) throws JsonProcessingException {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-
-        List<CommentDto> comments= commentApplicationService.addComment(
-                CommentTargetType.of(request),
-                id,
-                dto,
-                loggedInUser);
-
+    public JsonAPISuccessResponse<List<CommentDto>> addComment(
+            @PathVariable Long id,
+            @Validated @RequestBody RegisterCommentDto dto,
+            HttpServletRequest request
+    ){
+        List<CommentDto> comments= commentApplicationService.addComment(CommentTargetType.of(request), id, dto);
         return new ApiSuccessResponse<>("Add Comment success.", comments);
     }
 
     @PostMapping("/{comment-id}")
-    public JsonAPISuccessResponse<CommentDto> replyComment(@PathVariable(name = "comment-id")  Long commentId, String content)
-            throws JsonProcessingException {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        CommentDto dto = commentApplicationService.replyComment(commentId, content, loggedInUser);
-
+    public JsonAPISuccessResponse<CommentDto> replyComment(
+            @Valid @NotNull @PathVariable(name = "comment-id")  Long commentId,
+            @Valid @NotNull String content
+    ) {
+        CommentDto dto = commentApplicationService.replyComment(commentId, content);
         return new ApiSuccessResponse<>("Reply Comment success.", dto);
     }
 
     @DeleteMapping("{comment-id}")
     public JsonAPISuccessResponse<Void> deleteComment(
             @PathVariable Long id,
-            @PathVariable(name = "comment-id") Long commentId
-            ,HttpServletRequest request
+            @PathVariable(name = "comment-id") Long commentId,
+            HttpServletRequest request
     ) {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        commentApplicationService.deleteComment(CommentTargetType.of(request),id, commentId, loggedInUser);
+        commentApplicationService.deleteComment(CommentTargetType.of(request),id, commentId);
         return new ApiSuccessResponse<>("Delete Comment success.");
     }
 
     @GetMapping
     public JsonAPISuccessResponse<Page<CommentDto>> getComments(
-            @PathVariable Long id,
-            @PageableDefault(size=10) Pageable pageable)
-            throws PersistenceException, AccessDeniedException, JsonProcessingException{
+            @Valid @NotNull @PathVariable Long id,
+            @Valid @NotNull @PageableDefault(size=10) Pageable pageable) {
         Page<CommentDto> page = commentApplicationService.getComments(id, pageable);
         return new ApiSuccessResponse<>("Get all comments success.", page);
     }

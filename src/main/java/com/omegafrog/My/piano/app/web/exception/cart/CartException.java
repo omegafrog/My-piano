@@ -1,4 +1,4 @@
-package com.omegafrog.My.piano.app.utils.exception.cart;
+package com.omegafrog.My.piano.app.web.exception.cart;
 
 public abstract class CartException extends RuntimeException{
     protected CartException(String message) {

@@ -1,7 +1,7 @@
 package com.omegafrog.My.piano.app.web.service;
 
 import com.google.firebase.messaging.FirebaseMessagingException;
-import com.omegafrog.My.piano.app.utils.exception.subscription.SubscriptionExistException;
+import com.omegafrog.My.piano.app.web.exception.subscription.SubscriptionExistException;
 import com.omegafrog.My.piano.app.web.domain.notification.PushInstance;
 import com.omegafrog.My.piano.app.web.domain.notification.Subscription;
 import com.omegafrog.My.piano.app.web.domain.notification.SubscriptionRepository;

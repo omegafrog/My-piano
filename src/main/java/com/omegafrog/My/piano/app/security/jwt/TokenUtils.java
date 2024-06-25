@@ -1,5 +1,6 @@
 package com.omegafrog.My.piano.app.security.jwt;
 
+import com.nimbusds.oauth2.sdk.GrantType;
 import com.omegafrog.My.piano.app.security.entity.authorities.Role;
 import io.jsonwebtoken.*;
 import jakarta.servlet.http.Cookie;
@@ -75,6 +76,14 @@ public class TokenUtils {
         ).findFirst().orElseThrow(
                 () -> new AuthenticationCredentialsNotFoundException("Invalid refresh token")
         ).getValue();
+    }
+
+    public TokenInfo wrap(String accessToken, RefreshToken refreshToken){
+        return TokenInfo.builder()
+                .grantType(GrantType.JWT_BEARER.getValue())
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
     }
 
     private  boolean verifyAccessTokenString(String[] accessToken) throws AuthenticationException {

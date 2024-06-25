@@ -1,4 +1,4 @@
-package com.omegafrog.My.piano.app.utils.exception.article;
+package com.omegafrog.My.piano.app.web.exception.article;
 
 public class ArticleException extends RuntimeException {
     public ArticleException(String message) {

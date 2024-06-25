@@ -1,7 +1,7 @@
 package com.omegafrog.My.piano.app.web.service;
 
 import com.omegafrog.My.piano.app.utils.MapperUtil;
-import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
+import com.omegafrog.My.piano.app.web.exception.message.ExceptionMessage;
 import com.omegafrog.My.piano.app.web.domain.S3UploadFileExecutor;
 import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.relation.UserLikedSheetPost;
