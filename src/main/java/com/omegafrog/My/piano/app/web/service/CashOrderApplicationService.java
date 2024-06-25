@@ -77,7 +77,6 @@ public class CashOrderApplicationService {
      * @param paymentKey   : 토스 결제 요청 API에서 생성한 결제 객체를 구분하는 키
      * @param orderId      : 클라이언트에서 생성한 현금 주문을 식별하는 키
      * @param amount       : 총 결제 금액
-     * @param loggedInUser : 결제 요청 유저
      */
     public void requestCashOrder(String paymentKey, String orderId, int amount) throws JsonProcessingException {
         CashOrder byOrderId;
