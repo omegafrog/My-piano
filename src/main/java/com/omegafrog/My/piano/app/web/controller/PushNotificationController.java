@@ -9,6 +9,8 @@ import com.omegafrog.My.piano.app.web.response.success.JsonAPISuccessResponse;
 import com.omegafrog.My.piano.app.web.response.ResponseUtil;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.service.NotificationApplicationService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,17 +25,18 @@ public class PushNotificationController {
     private final MapperUtil mapperUtil;
 
     @PostMapping("/notification/token")
-    public JsonAPISuccessResponse getClientToken(@RequestBody String clientToken) throws JsonProcessingException {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        notificationService.subscribeUser( mapperUtil.parseNotiClientToken(clientToken),
-                loggedInUser.getId());
+    public JsonAPISuccessResponse getClientToken(
+            @Valid @NotNull @RequestBody String clientToken) throws JsonProcessingException {
+        notificationService.subscribeUser( mapperUtil.parseNotiClientToken(clientToken));
         return new ApiSuccessResponse("구독 성공.");
     }
 
     @GetMapping("/admin/notification")
-    public JsonAPISuccessResponse sendMessage(@RequestParam String topic, @RequestParam Long userId, @RequestParam String message) throws FirebaseMessagingException, JsonProcessingException {
+    public JsonAPISuccessResponse sendMessage(
+            @Valid @NotNull @RequestParam String topic,
+            @Valid @NotNull @RequestParam Long userId,
+            @Valid @NotNull @RequestParam String message) throws FirebaseMessagingException {
         String id = notificationService.sendMessageTo(topic, message, userId);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("messageId", id);
-        return new ApiSuccessResponse("Message 전송 성공.", data);
+        return new ApiSuccessResponse("Message 전송 성공.", id);
     }
 }

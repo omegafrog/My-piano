@@ -32,7 +32,7 @@ public class MapperUtil {
     private final ObjectMapper objectMapper;
     private final TossWebHookResultFactory tossWebHookResultFactory;
 
-    public MapperUtil(ObjectMapper objectMapper) {
+    public MapperUtil(ObjectMapper objectMapper){
         this.objectMapper = objectMapper;
         this.tossWebHookResultFactory = new TossWebHookResultFactoryImpl(objectMapper);
     }
@@ -179,6 +179,7 @@ public class MapperUtil {
     }
 
     public String parseNotiClientToken(String clientToken) throws JsonProcessingException {
+
         return objectMapper.readTree(clientToken).get("token").asText();
     }
 }
