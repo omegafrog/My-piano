@@ -72,8 +72,8 @@ public class ElasticSearchInstance {
         }
         SearchResponse<SheetPostIndex> response = esClient.search(
                 s -> s.index(SHEET_POST_INDEX_NAME)
-                        .from((pageable.getPageNumber()) * pageable.getPageSize())
-                        .size(pageable.getPageSize())
+//                        .from((pageable.getPageNumber()) * pageable.getPageSize())
+//                        .size(pageable.getPageSize())
                         .sort(SortOptions.of(so -> so.field(FieldSort.of(f -> f.field("created_at")
                                 .order(SortOrder.Desc)))))
                         .query(q->

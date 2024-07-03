@@ -14,6 +14,9 @@ import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
@@ -35,7 +38,13 @@ public class JpaSheetPostRepositoryImpl implements SheetPostRepository {
         return jpaRepository.save(sheetPost);
     }
 
+    @CachePut("sheetpost")
+    public SheetPost update(SheetPost sheetPost) {
+        return jpaRepository.save(sheetPost);
+    }
+
     @Override
+    @Cacheable("sheetpost")
     public Optional<SheetPost> findById(Long id) {
         return Optional.ofNullable(factory.select(QSheetPost.sheetPost).from(QSheetPost.sheetPost)
                 .join(QSheetPost.sheetPost.author, QUser.user).fetchJoin()
@@ -82,6 +91,7 @@ public class JpaSheetPostRepositoryImpl implements SheetPostRepository {
     }
 
     @Override
+    @Cacheable(cacheNames = "sheetpost")
     public Page<SheetPostListDto> findByIds(List<Long> sheetPostIds, Pageable pageable) {
         QSheetPost sheetPost = QSheetPost.sheetPost;
         BooleanExpression expressions = sheetPost.id.in(sheetPostIds);
@@ -111,11 +121,13 @@ public class JpaSheetPostRepositoryImpl implements SheetPostRepository {
     }
 
     @Override
+    @CacheEvict(cacheNames = "sheetpost")
     public void deleteById(Long id) {
         jpaRepository.deleteById(id);
     }
 
 
+    @CacheEvict(cacheNames = "sheetpost", allEntries = true)
     public void deleteAll() {
         jpaRepository.deleteAll();
     }

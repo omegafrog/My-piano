@@ -8,11 +8,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.io.Serializable;
+
 @Getter
 @Entity
 @Table(name = "user_scrapped_lesson")
 @NoArgsConstructor
-public class UserScrappedLesson {
+public class UserScrappedLesson implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
