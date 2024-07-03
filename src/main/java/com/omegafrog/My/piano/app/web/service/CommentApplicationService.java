@@ -1,5 +1,6 @@
 package com.omegafrog.My.piano.app.web.service;
 
+import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.web.domain.article.Article;
 import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.comment.CommentRepository;
@@ -35,6 +36,7 @@ public class CommentApplicationService {
     private final PostRepository postRepository;
     private final VideoPostRepository videoPostRepository;
     private final UserRepository userRepository;
+    private final AuthenticationUtil authenticationUtil;
 
     /**
      * 글에 달린 모든 댓글을 조회한다
@@ -56,10 +58,10 @@ public class CommentApplicationService {
      * @param type {@link CommentTargetType} 댓글을 작성할 글의 종류
      * @param targetId 댓글을 작성할 글의 id
      * @param dto {@link RegisterCommentDto}댓글의 내용
-     * @param loggedInUser {@link User}로그인한 유저
      * @return {@link List}&lt;{@link CommentDto}&gt;댓글이 추가된 모든 댓글 리스트
      */
-    public List<CommentDto> addComment(CommentTargetType type, Long targetId, RegisterCommentDto dto, User loggedInUser) {
+    public List<CommentDto> addComment(CommentTargetType type, Long targetId, RegisterCommentDto dto) {
+        User loggedInUser = authenticationUtil.getLoggedInUser();
         User user = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity : " + loggedInUser.getId()));
         Article target = getTarget(type, targetId);
@@ -73,14 +75,16 @@ public class CommentApplicationService {
         return target.getComments().stream().map(Comment::toDto).toList();
     }
 
-    public void deleteComment(CommentTargetType type, Long targetId,  Long commentId, User loggedInUser) {
+    public void deleteComment(CommentTargetType type, Long targetId,  Long commentId ) {
+        User loggedInUser = authenticationUtil.getLoggedInUser();
         Article target = getTarget(type, targetId);
-        boolean removed = target.getComments().removeIf(comment -> comment.getId().equals(commentId));
+        boolean removed = target.getComments()
+                .removeIf(comment -> comment.getId().equals(commentId) && comment.getAuthor().equals(loggedInUser));
+        if(!removed) throw new EntityNotFoundException("Cannot delete Comment entity. id : " + commentId);
     }
 
-    public CommentDto replyComment(Long commentId, String replyContent, User loggedInUser) {
-        User user = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity : " + loggedInUser.getId()));
+    public CommentDto replyComment(Long commentId, String replyContent) {
+        User user= authenticationUtil.getLoggedInUser();
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find comment entity : " + commentId));
         Comment reply = Comment.builder().content(replyContent)

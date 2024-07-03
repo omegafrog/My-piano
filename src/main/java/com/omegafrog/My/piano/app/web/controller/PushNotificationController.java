@@ -1,20 +1,15 @@
 package com.omegafrog.My.piano.app.web.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.firebase.messaging.FirebaseMessagingException;
-import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.utils.MapperUtil;
-import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
-import com.omegafrog.My.piano.app.utils.response.JsonAPIResponse;
-import com.omegafrog.My.piano.app.utils.response.ResponseUtil;
-import com.omegafrog.My.piano.app.web.domain.user.User;
+import com.omegafrog.My.piano.app.web.response.success.ApiResponse;
+import com.omegafrog.My.piano.app.web.response.success.JsonAPIResponse;
 import com.omegafrog.My.piano.app.web.service.NotificationApplicationService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -25,17 +20,18 @@ public class PushNotificationController {
     private final MapperUtil mapperUtil;
 
     @PostMapping("/notification/token")
-    public JsonAPIResponse getClientToken(@RequestBody String clientToken) throws JsonProcessingException {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        notificationService.subscribeUser( mapperUtil.parseNotiClientToken(clientToken),
-                loggedInUser.getId());
-        return new APISuccessResponse("구독 성공.");
+    public JsonAPIResponse getClientToken(
+            @Valid @NotNull @RequestBody String clientToken) throws JsonProcessingException {
+        notificationService.subscribeUser( mapperUtil.parseNotiClientToken(clientToken));
+        return new ApiResponse("구독 성공.");
     }
 
     @GetMapping("/admin/notification")
-    public JsonAPIResponse sendMessage(@RequestParam String topic, @RequestParam Long userId, @RequestParam String message) throws FirebaseMessagingException, JsonProcessingException {
+    public JsonAPIResponse sendMessage(
+            @Valid @NotNull @RequestParam String topic,
+            @Valid @NotNull @RequestParam Long userId,
+            @Valid @NotNull @RequestParam String message) throws FirebaseMessagingException {
         String id = notificationService.sendMessageTo(topic, message, userId);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("messageId", id);
-        return new APISuccessResponse("Message 전송 성공.", data);
+        return new ApiResponse("Message 전송 성공.", id);
     }
 }

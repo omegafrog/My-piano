@@ -51,21 +51,24 @@ public class ElasticSearchInstance {
         List<Query> searchOptions = new ArrayList<>();
         if (instruments!=null && !instruments.isEmpty()) {
             Query instrumentFilter = QueryBuilders.terms(t -> t
-                    .field("instrument")
-                    .terms(terms -> terms.value(instruments.stream().map(item -> FieldValue.of(item)).toList())));
+                    .field("instrument.keyword")
+                    .terms(terms -> terms.value(instruments.stream().map(item -> FieldValue.of(item))
+                            .filter(item ->!item.stringValue().isBlank()).toList())));
             searchOptions.add(instrumentFilter);
         }
         if (difficulties!=null && !difficulties.isEmpty()) {
-            Query instrumentFilter = QueryBuilders.terms(t -> t
-                    .field("difficulty")
-                    .terms(terms -> terms.value(difficulties.stream().map(item -> FieldValue.of(item)).toList())));
-            searchOptions.add(instrumentFilter);
+            Query difficultyFilter = QueryBuilders.terms(t -> t
+                    .field("difficulty.keyword")
+                    .terms(terms -> terms.value(difficulties.stream().map(item -> FieldValue.of(item))
+                            .filter(item ->!item.stringValue().isBlank()).toList())));
+            searchOptions.add(difficultyFilter);
         }
         if (genres!=null && !genres.isEmpty()) {
-            Query instrumentFilter = QueryBuilders.terms(t -> t
-                    .field("genre")
-                    .terms(terms -> terms.value(genres.stream().map(item -> FieldValue.of(item)).toList())));
-            searchOptions.add(instrumentFilter);
+            Query genreFilter= QueryBuilders.terms(t -> t
+                    .field("genre.keyword")
+                    .terms(terms -> terms.value(genres.stream().map(item -> FieldValue.of(item))
+                            .filter(item ->!item.stringValue().isBlank()).toList())));
+            searchOptions.add(genreFilter);
         }
         SearchResponse<SheetPostIndex> response = esClient.search(
                 s -> s.index(SHEET_POST_INDEX_NAME)

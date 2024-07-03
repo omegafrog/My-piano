@@ -17,6 +17,7 @@ import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
 import com.omegafrog.My.piano.app.external.tossPayment.TossPaymentInstance;
 import com.omegafrog.My.piano.app.external.tossPayment.TossWebHookResultFactory;
 import com.omegafrog.My.piano.app.external.tossPayment.TossWebHookResultFactoryImpl;
+import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.utils.MapperUtil;
 import com.omegafrog.My.piano.app.web.domain.S3UploadFileExecutor;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
@@ -81,8 +82,8 @@ public class GlobalConfig {
     }
 
     @Bean
-    public MapperUtil mapperUtil(ObjectMapper objectMapper){
-        return new MapperUtil(objectMapper);
+    public MapperUtil mapperUtil(ObjectMapper objectMapper, AuthenticationUtil authenticationUtil){
+        return new MapperUtil(objectMapper,authenticationUtil);
     }
     public ElasticsearchClient elasticsearchClient() {
         String serverUrl = "https://" + host + ":" + port;

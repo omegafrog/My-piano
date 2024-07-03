@@ -74,11 +74,9 @@ class LessonControllerTest {
 
     @BeforeAll
     void settings() throws Exception {
-        securityUserRepository.deleteAll();
-        refreshTokenRepository.deleteAll();
 
-        SecurityUserDto securityUserDto = commonUserService.registerUserWhitoutProfile(TestLoginUtil.user1);
-        commonUserService.registerUserWhitoutProfile(TestLoginUtil.user2);
+        SecurityUserDto securityUserDto = commonUserService.registerUserWithoutProfile(TestLoginUtil.user1);
+        commonUserService.registerUserWithoutProfile(TestLoginUtil.user2);
         artist = ((SecurityUser) commonUserService.loadUserByUsername(securityUserDto.getUsername())).getUser();
 
         savedSheetPost = sheetPostRepository.save(DummyData.sheetPost(artist));
@@ -105,20 +103,9 @@ class LessonControllerTest {
 
     @BeforeEach
     void setLesson() {
-        lesson = DummyData.lesson(savedSheetPost.getSheet(), artist);
+        lesson = DummyData.lesson(savedSheetPost, artist);
     }
 
-    @AfterEach
-    void clearRepository() {
-        lessonRepository.deleteAll();
-    }
-
-    @AfterAll
-    void clearAllRepository() {
-        lessonRepository.deleteAll();
-        sheetPostRepository.deleteAll();
-        securityUserRepository.deleteAll();
-    }
 
     String accessToken;
     Cookie refreshToken;
@@ -139,7 +126,7 @@ class LessonControllerTest {
     @DisplayName("로그인하고 lesson을 생성할 수 있어야 한다.")
     void createLessonTest() throws Exception {
         LessonRegisterDto lessonRegisterDto = LessonRegisterDto.builder()
-                .sheetId(lesson.getSheet().getId())
+                .sheetId(lesson.getSheetPost().getId())
                 .title(lesson.getTitle())
                 .videoInformation(lesson.getVideoInformation())
                 .lessonInformation(lesson.getLessonInformation())
@@ -164,7 +151,7 @@ class LessonControllerTest {
     @DisplayName("로그인하지 않으면 lesson을 등록할 수 없다.")
     void createLessonAuthorizationTest() throws Exception {
         LessonRegisterDto lessonRegisterDto = LessonRegisterDto.builder()
-                .sheetId(lesson.getSheet().getId())
+                .sheetId(lesson.getSheetPost().getId())
                 .title(lesson.getTitle())
                 .videoInformation(lesson.getVideoInformation())
                 .lessonInformation(lesson.getLessonInformation())
@@ -188,7 +175,7 @@ class LessonControllerTest {
         Lesson savedLesson = lessonRepository.save(lesson);
         UpdateLessonDto updatedLessonDto = UpdateLessonDto.builder()
                 .lessonInformation(lesson.getLessonInformation())
-                .sheetId(lesson.getSheet().getId())
+                .sheetId(lesson.getSheetPost().getId())
                 .videoInformation(lesson.getVideoInformation())
                 .price(30000)
                 .title("changedTitle")
@@ -219,7 +206,7 @@ class LessonControllerTest {
         Lesson savedLesson = lessonRepository.save(lesson);
         UpdateLessonDto updatedLessonDto = UpdateLessonDto.builder()
                 .lessonInformation(lesson.getLessonInformation())
-                .sheetId(lesson.getSheet().getId())
+                .sheetId(lesson.getSheetPost().getId())
                 .videoInformation(lesson.getVideoInformation())
                 .price(30000)
                 .title("changedTitle")
@@ -391,7 +378,7 @@ class LessonControllerTest {
     void findAllLessonTest() throws Exception {
         Lesson saved1 = lessonRepository.save(lesson);
         Lesson lesson2 = Lesson.builder()
-                .sheet(savedSheetPost.getSheet())
+                .sheetPost(savedSheetPost)
                 .title("lesson2")
                 .price(2000)
                 .lessonInformation(LessonInformation.builder()

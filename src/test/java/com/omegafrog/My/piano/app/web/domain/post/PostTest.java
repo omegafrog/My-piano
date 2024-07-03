@@ -63,7 +63,8 @@ class PostTest {
                                 .phoneNum("010-1111-1112")
                                 .build())
                         .build(),
-                content
+                content,
+                null
                );
         post.addComment(comment);
         Assertions.assertThat(post.getComments().get(0).getContent()).isEqualTo(content);
@@ -96,7 +97,8 @@ class PostTest {
         Comment comment = new Comment(
                 0L,
                 build,
-                content);
+                content,
+                null);
         post.addComment(comment);
         post.deleteComment(0L, build);
         Assertions.assertThat(post.getComments()).isEmpty();

@@ -1,6 +1,7 @@
 package com.omegafrog.My.piano.app.web.domain.article;
 
-import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
+import com.omegafrog.My.piano.app.web.exception.article.CannotDecreaseLikeCountException;
+import com.omegafrog.My.piano.app.web.exception.message.ExceptionMessage;
 import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import jakarta.persistence.*;
@@ -9,7 +10,6 @@ import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.engine.spi.CascadeStyle;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 
@@ -40,7 +40,6 @@ public class Article {
     protected boolean disabled=false;
 
     @ManyToOne
-    @JoinColumn(name="AUTHOR_ID")
     protected User author;
 
     public void setAuthor(User user){
@@ -59,6 +58,7 @@ public class Article {
     }
 
     public void decreaseLikedCount(){
+        if(likeCount==0) throw new CannotDecreaseLikeCountException("Like count is already 0");
         likeCount--;
     }
 

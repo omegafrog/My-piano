@@ -2,9 +2,9 @@ package com.omegafrog.My.piano.app.web.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.omegafrog.My.piano.app.security.exception.DuplicatePropertyException;
-import com.omegafrog.My.piano.app.utils.exception.payment.PaymentException;
-import com.omegafrog.My.piano.app.utils.response.APIBadRequestResponse;
-import com.omegafrog.My.piano.app.utils.response.APIInternalServerResponse;
+import com.omegafrog.My.piano.app.web.exception.payment.PaymentException;
+import com.omegafrog.My.piano.app.web.response.APIBadRequestResponse;
+import com.omegafrog.My.piano.app.web.response.APIInternalServerResponse;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceException;
@@ -83,6 +83,12 @@ public class ExceptionAdvisor {
     public Object JDBCBindingViolationExceptionHandler(DataIntegrityViolationException ex) {
         ex.printStackTrace();
         return new APIBadRequestResponse(ex.getCause().getCause().getMessage());
+    }
+
+    @ExceptionHandler(Exception.class)
+    public Object exceptionHandler(Exception ex) {
+        ex.printStackTrace();
+        return new APIInternalServerResponse(ex.getMessage());
     }
 
 }

@@ -1,7 +1,8 @@
 package com.omegafrog.My.piano.app.web.service;
 
 
-import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
+import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
+import com.omegafrog.My.piano.app.web.exception.message.ExceptionMessage;
 import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.post.PostRepository;
 import com.omegafrog.My.piano.app.web.domain.post.PostViewCountRepository;
@@ -25,11 +26,14 @@ public class PostApplicationService {
 
     private final UserRepository userRepository;
     private final PostRepository postRepository;
+    private final AuthenticationUtil authenticationUtil;
     private final PostViewCountRepository postViewCountRepository;
 
-    public PostDto writePost(PostRegisterDto post, User author) {
-        User user = userRepository.findById(author.getId())
-                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + author.getId()));
+    public PostDto writePost(PostRegisterDto post) {
+        User loggedInUser = authenticationUtil.getLoggedInUser();
+        User user = userRepository.findById(loggedInUser.getId())
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInUser.getId()));
+
         Post build = Post.builder()
                 .title(post.getTitle())
                 .content(post.getContent())
@@ -49,7 +53,8 @@ public class PostApplicationService {
         return postDto;
     }
 
-    public PostDto updatePost(Long id, UpdatePostDto updatePostDto, User loggedInUser) {
+    public PostDto updatePost(Long id, UpdatePostDto updatePostDto) {
+        User loggedInUser = authenticationUtil.getLoggedInUser();
         Post post = getPostById(id);
         if (post.getAuthor().equals(loggedInUser)) {
             return post.update(updatePostDto).toDto();
@@ -57,7 +62,8 @@ public class PostApplicationService {
         } else throw new AccessDeniedException("Cannot update other user's post");
     }
 
-    public void deletePost(Long id, User loggedInUser) {
+    public void deletePost(Long id) {
+        User loggedInUser = authenticationUtil.getLoggedInUser();
         Post post = getPostById(id);
         if (post.getAuthor().equals(loggedInUser)) {
             postRepository.deleteById(id);
@@ -68,20 +74,23 @@ public class PostApplicationService {
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_POST + id));
     }
 
-    public void likePost(Long postId, User user) {
+    public void likePost(Long postId) {
+        User user = authenticationUtil.getLoggedInUser();
         User byId = userRepository.findById(user.getId())
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + user.getId()));
         Post post = getPostById(postId);
         post.increaseLikedCount();
         byId.likePost(post);
     }
-    public void dislikePost(Long id, User loggedInUser){
+    public void dislikePost(Long id){
+        User loggedInUser = authenticationUtil.getLoggedInUser();
         Post dislikedPost = getPostById(id);
         User founded = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity."));
         founded.dislikePost(dislikedPost);
     }
-    public boolean isLikedPost(Long id, User loggedInUser){
+    public boolean isLikedPost(Long id){
+        User loggedInUser = authenticationUtil.getLoggedInUser();
         User founded = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity. "));
         return !founded.getLikedPosts().stream().filter(post -> post.getId().equals(id)).findFirst().isEmpty();

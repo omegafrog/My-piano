@@ -1,7 +1,6 @@
 package com.omegafrog.My.piano.app.security.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.web.dto.user.RegisterUserDto;
 import com.omegafrog.My.piano.app.web.dto.user.SecurityUserDto;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
@@ -28,7 +27,6 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 
-import java.util.List;
 import java.util.Map;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -49,10 +47,6 @@ class SecurityControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-    @Autowired
-    private SecurityUserRepository securityUserRepository;
 
     @Autowired
     private CommonUserService commonUserService;
@@ -67,7 +61,6 @@ class SecurityControllerTest {
 
     @BeforeEach
     void makeDto(){
-        securityUserRepository.deleteAll();
         dto = RegisterUserDto.builder()
                 .username("username")
                 .password("password")
@@ -78,21 +71,10 @@ class SecurityControllerTest {
                 .phoneNum("010-1111-2222")
                 .build();
     }
-    @AfterEach
-    void deleteRepo(){
-        securityUserRepository.deleteAll();
-    }
-    @AfterAll
-    void deleteRepository(){
-        securityUserRepository.deleteAll();
-        List<SecurityUser> all = securityUserRepository.findAll();
-        all.forEach(user -> System.out.println("user = " + user));
-        System.out.println("SecurityController : securityUserRepository.count() = " + securityUserRepository.count());
-    }
 
     @Test
     @DisplayName("/user/register로 유저 회원가입을 할 수 있어야 한다.")
-    void registerUserTest() throws Exception, DuplicatePropertyException {
+    void registerUserTest() throws Exception {
         String s = objectMapper.writeValueAsString(dto);
         mockMvc.perform(post("/user/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -105,9 +87,8 @@ class SecurityControllerTest {
 
     @Test
     @DisplayName("중복된 username으로 회원가입시 회원가입에 실패해야 한다.")
-    void usernameExistTest() throws DuplicatePropertyException, Exception {
-
-        SecurityUserDto securityUserDto = commonUserService.registerUserWhitoutProfile(dto);
+    void usernameExistTest() throws Exception {
+        SecurityUserDto securityUserDto = commonUserService.registerUserWithoutProfile(dto);
         String s = objectMapper.writeValueAsString(dto);
         mockMvc.perform(post("/user/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -121,8 +102,8 @@ class SecurityControllerTest {
 
     @Test
     @DisplayName("유저는 자신을 인증하고  토큰을 발급받아야 한다.")
-    void loginTest() throws Exception, DuplicatePropertyException {
-        SecurityUserDto securityUserDto = commonUserService.registerUserWhitoutProfile(dto);
+    void loginTest() throws Exception{
+        SecurityUserDto securityUserDto = commonUserService.registerUserWithoutProfile(dto);
         String s = objectMapper.writeValueAsString(dto);
         mockMvc.perform(post("/user/login")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
@@ -134,9 +115,8 @@ class SecurityControllerTest {
 
     @Test
     @DisplayName("유저가 로그인에 실패할 경우 올바른 에러를 리턴해야 한다.")
-    void loginFailedTest() throws Exception, DuplicatePropertyException {
-        SecurityUserDto securityUserDto = commonUserService.registerUserWhitoutProfile(dto);
-        String s = objectMapper.writeValueAsString(dto);
+    void loginFailedTest() throws Exception{
+        SecurityUserDto securityUserDto = commonUserService.registerUserWithoutProfile(dto);
         mockMvc.perform(post("/user/login")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content("username=username1&password=password"))
@@ -148,9 +128,8 @@ class SecurityControllerTest {
     // TODO : 로그아웃하려면 블랙리스트를 만들어야 하는데 이거는 추가로 repository를 넣어야 해서 힘들듯?
     @Test
     @DisplayName("유저는 로그아웃 할 수 있어야 한다.")
-    void logoutTest() throws Exception, DuplicatePropertyException {
-        SecurityUserDto securityUserDto = commonUserService.registerUserWhitoutProfile(dto);
-        String s = objectMapper.writeValueAsString(dto);
+    void logoutTest() throws Exception {
+        SecurityUserDto securityUserDto = commonUserService.registerUserWithoutProfile(dto);
         MvcResult mvcResult = mockMvc.perform(post("/user/login")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content("username=username&password=password"))
@@ -188,7 +167,7 @@ class SecurityControllerTest {
     @Test
     @DisplayName("로그인한 사용자는 회원탈퇴할 수 있어야 한다.")
     void signOutTest() throws Exception, DuplicatePropertyException {
-        SecurityUserDto securityUserDto = commonUserService.registerUserWhitoutProfile(dto);
+        SecurityUserDto securityUserDto = commonUserService.registerUserWithoutProfile(dto);
         MvcResult mvcResult = mockMvc.perform(post("/user/login")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content("username=username&password=password"))

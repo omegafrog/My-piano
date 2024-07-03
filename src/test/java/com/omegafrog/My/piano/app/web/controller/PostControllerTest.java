@@ -1,7 +1,6 @@
 package com.omegafrog.My.piano.app.web.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
@@ -15,7 +14,7 @@ import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.post.PostDto;
 import com.omegafrog.My.piano.app.web.dto.post.PostRegisterDto;
 import com.omegafrog.My.piano.app.web.dto.post.UpdatePostDto;
-import com.omegafrog.My.piano.app.utils.response.JsonAPIResponse;
+import com.omegafrog.My.piano.app.web.response.success.JsonAPIResponse;
 import com.omegafrog.My.piano.app.web.service.PostApplicationService;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 import org.assertj.core.api.Assertions;
@@ -118,7 +117,7 @@ class PostControllerTest {
             JsonAPIResponse apiResponse = controller.writePost( postDto);
             //then
             Assertions.assertThat(apiResponse).isNotNull();
-            PostDto postDto1 = (PostDto) apiResponse.getData();
+            PostDto postDto1 = (PostDto) apiResponse.getBody();
 
             Assertions.assertThat(postDto1.getId()).isEqualTo(0L);
         }
@@ -148,7 +147,7 @@ class PostControllerTest {
 
 
             Assertions.assertThat(response).isNotNull();
-            PostDto postDto1 = (PostDto) response.getData();
+            PostDto postDto1 = (PostDto) response.getBody();
             Long id = postDto1.getId();
             Assertions.assertThat(id).isEqualTo(0);
             String updatedContent = postDto1.getContent();
@@ -169,7 +168,7 @@ class PostControllerTest {
             //when
             JsonAPIResponse response = controller.deletePost(0L);
             Assertions.assertThat(response).isNotNull();
-            int status = response.getStatus();
+            int status = response.getStatusCode().value();
             Assertions.assertThat(status).isEqualTo(HttpStatus.OK.value());
         }
     }
@@ -200,7 +199,7 @@ class PostControllerTest {
         JsonAPIResponse response = controller.findPost(0L);
         //then
         Assertions.assertThat(response).isNotNull();
-        PostDto postDto1 = (PostDto) response.getData();
+        PostDto postDto1 = (PostDto) response.getBody();
         long id = postDto1.getId();
         String text = postDto1.getTitle();
         Assertions.assertThat(id).isEqualTo(0L);

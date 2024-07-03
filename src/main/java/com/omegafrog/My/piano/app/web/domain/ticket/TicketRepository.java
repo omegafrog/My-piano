@@ -16,7 +16,7 @@ public interface TicketRepository {
 
     Page<Ticket> findAll(SearchTicketFilter filter, Pageable pageable);
 
-    List<Ticket> findByAuthor_IdAndFilter(Long id, SearchTicketFilter filter,Pageable pageable);
+    Page<Ticket> findByAuthor_IdAndFilter(Long id, SearchTicketFilter filter,Pageable pageable);
 
     Long count();
 }

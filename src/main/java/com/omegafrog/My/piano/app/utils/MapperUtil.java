@@ -31,10 +31,12 @@ import java.util.List;
 public class MapperUtil {
     private final ObjectMapper objectMapper;
     private final TossWebHookResultFactory tossWebHookResultFactory;
+    private final AuthenticationUtil authenticationUtil;
 
-    public MapperUtil(ObjectMapper objectMapper) {
+    public MapperUtil(ObjectMapper objectMapper, AuthenticationUtil authenticationUtil){
         this.objectMapper = objectMapper;
         this.tossWebHookResultFactory = new TossWebHookResultFactoryImpl(objectMapper);
+        this.authenticationUtil = authenticationUtil;
     }
 
     public PaymentHistory parsePaymentHistory(String result) throws JsonProcessingException {
@@ -49,7 +51,8 @@ public class MapperUtil {
                     OrderStatus.valueOf(node.get("status").asText()));
 }
 
-    public RegisterSheetPostDto parseRegisterSheetPostInfo(String registerSheetInfo, User loggedInUser) throws JsonProcessingException {
+    public RegisterSheetPostDto parseRegisterSheetPostInfo(String registerSheetInfo) throws JsonProcessingException {
+        User loggedInUser = authenticationUtil.getLoggedInUser();
         JsonNode node = objectMapper.readTree(registerSheetInfo);
 
         return RegisterSheetPostDto.builder()
@@ -179,6 +182,7 @@ public class MapperUtil {
     }
 
     public String parseNotiClientToken(String clientToken) throws JsonProcessingException {
+
         return objectMapper.readTree(clientToken).get("token").asText();
     }
 }

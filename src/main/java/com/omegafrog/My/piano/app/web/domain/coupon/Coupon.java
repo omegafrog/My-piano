@@ -1,6 +1,6 @@
 package com.omegafrog.My.piano.app.web.domain.coupon;
 
-import com.omegafrog.My.piano.app.utils.exception.payment.ExpiredCouponException;
+import com.omegafrog.My.piano.app.web.exception.payment.ExpiredCouponException;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import jakarta.persistence.*;
 import lombok.Builder;

@@ -11,6 +11,7 @@ import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
 import com.omegafrog.My.piano.app.security.provider.AdminAuthenticationProvider;
 import com.omegafrog.My.piano.app.security.provider.CommonUserAuthenticationProvider;
+import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
 import com.omegafrog.My.piano.app.web.service.admin.AdminUserService;
 import com.omegafrog.My.piano.app.web.service.admin.CommonUserService;
@@ -100,6 +101,8 @@ public class SecurityConfig {
     private SheetPostRepository sheetPostRepository;
     @Autowired
     private MapperUtil mapperUtil;
+    @Autowired
+    private AuthenticationUtil authenticationUtil;
 
     @Bean
     public AdminUserService adminUserService(){
@@ -111,7 +114,8 @@ public class SecurityConfig {
                 postRepository,
                 mapperUtil,
                 sheetPostRepository,
-                lessonRepository
+                lessonRepository,
+                authenticationUtil
         );
     }
 
@@ -197,7 +201,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests()
                 .requestMatchers("/api/v1/cash/webhook")
                 .permitAll()
-                .anyRequest().hasRole(Role.USER.value)
+                .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value)
                 .and()
                 .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
                 .sessionManagement()

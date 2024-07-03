@@ -87,11 +87,6 @@ class UserControllerTest {
     }
 
 
-    @AfterEach
-    void clearRepository(){
-        securityUserRepository.deleteAll();
-        System.out.println("securityUserRepository.count() = " + securityUserRepository.count());
-    }
 
     @Test
     void getCommunityPostTest() throws Exception {

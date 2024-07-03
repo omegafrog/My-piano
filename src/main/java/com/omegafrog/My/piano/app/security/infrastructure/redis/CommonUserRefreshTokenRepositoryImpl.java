@@ -7,9 +7,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ScanOptions;
+import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
@@ -77,22 +81,30 @@ public class CommonUserRefreshTokenRepositoryImpl implements RefreshTokenReposit
     }
 
     @Override
-    public List<RefreshToken> findAllByRole(Role[] role, Pageable pageable) {
+    public Page<RefreshToken> findAllByRole(Role[] role, Pageable pageable) {
         List<RefreshToken> list = new ArrayList<>();
+        long count = 0;
         for(Role r: role){
             Set members = redisTemplate.opsForSet().members("refresh:" + r.value);
+            count += members.size();
             for (Object member : members) {
                 String item = String.valueOf(member);
                 Map<String, Object> entries = redisTemplate.opsForHash().entries("refresh:" + r.value + ":" + item);
-                log.debug("entries:{}", entries);
                 list.add(new RefreshToken((String) entries.get("id"), (String) entries.get("refreshToken"),
                         Long.parseLong((String) entries.get("userId")), Long.parseLong((String) entries.get("expiration")),
                         Role.valueOf((String) entries.get("role")), LocalDateTime.parse((String) entries.get("createdAt"))));
+                if(list.size() == pageable.getPageSize()) break;
             }
+            if(list.size() == pageable.getPageSize()) break;
         }
-        return list;
+        long finalCount = count;
+        return PageableExecutionUtils.getPage(list, pageable, () -> finalCount);
     }
 
+    private Long countKeys(String pattern) {
+        Cursor<byte[]> cursor = redisTemplate.getConnectionFactory().getConnection().scan( ScanOptions.scanOptions().match(pattern).build());
+        return cursor.stream().count();
+    }
     @Override
     public Long countByRole(Role role) {
         return redisTemplate.opsForSet().size("refresh:" + role.value);

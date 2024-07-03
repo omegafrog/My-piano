@@ -2,8 +2,8 @@ package com.omegafrog.My.piano.app.external.tossPayment;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.omegafrog.My.piano.app.utils.MapperUtil;
-import com.omegafrog.My.piano.app.utils.exception.payment.CashOrderConfirmFailedException;
-import com.omegafrog.My.piano.app.utils.exception.payment.TossAPIException;
+import com.omegafrog.My.piano.app.web.exception.payment.CashOrderConfirmFailedException;
+import com.omegafrog.My.piano.app.web.exception.payment.TossAPIException;
 import com.omegafrog.My.piano.app.web.domain.cash.CashOrder;
 import lombok.*;
 import org.springframework.beans.factory.annotation.Value;

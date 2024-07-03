@@ -1,6 +1,7 @@
 package com.omegafrog.My.piano.app.security.entity;
 
 import com.omegafrog.My.piano.app.web.dto.admin.SearchUserFilter;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
@@ -13,9 +14,11 @@ public interface SecurityUserRepository {
     Optional<SecurityUser> findById(Long id);
     void deleteById(Long id);
 
-    List<SecurityUser> findAll(Pageable pageable, SearchUserFilter filter);
+    Page<SecurityUser> findAllByFilter(Pageable pageable, SearchUserFilter filter);
 
     Long count();
 
     Optional<SecurityUser> findByEmail(String email);
+
+    Page<SecurityUser> findAllByUserId(List<Long> securityUserId, Pageable pageable);
 }

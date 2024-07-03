@@ -1,25 +1,18 @@
 package com.omegafrog.My.piano.app.web.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
-import com.omegafrog.My.piano.app.web.domain.order.SellableItemFactory;
-import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.order.OrderDto;
 import com.omegafrog.My.piano.app.web.dto.order.OrderRegisterDto;
 import com.omegafrog.My.piano.app.web.service.CartApplicationService;
 import com.omegafrog.My.piano.app.web.service.OrderService;
-import com.omegafrog.My.piano.app.utils.response.APISuccessResponse;
-import com.omegafrog.My.piano.app.utils.response.JsonAPIResponse;
-import com.omegafrog.My.piano.app.utils.response.ResponseUtil;
+import com.omegafrog.My.piano.app.web.response.success.ApiResponse;
+import com.omegafrog.My.piano.app.web.response.success.JsonAPIResponse;
 import jakarta.persistence.PersistenceException;
-import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @RestController
@@ -28,52 +21,36 @@ import java.util.Set;
 public class CartController {
 
     private final CartApplicationService cartService;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
     private final OrderService orderService;
-    @Autowired
-    private final SellableItemFactory sellableItemFactory;
 
     @PostMapping("{mainResource}")
-    public JsonAPIResponse addToCart(@RequestBody OrderRegisterDto dto, @PathVariable String mainResource, HttpServletRequest request)
-            throws JsonProcessingException {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
+    public JsonAPIResponse addToCart(@RequestBody OrderRegisterDto dto, @PathVariable String mainResource)  {
         OrderDto createdOrder = orderService.makeOrder(mainResource, dto);
-        List<OrderDto> orderDtos = cartService.addToCart(createdOrder, loggedInUser);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("contents", orderDtos);
-        return new APISuccessResponse("Add order to cart success.", data);
+        List<OrderDto> orderDtoList = cartService.addToCart(createdOrder);
+        return new ApiResponse("Add order to cart success.", orderDtoList);
     }
 
     @DeleteMapping("/{id}")
-    public JsonAPIResponse deleteFromCart(@PathVariable Long id){
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        cartService.deleteFromCart(id, loggedInUser);
-        return new APISuccessResponse("Delete order from cart success.");
+    public JsonAPIResponse deleteFromCart(@NotNull @PathVariable Long id){
+        cartService.deleteFromCart(id);
+        return new ApiResponse("Delete order from cart success.");
     }
 
     @GetMapping("")
-    public JsonAPIResponse getAllContentFromCart() throws JsonProcessingException , PersistenceException {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        List<OrderDto> allContentFromCart = cartService.getAllContentFromCart(loggedInUser);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("contents", allContentFromCart);
-        return new APISuccessResponse("Get all cart contents success.", data);
+    public JsonAPIResponse getAllContentFromCart() throws PersistenceException {
+        List<OrderDto> allContentFromCart = cartService.getAllContentFromCart();
+        return new ApiResponse("Get all cart contents success.", allContentFromCart);
     }
     @GetMapping("{mainResource}/{id}")
     public JsonAPIResponse isItemInCart(@PathVariable String mainResource, @PathVariable Long id) throws JsonProcessingException {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        boolean isInCart = cartService.isItemInCart(mainResource, id, loggedInUser);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("isInCart", isInCart);
-        return new APISuccessResponse("Check item is in cart success.", data);
+        boolean isInCart = cartService.isItemInCart(mainResource, id);
+        return new ApiResponse("Check item is in cart success.", isInCart);
     }
 
     @PatchMapping("")
     public JsonAPIResponse purchaseInCart(@RequestParam(name="orderId") Set<Long> orderId) throws JsonProcessingException {
-        User loggedInUser = AuthenticationUtil.getLoggedInUser();
-        int payCnt = cartService.purchaseInCart(orderId, loggedInUser);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("payCnt", payCnt);
-        return new APISuccessResponse("Purchase all content in cart success.", data);
+        int payCnt = cartService.purchaseInCart(orderId);
+        return new ApiResponse("Purchase all content in cart success.",payCnt);
     }
 
 }

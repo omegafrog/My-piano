@@ -1,9 +1,9 @@
 package com.omegafrog.My.piano.app.web.domain.user;
 
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
-import com.omegafrog.My.piano.app.utils.exception.AlreadyScrappedEntityException;
-import com.omegafrog.My.piano.app.utils.exception.AlreadyLikedEntityException;
-import com.omegafrog.My.piano.app.utils.exception.message.ExceptionMessage;
+import com.omegafrog.My.piano.app.web.exception.AlreadyScrappedEntityException;
+import com.omegafrog.My.piano.app.web.exception.AlreadyLikedEntityException;
+import com.omegafrog.My.piano.app.web.exception.message.ExceptionMessage;
 
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
 import com.omegafrog.My.piano.app.web.domain.coupon.Coupon;
@@ -19,8 +19,8 @@ import com.omegafrog.My.piano.app.web.dto.user.ChangeUserDto;
 import com.omegafrog.My.piano.app.web.dto.user.UserInfo;
 import com.omegafrog.My.piano.app.web.dto.user.UserProfileDto;
 import com.omegafrog.My.piano.app.web.enums.OrderStatus;
-import com.omegafrog.My.piano.app.utils.exception.payment.NotEnoughCashException;
-import com.omegafrog.My.piano.app.utils.exception.payment.PaymentException;
+import com.omegafrog.My.piano.app.web.exception.payment.NotEnoughCashException;
+import com.omegafrog.My.piano.app.web.exception.payment.PaymentException;
 import com.omegafrog.My.piano.app.web.vo.user.AlarmProperties;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
@@ -77,7 +77,6 @@ public class User {
     private SecurityUser securityUser;
 
     @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
-    @JoinColumn(name = "USER_ID")
     @NotNull
     private Cart cart;
 

@@ -86,15 +86,14 @@ class OrderControllerTest {
 
     @BeforeAll
     void register() throws Exception, DuplicatePropertyException {
-        securityUserRepository.deleteAll();
         RegisterUserDto user1 = TestLoginUtil.user1;
-        SecurityUserDto securityUserDto1 = commonUserService.registerUserWhitoutProfile(user1);
+        SecurityUserDto securityUserDto1 = commonUserService.registerUserWithoutProfile(user1);
         testUser1Profile = ((SecurityUser) commonUserService.loadUserByUsername(securityUserDto1.getUsername()))
                 .getUser();
         testUser1Profile.chargeCash(20000);
         userRepository.save(testUser1Profile);
         RegisterUserDto user2 = TestLoginUtil.user2;
-        SecurityUserDto securityUserDto2 = commonUserService.registerUserWhitoutProfile(user2);
+        SecurityUserDto securityUserDto2 = commonUserService.registerUserWithoutProfile(user2);
         artist = ((SecurityUser) commonUserService.loadUserByUsername(securityUserDto2.getUsername()))
                 .getUser();
         MvcResult mvcResult = mockMvc.perform(post("/user/login")
@@ -111,21 +110,10 @@ class OrderControllerTest {
     @Transactional
     void saveEntity() {
         savedSheetPost = sheetPostRepository.save(DummyData.sheetPost(testUser1Profile));
-        Lesson lesson = DummyData.lesson(savedSheetPost.getSheet(), artist);
+        Lesson lesson = DummyData.lesson(savedSheetPost, artist);
         savedLesson = lessonRepository.save(lesson);
     }
 
-    @AfterEach
-    void clearRepository() {
-        orderRepository.deleteAll();
-    }
-
-    @AfterAll
-    void clearAllRepository() {
-        lessonRepository.deleteAll();
-        sheetPostRepository.deleteAll();
-        securityUserRepository.deleteAll();
-    }
 
     @Test
     @Transactional

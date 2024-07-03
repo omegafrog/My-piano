@@ -1,6 +1,7 @@
 package com.omegafrog.My.piano.app.security.jwt;
 
 import com.omegafrog.My.piano.app.security.entity.authorities.Role;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.NonNull;
 
@@ -18,7 +19,7 @@ public interface RefreshTokenRepository  {
     void deleteById(String id);
     void deleteAll();
 
-    List<RefreshToken> findAllByRole(Role[] role, Pageable pageable);
+    Page<RefreshToken> findAllByRole(Role[] role, Pageable pageable);
 
     Long countByRole(Role role);
 }

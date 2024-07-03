@@ -1,6 +1,6 @@
 package com.omegafrog.My.piano.app.web.domain.cash;
 
-import com.omegafrog.My.piano.app.utils.exception.payment.CashOrderCalculateFailureException;
+import com.omegafrog.My.piano.app.web.exception.payment.CashOrderCalculateFailureException;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.order.CashOrderDto;
 import com.omegafrog.My.piano.app.web.enums.OrderStatus;
@@ -9,6 +9,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,7 +25,7 @@ import java.time.LocalDateTime;
 public class CashOrder {
     @Id
     private String orderId;
-
+    @NotBlank
     private String orderName;
 
     @Nullable
@@ -40,6 +42,7 @@ public class CashOrder {
 
     private OrderStatus status = OrderStatus.READY;
 
+    @NotNull
     private Long userId;
 
     public CashOrder(String orderId, String paymentKey, PaymentType paymentType, int amount, User user) {
