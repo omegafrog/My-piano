@@ -14,7 +14,7 @@ import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.post.PostDto;
 import com.omegafrog.My.piano.app.web.dto.post.PostRegisterDto;
 import com.omegafrog.My.piano.app.web.dto.post.UpdatePostDto;
-import com.omegafrog.My.piano.app.web.response.success.JsonAPISuccessResponse;
+import com.omegafrog.My.piano.app.web.response.success.JsonAPIResponse;
 import com.omegafrog.My.piano.app.web.service.PostApplicationService;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 import org.assertj.core.api.Assertions;
@@ -114,7 +114,7 @@ class PostControllerTest {
             ReflectionTestUtils.setField(build,"id", 0L);
             Mockito.when(postRepository.save(any(Post.class))).thenReturn(build);
             Mockito.when(userRepository.findById(0L)).thenReturn(Optional.of(author));
-            JsonAPISuccessResponse apiResponse = controller.writePost( postDto);
+            JsonAPIResponse apiResponse = controller.writePost( postDto);
             //then
             Assertions.assertThat(apiResponse).isNotNull();
             PostDto postDto1 = (PostDto) apiResponse.getBody();
@@ -143,7 +143,7 @@ class PostControllerTest {
             ReflectionTestUtils.setField(build, "content", updateDto.getContent());
 
 
-            JsonAPISuccessResponse response = controller.updatePost(0L, updateDto);
+            JsonAPIResponse response = controller.updatePost(0L, updateDto);
 
 
             Assertions.assertThat(response).isNotNull();
@@ -166,7 +166,7 @@ class PostControllerTest {
 
             Mockito.when(postRepository.findById(0L)).thenReturn(Optional.of(build));
             //when
-            JsonAPISuccessResponse response = controller.deletePost(0L);
+            JsonAPIResponse response = controller.deletePost(0L);
             Assertions.assertThat(response).isNotNull();
             int status = response.getStatusCode().value();
             Assertions.assertThat(status).isEqualTo(HttpStatus.OK.value());
@@ -196,7 +196,7 @@ class PostControllerTest {
         ReflectionTestUtils.setField(entity, "id", 0L);
         Mockito.when(postRepository.findById(0L)).thenReturn(Optional.of(entity));
         //when
-        JsonAPISuccessResponse response = controller.findPost(0L);
+        JsonAPIResponse response = controller.findPost(0L);
         //then
         Assertions.assertThat(response).isNotNull();
         PostDto postDto1 = (PostDto) response.getBody();

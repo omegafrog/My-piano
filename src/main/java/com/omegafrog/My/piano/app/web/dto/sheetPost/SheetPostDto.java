@@ -11,6 +11,7 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @SuperBuilder
 public class SheetPostDto extends SellableItemDto {
+    private String title;
     private String content;
     private Double discountRate = 0d;
     private UserInfo artist;

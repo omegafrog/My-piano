@@ -1,15 +1,11 @@
 package com.omegafrog.My.piano.app.web.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
-import com.omegafrog.My.piano.app.web.response.success.ApiSuccessResponse;
-import com.omegafrog.My.piano.app.web.response.success.JsonAPISuccessResponse;
-import com.omegafrog.My.piano.app.web.domain.user.User;
+import com.omegafrog.My.piano.app.web.response.success.ApiResponse;
+import com.omegafrog.My.piano.app.web.response.success.JsonAPIResponse;
 import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
 import com.omegafrog.My.piano.app.web.dto.comment.CommentTargetType;
 import com.omegafrog.My.piano.app.web.dto.comment.RegisterCommentDto;
 import com.omegafrog.My.piano.app.web.service.*;
-import jakarta.persistence.PersistenceException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -17,8 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -33,39 +27,39 @@ public class CommentController {
     private final CommentApplicationService commentApplicationService;
 
     @PostMapping
-    public JsonAPISuccessResponse<List<CommentDto>> addComment(
+    public JsonAPIResponse<List<CommentDto>> addComment(
             @Valid @NotNull @PathVariable Long id,
             @Valid @NotNull @RequestBody RegisterCommentDto dto,
             HttpServletRequest request
     ){
         List<CommentDto> comments= commentApplicationService.addComment(CommentTargetType.of(request), id, dto);
-        return new ApiSuccessResponse<>("Add Comment success.", comments);
+        return new ApiResponse<>("Add Comment success.", comments);
     }
 
     @PostMapping("/{comment-id}")
-    public JsonAPISuccessResponse<CommentDto> replyComment(
+    public JsonAPIResponse<CommentDto> replyComment(
             @Valid @NotNull @PathVariable(name = "comment-id")  Long commentId,
             @Valid @NotNull String content
     ) {
         CommentDto dto = commentApplicationService.replyComment(commentId, content);
-        return new ApiSuccessResponse<>("Reply Comment success.", dto);
+        return new ApiResponse<>("Reply Comment success.", dto);
     }
 
     @DeleteMapping("{comment-id}")
-    public JsonAPISuccessResponse<Void> deleteComment(
+    public JsonAPIResponse<Void> deleteComment(
             @Valid @NotNull @PathVariable Long id,
             @Valid @NotNull @PathVariable(name = "comment-id") Long commentId,
             HttpServletRequest request
     ) {
         commentApplicationService.deleteComment(CommentTargetType.of(request),id, commentId);
-        return new ApiSuccessResponse<>("Delete Comment success.");
+        return new ApiResponse<>("Delete Comment success.");
     }
 
     @GetMapping
-    public JsonAPISuccessResponse<Page<CommentDto>> getComments(
+    public JsonAPIResponse<Page<CommentDto>> getComments(
             @Valid @NotNull @PathVariable Long id,
             @Valid @NotNull @PageableDefault(size=10) Pageable pageable) {
         Page<CommentDto> page = commentApplicationService.getComments(id, pageable);
-        return new ApiSuccessResponse<>("Get all comments success.", page);
+        return new ApiResponse<>("Get all comments success.", page);
     }
 }

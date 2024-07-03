@@ -1,21 +1,18 @@
 package com.omegafrog.My.piano.app.web.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.omegafrog.My.piano.app.utils.MapperUtil;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostListDto;
 import com.omegafrog.My.piano.app.web.response.ResponseUtil;
-import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.RegisterSheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
 import com.omegafrog.My.piano.app.web.service.SheetPostApplicationService;
-import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
-import com.omegafrog.My.piano.app.web.response.success.ApiSuccessResponse;
-import com.omegafrog.My.piano.app.web.response.success.JsonAPISuccessResponse;
+import com.omegafrog.My.piano.app.web.response.success.ApiResponse;
+import com.omegafrog.My.piano.app.web.response.success.JsonAPIResponse;
 import jakarta.persistence.PersistenceException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
@@ -38,40 +35,40 @@ public class SheetPostController {
     private final MapperUtil mapperUtil;
 
     @GetMapping("/{id}")
-    public JsonAPISuccessResponse<SheetPostDto> getSheetPost(
+    public JsonAPIResponse<SheetPostDto> getSheetPost(
             @Valid @NotNull @PathVariable Long id) {
         SheetPostDto data = sheetPostService.getSheetPost(id);
-        return new ApiSuccessResponse<>("Get Sheet post success.", data);
+        return new ApiResponse<>("Get Sheet post success.", data);
     }
 
     @GetMapping("")
-    public JsonAPISuccessResponse<Page<SheetPostDto>> getSheetPosts(@Nullable @RequestParam String searchSentence,
-                                                                    @Nullable @RequestParam List<String> instrument,
-                                                                    @Nullable @RequestParam List<String> difficulty,
-                                                                    @Nullable @RequestParam List<String> genre,
-                                                                    Pageable pageable) throws IOException {
-        Page<SheetPostDto> data= sheetPostService.getSheetPosts(searchSentence, instrument, difficulty, genre, pageable);
-        return new ApiSuccessResponse<>("Get sheet posts success.", data);
+    public JsonAPIResponse<Page<SheetPostListDto>> getSheetPosts(
+            @Nullable @RequestParam String searchSentence,
+            @Nullable @RequestParam List<String> instrument,
+            @Nullable @RequestParam List<String> difficulty,
+            @Nullable @RequestParam List<String> genre,
+            Pageable pageable) throws IOException {
+        Page<SheetPostListDto> data= sheetPostService.getSheetPosts(searchSentence, instrument, difficulty, genre, pageable);
+        return new ApiResponse<>("Get sheet posts success.", data);
     }
     @PutMapping("/{id}/like")
-    public JsonAPISuccessResponse<Void> likePost(@PathVariable Long id){
+    public JsonAPIResponse<Void> likePost(@PathVariable Long id){
         sheetPostService.likePost(id);
-        return new ApiSuccessResponse<>("Increase like count success.");
+        return new ApiResponse<>("Increase like count success.");
     }
     @GetMapping("/{id}/like")
-    public JsonAPISuccessResponse<Map<String, Object>> isLikePost(@PathVariable Long id){
+    public JsonAPIResponse isLikePost(@PathVariable Long id){
         boolean isLiked= sheetPostService.isLikedSheetPost(id);
-        Map<String, Object> data = ResponseUtil.getStringObjectMap("isLiked", isLiked);
-        return new ApiSuccessResponse<>("Check liked sheet post success.", data);
+        return new ApiResponse<>("Check liked sheet post success.", isLiked);
     }
     @DeleteMapping("/{id}/like")
-    public JsonAPISuccessResponse<Void> dislikePost(@PathVariable Long id){
+    public JsonAPIResponse<Void> dislikePost(@PathVariable Long id){
         sheetPostService.dislikeSheetPost(id);
-        return new ApiSuccessResponse<>("Dislike this sheet post success.");
+        return new ApiResponse<>("Dislike this sheet post success.");
     }
 
     @PostMapping()
-    public JsonAPISuccessResponse<SheetPostDto> writeSheetPost(
+    public JsonAPIResponse<SheetPostDto> writeSheetPost(
             @RequestPart(name = "sheetFiles") @Valid @NotNull List<MultipartFile> file,
             @RequestPart(name = "sheetInfo") String registerSheetInfo)
             throws IOException{
@@ -79,51 +76,51 @@ public class SheetPostController {
         RegisterSheetPostDto dto = mapperUtil.parseRegisterSheetPostInfo(registerSheetInfo);
         SheetPostDto data = sheetPostService.writeSheetPost(dto, file);
 
-        return new ApiSuccessResponse<>("Write sheet post success.", data);
+        return new ApiResponse<>("Write sheet post success.", data);
     }
 
     @PutMapping("/{id}/scrap")
-    public JsonAPISuccessResponse<Void> scrapSheetPost(
+    public JsonAPIResponse<Void> scrapSheetPost(
             @Valid @NotNull @PathVariable Long id){
         sheetPostService.scrapSheetPost(id);
-        return new ApiSuccessResponse<>("Scrap sheet post success.");
+        return new ApiResponse<>("Scrap sheet post success.");
     }
 
     @GetMapping("/{id}/scrap")
-    public JsonAPISuccessResponse isScrappedSheetPost(
+    public JsonAPIResponse isScrappedSheetPost(
             @Valid @NotNull @PathVariable Long id) {
         boolean isScrapped = sheetPostService.isScrappedSheetPost(id);
-        return new ApiSuccessResponse<>("Check sheet post scrap success.", isScrapped);
+        return new ApiResponse<>("Check sheet post scrap success.", isScrapped);
     }
 
     @DeleteMapping("/{id}/scrap")
-    public JsonAPISuccessResponse unScrapSheetPost(
+    public JsonAPIResponse unScrapSheetPost(
             @Valid @NotNull @PathVariable Long id){
         sheetPostService.unScrapSheetPost(id);
-        return new ApiSuccessResponse<>("Unscrap sheet post success.");
+        return new ApiResponse<>("Unscrap sheet post success.");
     }
     @PutMapping("{id}")
-    public JsonAPISuccessResponse<SheetPostDto> updateSheetPost(
+    public JsonAPIResponse<SheetPostDto> updateSheetPost(
             @Valid @NotNull @PathVariable Long id,
             @Valid @Nullable @RequestPart MultipartFile file,
             @Valid @Nullable @RequestParam String dto)
             throws IOException {
         SheetPostDto data = sheetPostService.update(id, dto, file);
-        return new ApiSuccessResponse<>("Update sheet post success.", data);
+        return new ApiResponse<>("Update sheet post success.", data);
     }
 
     @GetMapping("{id}/sheet")
-    public JsonAPISuccessResponse<String> getSheetFileUrl(
+    public JsonAPIResponse<String> getSheetFileUrl(
             @Valid @NotNull @PathVariable Long id) {
         String url = sheetPostService.getSheetUrl(id);
-        return new ApiSuccessResponse<>("Get sheet url success", url);
+        return new ApiResponse<>("Get sheet url success", url);
     }
 
     @DeleteMapping("{id}")
-    public JsonAPISuccessResponse<Void> deleteSheetPost(
+    public JsonAPIResponse<Void> deleteSheetPost(
             @Valid @NotNull @PathVariable Long id)
             throws AccessDeniedException, PersistenceException {
         sheetPostService.delete(id);
-    return new ApiSuccessResponse<>("Delete sheet post success.");
+    return new ApiResponse<>("Delete sheet post success.");
     }
 }

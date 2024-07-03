@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -69,7 +70,6 @@ public class Comment {
                 .content(content)
                 .createdAt(createdAt)
                 .likeCount(likeCount)
-                .replies(replies.stream().map(Comment::toDto).toList())
                 .build();
     }
 

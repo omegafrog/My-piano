@@ -1,11 +1,8 @@
 package com.omegafrog.My.piano.app.web.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
-import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.post.*;
-import com.omegafrog.My.piano.app.web.response.success.ApiSuccessResponse;
-import com.omegafrog.My.piano.app.web.response.success.JsonAPISuccessResponse;
+import com.omegafrog.My.piano.app.web.response.success.ApiResponse;
+import com.omegafrog.My.piano.app.web.response.success.JsonAPIResponse;
 import com.omegafrog.My.piano.app.web.service.PostApplicationService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -22,56 +19,56 @@ public class PostController {
 
     private final PostApplicationService postApplicationService;
     @PostMapping("")
-    public JsonAPISuccessResponse<Void> writePost(
+    public JsonAPIResponse<Void> writePost(
             @Valid @NotNull @RequestBody PostRegisterDto post) {
         postApplicationService.writePost(post);
-        return new ApiSuccessResponse<>("Write post success");
+        return new ApiResponse<>("Write post success");
     }
 
     @GetMapping("/{id}")
-    public JsonAPISuccessResponse<PostDto> findPost(@Valid @NotNull @PathVariable Long id) {
+    public JsonAPIResponse<PostDto> findPost(@Valid @NotNull @PathVariable Long id) {
         PostDto postById = postApplicationService.findPostById(id);
-        return new ApiSuccessResponse<>("Find post success", postById);
+        return new ApiResponse<>("Find post success", postById);
     }
 
     @GetMapping("")
-    public JsonAPISuccessResponse<ReturnPostListDto> findAllPost(
+    public JsonAPIResponse<ReturnPostListDto> findAllPost(
             @Valid @NotNull @PageableDefault(page = 0, size=30) Pageable pageable){
         ReturnPostListDto data = postApplicationService.findPosts(pageable);
-        return new ApiSuccessResponse<>("Find all post success", data);
+        return new ApiResponse<>("Find all post success", data);
     }
 
     @PostMapping("/{id}")
-    public JsonAPISuccessResponse updatePost(
+    public JsonAPIResponse updatePost(
             @Valid @NotNull @PathVariable Long id,
             @Valid @NotNull @RequestBody UpdatePostDto post) {
         PostDto postDto = postApplicationService.updatePost(id, post);
-        return new ApiSuccessResponse("update post success", postDto);
+        return new ApiResponse("update post success", postDto);
     }
 
     @DeleteMapping("/{id}")
-    public JsonAPISuccessResponse<Void> deletePost(
+    public JsonAPIResponse<Void> deletePost(
             @Valid @NotNull @PathVariable Long id) {
         postApplicationService.deletePost(id);
-        return new ApiSuccessResponse<>("delete post success");
+        return new ApiResponse<>("delete post success");
     }
 
     @PutMapping("/{id}/like")
-    public JsonAPISuccessResponse likePost(
+    public JsonAPIResponse likePost(
             @Valid @NotNull @PathVariable Long id) {
         postApplicationService.likePost(id);
-        return new ApiSuccessResponse("like post success");
+        return new ApiResponse("like post success");
     }
     @DeleteMapping("/{id}/like")
-    public JsonAPISuccessResponse dislikePost(
+    public JsonAPIResponse dislikePost(
             @Valid @NotNull @PathVariable Long id) {
         postApplicationService.dislikePost(id);
-        return new ApiSuccessResponse("dislike post success");
+        return new ApiResponse("dislike post success");
     }
     @GetMapping("/{id}/like")
-    public JsonAPISuccessResponse isLikedPost(
+    public JsonAPIResponse isLikedPost(
             @Valid @NotNull @PathVariable Long id){
         boolean isLikedPost = postApplicationService.isLikedPost(id);
-        return new ApiSuccessResponse("Check liked post success", isLikedPost);
+        return new ApiResponse("Check liked post success", isLikedPost);
     }
 }

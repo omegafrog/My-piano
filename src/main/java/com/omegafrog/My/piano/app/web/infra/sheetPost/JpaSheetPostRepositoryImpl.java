@@ -1,12 +1,14 @@
 package com.omegafrog.My.piano.app.web.infra.sheetPost;
 
 import com.omegafrog.My.piano.app.web.domain.comment.QComment;
-import com.omegafrog.My.piano.app.web.domain.sheet.QSheet;
-import com.omegafrog.My.piano.app.web.domain.sheet.QSheetPost;
-import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
-import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
+import com.omegafrog.My.piano.app.web.domain.lesson.QLesson;
+import com.omegafrog.My.piano.app.web.domain.sheet.*;
 import com.omegafrog.My.piano.app.web.domain.user.QUser;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SearchSheetPostFilter;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostListDto;
+import com.querydsl.core.Tuple;
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -35,8 +37,13 @@ public class JpaSheetPostRepositoryImpl implements SheetPostRepository {
 
     @Override
     public Optional<SheetPost> findById(Long id) {
-        return jpaRepository.findById(id);
+        return Optional.ofNullable(factory.select(QSheetPost.sheetPost).from(QSheetPost.sheetPost)
+                .join(QSheetPost.sheetPost.author, QUser.user).fetchJoin()
+                .leftJoin(QSheetPost.sheetPost.comments, QComment.comment).fetchJoin()
+                .where(QSheetPost.sheetPost.id.eq(id))
+                .fetchOne());
     }
+
 
     @Override
     public Optional<SheetPost> findBySheetId(Long sheetId) {
@@ -49,36 +56,58 @@ public class JpaSheetPostRepositoryImpl implements SheetPostRepository {
     }
 
     @Override
-    public Page<SheetPost> findAll(Pageable pageable, SearchSheetPostFilter filter) {
+    public Page<SheetPostDto> findAll(Pageable pageable, SearchSheetPostFilter filter) {
         QSheetPost sheetPost = QSheetPost.sheetPost;
         BooleanExpression expressions = filter.getExpressions();
-        JPAQuery<SheetPost> query = factory.selectFrom(sheetPost)
+        JPAQuery<SheetPostDto> query = factory.select(
+                Projections.constructor(SheetPostDto.class,
+                        sheetPost.id,
+                        sheetPost.title,
+                        sheetPost.content,
+                        sheetPost.author,
+                        sheetPost.sheet,
+                        sheetPost.createdAt,
+                        sheetPost.modifiedAt
+                ))
+                .from(sheetPost)
                 .where(expressions)
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .orderBy(sheetPost.createdAt.desc());
+        int count = factory.selectFrom(sheetPost)
+                .where(expressions)
+                .fetch().size();
 
-        return PageableExecutionUtils.getPage(query.fetch(), pageable, this::count);
-
+        return PageableExecutionUtils.getPage(query.fetch(), pageable,()->count );
     }
 
     @Override
-    public Page<SheetPost> findByIds(List<Long> sheetPostIds, Pageable pageable) {
+    public Page<SheetPostListDto> findByIds(List<Long> sheetPostIds, Pageable pageable) {
         QSheetPost sheetPost = QSheetPost.sheetPost;
-        QSheet sheet = QSheet.sheet;
-        QComment comment = QComment.comment;
-        QUser user = QUser.user;
         BooleanExpression expressions = sheetPost.id.in(sheetPostIds);
-        JPAQuery<SheetPost> query = factory.selectFrom(sheetPost)
-                .join(sheetPost.sheet, sheet).fetchJoin()
-                .leftJoin(sheetPost.comments, comment).fetchJoin()
-                .leftJoin(sheetPost.author, user)
-                .where(expressions)
-                .orderBy(sheetPost.createdAt.desc());
-
-        return PageableExecutionUtils.getPage(query.fetch(),pageable , () -> factory.select(sheetPost.count())
+        JPAQuery<SheetPostListDto> query = factory.select
+                (Projections.constructor(SheetPostListDto.class,
+                        sheetPost.id,
+                        sheetPost.title,
+                        sheetPost.author.name,
+                        sheetPost.author.profileSrc,
+                        sheetPost.sheet.title,
+                        sheetPost.sheet.difficulty,
+                        sheetPost.sheet.genres,
+                        sheetPost.sheet.instrument,
+                        sheetPost.createdAt,
+                        sheetPost.price
+                ))
                 .from(sheetPost)
-                .fetchOne());
+                .join(sheetPost.author, QUser.user)
+                .join(sheetPost.sheet, QSheet.sheet)
+                .where(expressions);
+
+        int count = query.fetch().size();
+        return PageableExecutionUtils.getPage(query
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .orderBy(sheetPost.createdAt.desc()).fetch(), pageable, ()->count);
     }
 
     @Override

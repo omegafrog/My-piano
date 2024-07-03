@@ -57,7 +57,7 @@ public class UserApplicationService {
     @Autowired
     private AuthenticationUtil authenticationUtil;
 
-    public UserInfo getUserProfile(){
+    public UserInfo getUserProfile() {
         User loggedInUser = authenticationUtil.getLoggedInUser();
         User user = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInUser.getId()));
@@ -82,7 +82,6 @@ public class UserApplicationService {
     public List<ReturnCommentDto> getMyComments() {
         User loggedInUser = authenticationUtil.getLoggedInUser();
         User user = userRepository.findById(loggedInUser.getId())
-
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInUser.getId()));
         return user.getWroteComments().stream().map(Comment::toReturnCommentDto).toList();
     }

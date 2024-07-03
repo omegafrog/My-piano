@@ -2,12 +2,10 @@ package com.omegafrog.My.piano.app.web.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.omegafrog.My.piano.app.external.tossPayment.PaymentStatusChangedResult;
-import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.utils.MapperUtil;
-import com.omegafrog.My.piano.app.web.response.success.ApiSuccessResponse;
-import com.omegafrog.My.piano.app.web.response.success.JsonAPISuccessResponse;
+import com.omegafrog.My.piano.app.web.response.success.ApiResponse;
+import com.omegafrog.My.piano.app.web.response.success.JsonAPIResponse;
 import com.omegafrog.My.piano.app.web.domain.cash.PaymentHistory;
-import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.service.CashOrderApplicationService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
@@ -36,11 +34,11 @@ public class CashController {
     }
 
     @GetMapping("/info")
-    public JsonAPISuccessResponse createCashOrder(@Valid @NotNull String orderId,
-                                                  @Valid @Positive int amount,
-                                                  @Valid @NotEmpty String name) {
+    public JsonAPIResponse createCashOrder(@Valid @NotNull String orderId,
+                                           @Valid @Positive int amount,
+                                           @Valid @NotEmpty String name) {
         cashOrderService.createCashOrder(orderId, amount, name);
-        return new ApiSuccessResponse("Create cash order success.");
+        return new ApiResponse("Create cash order success.");
     }
 
     @Setter
@@ -57,19 +55,19 @@ public class CashController {
     }
 
     @PostMapping("/request")
-    public JsonAPISuccessResponse requestCashOrder(
+    public JsonAPIResponse requestCashOrder(
             @Valid @RequestBody CashOrderDto cashOrder) throws JsonProcessingException {
         cashOrderService.requestCashOrder(cashOrder.paymentKey, cashOrder.orderId, cashOrder.amount);
-        return new ApiSuccessResponse("Request cash order success.");
+        return new ApiResponse("Request cash order success.");
     }
 
     @GetMapping
-    public JsonAPISuccessResponse<List<PaymentHistory>> getPaymentHistory(
+    public JsonAPIResponse<List<PaymentHistory>> getPaymentHistory(
             @Valid @Nullable @RequestParam LocalDate start,
             @Valid @Nullable @RequestParam LocalDate end,
             Pageable pageable) {
         List<PaymentHistory> paymentHistory =
                 cashOrderService.getPaymentHistory( start, end, pageable);
-        return new ApiSuccessResponse("get payment history success.", paymentHistory);
+        return new ApiResponse("get payment history success.", paymentHistory);
     }
 }

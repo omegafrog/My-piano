@@ -40,7 +40,6 @@ public class Article {
     protected boolean disabled=false;
 
     @ManyToOne
-    @JoinColumn(name="AUTHOR_ID")
     protected User author;
 
     public void setAuthor(User user){

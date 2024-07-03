@@ -58,7 +58,6 @@ public class CommentApplicationService {
      * @param type {@link CommentTargetType} 댓글을 작성할 글의 종류
      * @param targetId 댓글을 작성할 글의 id
      * @param dto {@link RegisterCommentDto}댓글의 내용
-     * @param loggedInUser {@link User}로그인한 유저
      * @return {@link List}&lt;{@link CommentDto}&gt;댓글이 추가된 모든 댓글 리스트
      */
     public List<CommentDto> addComment(CommentTargetType type, Long targetId, RegisterCommentDto dto) {
@@ -85,9 +84,7 @@ public class CommentApplicationService {
     }
 
     public CommentDto replyComment(Long commentId, String replyContent) {
-        User loggedInUser = authenticationUtil.getLoggedInUser();
-        User user = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity : " + loggedInUser.getId()));
+        User user= authenticationUtil.getLoggedInUser();
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find comment entity : " + commentId));
         Comment reply = Comment.builder().content(replyContent)

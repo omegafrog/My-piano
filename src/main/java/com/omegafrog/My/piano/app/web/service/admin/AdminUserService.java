@@ -6,6 +6,7 @@ import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
 import com.omegafrog.My.piano.app.security.entity.authorities.Role;
 import com.omegafrog.My.piano.app.security.jwt.RefreshToken;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
+import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.utils.MapperUtil;
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
@@ -16,6 +17,7 @@ import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
+import com.omegafrog.My.piano.app.web.dto.admin.AdminDto;
 import com.omegafrog.My.piano.app.web.dto.admin.ControlUserDto;
 import com.omegafrog.My.piano.app.web.dto.admin.ReturnSessionDto;
 import com.omegafrog.My.piano.app.web.dto.admin.SearchUserFilter;
@@ -24,6 +26,7 @@ import com.omegafrog.My.piano.app.web.dto.lesson.SearchLessonFilter;
 import com.omegafrog.My.piano.app.web.dto.post.PostListDto;
 import com.omegafrog.My.piano.app.web.dto.post.SearchPostFilter;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SearchSheetPostFilter;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostListDto;
 import com.omegafrog.My.piano.app.web.dto.user.UserDto;
 import com.omegafrog.My.piano.app.web.service.admin.option.PostStrategy;
@@ -57,6 +60,7 @@ public class AdminUserService implements UserDetailsService {
     private final MapperUtil mapperUtil;
     private final SheetPostRepository sheetPostRepository;
     private final LessonRepository lessonRepository;
+    private final AuthenticationUtil authenticationUtil;
 
     @Override
     public SecurityUser loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -74,10 +78,10 @@ public class AdminUserService implements UserDetailsService {
                 .build());
     }
 
-    public SecurityUser getAdminProfile(SecurityUser loggedInAdmin) {
-        SecurityUser admin = securityUserRepository.findByUsername(loggedInAdmin.getUsername()).orElseThrow(
-                () -> new EntityNotFoundException("Cannot find Admin. id : " + loggedInAdmin.getId()));
-        return admin;
+    public AdminDto getAdminProfile() {
+        User admin= authenticationUtil.getLoggedInUser();
+        return new AdminDto(admin.getId(),
+                admin.getName(), admin.getEmail(), admin.getSecurityUser().getRole());
     }
 
     public Page<ReturnSessionDto> getLoggedInUsers(Pageable pageable) {
@@ -169,19 +173,19 @@ public class AdminUserService implements UserDetailsService {
     }
 
     public Page<SheetPostListDto> getAllSheetPosts(Pageable pageable, SearchSheetPostFilter searchUserFilter) {
-        Page<SheetPost> all = sheetPostRepository.findAll(pageable, searchUserFilter);
+        Page<SheetPostDto> all = sheetPostRepository.findAll(pageable, searchUserFilter);
         return PageableExecutionUtils.getPage(all.stream().map(item ->
                 new SheetPostListDto(
                         item.getId(),
                         item.getTitle(),
-                        item.getAuthor().getName(),
+                        item.getArtist().getName(),
+                        item.getArtist().getProfileSrc(),
                         item.getSheet().getTitle(),
                         item.getSheet().getDifficulty(),
                         item.getSheet().getGenres(),
                         item.getSheet().getInstrument(),
                         item.getCreatedAt(),
                         item.getPrice())).toList(),pageable, ()->all.getTotalElements());
-
     }
 
     public void updateSheetPost(Long id, String options) throws JsonProcessingException {

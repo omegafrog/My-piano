@@ -3,6 +3,7 @@ package com.omegafrog.My.piano.app.web.service;
 import com.omegafrog.My.piano.app.external.elasticsearch.SheetPostIndexRepository;
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.utils.MapperUtil;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostListDto;
 import com.omegafrog.My.piano.app.web.exception.WrongFileExtensionException;
 import com.omegafrog.My.piano.app.external.elasticsearch.ElasticSearchInstance;
 import com.omegafrog.My.piano.app.web.domain.S3UploadFileExecutor;
@@ -212,13 +213,11 @@ public class SheetPostApplicationService {
         User loggedInUser = authenticationUtil.getLoggedInUser();
         SheetPost sheetPost = sheetPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
-        User user = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + id));
 
-        user.unScrapSheetPost(sheetPost);
+        loggedInUser.unScrapSheetPost(sheetPost);
     }
 
-    public Page<SheetPostDto> getSheetPosts(
+    public Page<SheetPostListDto> getSheetPosts(
             String searchSentence,
             List<String> instrument,
             List<String> difficulty,
@@ -226,8 +225,7 @@ public class SheetPostApplicationService {
             Pageable pageable) throws IOException {
         List<Long> sheetPostIds = elasticSearchInstance.searchSheetPost(
                 searchSentence, instrument, difficulty, genre, pageable);
-        Page<SheetPostDto> res = sheetPostRepository.findByIds(sheetPostIds,pageable)
-                .map(SheetPost::toDto);
+        Page<SheetPostListDto> res = sheetPostRepository.findByIds(sheetPostIds,pageable);
         return res;
     }
 }
