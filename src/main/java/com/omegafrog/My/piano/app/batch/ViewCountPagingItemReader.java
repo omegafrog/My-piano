@@ -51,7 +51,8 @@ public class ViewCountPagingItemReader extends AbstractPagingItemReader<ViewCoun
 
     private List<String> scanKeys(String pattern) {
         List<String> keys = new ArrayList<>();
-        Cursor<byte[]> cursor = redisTemplate.getConnectionFactory().getConnection().scan( ScanOptions.scanOptions().match(pattern).build());
+        Cursor<byte[]> cursor = redisTemplate.getConnectionFactory().getConnection().scan( ScanOptions.scanOptions().
+                match(pattern).build());
         while (cursor.hasNext()) {
             keys.add(new String(cursor.next()));
         }

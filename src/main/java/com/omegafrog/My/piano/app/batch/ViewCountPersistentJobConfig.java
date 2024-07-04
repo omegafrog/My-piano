@@ -30,7 +30,7 @@ public class ViewCountPersistentJobConfig {
     private final RedisTemplate redisTemplate;
     private final static String LESSON_KEY_NAME="lesson";
     private final static String POST_KEY_NAME="post";
-    private final static String SHEET_POST_KEY_NAME="sheetPost";
+    private final static String SHEET_POST_KEY_NAME="sheetpost";
     @Bean
     @Qualifier("persistViewCountJob")
     public Job persistViewCountJob(JobRepository jobRepository){

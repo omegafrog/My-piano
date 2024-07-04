@@ -4,16 +4,19 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.*;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
-import co.elastic.clients.elasticsearch._types.query_dsl.QueryStringQuery;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.json.JsonData;
+import co.elastic.clients.util.ObjectBuilder;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import com.omegafrog.My.piano.app.web.dto.dateRange.DateRange;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.scheduling.annotation.Async;
 
 import javax.annotation.Nullable;
@@ -43,57 +46,64 @@ public class ElasticSearchInstance {
 
     }
 
-    public List<Long> searchSheetPost(@Nullable String searchSentence,
+    public Page<Long> searchSheetPost(@Nullable String searchSentence,
                                       @Nullable List<String> instruments,
                                       @Nullable List<String> difficulties,
                                       @Nullable List<String> genres,
                                       Pageable pageable) throws IOException {
         List<Query> searchOptions = new ArrayList<>();
         if (instruments!=null && !instruments.isEmpty()) {
-            Query instrumentFilter = QueryBuilders.terms(t -> t
-                    .field("instrument.keyword")
-                    .terms(terms -> terms.value(instruments.stream().map(item -> FieldValue.of(item))
-                            .filter(item ->!item.stringValue().isBlank()).toList())));
+            Query instrumentFilter = getQuery("instrument.keyword", instruments);
             searchOptions.add(instrumentFilter);
         }
         if (difficulties!=null && !difficulties.isEmpty()) {
-            Query difficultyFilter = QueryBuilders.terms(t -> t
-                    .field("difficulty.keyword")
-                    .terms(terms -> terms.value(difficulties.stream().map(item -> FieldValue.of(item))
-                            .filter(item ->!item.stringValue().isBlank()).toList())));
+            Query difficultyFilter = getQuery("difficulty.keyword", difficulties);
             searchOptions.add(difficultyFilter);
         }
         if (genres!=null && !genres.isEmpty()) {
-            Query genreFilter= QueryBuilders.terms(t -> t
-                    .field("genre.keyword")
-                    .terms(terms -> terms.value(genres.stream().map(item -> FieldValue.of(item))
-                            .filter(item ->!item.stringValue().isBlank()).toList())));
+            Query genreFilter= getQuery("genre.keyword", genres);
             searchOptions.add(genreFilter);
         }
         SearchResponse<SheetPostIndex> response = esClient.search(
-                s -> s.index(SHEET_POST_INDEX_NAME)
-                        .from((pageable.getPageNumber()) * pageable.getPageSize())
-                        .size(pageable.getPageSize())
-                        .sort(SortOptions.of(so -> so.field(FieldSort.of(f -> f.field("created_at")
-                                .order(SortOrder.Desc)))))
-                        .query(q->
-                        {
-                            if (searchSentence != null && !searchSentence.isEmpty()) {
-                                return q.bool(b -> b
-                                        .must(q2 -> q2.queryString(qs -> qs.fields("title", "content").query("*" + searchSentence + "*")))
-                                        .must(searchOptions));
-                            } else {
-                                return q.bool(b -> b.must(searchOptions));
-                            }
-                        }
-                        ),SheetPostIndex.class);
+                s -> getRequest(searchSentence, s, searchOptions, pageable),SheetPostIndex.class);
+
+
+        long count = esClient.count(builder ->
+                        builder.index(SHEET_POST_INDEX_NAME)
+                                .query(q -> getSearchTermQueryBuilder(searchSentence, searchOptions, q)))
+                .count();
 
         List<Hit<SheetPostIndex>> hits = response.hits().hits();
         List<Long> sheetPostIds = new ArrayList<>();
-        for (Hit<SheetPostIndex> hit : hits) {
-            sheetPostIds.add(Long.valueOf(hit.id()));
+        hits.forEach(hit -> sheetPostIds.add(hit.source().getId()));
+        return PageableExecutionUtils.getPage(sheetPostIds, pageable, () -> count);
+    }
+
+    private static Query getQuery(String value, List<String> instruments) {
+        return QueryBuilders.terms(t -> t
+                .field(value)
+                .terms(terms -> terms.value(instruments.stream().map(item -> FieldValue.of(item))
+                        .filter(item -> !item.stringValue().isBlank()).toList())));
+    }
+
+    private SearchRequest.Builder getRequest(@Nullable String searchSentence, SearchRequest.Builder s,
+                                             List<Query> searchOptions, Pageable pageable) {
+        return s.index(SHEET_POST_INDEX_NAME)
+                        .from((pageable.getPageNumber()) * pageable.getPageSize())
+                        .size(pageable.getPageSize())
+                .sort(SortOptions.of(so -> so.field(FieldSort.of(f -> f.field("created_at")
+                        .order(SortOrder.Desc)))))
+                .query(q->getSearchTermQueryBuilder(searchSentence, searchOptions, q));
+    }
+
+    private static ObjectBuilder<Query> getSearchTermQueryBuilder(@Nullable String searchSentence, List<Query> searchOptions, Query.Builder q) {
+        if (searchSentence != null && !searchSentence.isEmpty()) {
+            return q.bool(b -> b
+                    .must(q2 -> q2.queryString(qs -> qs.fields("title", "content").query("*" + searchSentence + "*")))
+                    .must(searchOptions));
+        } else {
+            return q.bool(b -> b.must(searchOptions));
         }
-        return sheetPostIds;
     }
 
     public List<SheetPostIndex> searchPopularDateRangeSheetPost(DateRange dateRange, String limit) throws IOException, TimeoutException {
