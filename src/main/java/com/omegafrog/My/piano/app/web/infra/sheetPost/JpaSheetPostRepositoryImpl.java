@@ -91,7 +91,7 @@ public class JpaSheetPostRepositoryImpl implements SheetPostRepository {
     }
 
     @Override
-    @Cacheable(cacheNames = "sheetpost")
+    @Cacheable(cacheNames = "sheetpost", key = "#sheetPostIds")
     public Page<SheetPostListDto> findByIds(List<Long> sheetPostIds, Pageable pageable) {
         QSheetPost sheetPost = QSheetPost.sheetPost;
         BooleanExpression expressions = sheetPost.id.in(sheetPostIds);
