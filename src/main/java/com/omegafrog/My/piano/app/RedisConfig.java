@@ -6,13 +6,15 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.BatchStrategies;
-import org.springframework.data.redis.cache.BatchStrategy;
+import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.cache.RedisCacheWriter;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+
+import java.time.Duration;
 
 @Configuration
 @EnableCaching
@@ -21,14 +23,23 @@ public class RedisConfig {
     @Value("${spring.redis.user.host}")
     private String host;
 
+    @Value("${spring.redis.cache.host}")
+    private String cacheHost;
+
     @Value("${spring.redis.user.port}")
     private int port;
+    @Value("${spring.redis.cache.port}")
+    private int cachePort;
 
     private int CACHE_BATCH_SIZE=1000;
 
     @Bean
     public RedisConnectionFactory commonUserRedisConnectionFactory(){
         return new LettuceConnectionFactory(host, port);
+    }
+    @Bean(name="cacheConnectionFactory")
+    public RedisConnectionFactory cacheConnectionFactory(){
+        return new LettuceConnectionFactory(cacheHost, cachePort);
     }
 
     @Qualifier("CommonUserRedisTemplate")
@@ -45,9 +56,10 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory){
+    public RedisCacheManager cacheManager(){
         return RedisCacheManager.builder()
-                .cacheWriter(RedisCacheWriter.lockingRedisCacheWriter(connectionFactory, BatchStrategies.scan(CACHE_BATCH_SIZE)))
+                .cacheWriter(RedisCacheWriter.lockingRedisCacheWriter(cacheConnectionFactory(), BatchStrategies.scan(CACHE_BATCH_SIZE)))
+                .cacheDefaults(RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofMinutes(10L)))
                 .build();
     }
 }
