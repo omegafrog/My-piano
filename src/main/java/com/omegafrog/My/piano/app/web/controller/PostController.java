@@ -19,10 +19,10 @@ public class PostController {
 
     private final PostApplicationService postApplicationService;
     @PostMapping("")
-    public JsonAPIResponse<Void> writePost(
+    public JsonAPIResponse writePost(
             @Valid @NotNull @RequestBody PostRegisterDto post) {
         postApplicationService.writePost(post);
-        return new ApiResponse<>("Write post success");
+        return new ApiResponse("Write post success");
     }
 
     @GetMapping("/{id}")

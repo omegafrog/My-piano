@@ -1,8 +1,12 @@
 package com.omegafrog.My.piano.app.web.infra.post;
 
+import com.omegafrog.My.piano.app.security.entity.QSecurityUser;
+import com.omegafrog.My.piano.app.web.domain.comment.QComment;
 import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.post.PostRepository;
 import com.omegafrog.My.piano.app.web.domain.post.QPost;
+import com.omegafrog.My.piano.app.web.domain.sheet.QSheetPost;
+import com.omegafrog.My.piano.app.web.domain.user.QUser;
 import com.omegafrog.My.piano.app.web.dto.post.SearchPostFilter;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
@@ -36,7 +40,11 @@ public class JpaPostRepositoryImpl implements PostRepository {
 
     @Override
     public Optional<Post> findById(Long id) {
-        return postRepository.findById(id);
+        return Optional.ofNullable(factory.select(QPost.post).from(QPost.post)
+                .join(QPost.post.author, QUser.user).fetchJoin()
+                        .join(QPost.post.author.securityUser, QSecurityUser.securityUser).fetchJoin()
+                .where(QPost.post.id.eq(id))
+                .fetchOne());
     }
 
     @Override

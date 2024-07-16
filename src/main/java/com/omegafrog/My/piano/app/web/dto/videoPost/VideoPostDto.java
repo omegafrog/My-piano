@@ -20,9 +20,9 @@ public class VideoPostDto extends ArticleDto {
     private String videoUrl;
 
     @Builder
-    public VideoPostDto(Long id, String title, String content, LocalDateTime createdAt, UserProfileDto author, int likeCount, int viewCount, List<CommentDto> comments, String videoUrl,
+    public VideoPostDto(Long id, String title, String content, LocalDateTime createdAt, UserProfileDto author, int likeCount, int viewCount, String videoUrl,
                         boolean disabled) {
-        super(id, title, content, createdAt, author, likeCount, viewCount, comments, disabled);
+        super(id, title, content, createdAt, author, likeCount, viewCount, disabled);
         this.videoUrl = videoUrl;
     }
 }

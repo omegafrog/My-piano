@@ -33,8 +33,7 @@ public abstract class ArticleDto {
     private List<CommentDto> comments;
     private boolean disabled = false;
 
-    protected ArticleDto(Long id, String title, String content, LocalDateTime createdAt, UserProfileDto author, int likeCount, int viewCount, List<CommentDto> comments,
-                         boolean disabled) {
+    protected ArticleDto(Long id, String title, String content, LocalDateTime createdAt, UserProfileDto author, int likeCount, int viewCount,boolean disabled) {
         this.id = id;
         this.title = title;
         this.content = content;

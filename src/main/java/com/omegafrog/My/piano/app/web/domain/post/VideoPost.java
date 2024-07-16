@@ -57,7 +57,6 @@ public class VideoPost extends Article {
                 .likeCount(likeCount)
                 .viewCount(viewCount)
                 .createdAt(createdAt)
-                .comments(getComments().stream().map(Comment::toDto).toList())
                 .videoUrl(videoUrl)
                 .build();
     }

@@ -51,7 +51,7 @@ public class Article implements Serializable{
     @Temporal(TemporalType.TIMESTAMP)
     protected LocalDateTime modifiedAt = LocalDateTime.now();
 
-    @OneToMany(mappedBy = "target",cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "target",cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     protected List<Comment> comments = new ArrayList<>();
 
     public void increaseLikedCount(){

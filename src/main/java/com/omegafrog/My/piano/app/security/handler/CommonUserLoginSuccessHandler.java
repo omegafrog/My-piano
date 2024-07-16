@@ -46,7 +46,8 @@ public class CommonUserLoginSuccessHandler implements AuthenticationSuccessHandl
         data.put("access token", tokenInfo.getGrantType() + " " + tokenInfo.getAccessToken());
         tokenUtils.setRefreshToken(response, tokenInfo);
         ApiResponse loginSuccess = new ApiResponse("login success", data);
-        String s = objectMapper.writeValueAsString(loginSuccess);
+
+        String s = objectMapper.writeValueAsString(loginSuccess.getBody());
 
         writer.write(s);
         writer.flush();
