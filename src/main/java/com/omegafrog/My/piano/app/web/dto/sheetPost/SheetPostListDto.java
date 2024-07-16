@@ -4,6 +4,7 @@ import com.omegafrog.My.piano.app.web.domain.sheet.Genres;
 import com.omegafrog.My.piano.app.web.enums.Difficulty;
 import com.omegafrog.My.piano.app.web.enums.Instrument;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 public record SheetPostListDto(Long id, String title, String artistName,
@@ -11,5 +12,5 @@ public record SheetPostListDto(Long id, String title, String artistName,
                                Difficulty difficulty,
                                Genres genres,
                                Instrument instrument, LocalDateTime createdAt,
-                               Integer price) {
+                               Integer price) implements Serializable {
 }

@@ -13,6 +13,7 @@ import lombok.Setter;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +22,7 @@ import java.util.List;
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
 @DiscriminatorColumn(name = "DTYPE")
-public class Article {
+public class Article implements Serializable{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

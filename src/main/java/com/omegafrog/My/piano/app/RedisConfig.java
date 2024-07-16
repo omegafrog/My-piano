@@ -2,36 +2,46 @@ package com.omegafrog.My.piano.app;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.cache.BatchStrategies;
+import org.springframework.data.redis.cache.RedisCacheConfiguration;
+import org.springframework.data.redis.cache.RedisCacheManager;
+import org.springframework.data.redis.cache.RedisCacheWriter;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
+import java.time.Duration;
+
 @Configuration
+@EnableCaching
 public class RedisConfig {
 
     @Value("${spring.redis.user.host}")
     private String host;
 
+    @Value("${spring.redis.cache.host}")
+    private String cacheHost;
+
     @Value("${spring.redis.user.port}")
     private int port;
-    @Value("${spring.redis.admin.host}")
-    private String adminHost;
+    @Value("${spring.redis.cache.port}")
+    private int cachePort;
 
-    @Value("${spring.redis.admin.port}")
-    private int adminPort;
+    private int CACHE_BATCH_SIZE=1000;
 
     @Bean
     public RedisConnectionFactory commonUserRedisConnectionFactory(){
         return new LettuceConnectionFactory(host, port);
     }
-
-    @Bean
-    public RedisConnectionFactory adminRedisConnectionFactory(){
-        return new LettuceConnectionFactory(adminHost, adminPort);
+    @Bean(name="cacheConnectionFactory")
+    public RedisConnectionFactory cacheConnectionFactory(){
+        return new LettuceConnectionFactory(cacheHost, cachePort);
     }
+
     @Qualifier("CommonUserRedisTemplate")
     @Bean
     public RedisTemplate<?, ?> redisTemplate(){
@@ -43,5 +53,13 @@ public class RedisConfig {
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());
         redisTemplate.setHashValueSerializer(new StringRedisSerializer());
         return redisTemplate;
+    }
+
+    @Bean
+    public RedisCacheManager cacheManager(){
+        return RedisCacheManager.builder()
+                .cacheWriter(RedisCacheWriter.lockingRedisCacheWriter(cacheConnectionFactory(), BatchStrategies.scan(CACHE_BATCH_SIZE)))
+                .cacheDefaults(RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofMinutes(10L)))
+                .build();
     }
 }

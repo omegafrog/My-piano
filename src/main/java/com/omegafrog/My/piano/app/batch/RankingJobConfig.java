@@ -29,8 +29,6 @@ import java.util.List;
 @Slf4j
 public class RankingJobConfig {
 
-    @Autowired
-    private final DataSource dataSource;
 
     @Autowired
     private final EntityManagerFactory entityManagerFactory;

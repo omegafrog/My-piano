@@ -6,13 +6,14 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 @Embeddable
 @NoArgsConstructor
 @Getter
-public class Genres {
+public class Genres implements Serializable {
     private Genre genre1;
     private Genre genre2;
 

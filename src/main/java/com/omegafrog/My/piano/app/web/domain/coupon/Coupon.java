@@ -8,13 +8,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
 @NoArgsConstructor
 @Getter
-public class Coupon {
+public class Coupon implements Serializable {
 
     @Id
     private String id = "coupon-" + UUID.randomUUID();

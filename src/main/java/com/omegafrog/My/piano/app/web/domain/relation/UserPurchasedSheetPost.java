@@ -8,11 +8,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.io.Serializable;
+
 @Getter
 @Entity
 @Table(name = "user_purchased_sheet_post")
 @NoArgsConstructor
-public class UserPurchasedSheetPost implements PurchasedSheetPost{
+public class UserPurchasedSheetPost implements PurchasedSheetPost, Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

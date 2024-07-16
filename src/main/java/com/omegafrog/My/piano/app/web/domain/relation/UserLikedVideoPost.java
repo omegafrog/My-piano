@@ -5,12 +5,16 @@ import com.omegafrog.My.piano.app.web.domain.user.User;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.io.Serializable;
 
 @Getter
 @Entity
 @Table(name = "user_liked_video_post")
-public class UserLikedVideoPost {
+@NoArgsConstructor
+public class UserLikedVideoPost implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

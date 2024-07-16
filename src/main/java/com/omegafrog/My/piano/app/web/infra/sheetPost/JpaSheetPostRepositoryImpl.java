@@ -1,19 +1,20 @@
 package com.omegafrog.My.piano.app.web.infra.sheetPost;
 
 import com.omegafrog.My.piano.app.web.domain.comment.QComment;
-import com.omegafrog.My.piano.app.web.domain.lesson.QLesson;
 import com.omegafrog.My.piano.app.web.domain.sheet.*;
 import com.omegafrog.My.piano.app.web.domain.user.QUser;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SearchSheetPostFilter;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostListDto;
-import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
@@ -35,7 +36,13 @@ public class JpaSheetPostRepositoryImpl implements SheetPostRepository {
         return jpaRepository.save(sheetPost);
     }
 
+    @CachePut("sheetpost")
+    public SheetPost update(SheetPost sheetPost) {
+        return jpaRepository.save(sheetPost);
+    }
+
     @Override
+    @Cacheable("sheetpost")
     public Optional<SheetPost> findById(Long id) {
         return Optional.ofNullable(factory.select(QSheetPost.sheetPost).from(QSheetPost.sheetPost)
                 .join(QSheetPost.sheetPost.author, QUser.user).fetchJoin()
@@ -82,7 +89,8 @@ public class JpaSheetPostRepositoryImpl implements SheetPostRepository {
     }
 
     @Override
-    public Page<SheetPostListDto> findByIds(List<Long> sheetPostIds, Pageable pageable) {
+    @Cacheable(cacheNames = "sheetpost", key = "#sheetPostIds")
+    public List<SheetPostListDto> findByIds(List<Long> sheetPostIds, Pageable pageable) {
         QSheetPost sheetPost = QSheetPost.sheetPost;
         BooleanExpression expressions = sheetPost.id.in(sheetPostIds);
         JPAQuery<SheetPostListDto> query = factory.select
@@ -103,19 +111,17 @@ public class JpaSheetPostRepositoryImpl implements SheetPostRepository {
                 .join(sheetPost.sheet, QSheet.sheet)
                 .where(expressions);
 
-        int count = query.fetch().size();
-        return PageableExecutionUtils.getPage(query
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .orderBy(sheetPost.createdAt.desc()).fetch(), pageable, ()->count);
+        return query.fetch();
     }
 
     @Override
+    @CacheEvict(cacheNames = "sheetpost")
     public void deleteById(Long id) {
         jpaRepository.deleteById(id);
     }
 
 
+    @CacheEvict(cacheNames = "sheetpost", allEntries = true)
     public void deleteAll() {
         jpaRepository.deleteAll();
     }

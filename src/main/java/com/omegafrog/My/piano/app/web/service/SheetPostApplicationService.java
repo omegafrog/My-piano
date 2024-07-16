@@ -25,6 +25,7 @@ import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
@@ -223,9 +224,9 @@ public class SheetPostApplicationService {
             List<String> difficulty,
             List<String> genre,
             Pageable pageable) throws IOException {
-        List<Long> sheetPostIds = elasticSearchInstance.searchSheetPost(
+        Page<Long> sheetPostIds = elasticSearchInstance.searchSheetPost(
                 searchSentence, instrument, difficulty, genre, pageable);
-        Page<SheetPostListDto> res = sheetPostRepository.findByIds(sheetPostIds,pageable);
-        return res;
+        List<SheetPostListDto> res = sheetPostRepository.findByIds(sheetPostIds.getContent(),pageable);
+        return PageableExecutionUtils.getPage(res, pageable, sheetPostIds::getTotalElements);
     }
 }
