@@ -1,12 +1,12 @@
 package com.omegafrog.My.piano.app.web.domain.relation;
 
+import com.omegafrog.My.piano.app.web.domain.order.SellableItem;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.io.Serializable;
 
@@ -14,7 +14,7 @@ import java.io.Serializable;
 @Entity
 @Table(name = "user_purchased_sheet_post")
 @NoArgsConstructor
-public class UserPurchasedSheetPost implements PurchasedSheetPost, Serializable {
+public class UserPurchasedSheetPost implements UserPurchasedItem, Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -32,5 +32,10 @@ public class UserPurchasedSheetPost implements PurchasedSheetPost, Serializable 
     public UserPurchasedSheetPost(User user, SheetPost sheetPost) {
         this.user = user;
         this.sheetPost = sheetPost;
+    }
+
+    @Override
+    public SellableItem getItem() {
+        return sheetPost;
     }
 }

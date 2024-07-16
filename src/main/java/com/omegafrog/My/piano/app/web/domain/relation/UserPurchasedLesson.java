@@ -1,18 +1,18 @@
 package com.omegafrog.My.piano.app.web.domain.relation;
 
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
+import com.omegafrog.My.piano.app.web.domain.order.SellableItem;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Getter
 @Entity
 @Table(name = "user_purchased_lesson")
 @NoArgsConstructor
-public class UserPurchasedLesson implements PurchasedSheetPost{
+public class UserPurchasedLesson implements UserPurchasedItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -29,5 +29,10 @@ public class UserPurchasedLesson implements PurchasedSheetPost{
     public UserPurchasedLesson(User user, Lesson lesson) {
         this.user = user;
         this.lesson = lesson;
+    }
+
+    @Override
+    public SellableItem getItem() {
+        return lesson;
     }
 }

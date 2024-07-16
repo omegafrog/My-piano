@@ -53,7 +53,6 @@ public class Post extends Article {
                 .content(content)
                 .viewCount(viewCount)
                 .likeCount(likeCount)
-                .comments(comments)
                 .author(author.getUserProfileDto())
                 .disable(disabled)
                 .build();
