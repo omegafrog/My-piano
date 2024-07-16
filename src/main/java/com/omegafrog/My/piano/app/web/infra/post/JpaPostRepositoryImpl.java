@@ -1,11 +1,9 @@
 package com.omegafrog.My.piano.app.web.infra.post;
 
 import com.omegafrog.My.piano.app.security.entity.QSecurityUser;
-import com.omegafrog.My.piano.app.web.domain.comment.QComment;
 import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.post.PostRepository;
 import com.omegafrog.My.piano.app.web.domain.post.QPost;
-import com.omegafrog.My.piano.app.web.domain.sheet.QSheetPost;
 import com.omegafrog.My.piano.app.web.domain.user.QUser;
 import com.omegafrog.My.piano.app.web.dto.post.SearchPostFilter;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -26,9 +24,6 @@ import java.util.Optional;
 @Repository
 @RequiredArgsConstructor
 public class JpaPostRepositoryImpl implements PostRepository {
-
-    @PersistenceUnit
-    private EntityManagerFactory emf;
 
     private final JPAQueryFactory factory;
 
@@ -79,13 +74,12 @@ public class JpaPostRepositoryImpl implements PostRepository {
         QPost post = QPost.post;
         BooleanExpression expression = filter.getExpression();
         JPAQuery<Post> query = factory.selectFrom(post)
-                .where(expression)
+                .where(expression);
+        List<Post> fetched = query
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
-                .orderBy(post.createdAt.desc());
-        List<Post> fetched = query.fetch();
-        Long count = query.fetchCount();
-        return PageableExecutionUtils.getPage(fetched, pageable, count::longValue);
+                .orderBy(post.createdAt.desc()).fetch();
+        return PageableExecutionUtils.getPage(fetched, pageable, ()->query.fetch().size());
 
     }
 

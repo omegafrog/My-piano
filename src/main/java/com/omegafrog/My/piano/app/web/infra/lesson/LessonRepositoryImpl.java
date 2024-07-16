@@ -60,11 +60,11 @@ public class LessonRepositoryImpl implements LessonRepository {
         BooleanExpression expression = searchLessonFilter.getExpression();
         QLesson lesson = QLesson.lesson;
         JPAQuery<Lesson> query = factory.selectFrom(lesson)
-                .where(expression)
+                .where(expression);
+        List<Lesson> fetched = query
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
-                .orderBy(lesson.createdAt.desc());
-
-        return PageableExecutionUtils.getPage(query.fetch(), pageable, () -> query.fetchCount());
+                .orderBy(lesson.createdAt.desc()).fetch();
+        return PageableExecutionUtils.getPage(fetched, pageable, () -> query.fetch().size());
     }
 }

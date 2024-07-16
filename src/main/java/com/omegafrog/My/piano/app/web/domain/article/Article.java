@@ -1,7 +1,6 @@
 package com.omegafrog.My.piano.app.web.domain.article;
 
 import com.omegafrog.My.piano.app.web.exception.article.CannotDecreaseLikeCountException;
-import com.omegafrog.My.piano.app.web.exception.message.ExceptionMessage;
 import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import jakarta.persistence.*;
@@ -40,12 +39,10 @@ public class Article implements Serializable{
 
     protected boolean disabled=false;
 
+    @Setter
     @ManyToOne
     protected User author;
 
-    public void setAuthor(User user){
-        author=user;
-    }
     @Temporal(TemporalType.TIMESTAMP)
     protected LocalDateTime createdAt = LocalDateTime.now();
     @Temporal(TemporalType.TIMESTAMP)
@@ -93,15 +90,15 @@ public class Article implements Serializable{
             throw new EntityNotFoundException("Cannot find comment entity : " + id);
     }
 
-    public void increaseCommentLikeCount(Long commentId){
-        Comment foundedComment = this.comments.stream().filter(comment -> comment.getId().equals(commentId))
-                .findFirst().orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_COMMENT));
-        foundedComment.increaseLikeCount();
-    }
-    public void decreaseCommentLikeCount(Long commentId){ Comment foundedComment = this.comments.stream().filter(comment -> comment.getId().equals(commentId))
-            .findFirst().orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_COMMENT));
-        foundedComment.decreaseLikeCount();
-    }
+//    public void increaseCommentLikeCount(Long commentId){
+//        Comment foundedComment = this.comments.stream().filter(comment -> comment.getId().equals(commentId))
+//                .findFirst().orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_COMMENT));
+//        foundedComment.increaseLikeCount();
+//    }
+//    public void decreaseCommentLikeCount(Long commentId){ Comment foundedComment = this.comments.stream().filter(comment -> comment.getId().equals(commentId))
+//            .findFirst().orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_COMMENT));
+//        foundedComment.decreaseLikeCount();
+//    }
     public List<Comment> getComments(Pageable pageable){
         long offset = pageable.getOffset();
         int pageSize = pageable.getPageSize();
@@ -121,4 +118,5 @@ public class Article implements Serializable{
     public int hashCode() {
         return id.hashCode();
     }
+
 }

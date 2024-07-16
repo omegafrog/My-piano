@@ -1,7 +1,6 @@
 package com.omegafrog.My.piano.app.web.dto;
 
 import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
-import com.omegafrog.My.piano.app.web.dto.user.UserInfo;
 import com.omegafrog.My.piano.app.web.dto.user.UserProfileDto;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -41,7 +40,6 @@ public abstract class ArticleDto {
         this.author = author;
         this.likeCount = likeCount;
         this.viewCount = viewCount;
-        this.comments = comments;
         this.disabled = disabled;
     }
 }

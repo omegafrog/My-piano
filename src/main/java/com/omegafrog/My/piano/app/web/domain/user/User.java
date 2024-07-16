@@ -82,7 +82,7 @@ public class User implements Serializable {
     private Cart cart;
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "owner")
-    private List<Coupon> coupons = new ArrayList<>();
+    private final List<Coupon> coupons = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private final List<UserPurchasedSheetPost> purchasedSheets = new ArrayList<>();
@@ -212,7 +212,7 @@ public class User implements Serializable {
 
 
     public void likeVideoPost(VideoPost videoPost) {
-        if (likedVideoPosts.contains(videoPost))
+        if (likedVideoPosts.stream().anyMatch(item->item.getVideoPost().equals(videoPost)))
             throw new EntityExistsException(ExceptionMessage.ENTITY_EXISTS);
         likedVideoPosts.add(UserLikedVideoPost.builder()
                 .videoPost(videoPost)
@@ -222,7 +222,7 @@ public class User implements Serializable {
     }
 
     public void dislikeVideoPost(VideoPost videoPost) {
-        if (!likedVideoPosts.removeIf(post -> post.equals(videoPost)))
+        if (!likedVideoPosts.removeIf(likedVideoPost -> likedVideoPost.getVideoPost().equals(videoPost)))
             throw new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_VIDEO_POST);
     }
 
@@ -244,7 +244,7 @@ public class User implements Serializable {
     }
 
     @Builder
-    public User(String name, String email, Cart cart, LoginMethod loginMethod, String profileSrc, PhoneNum phoneNum, int cash) {
+    public User(String name, String email, Cart cart, LoginMethod loginMethod, String profileSrc, @Nullable PhoneNum phoneNum, int cash) {
 
         this.email = email;
         this.name = name;
@@ -316,14 +316,14 @@ public class User implements Serializable {
      * @return 구매한 상품이라면 true, 구매하지 않은 상품이라면 false
      */
     public boolean isPurchased(SellableItem item) {
-        List<? extends PurchasedSheetPost> purchasedItemList;
+        List<? extends UserPurchasedItem> purchasedItemList;
         if (item instanceof SheetPost)
             purchasedItemList = purchasedSheets;
         else if (item instanceof Lesson)
             purchasedItemList = purchasedLessons;
         else throw new ClassCastException("Cannot find SellableItem collection");
 
-        return purchasedItemList.stream().anyMatch(purchasedItem -> purchasedItem.equals(item));
+        return purchasedItemList.stream().anyMatch(purchasedItem -> purchasedItem.getItem().equals(item));
     }
 
     public UserInfo getUserInfo() {

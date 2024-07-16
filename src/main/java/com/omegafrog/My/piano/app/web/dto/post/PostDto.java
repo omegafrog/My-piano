@@ -1,6 +1,5 @@
 package com.omegafrog.My.piano.app.web.dto.post;
 
-import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.ArticleDto;
@@ -8,8 +7,6 @@ import com.omegafrog.My.piano.app.web.dto.user.UserProfileDto;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.List;
-
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Setter

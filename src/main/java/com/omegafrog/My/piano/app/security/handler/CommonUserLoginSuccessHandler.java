@@ -7,7 +7,6 @@ import com.omegafrog.My.piano.app.security.jwt.RefreshToken;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.security.jwt.TokenInfo;
 import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -30,22 +29,22 @@ public class CommonUserLoginSuccessHandler implements AuthenticationSuccessHandl
     private final TokenUtils tokenUtils;
 
     @Override
-    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
-        log.debug("login success");
+    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException{
         PrintWriter writer = response.getWriter();
         Map<String, Object> data = new HashMap<>();
         SecurityUser user = (SecurityUser) authentication.getPrincipal();
+        log.debug("login success. {}:{}",user.getId(), user.getUsername());
         TokenInfo tokenInfo = tokenUtils.generateToken(String.valueOf(user.getId()), user.getRole());
         Optional<RefreshToken> founded = refreshTokenRepository.findByRoleAndUserId(user.getId(),user.getRole());
 
         if(founded.isPresent())
             founded.get().updateRefreshToken(tokenInfo.getRefreshToken().getPayload());
         else
-            founded = Optional.of(refreshTokenRepository.save(tokenInfo.getRefreshToken()));
+            refreshTokenRepository.save(tokenInfo.getRefreshToken());
 
         data.put("access token", tokenInfo.getGrantType() + " " + tokenInfo.getAccessToken());
         tokenUtils.setRefreshToken(response, tokenInfo);
-        ApiResponse loginSuccess = new ApiResponse("login success", data);
+        ApiResponse<Map<String, Object>> loginSuccess = new ApiResponse<>("login success", data);
 
         String s = objectMapper.writeValueAsString(loginSuccess.getBody());
 
