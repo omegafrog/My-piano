@@ -27,5 +27,5 @@ public interface SheetPostRepository  {
 
     Long count();
 
-    Page<SheetPostListDto> findByIds(List<Long> sheetPostIds, Pageable pageable);
+    List<SheetPostListDto> findByIds(List<Long> sheetPostIds, Pageable pageable);
 }
