@@ -77,7 +77,7 @@ public class User implements Serializable {
     @OneToOne(mappedBy = "user")
     private SecurityUser securityUser;
 
-    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
+    @OneToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
     @NotNull
     private Cart cart;
 
