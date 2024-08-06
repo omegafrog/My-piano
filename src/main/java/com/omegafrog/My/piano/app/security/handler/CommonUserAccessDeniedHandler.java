@@ -25,9 +25,11 @@ public class CommonUserAccessDeniedHandler implements AccessDeniedHandler {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         String body;
         if(accessDeniedException.getCause() instanceof AuthenticationCredentialsNotFoundException){
-            body = objectMapper.writeValueAsString(new APIUnauthorizedResponse(accessDeniedException.getMessage()));
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            body = objectMapper.writeValueAsString(new APIUnauthorizedResponse(accessDeniedException.getMessage()).getBody());
         }else{
-            body = objectMapper.writeValueAsString(new APIForbiddenResponse(accessDeniedException.getMessage()));
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            body = objectMapper.writeValueAsString(new APIForbiddenResponse(accessDeniedException.getMessage()).getBody());
         }
         response.getWriter().write(body);
     }

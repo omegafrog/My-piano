@@ -24,7 +24,7 @@ public class CommonUserLoginFailureHandler implements AuthenticationFailureHandl
         log.debug("login failed");
         JsonAPIResponse apiResponse = new APIBadRequestResponse("login failed");
         PrintWriter writer = response.getWriter();
-        writer.write(objectMapper.writeValueAsString(apiResponse));
+        writer.write(objectMapper.writeValueAsString(apiResponse.getBody()));
         writer.flush();
     }
 }

@@ -22,7 +22,7 @@ public class AuthenticationExceptionEntryPoint implements AuthenticationEntryPoi
         response.setCharacterEncoding("utf-8");
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.getWriter().write(
-                objectMapper.writeValueAsString(new APIUnauthorizedResponse(authException.getMessage()))
+                objectMapper.writeValueAsString(new APIUnauthorizedResponse(authException.getMessage()).getBody())
         );
     }
 }
