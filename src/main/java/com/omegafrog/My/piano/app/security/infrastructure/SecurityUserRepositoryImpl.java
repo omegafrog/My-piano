@@ -32,6 +32,7 @@ public class SecurityUserRepositoryImpl implements SecurityUserRepository {
 
     @Override
     public SecurityUser save(SecurityUser securityUser) {
+        if(securityUser.getUser().getSecurityUser() == null) securityUser.getUser().setSecurityUser(securityUser);
         return jpaRepository.save(securityUser);
     }
     @Override

@@ -89,8 +89,8 @@ public class SecurityConfig {
         return new CommonUserService(passwordEncoder(),
                 securityUserRepository,
                 refreshTokenRepository(),
-                objectMapper,
                 googlePublicKeysManager,
+                authenticationUtil,
                 s3Client);
     }
 
