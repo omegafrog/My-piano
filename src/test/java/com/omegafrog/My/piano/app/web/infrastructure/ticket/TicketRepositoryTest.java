@@ -1,6 +1,6 @@
 package com.omegafrog.My.piano.app.web.infrastructure.ticket;
 
-import com.omegafrog.My.piano.app.DataJpaUnitConfig;
+import com.omegafrog.My.piano.app.DataJpaTestConfig;
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.enums.TicketType;
@@ -8,8 +8,6 @@ import com.omegafrog.My.piano.app.web.domain.ticket.Ticket;
 import com.omegafrog.My.piano.app.web.domain.ticket.TicketRepository;
 import com.omegafrog.My.piano.app.web.dto.ticket.UpdateTicketDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
-import com.omegafrog.My.piano.app.web.infra.user.JpaUserRepositoryImpl;
-import com.omegafrog.My.piano.app.web.infra.user.SimpleJpaUserRepository;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 import org.assertj.core.api.Assertions;
@@ -23,7 +21,7 @@ import java.util.Optional;
 
 
 @DataJpaTest
-@Import(DataJpaUnitConfig.class)
+@Import(DataJpaTestConfig.class)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class TicketRepositoryTest {

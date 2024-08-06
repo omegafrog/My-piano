@@ -84,7 +84,7 @@ class SheetPostControllerTest {
     }
 
     @BeforeEach
-    void login() throws Exception, DuplicatePropertyException {
+    void login() throws Exception{
         SecurityUserDto securityUserDto1 = commonUserService.registerUserWithoutProfile(TestLoginUtil.user1);
         User user = ((SecurityUser) commonUserService.loadUserByUsername(securityUserDto1.getUsername()))
                 .getUser();

@@ -1,6 +1,6 @@
 package com.omegafrog.My.piano.app.web.infrastructure.lesson;
 
-import com.omegafrog.My.piano.app.DataJpaUnitConfig;
+import com.omegafrog.My.piano.app.DataJpaTestConfig;
 import com.omegafrog.My.piano.app.web.controller.DummyData;
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
@@ -26,7 +26,7 @@ import java.time.LocalTime;
 import java.util.Optional;
 
 @DataJpaTest
-@Import(DataJpaUnitConfig.class)
+@Import(DataJpaTestConfig.class)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class LessonRepositoryTest {

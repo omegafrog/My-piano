@@ -95,15 +95,15 @@ class CartControllerTest {
                 .phoneNum("010-1111-2222")
                 .build();
 
-        mockMvc.perform(post("/user/register")
+        mockMvc.perform(post("/api/v1/user/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
                 .andReturn();
 
-        MvcResult mvcResult = mockMvc.perform(post("/user/login")
+        MvcResult mvcResult = mockMvc.perform(post("/api/v1/user/login")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                        .content("username=username&password=password"))
+                        .content("username=username2&password=password"))
                 .andExpect(status().isOk())
 //                .andExpect(jsonPath("$.status").value(HttpStatus.OK))
                 .andDo(print())
@@ -171,7 +171,7 @@ class CartControllerTest {
                 .itemId(savedLesson.getId())
                 .build();
         //when
-        MvcResult mvcResult = mockMvc.perform(post("/cart/sheet")
+        MvcResult mvcResult = mockMvc.perform(post("/api/v1/cart/sheet")
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -185,7 +185,7 @@ class CartControllerTest {
         String title = objectMapper.readTree(content).get("serializedData").get("contents").get(0).get("item").get("title").asText();
         Assertions.assertThat(title).isEqualTo("SheetPostTitle1");
 
-        MvcResult mvcResult2 = mockMvc.perform(post("/cart/lesson")
+        MvcResult mvcResult2 = mockMvc.perform(post("/api/v1/cart/lesson")
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -205,7 +205,7 @@ class CartControllerTest {
                 .itemId(savedSheetPost.getId())
                 .build();
         //when
-        MvcResult mvcResult = mockMvc.perform(post("/cart/sheet")
+        MvcResult mvcResult = mockMvc.perform(post("/api/v1/cart/sheet")
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -216,7 +216,7 @@ class CartControllerTest {
         String content = mvcResult.getResponse().getContentAsString();
         Long id = objectMapper.readTree(content).get("serializedData").get("contents").get(0).get("id").asLong();
 
-        mockMvc.perform(delete("/cart/" + id)
+        mockMvc.perform(delete("/api/v1/cart/" + id)
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken))
                 .andExpect(status().isOk())
@@ -232,7 +232,7 @@ class CartControllerTest {
                 .build();
 
         //when
-        mockMvc.perform(post("/cart/sheet")
+        mockMvc.perform(post("/api/v1/cart/sheet")
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -241,7 +241,7 @@ class CartControllerTest {
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
 
-        MvcResult mvcResult = mockMvc.perform(get("/cart")
+        MvcResult mvcResult = mockMvc.perform(get("/api/v1/cart")
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken))
                 .andExpect(status().isOk())
@@ -257,7 +257,7 @@ class CartControllerTest {
     @Test
     void payAllInCartTest() throws Exception {
 
-        mockMvc.perform(post("/user/cash")
+        mockMvc.perform(post("/api/v1/user/cash")
                 .header(HttpHeaders.AUTHORIZATION, accessToken)
                 .cookie(refreshToken)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -270,7 +270,7 @@ class CartControllerTest {
                 .buyerId(user.getUser().getId())
                 .itemId(savedLesson.getId())
                 .build();
-        mockMvc.perform(post("/cart/sheet")
+        mockMvc.perform(post("/api/v1/cart/sheet")
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -278,7 +278,7 @@ class CartControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
-        mockMvc.perform(post("/cart/lesson")
+        mockMvc.perform(post("/api/v1/cart/lesson")
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -287,7 +287,7 @@ class CartControllerTest {
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
 
-        mockMvc.perform(get("/cart/pay")
+        mockMvc.perform(get("/api/v1/cart/pay")
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken))
                 .andExpect(status().isOk())

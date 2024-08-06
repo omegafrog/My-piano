@@ -1,6 +1,6 @@
 package com.omegafrog.My.piano.app.web.infrastructure.admin;
 
-import com.omegafrog.My.piano.app.DataJpaUnitConfig;
+import com.omegafrog.My.piano.app.DataJpaTestConfig;
 import com.omegafrog.My.piano.app.web.dto.admin.UpdateAdminDto;
 import com.omegafrog.My.piano.app.web.enums.Position;
 import com.omegafrog.My.piano.app.web.domain.admin.Admin;
@@ -17,7 +17,7 @@ import org.springframework.context.annotation.Import;
 import java.util.Optional;
 
 @DataJpaTest
-@Import(DataJpaUnitConfig.class)
+@Import(DataJpaTestConfig.class)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class AdminRepositoryTest {

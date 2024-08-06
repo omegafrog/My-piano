@@ -68,14 +68,14 @@ class UserControllerTest {
                 .phoneNum("010-1111-2222")
                 .build();
 
-        mockMvc.perform(post("/user/register")
+        mockMvc.perform(post("/api/v1/user/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dto)))
+                .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
                 .andReturn();
 
 
-        MvcResult mvcResult = mockMvc.perform(post("/user/login")
+        MvcResult mvcResult = mockMvc.perform(post("/api/v1/user/login")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content("username=username&password=password"))
                 .andExpect(status().isOk())
@@ -96,7 +96,7 @@ class UserControllerTest {
                 .title("title")
                 .content("content")
                 .build();
-        String string = mockMvc.perform(post("/community/post")
+        String string = mockMvc.perform(post("/api/v1/community/post")
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -106,7 +106,7 @@ class UserControllerTest {
         long postId = objectMapper.readTree(string).get("serializedData").get("post").get("id").asLong();
 
         // when
-        MvcResult mvcResult = mockMvc.perform(get("/user/community/posts")
+        MvcResult mvcResult = mockMvc.perform(get("/api/v1/user/community/posts")
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken))
                 .andExpect(status().isOk())

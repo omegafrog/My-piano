@@ -1,6 +1,6 @@
 package com.omegafrog.My.piano.app.web.infrastructure.user;
 
-import com.omegafrog.My.piano.app.DataJpaUnitConfig;
+import com.omegafrog.My.piano.app.DataJpaTestConfig;
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
 import com.omegafrog.My.piano.app.web.dto.user.ChangeUserDto;
 import com.omegafrog.My.piano.app.web.infra.user.JpaUserRepositoryImpl;
@@ -23,7 +23,7 @@ import java.util.Optional;
 
 
 @DataJpaTest
-@Import(value = DataJpaUnitConfig.class)
+@Import(value = DataJpaTestConfig.class)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ExtendWith({SpringExtension.class, MockitoExtension.class})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
