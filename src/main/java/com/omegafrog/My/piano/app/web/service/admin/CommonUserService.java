@@ -9,6 +9,7 @@ import com.omegafrog.My.piano.app.security.jwt.RefreshToken;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.security.jwt.TokenInfo;
 import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
+import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
 import com.omegafrog.My.piano.app.web.dto.user.RegisterUserDto;
 import com.omegafrog.My.piano.app.web.dto.user.SecurityUserDto;
@@ -51,8 +52,8 @@ public class CommonUserService implements UserDetailsService {
     private final PasswordEncoder passwordEncoder;
     private final SecurityUserRepository securityUserRepository;
     private final RefreshTokenRepository refreshTokenRepository;
-    private final ObjectMapper objectMapper;
     private final GooglePublicKeysManager googlePublicKeysManager;
+    private final AuthenticationUtil authenticationUtil;
     @Autowired
     private S3Template s3Template;
     @Value("${spring.cloud.aws.bucket.name}")
@@ -106,6 +107,7 @@ public class CommonUserService implements UserDetailsService {
                 .username(dto.getUsername())
                 .role(Role.USER)
                 .user(user);
+
         if (dto.getLoginMethod().equals(LoginMethod.EMAIL) && dto.getPassword()==null)
             throw new IllegalArgumentException("비밀번호는 비어있지 않아야 합니다.");
         if(dto.getPassword() == null) dto.setPassword("");
@@ -144,8 +146,9 @@ public class CommonUserService implements UserDetailsService {
     }
 
 
-    public void signOutUser(String username){
-        SecurityUser securityUser = securityUserRepository.findByUsername(username)
+    public void signOutUser(){
+        User loggedInUser = authenticationUtil.getLoggedInUser();
+        SecurityUser securityUser = securityUserRepository.findByEmail(loggedInUser.getEmail())
                 .orElseThrow(() -> new UsernameNotFoundException("그런 유저는 없습니다."));
         securityUserRepository.deleteById(securityUser.getId());
     }

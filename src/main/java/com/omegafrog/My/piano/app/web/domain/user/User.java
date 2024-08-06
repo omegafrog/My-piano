@@ -1,6 +1,7 @@
 package com.omegafrog.My.piano.app.web.domain.user;
 
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
+import com.omegafrog.My.piano.app.security.infrastructure.SecurityUserRepositoryImpl;
 import com.omegafrog.My.piano.app.web.exception.AlreadyScrappedEntityException;
 import com.omegafrog.My.piano.app.web.exception.AlreadyLikedEntityException;
 import com.omegafrog.My.piano.app.web.exception.message.ExceptionMessage;
@@ -31,6 +32,7 @@ import lombok.NoArgsConstructor;
 
 
 import jakarta.persistence.*;
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.AccessDeniedException;
 
@@ -75,6 +77,7 @@ public class User implements Serializable {
     private AlarmProperties alarmProperties;
 
     @OneToOne(mappedBy = "user")
+    @Setter
     private SecurityUser securityUser;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
@@ -384,4 +387,5 @@ public class User implements Serializable {
         boolean removed = scrappedSheetPosts.removeIf(item -> item.getSheetPost().equals(sheetPost));
         if(!removed) throw new EntityNotFoundException("스크랩하지 않았습니다.");
     }
+
 }
