@@ -28,6 +28,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;
@@ -35,6 +36,8 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.LogoutHandler;
+import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -150,34 +153,36 @@ public class SecurityConfig {
     public SecurityFilterChain adminAuthentication(HttpSecurity http) throws Exception {
         http
                 .securityMatcher("/api/v1/admin/**")
-                .authenticationProvider(adminAuthenticationProvider())
-                .authorizeHttpRequests()
-                .requestMatchers("/api/v1/admin/login", "/api/v1/admin/register", "/api/v1/admin/logout")
-                .permitAll()
-                .anyRequest()
-                .hasAnyRole(Role.ADMIN.value, Role.SUPER_ADMIN.value)
-                .and()
-                .formLogin()
-                .usernameParameter("username")
-                .passwordParameter("password")
-                .successHandler(new AdminLoginSuccessHandler(objectMapper, refreshTokenRepository(), tokenUtils()))
-                .failureHandler(new CommonUserLoginFailureHandler(objectMapper))
-                .loginProcessingUrl("/api/v1/admin/login")
-                .and()
-                .logout()
-                .logoutUrl("/api/v1/admin/logout")
-                .addLogoutHandler(commonUserLogoutHandler())
-                .and()
+                .authenticationProvider(adminAuthenticationProvider()).authorizeHttpRequests(
+                        (authorizeHttpRequest) ->
+                                authorizeHttpRequest
+                                        .requestMatchers("/api/v1/admin/login", "/api/v1/admin/register", "/api/v1/admin/logout")
+                                        .permitAll()
+                                        .anyRequest()
+                                        .hasAnyRole(Role.ADMIN.value, Role.SUPER_ADMIN.value)
+                )
+                .formLogin((formLogin) ->
+                        formLogin.usernameParameter("username")
+                                .passwordParameter("password")
+                                .successHandler(new AdminLoginSuccessHandler(objectMapper, refreshTokenRepository(), tokenUtils()))
+                                .failureHandler(new CommonUserLoginFailureHandler(objectMapper))
+                                .loginProcessingUrl("/api/v1/admin/login"))
+                .logout((logout) ->
+                        logout.logoutUrl("/api/v1/admin/logout")
+                                .addLogoutHandler(commonUserLogoutHandler()))
                 .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
-                .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
-                .exceptionHandling()
-                .authenticationEntryPoint(unAuthorizedEntryPoint())
-                .accessDeniedHandler(commonUserAccessDeniedHandler())
-                .and()
-                .csrf().disable()
-                .cors().configurationSource(corsConfigurationSource());
+                .sessionManagement((sessionManagement) ->
+                        sessionManagement
+                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .exceptionHandling((exceptionadvisor) ->
+                        exceptionadvisor
+                                .authenticationEntryPoint(unAuthorizedEntryPoint())
+                                .accessDeniedHandler(commonUserAccessDeniedHandler())
+                )
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors((conf)->conf.configurationSource(corsConfigurationSource()));
+
         return http.build();
     }
 
@@ -238,6 +243,7 @@ public class SecurityConfig {
                 .and()
                 .logout()
                 .logoutUrl("/api/v1/user/logout").permitAll()
+                .logoutSuccessHandler(logoutHandler())
                 .addLogoutHandler(commonUserLogoutHandler())
                 .and()
                 .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
@@ -252,6 +258,10 @@ public class SecurityConfig {
                 .cors().configurationSource(corsConfigurationSource());
 
         return http.build();
+    }
+
+    private LogoutSuccessHandler logoutHandler() {
+        return new CommonUserLogoutSuccessHandler(objectMapper);
     }
 
     @Bean

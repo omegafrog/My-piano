@@ -3,6 +3,7 @@ package com.omegafrog.My.piano.app.web.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.omegafrog.My.piano.app.external.tossPayment.Payment;
 import com.omegafrog.My.piano.app.external.tossPayment.PaymentStatusChangedResult;
+import com.omegafrog.My.piano.app.external.tossPayment.TossError;
 import com.omegafrog.My.piano.app.external.tossPayment.TossPaymentInstance;
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.web.exception.payment.CashOrderCalculateFailureException;
@@ -17,10 +18,13 @@ import com.omegafrog.My.piano.app.web.dto.order.CashOrderDto;
 import com.omegafrog.My.piano.app.web.enums.OrderStatus;
 import com.omegafrog.My.piano.app.web.dto.dateRange.CustomDateRange;
 import com.omegafrog.My.piano.app.web.dto.dateRange.DateRangeFactory;
+import com.omegafrog.My.piano.app.web.exception.payment.WrongOrderStateException;
 import jakarta.persistence.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -29,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Nullable;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +41,7 @@ import java.util.List;
 public class CashOrderApplicationService {
 
     private final CashOrderRepository cashOrderRepository;
+    private final TossPaymentInstance tossPaymentInstance;
     @PersistenceUnit
     private EntityManagerFactory emf;
     private final DateRangeFactory dateRangeFactory;
@@ -112,34 +118,41 @@ public class CashOrderApplicationService {
             user.chargeCash(amount);
             // order state 변경
             byOrderId.changeState(OrderStatus.DONE);
+            tx.commit();
 
         } catch (EntityNotFoundException | CashOrderCalculateFailureException
                  | CashOrderConfirmFailedException | TossAPIException e
         ) {
+            tx.rollback();
+            tx.begin();
             byOrderId.changeState(OrderStatus.ABORTED);
+            tx.commit();
             throw e;
         } finally {
             entityManager.merge(user);
             entityManager.merge(byOrderId);
-            tx.commit();
             entityManager.close();
         }
     }
     @Transactional
-    public List<PaymentHistory> getPaymentHistory(LocalDate start, LocalDate end, @Nullable Pageable pageable) {
+    public Page<PaymentHistory> getPaymentHistory(LocalDate start, LocalDate end, Pageable pageable) {
         User loggedInUser = authenticationUtil.getLoggedInUser();
         // expired handling
         List<CashOrder> expired = cashOrderRepository.findExpired(loggedInUser.getId(), new CustomDateRange(LocalDate.now(), LocalDate.now()));
         for(CashOrder order : expired)
             order.changeState(OrderStatus.EXPIRED);
 
-        List<CashOrder> byUserId = null;
-
+        Page<CashOrder> cashOrders;
         if (start != null && end != null)
-            byUserId = cashOrderRepository.
+            cashOrders = cashOrderRepository.
                     findByUserIdAndDate(loggedInUser.getId(), pageable, dateRangeFactory.calcDateRange(start, end));
-        else byUserId = cashOrderRepository.findByUserId(loggedInUser.getId(), pageable);
-        return byUserId.stream().map(PaymentHistory::new).toList();
+
+        else cashOrders = cashOrderRepository.findByUserId(loggedInUser.getId(), pageable);
+        return PageableExecutionUtils.getPage(
+                cashOrders.getContent().stream().map(PaymentHistory::new).collect(Collectors.toList()),
+                pageable,
+                cashOrders::getTotalElements
+        );
     }
 
     @Transactional
@@ -169,5 +182,18 @@ public class CashOrderApplicationService {
             log.debug("order:{}", order);
             order.changeState(OrderStatus.EXPIRED);
         }
+    }
+
+    public void cancelPayment(String orderId, String cancelReason) {
+        CashOrder cashOrder = cashOrderRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find Cash order Entity. id:" + orderId));
+        validate(cashOrder);
+        tossPaymentInstance.cancelPayment(cashOrder.getPaymentKey(), cancelReason);
+    }
+    private void validate(CashOrder cashOrder ) {
+        if (!cashOrder.getStatus().equals(OrderStatus.DONE))
+            throw new WrongOrderStateException("계산이 완료된 주문이어야 합니다.");
+        if (cashOrder.getPaymentKey() == null)
+            throw new NullPointerException("PaymentKey가 없습니다.");
     }
 }

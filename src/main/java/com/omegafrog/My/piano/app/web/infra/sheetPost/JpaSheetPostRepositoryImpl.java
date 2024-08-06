@@ -26,6 +26,7 @@ import java.util.Optional;
 @Repository
 @AllArgsConstructor
 public class JpaSheetPostRepositoryImpl implements SheetPostRepository {
+
     @Autowired
     private SimpleJpaSheetPostRepository jpaRepository;
 
@@ -59,6 +60,7 @@ public class JpaSheetPostRepositoryImpl implements SheetPostRepository {
 
     @Override
     public Page<SheetPost> findAll(Pageable pageable) {
+
         return jpaRepository.findAll(pageable);
     }
 

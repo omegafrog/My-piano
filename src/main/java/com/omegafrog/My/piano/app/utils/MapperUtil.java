@@ -103,7 +103,11 @@ public class MapperUtil {
     }
 
     public Payment parsePayment(String json) throws JsonProcessingException {
+        List<CancelHistory> cancels = new ArrayList<>();
         JsonNode jsonNode = objectMapper.readTree(json);
+        jsonNode.get("cancels").forEach(cancel -> cancels.add(
+                objectMapper.convertValue(cancel, CancelHistory.class))
+        );
         return new Payment(jsonNode.get("paymentKey").asText(),
                 jsonNode.get("type").asText(),
                 jsonNode.get("orderId").asText(),
@@ -111,6 +115,7 @@ public class MapperUtil {
                 jsonNode.get("mId").asText(),
                 jsonNode.get("currency").asText(),
                 jsonNode.get("method").asText(),
+                cancels,
                 jsonNode.get("totalAmount").asLong(),
                 jsonNode.get("status").asText());
     }

@@ -12,6 +12,7 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
@@ -34,6 +35,7 @@ public class LessonRepositoryImpl implements LessonRepository {
     }
 
     @Override
+    @CachePut(value="lesson")
     public Optional<Lesson> findById(Long id) {
         return Optional.ofNullable(factory.select(QLesson.lesson)
                 .from(QLesson.lesson)

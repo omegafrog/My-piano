@@ -37,11 +37,5 @@ public class CommonUserLogoutHandler implements LogoutHandler {
         Claims claims = tokenUtils.extractClaims(accessToken);
         Long userId = Long.valueOf((String) claims.get("id"));
         refreshTokenRepository.deleteByUserIdAndRole(userId, Role.valueOf((String)claims.get("role")));
-        try {
-            ResponseUtil.writeResponse(new ApiResponse("logout success"), response, objectMapper);
-        } catch (IOException e) {
-            response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
-        }
-
     }
 }

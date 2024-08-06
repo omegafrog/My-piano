@@ -12,7 +12,9 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.*;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Nullable;
@@ -34,9 +36,9 @@ public class CashController {
     }
 
     @GetMapping("/info")
-    public JsonAPIResponse createCashOrder(@Valid @NotNull String orderId,
-                                           @Valid @Positive int amount,
-                                           @Valid @NotEmpty String name) {
+    public JsonAPIResponse createCashOrder(@Valid @NotNull @RequestParam(name="orderId") String orderId,
+                                           @Valid @Positive @RequestParam(name="amount") int amount,
+                                           @Valid @NotEmpty @RequestParam(name="name") String name) {
         cashOrderService.createCashOrder(orderId, amount, name);
         return new ApiResponse("Create cash order success.");
     }
@@ -62,12 +64,21 @@ public class CashController {
     }
 
     @GetMapping
-    public JsonAPIResponse<List<PaymentHistory>> getPaymentHistory(
-            @Valid @Nullable @RequestParam LocalDate start,
-            @Valid @Nullable @RequestParam LocalDate end,
-            Pageable pageable) {
-        List<PaymentHistory> paymentHistory =
+    public JsonAPIResponse<Page<PaymentHistory>> getPaymentHistory(
+            @Valid @Nullable @RequestParam(name="start") LocalDate start,
+            @Valid @Nullable @RequestParam(name="end") LocalDate end,
+            @PageableDefault(size = 30) Pageable pageable) {
+        Page<PaymentHistory> paymentHistory =
                 cashOrderService.getPaymentHistory( start, end, pageable);
         return new ApiResponse("get payment history success.", paymentHistory);
+    }
+
+    @DeleteMapping
+    public JsonAPIResponse<String> cancelPayment(
+            @Valid @NotNull @RequestParam(name="orderId") String orderId,
+            @Valid @NotNull @RequestParam(name="cancelReason") String cancelReason
+    ){
+        cashOrderService.cancelPayment(orderId, cancelReason);
+        return new ApiResponse<>("Cancel payment success.");
     }
 }
