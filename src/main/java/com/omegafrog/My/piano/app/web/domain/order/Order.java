@@ -16,6 +16,7 @@ import lombok.NoArgsConstructor;
 import jakarta.persistence.*;
 
 import javax.annotation.Nullable;
+import java.io.Serializable;
 
 @Entity
 @Table(name = "orders")
@@ -23,7 +24,7 @@ import javax.annotation.Nullable;
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
-public class Order {
+public class Order implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,7 +40,6 @@ public class Order {
     @JoinColumn(name = "BUYER_ID")
     private User buyer;
 
-    @NotNull
     @OneToOne
     @JoinColumn(name = "ITEM_ID")
     private SellableItem item;
@@ -49,6 +49,7 @@ public class Order {
 
     private Integer totalPrice;
 
+    @Builder.Default
     private OrderStatus orderStatus=OrderStatus.READY;
 
     @Builder.Default

@@ -10,11 +10,13 @@ import lombok.NoArgsConstructor;
 import jakarta.persistence.Embeddable;
 import lombok.Setter;
 
+import java.io.Serializable;
+
 @Embeddable
 @NoArgsConstructor
 @Setter
 @Getter
-public class LessonInformation {
+public class LessonInformation implements Serializable {
     private String artistDescription;
     private String lessonDescription;
     private RefundPolicy policy;
