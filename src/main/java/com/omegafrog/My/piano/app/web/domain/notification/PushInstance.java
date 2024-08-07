@@ -28,7 +28,9 @@ public class PushInstance {
         FirebaseOptions options = new FirebaseOptions.Builder()
                 .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                 .build();
-        app = FirebaseApp.initializeApp(options);
+        if(FirebaseApp.getApps().size()==0)
+            app = FirebaseApp.initializeApp(options);
+        else app = FirebaseApp.getApps().get(0);
     }
 
     public String sendMessageTo(String topic, String body, String clientToken) throws FirebaseMessagingException {
