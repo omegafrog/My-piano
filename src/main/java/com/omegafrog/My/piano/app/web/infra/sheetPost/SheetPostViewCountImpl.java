@@ -1,7 +1,5 @@
 package com.omegafrog.My.piano.app.web.infra.sheetPost;
 
-import com.omegafrog.My.piano.app.web.domain.article.ViewCount;
-import com.omegafrog.My.piano.app.web.domain.lesson.LessonViewCount;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostViewCount;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostViewCountRepository;
@@ -14,7 +12,7 @@ import org.springframework.stereotype.Repository;
 @RequiredArgsConstructor
 public class SheetPostViewCountImpl implements SheetPostViewCountRepository {
 
-    private final JpaSheetPostViewCountRepository repository;
+    private final RedisSheetPostViewCountRepository repository;
     private final RedisTemplate<String, SheetPostViewCount> redisTemplate;
 
     @Override
