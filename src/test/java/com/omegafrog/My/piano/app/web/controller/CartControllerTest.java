@@ -1,6 +1,7 @@
 package com.omegafrog.My.piano.app.web.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.omegafrog.My.piano.app.Cleanup;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
 import com.omegafrog.My.piano.app.web.service.admin.CommonUserService;
@@ -19,6 +20,7 @@ import com.omegafrog.My.piano.app.web.dto.user.RegisterUserDto;
 import com.omegafrog.My.piano.app.web.dto.order.OrderRegisterDto;
 import com.omegafrog.My.piano.app.web.enums.*;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.Cookie;
 import lombok.Getter;
 import lombok.Setter;
@@ -31,7 +33,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,7 +52,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CartControllerTest {
 
@@ -67,13 +70,20 @@ class CartControllerTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private Cleanup cleanup;
+
     private String accessToken;
     private Cookie refreshToken;
     private SecurityUser user;
+    private SecurityUser buyer;
     private SheetPost savedSheetPost;
     private Lesson savedLesson;
+
     @Autowired
     private SecurityUserRepository securityUserRepository;
+
+
 
     @Getter
     @Setter
@@ -83,8 +93,9 @@ class CartControllerTest {
         private Map<String, String> serializedData;
     }
 
-    @BeforeAll
+    @BeforeEach
     public void login() throws Exception {
+        // register seller
         RegisterUserDto dto = RegisterUserDto.builder()
                 .username("username")
                 .password("password")
@@ -95,27 +106,54 @@ class CartControllerTest {
                 .phoneNum("010-1111-2222")
                 .build();
 
-        mockMvc.perform(post("/api/v1/user/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dto)))
+        String s = objectMapper.writeValueAsString(dto);
+        MockMultipartFile registerInfo = new MockMultipartFile("registerInfo", "","application/json",
+                s.getBytes());
+        mockMvc.perform(multipart("/api/v1/user/register")
+                        .file(registerInfo)
+                        .header(HttpHeaders.CONTENT_TYPE, MediaType.MULTIPART_FORM_DATA_VALUE))
                 .andExpect(status().isOk())
-                .andReturn();
+                .andDo(print());
+        // register buyer
+        RegisterUserDto buyerDto = RegisterUserDto.builder()
+                .username("username2")
+                .password("password")
+                .name("user")
+                .email("email2@email.com")
+                .profileSrc("src")
+                .loginMethod(LoginMethod.EMAIL)
+                .phoneNum("010-1111-2222")
+                .build();
+        String s2 = objectMapper.writeValueAsString(buyerDto);
+        MockMultipartFile registerInfo2 = new MockMultipartFile("registerInfo", "","application/json",
+                s2.getBytes());
+        mockMvc.perform(multipart("/api/v1/user/register")
+                        .file(registerInfo2)
+                        .header(HttpHeaders.CONTENT_TYPE, MediaType.MULTIPART_FORM_DATA_VALUE))
+                .andExpect(status().isOk())
+                .andDo(print());
 
         MvcResult mvcResult = mockMvc.perform(post("/api/v1/user/login")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                        .content("username=username2&password=password"))
+                        .content("username=username&password=password"))
                 .andExpect(status().isOk())
-//                .andExpect(jsonPath("$.status").value(HttpStatus.OK))
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andDo(print())
                 .andReturn();
+
         String content = mvcResult.getResponse().getContentAsString();
-        LoginResult loginResult = objectMapper.readValue(content, LoginResult.class);
-        accessToken = loginResult.getSerializedData().get("access token");
+        accessToken= objectMapper.readTree(content).get("data").get("access token").asText();
         refreshToken = mvcResult.getResponse().getCookie("refreshToken");
         user = (SecurityUser) userService.loadUserByUsername("username");
+        buyer = (SecurityUser) userService.loadUserByUsername("username2");
+    }
+    @AfterEach
+    void cleanUp(){
+        cleanup.cleanUp();
+
     }
 
-    @BeforeAll
+    @BeforeEach
     void setItem() {
         SheetPost sheetPost = SheetPost.builder()
                 .sheet(Sheet.builder()
@@ -163,11 +201,11 @@ class CartControllerTest {
 
         // given
         OrderRegisterDto build1 = OrderRegisterDto.builder()
-                .buyerId(user.getUser().getId())
+                .buyerId(buyer.getUser().getId())
                 .itemId(savedSheetPost.getId())
                 .build();
         OrderRegisterDto build2 = OrderRegisterDto.builder()
-                .buyerId(user.getUser().getId())
+                .buyerId(buyer.getUser().getId())
                 .itemId(savedLesson.getId())
                 .build();
         //when
@@ -182,7 +220,7 @@ class CartControllerTest {
 
         //then
         String content = mvcResult.getResponse().getContentAsString();
-        String title = objectMapper.readTree(content).get("serializedData").get("contents").get(0).get("item").get("title").asText();
+        String title = objectMapper.readTree(content).get("data").get(0).get("item").get("title").asText();
         Assertions.assertThat(title).isEqualTo("SheetPostTitle1");
 
         MvcResult mvcResult2 = mockMvc.perform(post("/api/v1/cart/lesson")
@@ -194,14 +232,15 @@ class CartControllerTest {
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
         String contentAsString = mvcResult2.getResponse().getContentAsString();
-        String title2 = objectMapper.readTree(contentAsString).get("serializedData").get("contents").get(1).get("item").get("title").asText();
+        String title2 = objectMapper.readTree(contentAsString).get("data").get(1).get("item").get("title").asText();
+
         Assertions.assertThat(title2).isEqualTo("lesson1");
     }
 
     @Test
     void deleteFromCartTest() throws Exception {
         OrderRegisterDto build1 = OrderRegisterDto.builder()
-                .buyerId(user.getUser().getId())
+                .buyerId(buyer.getUser().getId())
                 .itemId(savedSheetPost.getId())
                 .build();
         //when
@@ -214,7 +253,7 @@ class CartControllerTest {
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
         String content = mvcResult.getResponse().getContentAsString();
-        Long id = objectMapper.readTree(content).get("serializedData").get("contents").get(0).get("id").asLong();
+        Long id = objectMapper.readTree(content).get("data").get(0).get("item").get("id").asLong();
 
         mockMvc.perform(delete("/api/v1/cart/" + id)
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
@@ -227,7 +266,7 @@ class CartControllerTest {
     @Test
     void getAllContentFromCartTest() throws Exception {
         OrderRegisterDto build1 = OrderRegisterDto.builder()
-                .buyerId(user.getUser().getId())
+                .buyerId(buyer.getUser().getId())
                 .itemId(savedSheetPost.getId())
                 .build();
 
@@ -250,24 +289,20 @@ class CartControllerTest {
                 .andReturn();
 
         String content = mvcResult.getResponse().getContentAsString();
-        Long id = objectMapper.readTree(content).get("serializedData").get("contents").get(0).get("item").get("id").asLong();
+        Long id = objectMapper.readTree(content).get("data").get(0).get("item").get("id").asLong();
         Assertions.assertThat(id).isEqualTo(savedSheetPost.getId());
     }
 
     @Test
     void payAllInCartTest() throws Exception {
-
-        mockMvc.perform(post("/api/v1/user/cash")
-                .header(HttpHeaders.AUTHORIZATION, accessToken)
-                .cookie(refreshToken)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(20000)));
+        ReflectionTestUtils.setField(buyer.getUser(), "cash", 20000);
+        userRepository.save(buyer.getUser());
         OrderRegisterDto build1 = OrderRegisterDto.builder()
-                .buyerId(user.getUser().getId())
+                .buyerId(buyer.getUser().getId())
                 .itemId(savedSheetPost.getId())
                 .build();
         OrderRegisterDto build2 = OrderRegisterDto.builder()
-                .buyerId(user.getUser().getId())
+                .buyerId(buyer.getUser().getId())
                 .itemId(savedLesson.getId())
                 .build();
         mockMvc.perform(post("/api/v1/cart/sheet")
@@ -287,7 +322,7 @@ class CartControllerTest {
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
 
-        mockMvc.perform(get("/api/v1/cart/pay")
+        mockMvc.perform(patch("/api/v1/cart?orderId=" + build1.getItemId() + "," + build2.getItemId())
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken))
                 .andExpect(status().isOk())
