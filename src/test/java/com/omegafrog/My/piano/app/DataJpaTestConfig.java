@@ -29,4 +29,9 @@ import org.springframework.data.redis.repository.configuration.EnableRedisReposi
 ))
 @EnableRedisRepositories
 public class DataJpaTestConfig {
+
+    @Bean
+    public Cleanup cleanup(){
+        return new Cleanup();
+    }
 }
