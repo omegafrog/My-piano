@@ -8,6 +8,7 @@ import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteExcep
 import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 
 import java.text.SimpleDateFormat;
@@ -16,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
+@Profile("!test")
 @Slf4j
 public class RankingScheduler {
     @Autowired

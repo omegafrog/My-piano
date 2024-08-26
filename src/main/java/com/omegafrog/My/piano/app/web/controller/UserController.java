@@ -7,6 +7,7 @@ import com.omegafrog.My.piano.app.web.dto.post.PostDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetInfoDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.user.UserInfo;
+import com.omegafrog.My.piano.app.web.dto.videoPost.VideoPostDto;
 import com.omegafrog.My.piano.app.web.response.success.ApiResponse;
 import com.omegafrog.My.piano.app.web.response.success.JsonAPIResponse;
 import com.omegafrog.My.piano.app.web.service.UserApplicationService;
@@ -67,6 +68,13 @@ public class UserController {
             @Valid @NotNull @PageableDefault(size = 10,page = 0) Pageable pageable){
         Page<SheetPostDto> data = userService.uploadedSheetPost(pageable);
         return new ApiResponse<>("Get all uploaded sheets success.", data);
+    }
+
+    @GetMapping("/uploaded-video-posts")
+    public JsonAPIResponse<Page<VideoPostDto>> getUploadedVideoPosts(
+            @Valid @NotNull @PageableDefault(size = 10, page = 0) Pageable pageable){
+        Page<VideoPostDto> data = userService.uploadedVideoPost(pageable);
+        return new ApiResponse<>("Get all uploaded video posts success.", data);
     }
 
     @GetMapping("/likedSheets")

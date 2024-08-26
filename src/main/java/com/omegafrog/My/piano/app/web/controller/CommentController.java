@@ -20,15 +20,15 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(value={"/api/v1/lesson/{id}/comments",
-        "/api/v1/posts/{id}/comments",
-        "/api/v1/community/video-post/{id}/comments",
+        "/api/v1/community/posts/{id}/comments",
+        "/api/v1/video-post/{id}/comments",
         "/api/v1/sheet-post/{id}/comments"})
 public class CommentController {
     private final CommentApplicationService commentApplicationService;
 
     @PostMapping
     public JsonAPIResponse<List<CommentDto>> addComment(
-            @Valid @NotNull @PathVariable Long id,
+            @Valid @NotNull @PathVariable(name = "id") Long id,
             @Valid @NotNull @RequestBody RegisterCommentDto dto,
             HttpServletRequest request
     ){
@@ -47,7 +47,7 @@ public class CommentController {
 
     @DeleteMapping("{comment-id}")
     public JsonAPIResponse<Void> deleteComment(
-            @Valid @NotNull @PathVariable Long id,
+            @Valid @NotNull @PathVariable(name="id") Long id,
             @Valid @NotNull @PathVariable(name = "comment-id") Long commentId,
             HttpServletRequest request
     ) {
@@ -57,7 +57,7 @@ public class CommentController {
 
     @GetMapping
     public JsonAPIResponse<Page<CommentDto>> getComments(
-            @Valid @NotNull @PathVariable Long id,
+            @Valid @NotNull @PathVariable(name="id") Long id,
             @Valid @NotNull @PageableDefault(size=10) Pageable pageable) {
         Page<CommentDto> page = commentApplicationService.getComments(id, pageable);
         return new ApiResponse<>("Get all comments success.", page);

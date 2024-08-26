@@ -13,16 +13,16 @@ import org.springframework.web.bind.annotation.*;
 
 
 @RestController
-@RequestMapping("/api/v1/posts")
+@RequestMapping("/api/v1/community/posts")
 @RequiredArgsConstructor
 public class PostController {
 
     private final PostApplicationService postApplicationService;
     @PostMapping("")
-    public JsonAPIResponse<Void> writePost(
+    public JsonAPIResponse<PostDto> writePost(
             @Valid @NotNull @RequestBody PostRegisterDto post) {
-        postApplicationService.writePost(post);
-        return new ApiResponse<>("Write post success");
+        PostDto postDto = postApplicationService.writePost(post);
+        return new ApiResponse<>("Write post success", postDto);
     }
 
     @GetMapping("/{id}")

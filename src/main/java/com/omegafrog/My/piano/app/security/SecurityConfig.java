@@ -267,15 +267,15 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain postAuthentication(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/api/v1/posts/**")
+                .securityMatcher("/api/v1/community/posts/**")
                 .authenticationProvider(commonUserAuthenticationProvider())
                 .authorizeHttpRequests()
-                .requestMatchers(HttpMethod.GET, "/api/v1/posts",
+                .requestMatchers(HttpMethod.GET, "/api/v1/community/posts",
                         "/api/v1/community/video-post",
-                        "/api/v1/posts/{id:[0-9]+}",
+                        "/api/v1/community/posts/{id:[0-9]+}",
                         "/api/v1/community/video-post/{id:[0-9]+}",
                         "/api/v1/community/video-post/{id:[0-9]+}/comments",
-                        "/api/v1/posts/{id:[0-9]+}/comments")
+                        "/api/v1/community/posts/{id:[0-9]+}/comments")
                 .permitAll()
                 .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value)
                 .and()

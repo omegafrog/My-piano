@@ -17,7 +17,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,9 +31,10 @@ public class SecurityUserRepositoryImpl implements SecurityUserRepository {
 
     @Override
     public SecurityUser save(SecurityUser securityUser) {
-        if(securityUser.getUser().getSecurityUser() == null) securityUser.getUser().setSecurityUser(securityUser);
+        if (securityUser.getUser().getSecurityUser() == null) securityUser.getUser().setSecurityUser(securityUser);
         return jpaRepository.save(securityUser);
     }
+
     @Override
     public Long count() {
         return jpaRepository.count();
@@ -94,10 +94,10 @@ public class SecurityUserRepositoryImpl implements SecurityUserRepository {
     @Override
     public Optional<SecurityUser> findByEmail(String email) {
         QUser user = QUser.user;
-        User fetchedUser= factory.selectFrom(user)
+        User fetchedUser = factory.selectFrom(user)
                 .where(user.email.eq(email))
                 .fetchOne();
-        if(fetchedUser == null) return Optional.empty();
-        return Optional.of(fetchedUser.getSecurityUser());
+        if (fetchedUser == null) return Optional.empty();
+        return Optional.ofNullable(fetchedUser.getSecurityUser());
     }
 }

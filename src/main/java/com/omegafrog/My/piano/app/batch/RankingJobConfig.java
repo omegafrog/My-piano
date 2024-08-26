@@ -19,13 +19,14 @@ import org.springframework.batch.item.database.builder.JpaPagingItemReaderBuilde
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import javax.sql.DataSource;
 import java.util.List;
 
 @Configuration
 @RequiredArgsConstructor
+@Profile("!test")
 @Slf4j
 public class RankingJobConfig {
 
@@ -58,7 +59,7 @@ public class RankingJobConfig {
     }
 
     @Bean
-    public JpaPagingItemReader<SheetPost> jpaPagingItemReader()  {
+    public JpaPagingItemReader<SheetPost> jpaPagingItemReader() {
         return new JpaPagingItemReaderBuilder<SheetPost>()
                 .entityManagerFactory(entityManagerFactory)
                 .queryString("from SheetPost p ORDER by id ASC")
@@ -89,7 +90,7 @@ public class RankingJobConfig {
 //                    log.info("created_at:{}", item.getCreated_at());
 //                    sheetPostIndexRepository.save(item);
 //                }
-                    sheetPostIndexRepository.saveAll(items);
+                sheetPostIndexRepository.saveAll(items);
 
             }
         };

@@ -29,6 +29,7 @@ public class JwtTokenExceptionFilter extends OncePerRequestFilter {
         }catch (AuthenticationException ex){
             if (ex instanceof CredentialsExpiredException)
                 responseBody = ex.getMessage();
+
         }
         catch(RuntimeException e){
             responseBody = e.getMessage();

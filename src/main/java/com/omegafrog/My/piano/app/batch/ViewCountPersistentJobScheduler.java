@@ -16,9 +16,11 @@ import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 
 @Configuration
+@Profile("!test")
 @RequiredArgsConstructor
 @Slf4j
 public class ViewCountPersistentJobScheduler {
