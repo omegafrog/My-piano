@@ -1,11 +1,9 @@
 package com.omegafrog.My.piano.app.web.service;
 
+import com.omegafrog.My.piano.app.external.elasticsearch.ElasticSearchInstance;
 import com.omegafrog.My.piano.app.external.elasticsearch.SheetPostIndexRepository;
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.utils.MapperUtil;
-import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostListDto;
-import com.omegafrog.My.piano.app.web.exception.WrongFileExtensionException;
-import com.omegafrog.My.piano.app.external.elasticsearch.ElasticSearchInstance;
 import com.omegafrog.My.piano.app.web.domain.S3UploadFileExecutor;
 import com.omegafrog.My.piano.app.web.domain.comment.CommentRepository;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
@@ -14,9 +12,11 @@ import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostViewCountRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
-import com.omegafrog.My.piano.app.web.dto.sheetPost.UpdateSheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.RegisterSheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostListDto;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.UpdateSheetPostDto;
+import com.omegafrog.My.piano.app.web.exception.WrongFileExtensionException;
 import io.awspring.cloud.s3.ObjectMetadata;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -32,9 +32,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.URL;
-import java.util.*;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -78,9 +80,7 @@ public class SheetPostApplicationService {
                     tempFile.document, tempFile.filename,
                     new ObjectMetadata.Builder().contentType("jpg").build());
 
-            Sheet sheet = dto.getSheet().getEntityBuilderWithoutAuthor()
-                    .user(loggedInUser)
-                    .pageNum(tempFile.pageNum).build();
+            Sheet sheet = dto.getSheet().createEntity(loggedInUser, tempFile.pageNum);
 
             SheetPost sheetPost = SheetPost.builder()
                     .title(dto.getTitle())
@@ -94,7 +94,7 @@ public class SheetPostApplicationService {
             elasticSearchInstance.invertIndexingSheetPost(saved);
             return saved.toDto();
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error(e.getLocalizedMessage());
             throw e;
         }
     }
@@ -144,13 +144,14 @@ public class SheetPostApplicationService {
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find Sheetpost entity."));
         User user = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity."));
-        if(!user.isPurchased(sheetPost))
+        if (!user.isPurchased(sheetPost))
             throw new BadCredentialsException("구매하지 않은 sheet post 를 조회할 수 없습니다.");
         URL fileUrl = uploadFileExecutor.createFileUrl(sheetPost.getSheet().getSheetUrl());
         return fileUrl.toString();
     }
 
-    private record SheetPostTempFile(String filename, ObjectMetadata metadata, File temp, PDDocument document, int pageNum) {
+    private record SheetPostTempFile(String filename, ObjectMetadata metadata, File temp, PDDocument document,
+                                     int pageNum) {
     }
 
     public void delete(Long id) {
@@ -180,7 +181,7 @@ public class SheetPostApplicationService {
         User user = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find user entity:" + id));
         return user.getLikedSheetPosts()
-                .stream().anyMatch(likedSheetPost-> likedSheetPost.getSheetPost().equals(targetSheetPost));
+                .stream().anyMatch(likedSheetPost -> likedSheetPost.getSheetPost().equals(targetSheetPost));
     }
 
     public void dislikeSheetPost(Long id) {
@@ -190,18 +191,20 @@ public class SheetPostApplicationService {
         User user = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
         boolean removed = user.getLikedSheetPosts().removeIf(item -> item.getSheetPost().getId().equals(id));
-        if(!removed) throw new EntityNotFoundException("좋아요를 누르지 않았습니다." + id);
+        if (!removed) throw new EntityNotFoundException("좋아요를 누르지 않았습니다." + id);
         sheetPost.decreaseLikedCount();
     }
+
     public void scrapSheetPost(Long id) {
         User loggedInUser = authenticationUtil.getLoggedInUser();
         SheetPost sheetPost = sheetPostRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity:"+ id));
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity:" + id));
         User user = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
         user.scrapSheetPost(sheetPost);
     }
-    public boolean isScrappedSheetPost(Long id){
+
+    public boolean isScrappedSheetPost(Long id) {
         User loggedInUser = authenticationUtil.getLoggedInUser();
         SheetPost targetSheetPost = sheetPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
@@ -226,7 +229,7 @@ public class SheetPostApplicationService {
             Pageable pageable) throws IOException {
         Page<Long> sheetPostIds = elasticSearchInstance.searchSheetPost(
                 searchSentence, instrument, difficulty, genre, pageable);
-        List<SheetPostListDto> res = sheetPostRepository.findByIds(sheetPostIds.getContent(),pageable);
+        List<SheetPostListDto> res = sheetPostRepository.findByIds(sheetPostIds.getContent(), pageable);
         return PageableExecutionUtils.getPage(res, pageable, sheetPostIds::getTotalElements);
     }
 }

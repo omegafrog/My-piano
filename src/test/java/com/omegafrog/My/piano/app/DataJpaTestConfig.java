@@ -2,6 +2,7 @@ package com.omegafrog.My.piano.app;
 
 import com.omegafrog.My.piano.app.external.elasticsearch.SheetPostIndexRepository;
 import com.omegafrog.My.piano.app.security.infrastructure.redis.RedisRefreshTokenRepository;
+import com.omegafrog.My.piano.app.web.controller.TestUtil;
 import com.omegafrog.My.piano.app.web.infra.Subscription.RedisSubscriptionRepository;
 import com.omegafrog.My.piano.app.web.infra.lesson.RedisLessonViewCountRepository;
 import com.omegafrog.My.piano.app.web.infra.post.RedisPostViewCountRepository;
@@ -21,13 +22,18 @@ import org.springframework.data.redis.repository.configuration.EnableRedisReposi
                 RedisPostViewCountRepository.class,
                 RedisSheetPostViewCountRepository.class,
                 RedisSubscriptionRepository.class
-                }
+        }
 ))
 @EnableRedisRepositories
 public class DataJpaTestConfig {
 
     @Bean
-    public Cleanup cleanup(){
+    public Cleanup cleanup() {
         return new Cleanup();
+    }
+
+    @Bean
+    public TestUtil testUtil() {
+        return new TestUtil();
     }
 }

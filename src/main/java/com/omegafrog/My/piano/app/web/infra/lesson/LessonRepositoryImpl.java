@@ -1,10 +1,8 @@
 package com.omegafrog.My.piano.app.web.infra.lesson;
 
-import com.omegafrog.My.piano.app.security.entity.QSecurityUser;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
 import com.omegafrog.My.piano.app.web.domain.lesson.QLesson;
-import com.omegafrog.My.piano.app.web.domain.sheet.QSheet;
 import com.omegafrog.My.piano.app.web.domain.sheet.QSheetPost;
 import com.omegafrog.My.piano.app.web.domain.user.QUser;
 import com.omegafrog.My.piano.app.web.dto.lesson.SearchLessonFilter;
@@ -35,15 +33,21 @@ public class LessonRepositoryImpl implements LessonRepository {
     }
 
     @Override
-    @CachePut(value="lesson")
+    @CachePut(value = "lesson")
     public Optional<Lesson> findById(Long id) {
+//        return Optional.ofNullable(factory.select(QLesson.lesson)
+//                .from(QLesson.lesson)
+//                .join(QLesson.lesson.author, QUser.user).fetchJoin()
+//                .leftJoin(QLesson.lesson.sheetPost, QSheetPost.sheetPost).fetchJoin()
+//                .join(QLesson.lesson.sheetPost.author, new QUser("sheetPostAuthor")).fetchJoin()
+//                .join(QLesson.lesson.sheetPost.sheet, QSheet.sheet).fetchJoin()
+//                .join(QLesson.lesson.author.securityUser, new QSecurityUser("securityUser")).fetchJoin()
+//                .where(QLesson.lesson.id.eq(id))
+//                .fetchOne());
         return Optional.ofNullable(factory.select(QLesson.lesson)
                 .from(QLesson.lesson)
                 .join(QLesson.lesson.author, QUser.user).fetchJoin()
                 .join(QLesson.lesson.sheetPost, QSheetPost.sheetPost).fetchJoin()
-                        .join(QLesson.lesson.sheetPost.author, new QUser("sheetPostAuthor")).fetchJoin()
-                        .join(QLesson.lesson.sheetPost.sheet, QSheet.sheet).fetchJoin()
-                        .join(QLesson.lesson.author.securityUser, new QSecurityUser("securityUser")).fetchJoin()
                 .where(QLesson.lesson.id.eq(id))
                 .fetchOne());
     }
@@ -52,8 +56,9 @@ public class LessonRepositoryImpl implements LessonRepository {
     public void deleteById(Long id) {
         jpaRepository.deleteById(id);
     }
+
     @Override
-    public List<Lesson> findAll(Pageable pageable){
+    public List<Lesson> findAll(Pageable pageable) {
         return jpaRepository.findAll(pageable).getContent();
     }
 

@@ -6,24 +6,24 @@ import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
 import com.google.api.client.http.apache.v2.ApacheHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.omegafrog.My.piano.app.external.elasticsearch.ElasticSearchInstance;
-import com.omegafrog.My.piano.app.external.elasticsearch.SheetPostIndexRepository;
-import com.omegafrog.My.piano.app.external.tossPayment.TossPaymentInstance;
-import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
 import com.omegafrog.My.piano.app.external.tossPayment.TossPaymentInstance;
 import com.omegafrog.My.piano.app.external.tossPayment.TossWebHookResultFactory;
 import com.omegafrog.My.piano.app.external.tossPayment.TossWebHookResultFactoryImpl;
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.utils.MapperUtil;
+import com.omegafrog.My.piano.app.utils.OrderDtoCustomSerializer;
 import com.omegafrog.My.piano.app.web.domain.S3UploadFileExecutor;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
 import com.omegafrog.My.piano.app.web.domain.notification.PushInstance;
 import com.omegafrog.My.piano.app.web.domain.order.SellableItemFactory;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
+import com.omegafrog.My.piano.app.web.dto.order.OrderDto;
 import io.awspring.cloud.s3.InMemoryBufferingS3OutputStreamProvider;
 import io.awspring.cloud.s3.Jackson2JsonS3ObjectConverter;
 import io.awspring.cloud.s3.S3Template;
@@ -82,9 +82,10 @@ public class GlobalConfig {
     }
 
     @Bean
-    public MapperUtil mapperUtil(ObjectMapper objectMapper, AuthenticationUtil authenticationUtil){
-        return new MapperUtil(objectMapper,authenticationUtil);
+    public MapperUtil mapperUtil(ObjectMapper objectMapper, AuthenticationUtil authenticationUtil) {
+        return new MapperUtil(objectMapper, authenticationUtil);
     }
+
     public ElasticsearchClient elasticsearchClient() {
         String serverUrl = "https://" + host + ":" + port;
 
@@ -103,8 +104,9 @@ public class GlobalConfig {
         // And create the API client
         return new ElasticsearchClient(transport);
     }
+
     @Bean
-    public TossWebHookResultFactory tossWebHookResultFactory(ObjectMapper objectMapper){
+    public TossWebHookResultFactory tossWebHookResultFactory(ObjectMapper objectMapper) {
         return new TossWebHookResultFactoryImpl(objectMapper);
     }
 
@@ -132,6 +134,7 @@ public class GlobalConfig {
     public ObjectMapper objectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.registerModule(new SimpleModule().addSerializer(OrderDto.class, new OrderDtoCustomSerializer()));
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
         return objectMapper;

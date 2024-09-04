@@ -12,14 +12,13 @@ import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
 import com.omegafrog.My.piano.app.security.provider.AdminAuthenticationProvider;
 import com.omegafrog.My.piano.app.security.provider.CommonUserAuthenticationProvider;
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
-import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
-import com.omegafrog.My.piano.app.web.service.admin.AdminUserService;
-import com.omegafrog.My.piano.app.web.service.admin.CommonUserService;
-
 import com.omegafrog.My.piano.app.utils.MapperUtil;
+import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
 import com.omegafrog.My.piano.app.web.domain.post.PostRepository;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
+import com.omegafrog.My.piano.app.web.service.admin.AdminUserService;
+import com.omegafrog.My.piano.app.web.service.admin.CommonUserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,8 +34,6 @@ import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -51,19 +48,22 @@ public class SecurityConfig {
 
     @Autowired
     private S3Client s3Client;
+
     @Bean
-    public RefreshTokenRepository refreshTokenRepository(){
+    public RefreshTokenRepository refreshTokenRepository() {
         return new CommonUserRefreshTokenRepositoryImpl();
     }
+
     @Bean
-    public TokenUtils tokenUtils(){
+    public TokenUtils tokenUtils() {
         return new TokenUtils();
     }
 
     @Bean
-    public JwtTokenFilter jwtFilter(){
+    public JwtTokenFilter jwtFilter() {
         return new JwtTokenFilter(tokenUtils(), securityUserRepository, refreshTokenRepository());
     }
+
     @Autowired
     private SecurityUserRepository securityUserRepository;
     @Autowired
@@ -108,7 +108,7 @@ public class SecurityConfig {
     private AuthenticationUtil authenticationUtil;
 
     @Bean
-    public AdminUserService adminUserService(){
+    public AdminUserService adminUserService() {
         return new AdminUserService(
                 passwordEncoder(),
                 userRepository,
@@ -144,10 +144,35 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AdminAuthenticationProvider adminAuthenticationProvider(){
+    public AdminAuthenticationProvider adminAuthenticationProvider() {
         return new AdminAuthenticationProvider(adminUserService(), passwordEncoder());
     }
 
+    @Bean
+    public SecurityFilterChain commentAuthentication(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/api/v1/**/comments/**")
+                .authenticationProvider(commonUserAuthenticationProvider()).authorizeHttpRequests(
+                        (authorizeHttpRequest) ->
+                                authorizeHttpRequest
+                                        .requestMatchers(HttpMethod.GET, "/api/v1/**/comments")
+                                        .permitAll()
+                                        .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value)
+                )
+                .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
+                .sessionManagement((sessionManagement) ->
+                        sessionManagement
+                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .exceptionHandling((exceptionadvisor) ->
+                        exceptionadvisor
+                                .authenticationEntryPoint(unAuthorizedEntryPoint())
+                                .accessDeniedHandler(commonUserAccessDeniedHandler())
+                )
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors((conf) -> conf.configurationSource(corsConfigurationSource()));
+        return http.build();
+    }
 
     @Bean
     public SecurityFilterChain adminAuthentication(HttpSecurity http) throws Exception {
@@ -181,7 +206,7 @@ public class SecurityConfig {
                                 .accessDeniedHandler(commonUserAccessDeniedHandler())
                 )
                 .csrf(AbstractHttpConfigurer::disable)
-                .cors((conf)->conf.configurationSource(corsConfigurationSource()));
+                .cors((conf) -> conf.configurationSource(corsConfigurationSource()));
 
         return http.build();
     }
@@ -273,9 +298,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v1/community/posts",
                         "/api/v1/community/video-post",
                         "/api/v1/community/posts/{id:[0-9]+}",
-                        "/api/v1/community/video-post/{id:[0-9]+}",
-                        "/api/v1/community/video-post/{id:[0-9]+}/comments",
-                        "/api/v1/community/posts/{id:[0-9]+}/comments")
+                        "/api/v1/community/video-post/{id:[0-9]+}")
                 .permitAll()
                 .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value)
                 .and()
@@ -295,18 +318,17 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain lessonAuthentication(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/api/v1/lesson/**")
+                .securityMatcher("/api/v1/lessons/**")
                 .authenticationProvider(commonUserAuthenticationProvider())
                 .authorizeHttpRequests()
                 .requestMatchers(HttpMethod.GET,
-                        "/api/v1/lesson",
-                        "/api/v1/lesson/{id:[0-9]+}",
-                        "/api/v1/lesson/{id:[0-9]+}/comments",
-                        "/api/v1/lesson/{id:[0-9]+}/scrap")
+                        "/api/v1/lessons",
+                        "/api/v1/lessons/{id:[0-9]+}",
+                        "/api/v1/lessons/{id:[0-9]+}/scrap")
                 .permitAll()
-                .requestMatchers(HttpMethod.PUT, "/api/v1/lesson/{id:[0-9]+}/scrap")
+                .requestMatchers(HttpMethod.PUT, "/api/v1/lessons/{id:[0-9]+}/scrap")
                 .permitAll()
-                .requestMatchers(HttpMethod.DELETE, "/api/v1/lesson/{id:[0-9]+}/scrap")
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/lessons/{id:[0-9]+}/scrap")
                 .permitAll()
                 .anyRequest().hasRole(Role.CREATOR.value)
                 .and()
@@ -330,9 +352,9 @@ public class SecurityConfig {
                 .authenticationProvider(commonUserAuthenticationProvider())
                 .authorizeHttpRequests()
                 .requestMatchers(HttpMethod.GET, "/api/v1/order",
-                                                "/api/v1/order/{id:[0-9]+}")
+                        "/api/v1/order/{id:[0-9]+}")
                 .permitAll()
-                .anyRequest().hasAnyRole(Role.USER.value,Role.CREATOR.value)
+                .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value)
                 .and()
                 .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
                 .sessionManagement()
@@ -353,8 +375,7 @@ public class SecurityConfig {
                 .securityMatcher("/api/v1/sheet-post/**")
                 .authenticationProvider(commonUserAuthenticationProvider())
                 .authorizeHttpRequests()
-                .requestMatchers(HttpMethod.GET, "/api/v1/sheet-post/{id:[0-9]+}",
-                        "/api/v1/sheet-post/{id:[0-9]+}/comments")
+                .requestMatchers(HttpMethod.GET, "/api/v1/sheet-post/{id:[0-9]+}")
                 .permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/sheet-post")
                 .permitAll()
@@ -374,7 +395,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public  SecurityFilterChain cartAuthentication(HttpSecurity http) throws Exception {
+    public SecurityFilterChain cartAuthentication(HttpSecurity http) throws Exception {
         http
                 .securityMatcher("/api/v1/cart/**")
                 .authenticationProvider(commonUserAuthenticationProvider())
@@ -396,6 +417,7 @@ public class SecurityConfig {
 
         return http.build();
     }
+
     @Bean
     SecurityFilterChain ticketAuthentication(HttpSecurity http) throws Exception {
         http

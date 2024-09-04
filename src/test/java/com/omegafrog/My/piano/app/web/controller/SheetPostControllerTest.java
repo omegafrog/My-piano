@@ -3,28 +3,28 @@ package com.omegafrog.My.piano.app.web.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
-import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
-import com.omegafrog.My.piano.app.security.exception.DuplicatePropertyException;
-import com.omegafrog.My.piano.app.web.service.admin.CommonUserService;
 import com.omegafrog.My.piano.app.web.domain.sheet.Genres;
-import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
-import com.omegafrog.My.piano.app.web.dto.user.SecurityUserDto;
-import com.omegafrog.My.piano.app.web.dto.sheetPost.UpdateSheetDto;
-import com.omegafrog.My.piano.app.web.dto.sheetPost.UpdateSheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
 import com.omegafrog.My.piano.app.web.dto.comment.RegisterCommentDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.RegisterSheetPostDto;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.UpdateSheetDto;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.UpdateSheetPostDto;
+import com.omegafrog.My.piano.app.web.dto.user.SecurityUserDto;
 import com.omegafrog.My.piano.app.web.enums.Difficulty;
 import com.omegafrog.My.piano.app.web.enums.Genre;
 import com.omegafrog.My.piano.app.web.enums.Instrument;
+import com.omegafrog.My.piano.app.web.service.admin.CommonUserService;
 import jakarta.servlet.http.Cookie;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -35,7 +35,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,18 +49,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @RequiredArgsConstructor
-@Transactional
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SheetPostControllerTest {
 
     @Autowired
-    private SecurityUserRepository securityUserRepository;
-    @Autowired
     private CommonUserService commonUserService;
     @Autowired
     private UserRepository userRepository;
-    @Autowired
-    private SheetPostRepository sheetPostRepository;
     @Autowired
     private ObjectMapper objectMapper;
 
@@ -84,14 +78,14 @@ class SheetPostControllerTest {
     }
 
     @BeforeEach
-    void login() throws Exception{
-        SecurityUserDto securityUserDto1 = commonUserService.registerUserWithoutProfile(TestLoginUtil.user1);
+    void login() throws Exception {
+        SecurityUserDto securityUserDto1 = commonUserService.registerUserWithoutProfile(TestUtil.user1);
         User user = ((SecurityUser) commonUserService.loadUserByUsername(securityUserDto1.getUsername()))
                 .getUser();
         user.chargeCash(20000);
         userRepository.save(user);
 
-        SecurityUserDto securityUserDto2 = commonUserService.registerUserWithoutProfile(TestLoginUtil.user2);
+        SecurityUserDto securityUserDto2 = commonUserService.registerUserWithoutProfile(TestUtil.user2);
         artist = ((SecurityUser) commonUserService.loadUserByUsername(securityUserDto2.getUsername()))
                 .getUser();
         MvcResult mvcResult = mockMvc.perform(post("/user/login")
@@ -102,14 +96,6 @@ class SheetPostControllerTest {
         LoginResult loginResult = objectMapper.readValue(contentAsString, LoginResult.class);
         accessToken = loginResult.getSerializedData().get("access token");
         refreshToken = mvcResult.getResponse().getCookie("refreshToken");
-        build = RegisterSheetPostDto.builder()
-                .title("title")
-                .content("content")
-                .price(12000)
-                .sheetDto(DummyData.registerSheetDto(DummyData.sheet(artist)))
-                .artistId(artist.getId())
-                .discountRate(0d)
-                .build();
     }
 
     @Test
@@ -121,7 +107,8 @@ class SheetPostControllerTest {
                         .content(objectMapper.writeValueAsString(build)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
-                .andReturn().getResponse().getContentAsString();;
+                .andReturn().getResponse().getContentAsString();
+        ;
 
         String content = objectMapper.readTree(contentAsString).get("serializedData").get("sheetPost").get("content").asText();
         Assertions.assertThat(content).isEqualTo("content");
@@ -137,7 +124,8 @@ class SheetPostControllerTest {
                         .content(objectMapper.writeValueAsString(build)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
-                .andReturn().getResponse().getContentAsString();;
+                .andReturn().getResponse().getContentAsString();
+        ;
         Long id = objectMapper.readTree(contentAsString).get("serializedData").get("sheetPost").get("id").asLong();
 
         //when
@@ -183,7 +171,8 @@ class SheetPostControllerTest {
                         .content(objectMapper.writeValueAsString(build)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
-                .andReturn().getResponse().getContentAsString();;
+                .andReturn().getResponse().getContentAsString();
+        ;
         long id = objectMapper.readTree(contentAsString).get("serializedData").get("sheetPost").get("id").asLong();
         //when
         MvcResult mvcResult1 = mockMvc.perform(delete("/sheet/" + id)
@@ -209,7 +198,8 @@ class SheetPostControllerTest {
                         .content(objectMapper.writeValueAsString(build)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
-                .andReturn().getResponse().getContentAsString();;
+                .andReturn().getResponse().getContentAsString();
+        ;
         Long id = objectMapper.readTree(contentAsString).get("serializedData").get("sheetPost").get("id").asLong();
 
         MvcResult mvcResult1 = mockMvc.perform(get("/sheet/" + id))
@@ -224,14 +214,15 @@ class SheetPostControllerTest {
     @Test
     void findAllTest() throws Exception {
         //given
-        String contentAsString1= mockMvc.perform(post("/sheet/write")
+        String contentAsString1 = mockMvc.perform(post("/sheet/write")
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
                         .cookie(refreshToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(build)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
-                .andReturn().getResponse().getContentAsString();;
+                .andReturn().getResponse().getContentAsString();
+        ;
         Long id1 = objectMapper.readTree(contentAsString1).get("serializedData").get("sheetPost").get("id").asLong();
         build.setTitle("title2");
         MvcResult mvcResult2 = mockMvc.perform(post("/sheet/write")
@@ -281,7 +272,7 @@ class SheetPostControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn().getResponse().getContentAsString();
-        JsonNode jsonNode  = objectMapper.readTree(contentAsString1).get("serializedData").get("comments");
+        JsonNode jsonNode = objectMapper.readTree(contentAsString1).get("serializedData").get("comments");
         List<CommentDto> commentList = new ArrayList<>();
 
         jsonNode.forEach(node -> {
@@ -333,7 +324,7 @@ class SheetPostControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn().getResponse().getContentAsString();
-        JsonNode jsonNode1  = objectMapper.readTree(contentAsString2).get("serializedData").get("comments");
+        JsonNode jsonNode1 = objectMapper.readTree(contentAsString2).get("serializedData").get("comments");
         List<CommentDto> commentDtoList = new ArrayList<>();
         jsonNode1.forEach(element -> commentDtoList.add(objectMapper.convertValue(element, CommentDto.class)));
 

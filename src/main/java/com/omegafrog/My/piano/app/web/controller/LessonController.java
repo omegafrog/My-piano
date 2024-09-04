@@ -1,8 +1,8 @@
 package com.omegafrog.My.piano.app.web.controller;
 
-import com.omegafrog.My.piano.app.web.dto.lesson.UpdateLessonDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
-import com.omegafrog.My.piano.app.web.dto.lesson.LessonRegisterDto;
+import com.omegafrog.My.piano.app.web.dto.lesson.RegisterLessonDto;
+import com.omegafrog.My.piano.app.web.dto.lesson.UpdateLessonDto;
 import com.omegafrog.My.piano.app.web.response.success.ApiResponse;
 import com.omegafrog.My.piano.app.web.response.success.JsonAPIResponse;
 import com.omegafrog.My.piano.app.web.service.lesson.LessonService;
@@ -21,29 +21,30 @@ import java.util.List;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/lessons")
 public class LessonController {
 
     private final LessonService lessonService;
-    @PostMapping("/lesson")
-    public JsonAPIResponse createLesson(@Validated @NotNull @RequestBody LessonRegisterDto lessonRegisterDto) {
-        LessonDto lessonDto = lessonService.createLesson(lessonRegisterDto);
+
+    @PostMapping("")
+    public JsonAPIResponse createLesson(@Validated @NotNull @RequestBody RegisterLessonDto registerLessonDto) {
+        LessonDto lessonDto = lessonService.createLesson(registerLessonDto);
         return new ApiResponse("Create new Lesson success", lessonDto);
     }
 
-    @GetMapping("/lessons")
-    public JsonAPIResponse getLessons(@PageableDefault(page=0,size = 10) Pageable pageable) {
+    @GetMapping("")
+    public JsonAPIResponse getLessons(@PageableDefault(page = 0, size = 10) Pageable pageable) {
         List<LessonDto> allLessons = lessonService.getAllLessons(pageable);
         return new ApiResponse("Success load all lessons.", allLessons);
     }
 
-    @GetMapping("/lesson/{id}")
-    public JsonAPIResponse getLesson(@Valid @NotNull @PathVariable Long id){
+    @GetMapping("/{id}")
+    public JsonAPIResponse getLesson(@Valid @NotNull @PathVariable Long id) {
         LessonDto lessonById = lessonService.getLessonById(id);
         return new ApiResponse("Success load lesson" + id + ".", lessonById);
     }
 
-    @PostMapping("/lesson/{id}")
+    @PostMapping("/{id}")
     public JsonAPIResponse updateLesson(
             @Valid @NotNull @RequestBody UpdateLessonDto updateLessonDto,
             @Valid @NotNull @PathVariable Long id) {
@@ -51,51 +52,51 @@ public class LessonController {
         return new ApiResponse("Lesson update success", updated);
     }
 
-    @DeleteMapping("/lesson/{id}")
+    @DeleteMapping("/{id}")
     public JsonAPIResponse deleteLesson(
             @Valid @NotNull @PathVariable Long id) {
         lessonService.deleteLesson(id);
         return new ApiResponse("Lesson delete success");
     }
 
-    @PutMapping("/lesson/{id}/like")
+    @PutMapping("/{id}/like")
     public JsonAPIResponse likeLesson(
-            @Valid @NotNull @PathVariable Long id){
+            @Valid @NotNull @PathVariable Long id) {
         lessonService.likeLesson(id);
         return new ApiResponse("Like lesson success");
     }
 
-    @GetMapping("/lesson/{id}/like")
+    @GetMapping("/{id}/like")
     public JsonAPIResponse isLikeLesson(
             @Valid @NotNull @PathVariable Long id) {
         boolean isLiked = lessonService.isLikedLesson(id);
-        return new ApiResponse("Check Lesson is liked success.",isLiked);
+        return new ApiResponse("Check Lesson is liked success.", isLiked);
     }
 
-    @DeleteMapping("/lesson/{id}/like")
+    @DeleteMapping("/{id}/like")
     public JsonAPIResponse dislikeLesson(
-            @Valid @NotNull @PathVariable Long id){
+            @Valid @NotNull @PathVariable Long id) {
         lessonService.dislikeLesson(id);
         return new ApiResponse("Dislike lesson success.");
     }
 
-    @GetMapping("/lesson/{id}/scrap")
+    @GetMapping("/{id}/scrap")
     public JsonAPIResponse isScrappedLesson(
-            @Valid @NotNull @PathVariable Long id){
+            @Valid @NotNull @PathVariable Long id) {
         boolean scrappedLesson = lessonService.isScrappedLesson(id);
         return new ApiResponse("Check lesson is scrapped success.", scrappedLesson);
     }
 
-    @PutMapping("/lesson/{id}/scrap")
+    @PutMapping("/{id}/scrap")
     public JsonAPIResponse scrapLesson(
-            @Valid @NotNull @PathVariable Long id ){
+            @Valid @NotNull @PathVariable Long id) {
         lessonService.scrapLesson(id);
         return new ApiResponse("Scrap lesson success.");
     }
 
-    @DeleteMapping("/lesson/{id}/scrap")
+    @DeleteMapping("/{id}/scrap")
     public JsonAPIResponse unScrapLesson(
-            @Valid @NotNull @PathVariable Long id){
+            @Valid @NotNull @PathVariable Long id) {
         lessonService.unScrapLesson(id);
         return new ApiResponse("Cancel scrap lesson success.");
     }

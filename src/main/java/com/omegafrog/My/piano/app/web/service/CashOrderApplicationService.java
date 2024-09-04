@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional
 public class CashOrderApplicationService {
 
     private final CashOrderRepository cashOrderRepository;
@@ -194,5 +195,11 @@ public class CashOrderApplicationService {
             throw new WrongOrderStateException("계산이 완료된 주문이어야 합니다.");
         if (cashOrder.getPaymentKey() == null)
             throw new NullPointerException("PaymentKey가 없습니다.");
+    }
+
+    @Profile("test")
+    public void chargeCash(int amount) {
+        User loggedInUser = authenticationUtil.getLoggedInUser();
+        loggedInUser.chargeCash(amount);
     }
 }

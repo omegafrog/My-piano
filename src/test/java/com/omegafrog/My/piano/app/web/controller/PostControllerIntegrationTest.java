@@ -5,17 +5,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
 import com.omegafrog.My.piano.app.security.exception.DuplicatePropertyException;
-import com.omegafrog.My.piano.app.web.service.admin.CommonUserService;
 import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
 import com.omegafrog.My.piano.app.web.dto.comment.RegisterCommentDto;
 import com.omegafrog.My.piano.app.web.dto.post.PostRegisterDto;
 import com.omegafrog.My.piano.app.web.dto.post.UpdatePostDto;
+import com.omegafrog.My.piano.app.web.service.admin.CommonUserService;
 import jakarta.servlet.http.Cookie;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -23,7 +26,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -76,8 +78,8 @@ class PostControllerIntegrationTest {
     @BeforeAll
     void getTokens() throws Exception, DuplicatePropertyException {
 
-        commonUserService.registerUserWithoutProfile(TestLoginUtil.user1);
-        commonUserService.registerUserWithoutProfile(TestLoginUtil.user2);
+        commonUserService.registerUserWithoutProfile(TestUtil.user1);
+        commonUserService.registerUserWithoutProfile(TestUtil.user2);
         MvcResult mvcResult = mockMvc.perform(post("/user/login")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content("username=user1&password=password"))
@@ -173,7 +175,7 @@ class PostControllerIntegrationTest {
                 .andReturn();
         //then
         String s = mvcResult.getResponse().getContentAsString();
-        JsonNode postDto1 =  objectMapper.readTree(s).get("serializedData").get("post");
+        JsonNode postDto1 = objectMapper.readTree(s).get("serializedData").get("post");
         Long updatedId = postDto1.get("id").asLong();
         String content = postDto1.get("content").asText();
         Assertions.assertThat(updatedId).isEqualTo(postId);
@@ -259,7 +261,7 @@ class PostControllerIntegrationTest {
         Assertions.assertThat(commentList.size()).isGreaterThan(0);
         Assertions.assertThat(commentList.get(0).getContent()).isEqualTo(commentDTO.getContent());
 
-        SecurityUser user = (SecurityUser) commonUserService.loadUserByUsername(TestLoginUtil.user1.getUsername());
+        SecurityUser user = (SecurityUser) commonUserService.loadUserByUsername(TestUtil.user1.getUsername());
         Assertions.assertThat(user.getUser().getWroteComments()).hasSize(1);
         Assertions.assertThat(user.getUser().getWroteComments().get(0).getId()).isEqualTo(commentList.get(0).getId());
     }
@@ -459,6 +461,7 @@ class PostControllerIntegrationTest {
         String message = objectMapper.readTree(s).get("message").asText();
         Assertions.assertThat(message).isEqualTo("delete post success");
     }
+
     @Test
     @DisplayName("작성자가 아닌 유저는 커뮤니티 글을 삭제할 수 없다.")
     @Transactional

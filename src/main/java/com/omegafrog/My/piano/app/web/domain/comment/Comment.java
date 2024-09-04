@@ -2,13 +2,12 @@ package com.omegafrog.My.piano.app.web.domain.comment;
 
 import com.omegafrog.My.piano.app.web.domain.article.Article;
 import com.omegafrog.My.piano.app.web.domain.user.User;
-import com.omegafrog.My.piano.app.web.dto.comment.ReturnCommentDto;
 import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
+import com.omegafrog.My.piano.app.web.dto.comment.ReturnCommentDto;
+import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import jakarta.persistence.*;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -29,29 +28,30 @@ public class Comment implements Serializable {
     private User author;
 
     @Temporal(TemporalType.TIMESTAMP)
-    private LocalDateTime createdAt=LocalDateTime.now();
+    private LocalDateTime createdAt = LocalDateTime.now();
 
     private String content;
 
     private int likeCount;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "parent",orphanRemoval = true)
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "parent", orphanRemoval = true)
     private List<Comment> replies = new ArrayList<>();
     @ManyToOne
-    @JoinColumn(name="PARENT_ID")
+    @JoinColumn(name = "PARENT_ID")
     private Comment parent;
 
     @ManyToOne
     private Article target;
 
-    public void setTarget(Article article){
+    public void setTarget(Article article) {
         target = article;
     }
 
-    public void increaseLikeCount(){
+    public void increaseLikeCount() {
         likeCount++;
     }
-    public void decreaseLikeCount(){
+
+    public void decreaseLikeCount() {
         likeCount--;
     }
 
@@ -64,7 +64,7 @@ public class Comment implements Serializable {
         this.parent = parent;
     }
 
-    public CommentDto toDto(){
+    public CommentDto toDto() {
         return CommentDto.builder()
                 .id(id)
                 .author(author.getUserInfo())
@@ -74,7 +74,7 @@ public class Comment implements Serializable {
                 .build();
     }
 
-    public ReturnCommentDto toReturnCommentDto(){
+    public ReturnCommentDto toReturnCommentDto() {
         return ReturnCommentDto.builder()
                 .id(id)
                 .content(content)
@@ -88,5 +88,9 @@ public class Comment implements Serializable {
 
     public void addReply(Comment saved) {
         replies.add(saved);
+    }
+
+    public void setAuthor(User author) {
+        this.author = author;
     }
 }

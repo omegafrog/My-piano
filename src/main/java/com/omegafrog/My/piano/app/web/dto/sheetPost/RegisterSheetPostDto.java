@@ -17,20 +17,17 @@ public class RegisterSheetPostDto {
     private String content;
     @PositiveOrZero
     private int price;
-    @Range(min=0, max=1L)
+    @Range(min = 0, max = 1L)
     private Double discountRate;
-    @NotNull
-    private Long artistId;
     @NotNull
     private RegisterSheetDto sheet;
 
     @Builder
-    public RegisterSheetPostDto(String title, String content, int price, Double discountRate, Long artistId, RegisterSheetDto sheetDto) {
+    public RegisterSheetPostDto(String title, String content, int price, Double discountRate, RegisterSheetDto sheetDto) {
         this.title = title;
         this.content = content;
         this.price = price;
         this.discountRate = discountRate;
-        this.artistId = artistId;
-        this.sheet= sheetDto;
+        this.sheet = sheetDto;
     }
 }

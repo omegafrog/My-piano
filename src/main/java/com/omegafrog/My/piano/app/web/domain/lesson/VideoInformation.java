@@ -1,14 +1,14 @@
 package com.omegafrog.My.piano.app.web.domain.lesson;
 
+import jakarta.persistence.Embeddable;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import jakarta.persistence.Embeddable;
-
 import java.io.Serializable;
 import java.time.LocalTime;
+import java.util.Objects;
 
 @Getter
 @Setter
@@ -22,5 +22,18 @@ public class VideoInformation implements Serializable {
     public VideoInformation(String videoUrl, LocalTime runningTime) {
         this.videoUrl = videoUrl;
         this.runningTime = runningTime;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        VideoInformation that = (VideoInformation) o;
+        return Objects.equals(getVideoUrl(), that.getVideoUrl()) && Objects.equals(getRunningTime(), that.getRunningTime());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getVideoUrl(), getRunningTime());
     }
 }

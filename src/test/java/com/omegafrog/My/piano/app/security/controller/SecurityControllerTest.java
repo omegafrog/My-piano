@@ -1,18 +1,20 @@
 package com.omegafrog.My.piano.app.security.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.omegafrog.My.piano.app.web.dto.user.RegisterUserDto;
-import com.omegafrog.My.piano.app.web.dto.user.SecurityUserDto;
-import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
 import com.omegafrog.My.piano.app.security.exception.DuplicatePropertyException;
-import com.omegafrog.My.piano.app.web.service.admin.CommonUserService;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
+import com.omegafrog.My.piano.app.web.dto.user.RegisterUserDto;
+import com.omegafrog.My.piano.app.web.service.admin.CommonUserService;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import jakarta.servlet.http.Cookie;
-import lombok.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -22,12 +24,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
-
 
 import java.util.Map;
 
@@ -59,10 +59,8 @@ class SecurityControllerTest {
     private UserRepository userRepository;
 
 
-    
-
     @BeforeEach
-    void makeDto(){
+    void makeDto() {
         dto = RegisterUserDto.builder()
                 .username("username")
                 .password("password")
@@ -78,7 +76,7 @@ class SecurityControllerTest {
     @DisplayName("/user/register로 유저 회원가입을 할 수 있어야 한다.")
     void registerUserTest() throws Exception {
         String s = objectMapper.writeValueAsString(dto);
-        MockMultipartFile registerInfo = new MockMultipartFile("registerInfo", "","application/json",
+        MockMultipartFile registerInfo = new MockMultipartFile("registerInfo", "", "application/json",
                 s.getBytes());
         mockMvc.perform(multipart("/api/v1/user/register")
                         .file(registerInfo)
@@ -92,7 +90,7 @@ class SecurityControllerTest {
     @DisplayName("중복된 username으로 회원가입시 회원가입에 실패해야 한다.")
     void usernameExistTest() throws Exception {
         String s = objectMapper.writeValueAsString(dto);
-        MockMultipartFile registerInfo = new MockMultipartFile("registerInfo", "","application/json",
+        MockMultipartFile registerInfo = new MockMultipartFile("registerInfo", "", "application/json",
                 s.getBytes());
         mockMvc.perform(multipart("/api/v1/user/register")
                         .file(registerInfo)
@@ -109,9 +107,9 @@ class SecurityControllerTest {
 
     @Test
     @DisplayName("유저는 자신을 인증하고  토큰을 발급받아야 한다.")
-    void loginTest() throws Exception{
+    void loginTest() throws Exception {
         String s = objectMapper.writeValueAsString(dto);
-        MockMultipartFile registerInfo = new MockMultipartFile("registerInfo", "","application/json",
+        MockMultipartFile registerInfo = new MockMultipartFile("registerInfo", "", "application/json",
                 s.getBytes());
         mockMvc.perform(multipart("/api/v1/user/register")
                         .file(registerInfo)
@@ -128,9 +126,9 @@ class SecurityControllerTest {
 
     @Test
     @DisplayName("유저가 로그인에 실패할 경우 올바른 에러를 리턴해야 한다.")
-    void loginFailedTest() throws Exception{
+    void loginFailedTest() throws Exception {
         String s = objectMapper.writeValueAsString(dto);
-        MockMultipartFile registerInfo = new MockMultipartFile("registerInfo", "","application/json",
+        MockMultipartFile registerInfo = new MockMultipartFile("registerInfo", "", "application/json",
                 s.getBytes());
         mockMvc.perform(multipart("/api/v1/user/register")
                         .file(registerInfo)
@@ -150,7 +148,7 @@ class SecurityControllerTest {
     @DisplayName("유저는 로그아웃 할 수 있어야 한다.")
     void logoutTest() throws Exception {
         String s = objectMapper.writeValueAsString(dto);
-        MockMultipartFile registerInfo = new MockMultipartFile("registerInfo", "","application/json",
+        MockMultipartFile registerInfo = new MockMultipartFile("registerInfo", "", "application/json",
                 s.getBytes());
         mockMvc.perform(multipart("/api/v1/user/register")
                         .file(registerInfo)
@@ -183,11 +181,12 @@ class SecurityControllerTest {
                 .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.value()))
                 .andDo(print());
     }
+
     @Test
     @DisplayName("인증되지 않은 사용자는 entryPoint로 가야 한다.")
     void entryPointTest() throws Exception {
         mockMvc.perform(get("/api/v1/user/someMethod"))
-                .andExpect(status().isOk())
+                .andExpect(status().isUnauthorized())
                 .andDo(print());
 
     }
@@ -196,7 +195,7 @@ class SecurityControllerTest {
     @DisplayName("로그인한 사용자는 회원탈퇴할 수 있어야 한다.")
     void signOutTest() throws Exception, DuplicatePropertyException {
         String s = objectMapper.writeValueAsString(dto);
-        MockMultipartFile registerInfo = new MockMultipartFile("registerInfo", "","application/json",
+        MockMultipartFile registerInfo = new MockMultipartFile("registerInfo", "", "application/json",
                 s.getBytes());
         mockMvc.perform(multipart("/api/v1/user/register")
                         .file(registerInfo)
@@ -212,7 +211,7 @@ class SecurityControllerTest {
                 .andReturn();
         Cookie refreshToken = mvcResult.getResponse().getCookie("refreshToken");
         String s2 = mvcResult.getResponse().getContentAsString();
-        String accessToken= objectMapper.readTree(s2).get("data").get("access token").asText();
+        String accessToken = objectMapper.readTree(s2).get("data").get("access token").asText();
 
         MvcResult mvcResult2 = mockMvc.perform(get("/api/v1/user/signOut")
                         .header(HttpHeaders.AUTHORIZATION, accessToken)
@@ -244,7 +243,6 @@ class SecurityControllerTest {
         private String message;
         private Map<String, String> serializedData;
     }
-    
 
 
 }

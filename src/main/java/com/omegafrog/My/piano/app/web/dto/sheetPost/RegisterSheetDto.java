@@ -2,7 +2,7 @@ package com.omegafrog.My.piano.app.web.dto.sheetPost;
 
 import com.omegafrog.My.piano.app.web.domain.sheet.Genres;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
-import com.omegafrog.My.piano.app.web.domain.sheet.Sheet.SheetBuilder;
+import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.enums.Difficulty;
 import com.omegafrog.My.piano.app.web.enums.Instrument;
 import lombok.*;
@@ -18,7 +18,7 @@ public class RegisterSheetDto {
     private String title;
     @Range(min = 0, max = 4)
     private int difficulty;
-    @Range(min=0,max=12)
+    @Range(min = 0, max = 12)
     private int instrument;
 
     private Genres genres;
@@ -37,7 +37,7 @@ public class RegisterSheetDto {
         this.filePath = filePath;
     }
 
-    public SheetBuilder getEntityBuilderWithoutAuthor() {
+    public Sheet createEntity(User user, int pageNum) {
         return Sheet.builder()
                 .title(title)
                 .difficulty(Arrays.stream(Difficulty.values()).filter(iter -> iter.ordinal() == difficulty).findFirst().get())
@@ -45,7 +45,10 @@ public class RegisterSheetDto {
                 .genres(genres)
                 .isSolo(isSolo)
                 .lyrics(lyrics)
-                .sheetUrl(filePath);
+                .sheetUrl(filePath)
+                .user(user)
+                .pageNum(pageNum)
+                .build();
     }
 
 }

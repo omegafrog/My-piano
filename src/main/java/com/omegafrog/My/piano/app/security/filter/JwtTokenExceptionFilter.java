@@ -3,7 +3,8 @@ package com.omegafrog.My.piano.app.security.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.web.response.APIUnauthorizedResponse;
-import jakarta.servlet.*;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -19,22 +20,23 @@ import java.io.IOException;
 @Slf4j
 public class JwtTokenExceptionFilter extends OncePerRequestFilter {
     private final ObjectMapper objectMapper;
-    private String responseBody=null;
+    private String responseBody = null;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        log.info("JwtTokenExceptionFilter");
         response.setCharacterEncoding("utf-8");
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         try {
             filterChain.doFilter(request, response);
-        }catch (AuthenticationException ex){
+        } catch (AuthenticationException ex) {
             if (ex instanceof CredentialsExpiredException)
                 responseBody = ex.getMessage();
 
-        }
-        catch(RuntimeException e){
+        } catch (RuntimeException e) {
             responseBody = e.getMessage();
-        }finally {
-            if(responseBody !=null){
+        } finally {
+            if (responseBody != null) {
                 log.error(responseBody);
                 response.getWriter().write(
                         objectMapper.writeValueAsString(new APIUnauthorizedResponse(responseBody))
@@ -42,7 +44,6 @@ public class JwtTokenExceptionFilter extends OncePerRequestFilter {
             }
         }
     }
-
 
 
 }

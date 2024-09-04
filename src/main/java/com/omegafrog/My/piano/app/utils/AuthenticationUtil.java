@@ -15,7 +15,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class AuthenticationUtil {
     private final SecurityUserRepository securityUserRepository;
-    public User getLoggedInUser() throws AccessDeniedException{
+
+    public User getLoggedInUser() throws AccessDeniedException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null ||

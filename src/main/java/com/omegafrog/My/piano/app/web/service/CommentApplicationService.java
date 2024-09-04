@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -78,10 +79,25 @@ public class CommentApplicationService {
     public void deleteComment(CommentTargetType type, Long targetId, Long commentId) {
         User loggedInUser = authenticationUtil.getLoggedInUser();
         Article target = getTarget(type, targetId);
-        boolean removed = target.getComments()
-                .removeIf(comment -> comment.getId().equals(commentId) && comment.getAuthor().equals(loggedInUser));
-        loggedInUser.getWroteComments().removeIf(wroteComment -> wroteComment.getId().equals(commentId));
-        if (!removed) throw new EntityNotFoundException("Cannot delete Comment entity. id : " + commentId);
+        // find by comment id
+        Comment founded = target.getComments().stream()
+                .filter(item -> item.getId().equals(commentId)).findFirst()
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find Comment entity. id : " + commentId));
+
+        // check comment's author is same
+        if (!founded.getAuthor().equals(loggedInUser))
+            throw new AccessDeniedException("Cannot delete other user's comment.");
+
+        // remove comment from target item
+        target.getComments().remove(founded);
+
+        // remove comment from logged in user's wrote comment
+        loggedInUser.getWroteComments().remove(founded);
+
+        // remove connection between author and comment
+        founded.setAuthor(null);
+        // remove connection between target item and comment
+        founded.setTarget(null);
     }
 
     public CommentDto replyComment(Long commentId, String replyContent) {

@@ -21,8 +21,10 @@ public class AuthenticationExceptionEntryPoint implements AuthenticationEntryPoi
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
         log.info(authException.getMessage());
+        log.info("authenticationEntryPoint");
         response.setCharacterEncoding("utf-8");
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.getWriter().write(
                 objectMapper.writeValueAsString(new APIUnauthorizedResponse(authException.getMessage()).getBody())
         );

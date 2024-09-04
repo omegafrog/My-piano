@@ -27,7 +27,7 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.List;
 
-@Tag(name="유저 컨트롤러", description = "유저 API 컨트롤러")
+@Tag(name = "유저 컨트롤러", description = "유저 API 컨트롤러")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/user")
@@ -45,7 +45,7 @@ public class UserController {
         return new ApiResponse<>("Get community posts success.", data);
     }
 
-    @GetMapping("/lesson")
+    @GetMapping("/purchasedLessons")
     public JsonAPIResponse<List<LessonDto>> getPurchasedLessons() {
         List<LessonDto> data = userService.getPurchasedLessons();
         return new ApiResponse<>("Get purchased lessons success.", data);
@@ -65,14 +65,14 @@ public class UserController {
 
     @GetMapping("/uploadedSheets")
     public JsonAPIResponse<Page<SheetPostDto>> getUploadedSheets(
-            @Valid @NotNull @PageableDefault(size = 10,page = 0) Pageable pageable){
+            @Valid @NotNull @PageableDefault(size = 10, page = 0) Pageable pageable) {
         Page<SheetPostDto> data = userService.uploadedSheetPost(pageable);
         return new ApiResponse<>("Get all uploaded sheets success.", data);
     }
 
     @GetMapping("/uploaded-video-posts")
     public JsonAPIResponse<Page<VideoPostDto>> getUploadedVideoPosts(
-            @Valid @NotNull @PageableDefault(size = 10, page = 0) Pageable pageable){
+            @Valid @NotNull @PageableDefault(size = 10, page = 0) Pageable pageable) {
         Page<VideoPostDto> data = userService.uploadedVideoPost(pageable);
         return new ApiResponse<>("Get all uploaded video posts success.", data);
     }

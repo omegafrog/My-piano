@@ -5,16 +5,15 @@ import com.omegafrog.My.piano.app.web.domain.order.SellableItem;
 import com.omegafrog.My.piano.app.web.domain.relation.UserLikedSheetPost;
 import com.omegafrog.My.piano.app.web.domain.relation.UserPurchasedSheetPost;
 import com.omegafrog.My.piano.app.web.domain.relation.UserScrappedSheetPost;
-import com.omegafrog.My.piano.app.web.dto.sheetPost.UpdateSheetDto;
-import com.omegafrog.My.piano.app.web.dto.sheetPost.UpdateSheetPostDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetInfoDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.UpdateSheetDto;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.UpdateSheetPostDto;
+import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import jakarta.persistence.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,12 +27,14 @@ public class SheetPost extends SellableItem {
     @JoinColumn(name = "SHEET_ID")
     private Sheet sheet;
 
-    @OneToMany(mappedBy = "sheetPost", cascade =CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "sheetPost", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<UserLikedSheetPost> likedUsers = new ArrayList<>();
     @OneToMany(mappedBy = "sheetPost", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<UserScrappedSheetPost> scrappedUsers = new ArrayList<>();
-    @OneToMany(mappedBy = "sheetPost", cascade =CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "sheetPost", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<UserPurchasedSheetPost> purchasedUsers = new ArrayList<>();
+
+
     @Builder
     public SheetPost(String title, String content, User artist, Sheet sheet, int price) {
         super(artist, title, content, price);
@@ -43,10 +44,10 @@ public class SheetPost extends SellableItem {
     }
 
     public SheetPost update(UpdateSheetPostDto dto) {
-        super.updatePrice(dto.getPrice()==null?price:dto.getPrice());
-        super.updateDiscountRate(dto.getDiscountRate()==null?discountRate:dto.getDiscountRate());
-        this.title = dto.getTitle()==null?title:dto.getTitle();
-        if(dto.getSheet()!=null){
+        super.updatePrice(dto.getPrice() == null ? price : dto.getPrice());
+        super.updateDiscountRate(dto.getDiscountRate() == null ? discountRate : dto.getDiscountRate());
+        this.title = dto.getTitle() == null ? title : dto.getTitle();
+        if (dto.getSheet() != null) {
             UpdateSheetDto sheetDto = dto.getSheet();
             this.sheet = Sheet.builder()
                     .title(sheetDto.getTitle())
@@ -60,11 +61,11 @@ public class SheetPost extends SellableItem {
                     .user(author)
                     .build();
         }
-        this.content = dto.getContent()==null?content:dto.getContent();
+        this.content = dto.getContent() == null ? content : dto.getContent();
         return this;
     }
 
-    public SheetPostDto toDto(){
+    public SheetPostDto toDto() {
         return SheetPostDto.builder()
                 .id(id)
                 .title(title)
@@ -73,7 +74,7 @@ public class SheetPost extends SellableItem {
                 .viewCount(viewCount)
                 .discountRate(getDiscountRate())
                 .comments(comments.stream().map(Comment::toDto).toList())
-                .artist(author.getUserInfo())
+                .artist(author.getArtistInfo())
                 .createdAt(createdAt)
                 .sheet(toInfoDto())
                 .price(getPrice())
@@ -82,7 +83,7 @@ public class SheetPost extends SellableItem {
 
     }
 
-    public SheetInfoDto toInfoDto(){
+    public SheetInfoDto toInfoDto() {
         return SheetInfoDto.builder()
                 .id(id)
                 .title(sheet.getTitle())
@@ -93,7 +94,7 @@ public class SheetPost extends SellableItem {
                 .lyrics(sheet.isLyrics())
                 .difficulty(sheet.getDifficulty())
                 .sheetUrl(sheet.getSheetUrl())
-                .artist(author.getUserInfo())
+                .artist(author.getArtistInfo())
                 .pageNum(sheet.getPageNum())
                 .originalFileName(sheet.getOriginalFileName())
                 .createdAt(createdAt)

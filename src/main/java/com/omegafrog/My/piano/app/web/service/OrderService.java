@@ -1,23 +1,24 @@
 package com.omegafrog.My.piano.app.web.service;
 
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
-import com.omegafrog.My.piano.app.web.exception.message.ExceptionMessage;
 import com.omegafrog.My.piano.app.web.domain.coupon.Coupon;
 import com.omegafrog.My.piano.app.web.domain.coupon.CouponRepository;
 import com.omegafrog.My.piano.app.web.domain.order.Order;
-import com.omegafrog.My.piano.app.web.domain.order.SellableItemFactory;
 import com.omegafrog.My.piano.app.web.domain.order.OrderRepository;
 import com.omegafrog.My.piano.app.web.domain.order.SellableItem;
+import com.omegafrog.My.piano.app.web.domain.order.SellableItemFactory;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.order.OrderDto;
 import com.omegafrog.My.piano.app.web.dto.order.OrderRegisterDto;
+import com.omegafrog.My.piano.app.web.exception.message.ExceptionMessage;
 import com.omegafrog.My.piano.app.web.exception.order.AlreadyPurchasedItemException;
 import com.omegafrog.My.piano.app.web.exception.order.DuplicateItemException;
 import com.omegafrog.My.piano.app.web.exception.order.SamePartyException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,7 +52,12 @@ public class OrderService {
         return orderDto;
     }
 
-    public void deleteOrder(Long orderId){
+    public void deleteOrder(Long orderId) {
+        User loggedInUser = authenticationUtil.getLoggedInUser();
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find Order entity. id : " + orderId));
+        if (!order.getBuyer().equals(loggedInUser))
+            throw new AccessDeniedException("Cannot delete other user's order.");
         orderRepository.deleteById(orderId);
     }
 
@@ -62,19 +68,17 @@ public class OrderService {
     }
 
     public OrderDto makeOrder(String mainResourceName, OrderRegisterDto dto) {
-        User buyer = userRepository.findById(dto.getBuyerId())
-                .orElseThrow(() -> new EntityNotFoundException(USER_ENTITY_NOT_FOUNT_ERROR_MSG
-                        + dto.getBuyerId()));
+        User buyer = authenticationUtil.getLoggedInUser();
 
         SellableItem item = sellableItemFactory.createDetailedItem(mainResourceName, dto.getItemId());
 
-        if(buyer.getCart().itemIsInCart(item.getId()))
+        if (buyer.getCart().itemIsInCart(item.getId()))
             throw new DuplicateItemException(item.getId());
 
         if (buyer.equals(item.getAuthor()))
             throw new SamePartyException("구매자와 판매자가 같을 수 없습니다.");
 
-        if(buyer.isPurchased(item)) throw new AlreadyPurchasedItemException(item.getId());
+        if (buyer.isPurchased(item)) throw new AlreadyPurchasedItemException(item.getId());
 
         Order order = buildOrder(dto, buyer, item);
         order.calculateTotalPrice();

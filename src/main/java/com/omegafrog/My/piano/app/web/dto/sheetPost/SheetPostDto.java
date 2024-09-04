@@ -1,8 +1,10 @@
 package com.omegafrog.My.piano.app.web.dto.sheetPost;
 
 import com.omegafrog.My.piano.app.web.dto.order.SellableItemDto;
-import com.omegafrog.My.piano.app.web.dto.user.UserInfo;
-import lombok.*;
+import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 @Data
@@ -14,7 +16,7 @@ public class SheetPostDto extends SellableItemDto {
     private String title;
     private String content;
     private Double discountRate = 0d;
-    private UserInfo artist;
+    private ArtistInfo artist;
     private SheetInfoDto sheet;
     private boolean likePost;
 }

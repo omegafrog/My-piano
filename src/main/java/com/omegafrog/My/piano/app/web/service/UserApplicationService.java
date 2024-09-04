@@ -92,9 +92,7 @@ public class UserApplicationService {
 
     public List<SheetPostDto> getPurchasedSheets() {
         User loggedInUser = authenticationUtil.getLoggedInUser();
-        User user = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInUser.getId()));
-        return user.getPurchasedSheets().stream().map(item -> item.getSheetPost().toDto()).toList();
+        return loggedInUser.getPurchasedSheets().stream().map(item -> item.getSheetPost().toDto()).toList();
 
     }
 
@@ -144,9 +142,7 @@ public class UserApplicationService {
 
     public List<LessonDto> getPurchasedLessons() {
         User loggedInUser = authenticationUtil.getLoggedInUser();
-        User userProfile = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInUser.getId()));
-        return userProfile.getPurchasedLessons().stream().map(purchasedLesson -> purchasedLesson.getLesson().toDto()).toList();
+        return loggedInUser.getPurchasedLessons().stream().map(purchasedLesson -> purchasedLesson.getLesson().toDto()).toList();
     }
 
 

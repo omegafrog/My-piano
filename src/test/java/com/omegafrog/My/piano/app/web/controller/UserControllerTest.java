@@ -18,13 +18,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -36,6 +35,9 @@ class UserControllerTest {
 
     @Autowired
     MockMvc mockMvc;
+
+    @Autowired
+    TestUtil testUtil;
 
     @Autowired
     private Cleanup cleanup;
@@ -56,24 +58,10 @@ class UserControllerTest {
                 .loginMethod(LoginMethod.EMAIL)
                 .phoneNum("010-1111-2222")
                 .build();
-        String s = objectMapper.writeValueAsString(dto);
-        MockMultipartFile registerInfo = new MockMultipartFile("registerInfo", "", "application/json",
-                s.getBytes());
-        mockMvc.perform(multipart("/api/v1/user/register")
-                        .file(registerInfo)
-                        .header(HttpHeaders.CONTENT_TYPE, MediaType.MULTIPART_FORM_DATA_VALUE))
-                .andExpect(status().isOk())
-                .andDo(print());
-
-        MvcResult mvcResult = mockMvc.perform(post("/api/v1/user/login")
-                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                        .content("username=username&password=password"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
-                .andReturn();
-        String content = mvcResult.getResponse().getContentAsString();
-        accessToken = objectMapper.readTree(content).get("data").get("access token").asText();
-        refreshToken = mvcResult.getResponse().getCookie("refreshToken");
+        testUtil.register(mockMvc, dto);
+        TestUtil.TokenResponse login = testUtil.login(mockMvc, "username", "password");
+        accessToken = login.getAccessToken();
+        refreshToken = login.getRefreshToken();
     }
 
     @AfterAll
@@ -85,7 +73,6 @@ class UserControllerTest {
     @Test
     void getCommunityPostTest() throws Exception {
         //given
-
         PostRegisterDto postDto = PostRegisterDto.builder()
                 .title("title")
                 .content("content")

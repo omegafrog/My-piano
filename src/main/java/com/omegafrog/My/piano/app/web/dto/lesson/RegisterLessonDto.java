@@ -12,7 +12,7 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class LessonRegisterDto {
+public class RegisterLessonDto {
     @NotNull
     private String title;
     @NotNull
@@ -31,11 +31,11 @@ public class LessonRegisterDto {
     private int price;
 
     @Builder
-    public LessonRegisterDto(String title, String subTitle, VideoInformation videoInformation,LessonInformation lessonInformation, Long sheetId, int price) {
+    public RegisterLessonDto(String title, String subTitle, VideoInformation videoInformation, LessonInformation lessonInformation, Long sheetId, int price) {
         this.title = title;
         this.subTitle = subTitle;
         this.videoInformation = videoInformation;
-        this.viewCount =0;
+        this.viewCount = 0;
         this.sheetPostId = sheetId;
         this.lessonInformation = lessonInformation;
         this.price = price;

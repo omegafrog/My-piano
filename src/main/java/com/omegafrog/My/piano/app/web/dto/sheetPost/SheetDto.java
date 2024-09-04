@@ -1,5 +1,6 @@
 package com.omegafrog.My.piano.app.web.dto.sheetPost;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.omegafrog.My.piano.app.web.domain.sheet.Genres;
 import com.omegafrog.My.piano.app.web.dto.user.UserInfo;
 import com.omegafrog.My.piano.app.web.enums.Difficulty;
@@ -33,6 +34,7 @@ public class SheetDto {
     @NotNull
     private String sheetUrl;
     @NotNull
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
     @NotNull
     private UserInfo user;
