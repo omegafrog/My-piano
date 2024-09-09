@@ -26,8 +26,9 @@ public class RankingScheduler {
     @Autowired
     private Job UpdateRankingJob;
 
-//    @Scheduled(cron = "0 0 12 * * ?")
-    @Scheduled(cron = "0 0/30 * * * ?")
+
+    //    @Scheduled(cron = "0 0 12 * * ?")
+    @Scheduled(cron = "0 0/1 * * * ?")
     public void jobScheduled() throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
         log.info("scheduling start");
         Map<String, JobParameter<?>> jobParameterMap = new HashMap<>();

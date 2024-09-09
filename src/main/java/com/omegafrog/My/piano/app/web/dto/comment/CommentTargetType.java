@@ -2,10 +2,12 @@ package com.omegafrog.My.piano.app.web.dto.comment;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-public enum CommentTargetType {
-    POST("post"), VIDEO_POST("video-post"), SHEET_POST("sheet-post"), LESSON("lesson");
+import java.util.Arrays;
 
-    public String resource;
+public enum CommentTargetType {
+    POST("posts"), VIDEO_POST("video-post"), SHEET_POST("sheet-post"), LESSON("lessons");
+
+    public final String resource;
 
     CommentTargetType(String resource) {
         this.resource = resource;
@@ -13,12 +15,9 @@ public enum CommentTargetType {
 
     public static CommentTargetType of(HttpServletRequest request) {
         String[] split = request.getRequestURI().split("/");
-        return switch (split[3]) {
-            case "posts" -> CommentTargetType.POST;
-            case "video-post" -> CommentTargetType.VIDEO_POST;
-            case "sheet-post" -> CommentTargetType.SHEET_POST;
-            case "lessons" -> CommentTargetType.LESSON;
-            default -> throw new IllegalArgumentException("Invalid comment target type");
-        };
+        return Arrays.stream(CommentTargetType.values()).filter(target ->
+                        Arrays.stream(split).anyMatch(requestStr -> requestStr.equals(target.resource))).findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Wrong comment target type."));
+
     }
 }

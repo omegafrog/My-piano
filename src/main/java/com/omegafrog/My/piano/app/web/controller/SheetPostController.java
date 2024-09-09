@@ -111,11 +111,11 @@ public class SheetPostController {
         return new ApiResponse<>("Unscrap sheet post success.");
     }
 
-    @PutMapping("{id}")
+    @PostMapping("{id}")
     public JsonAPIResponse<SheetPostDto> updateSheetPost(
             @Valid @NotNull @PathVariable Long id,
             @Valid @Nullable @RequestPart MultipartFile file,
-            @Valid @Nullable @RequestParam String dto)
+            @Valid @Nullable @RequestPart String dto)
             throws IOException {
         SheetPostDto data = sheetPostService.update(id, dto, file);
         return new ApiResponse<>("Update sheet post success.", data);

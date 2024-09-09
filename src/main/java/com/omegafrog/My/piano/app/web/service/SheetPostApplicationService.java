@@ -90,6 +90,7 @@ public class SheetPostApplicationService {
                     .content(dto.getContent())
                     .build();
 
+            sheet.setSheetPost(sheetPost);
             SheetPost saved = sheetPostRepository.save(sheetPost);
             elasticSearchInstance.invertIndexingSheetPost(saved);
             return saved.toDto();
@@ -106,16 +107,17 @@ public class SheetPostApplicationService {
         UpdateSheetPostDto updateDto = mapperUtil.parseUpdateSheetPostJson(dto);
         log.debug("updateDto : {}", updateDto);
         if (sheetPost.getAuthor().equals(loggedInUser)) {
-            SheetPostTempFile tmp = getSheetPostTempFile(file);
+            if (file.getBytes().length > 0) {
+                SheetPostTempFile tmp = getSheetPostTempFile(file);
 
-            // 기존 파일 삭제 후 다시 업로드
-            uploadFileExecutor.removeSheetPost(sheetPost);
-            uploadFileExecutor.uploadSheet(tmp.temp(), file.getOriginalFilename(), tmp.metadata());
-            uploadFileExecutor.uploadThumbnail(
-                    tmp.document(), tmp.filename(),
-                    new ObjectMetadata.Builder().contentType("jpg").build());
-
-            updateDto.getSheet().setPageNum(tmp.pageNum());
+                // 기존 파일 삭제 후 다시 업로드
+                uploadFileExecutor.removeSheetPost(sheetPost);
+                uploadFileExecutor.uploadSheet(tmp.temp(), file.getOriginalFilename(), tmp.metadata());
+                uploadFileExecutor.uploadThumbnail(
+                        tmp.document(), tmp.filename(),
+                        new ObjectMetadata.Builder().contentType("jpg").build());
+                updateDto.getSheet().setPageNum(tmp.pageNum());
+            }
             return sheetPost.update(updateDto).toDto();
         } else throw new AccessDeniedException("Cannot update other user's sheet post." + id);
     }
@@ -232,4 +234,5 @@ public class SheetPostApplicationService {
         List<SheetPostListDto> res = sheetPostRepository.findByIds(sheetPostIds.getContent(), pageable);
         return PageableExecutionUtils.getPage(res, pageable, sheetPostIds::getTotalElements);
     }
+
 }

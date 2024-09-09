@@ -47,7 +47,7 @@ public class Article implements Serializable {
     protected User author;
 
     @Temporal(TemporalType.TIMESTAMP)
-    protected final LocalDateTime createdAt = LocalDateTime.now();
+    protected LocalDateTime createdAt = LocalDateTime.now();
     @Temporal(TemporalType.TIMESTAMP)
     protected LocalDateTime modifiedAt = LocalDateTime.now();
 

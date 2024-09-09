@@ -9,6 +9,7 @@ import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -17,6 +18,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Getter
 public class Sheet implements Serializable {
+    private final static long serialVersionUID = 3998165768159256704L;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -33,11 +35,12 @@ public class Sheet implements Serializable {
     private String originalFileName;
 
     @OneToOne(mappedBy = "sheet")
+    @Setter
     private SheetPost sheetPost;
 
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    @OneToOne(cascade = {CascadeType.MERGE})
+    @ManyToOne(cascade = {CascadeType.MERGE})
     @JoinColumn(name = "CREATOR_ID")
     private User user;
 

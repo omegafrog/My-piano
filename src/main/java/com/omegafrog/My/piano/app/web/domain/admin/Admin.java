@@ -20,7 +20,7 @@ import java.util.Collection;
 import java.util.List;
 
 
-@Entity
+@Entity(name = "administrator")
 @NoArgsConstructor
 @Getter
 public class Admin implements UserDetails {

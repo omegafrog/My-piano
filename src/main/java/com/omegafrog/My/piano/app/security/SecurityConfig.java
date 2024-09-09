@@ -28,6 +28,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;
@@ -456,15 +457,27 @@ public class SecurityConfig {
     public SecurityFilterChain defaultConfig(HttpSecurity http) throws Exception {
         http.
                 securityMatcher("/api/v1/**")
-                .authorizeHttpRequests()
-                .anyRequest().permitAll()
-                .and()
-                .csrf().disable()
-                .cors().configurationSource(corsConfigurationSource())
-                .and()
-                .headers()
-                .frameOptions()
-                .sameOrigin();
+                .authorizeHttpRequests(
+                        authorizationManagerRequestMatcherRegistry ->
+                                authorizationManagerRequestMatcherRegistry
+                                        .anyRequest().permitAll()
+
+                )
+                .csrf(
+                        httpSecurityCsrfConfigurer ->
+                                httpSecurityCsrfConfigurer.disable()
+                )
+                .cors(
+                        httpSecurityCorsConfigurer ->
+                                httpSecurityCorsConfigurer.configurationSource(corsConfigurationSource())
+                )
+                .headers(
+                        httpSecurityHeadersConfigurer ->
+                                httpSecurityHeadersConfigurer
+                                        .frameOptions(
+                                                HeadersConfigurer.FrameOptionsConfig::sameOrigin
+                                        )
+                );
         return http.build();
     }
 

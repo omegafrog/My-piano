@@ -35,7 +35,7 @@ public class Comment implements Serializable {
     private int likeCount;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "parent", orphanRemoval = true)
-    private List<Comment> replies = new ArrayList<>();
+    private final List<Comment> replies = new ArrayList<>();
     @ManyToOne
     @JoinColumn(name = "PARENT_ID")
     private Comment parent;
@@ -56,7 +56,7 @@ public class Comment implements Serializable {
     }
 
     @Builder
-    public Comment(Long id, User author, String content, Comment parent) {
+    public Comment(Long id, User author, String content, Article target, Comment parent) {
         this.id = id;
         this.author = author;
         this.content = content;

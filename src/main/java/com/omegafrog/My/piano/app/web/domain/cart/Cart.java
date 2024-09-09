@@ -23,7 +23,7 @@ public class Cart implements Serializable {
 
     private int totalPrice = 0;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.REMOVE, mappedBy = "cart")
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.REMOVE, mappedBy = "cart", orphanRemoval = true)
     private List<Order> contents = new ArrayList<>();
 
     public void addContent(Order order) {

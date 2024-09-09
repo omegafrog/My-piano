@@ -9,7 +9,6 @@ import com.omegafrog.My.piano.app.web.domain.post.PostRepository;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPostRepository;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
-import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
 import com.omegafrog.My.piano.app.web.dto.comment.CommentTargetType;
 import com.omegafrog.My.piano.app.web.dto.comment.RegisterCommentDto;
@@ -34,7 +33,6 @@ public class CommentApplicationService {
     private final LessonRepository lessonRepository;
     private final PostRepository postRepository;
     private final VideoPostRepository videoPostRepository;
-    private final UserRepository userRepository;
     private final AuthenticationUtil authenticationUtil;
 
     /**
@@ -63,16 +61,17 @@ public class CommentApplicationService {
      */
     public List<CommentDto> addComment(CommentTargetType type, Long targetId, RegisterCommentDto dto) {
         User loggedInUser = authenticationUtil.getLoggedInUser();
-        User user = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity : " + loggedInUser.getId()));
         Article target = getTarget(type, targetId);
 
         Comment savedComment = commentRepository.save(
                 Comment.builder()
                         .content(dto.getContent())
-                        .author(user)
+                        .author(loggedInUser)
+                        .target(target)
                         .build());
+
         target.addComment(savedComment);
+        loggedInUser.addWroteComments(savedComment);
         return target.getComments().stream().map(Comment::toDto).toList();
     }
 
@@ -80,8 +79,7 @@ public class CommentApplicationService {
         User loggedInUser = authenticationUtil.getLoggedInUser();
         Article target = getTarget(type, targetId);
         // find by comment id
-        Comment founded = target.getComments().stream()
-                .filter(item -> item.getId().equals(commentId)).findFirst()
+        Comment founded = commentRepository.findById(commentId)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find Comment entity. id : " + commentId));
 
         // check comment's author is same

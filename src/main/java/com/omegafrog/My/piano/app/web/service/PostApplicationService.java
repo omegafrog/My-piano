@@ -2,13 +2,13 @@ package com.omegafrog.My.piano.app.web.service;
 
 
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
-import com.omegafrog.My.piano.app.web.exception.message.ExceptionMessage;
 import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.post.PostRepository;
 import com.omegafrog.My.piano.app.web.domain.post.PostViewCountRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.post.*;
+import com.omegafrog.My.piano.app.web.exception.message.ExceptionMessage;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -69,6 +69,7 @@ public class PostApplicationService {
             postRepository.deleteById(id);
         } else throw new AccessDeniedException("Cannot delete other user's post");
     }
+
     private Post getPostById(Long id) {
         return postRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_POST + id));
@@ -76,20 +77,20 @@ public class PostApplicationService {
 
     public void likePost(Long postId) {
         User user = authenticationUtil.getLoggedInUser();
-        User byId = userRepository.findById(user.getId())
-                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + user.getId()));
         Post post = getPostById(postId);
         post.increaseLikedCount();
-        byId.likePost(post);
+        user.likePost(post);
     }
-    public void dislikePost(Long id){
+
+    public void dislikePost(Long id) {
         User loggedInUser = authenticationUtil.getLoggedInUser();
         Post dislikedPost = getPostById(id);
         User founded = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity."));
         founded.dislikePost(dislikedPost);
     }
-    public boolean isLikedPost(Long id){
+
+    public boolean isLikedPost(Long id) {
         User loggedInUser = authenticationUtil.getLoggedInUser();
         User founded = userRepository.findById(loggedInUser.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity. "));

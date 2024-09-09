@@ -3,10 +3,12 @@ package com.omegafrog.My.piano.app.web.service;
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.web.domain.coupon.Coupon;
 import com.omegafrog.My.piano.app.web.domain.coupon.CouponRepository;
+import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
 import com.omegafrog.My.piano.app.web.domain.order.Order;
 import com.omegafrog.My.piano.app.web.domain.order.OrderRepository;
 import com.omegafrog.My.piano.app.web.domain.order.SellableItem;
 import com.omegafrog.My.piano.app.web.domain.order.SellableItemFactory;
+import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.order.OrderDto;
@@ -18,15 +20,18 @@ import com.omegafrog.My.piano.app.web.exception.order.SamePartyException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class OrderService {
     private final UserRepository userRepository;
     private final CouponRepository couponRepository;
@@ -58,6 +63,10 @@ public class OrderService {
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find Order entity. id : " + orderId));
         if (!order.getBuyer().equals(loggedInUser))
             throw new AccessDeniedException("Cannot delete other user's order.");
+        if (order.getItem() instanceof SheetPost)
+            loggedInUser.deletePurchasedSheetPost(order);
+        else if (order.getItem() instanceof Lesson)
+            loggedInUser.deletePurchasedLesson(order);
         orderRepository.deleteById(orderId);
     }
 
@@ -81,6 +90,10 @@ public class OrderService {
         if (buyer.isPurchased(item)) throw new AlreadyPurchasedItemException(item.getId());
 
         Order order = buildOrder(dto, buyer, item);
+        Optional<User> byId1 = userRepository.findById(buyer.getId());
+        Optional<User> byId2 = userRepository.findById(item.getAuthor().getId());
+        log.info("byId1{}", byId1.toString());
+        log.info("byId2{}", byId2.toString());
         order.calculateTotalPrice();
         return orderRepository.save(order).toDto();
     }

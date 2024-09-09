@@ -24,17 +24,20 @@ public class RegisterSheetDto {
     private Genres genres;
     private Boolean isSolo;
     private boolean lyrics;
-    private String filePath;
+    private String sheetUrl;
+    private String originalFileName;
 
     @Builder
     public RegisterSheetDto(String title, int difficulty, int instrument, Genres genres, boolean isSolo,
-                            boolean lyrics, String filePath) {
+                            boolean lyrics, String sheetUrl, String originalFileName) {
         this.title = title;
         this.difficulty = difficulty;
         this.instrument = instrument;
         this.isSolo = isSolo;
         this.lyrics = lyrics;
-        this.filePath = filePath;
+        this.sheetUrl = sheetUrl;
+        this.originalFileName = originalFileName;
+        this.genres = genres;
     }
 
     public Sheet createEntity(User user, int pageNum) {
@@ -45,7 +48,8 @@ public class RegisterSheetDto {
                 .genres(genres)
                 .isSolo(isSolo)
                 .lyrics(lyrics)
-                .sheetUrl(filePath)
+                .sheetUrl(sheetUrl)
+                .originalFileName(originalFileName)
                 .user(user)
                 .pageNum(pageNum)
                 .build();

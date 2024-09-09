@@ -9,7 +9,7 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.Optional;
 
-public interface SheetPostRepository  {
+public interface SheetPostRepository {
 
     SheetPost save(SheetPost sheetPost);
 
@@ -18,6 +18,7 @@ public interface SheetPostRepository  {
     Optional<SheetPost> findBySheetId(Long sheetId);
 
     Page<SheetPost> findAll(Pageable pageable);
+
     Page<SheetPostDto> findAll(Pageable pageable, SearchSheetPostFilter filter);
 
 
@@ -28,4 +29,6 @@ public interface SheetPostRepository  {
     Long count();
 
     List<SheetPostListDto> findByIds(List<Long> sheetPostIds, Pageable pageable);
+
+    Iterable<SheetPost> findAllById(List<Long> list);
 }

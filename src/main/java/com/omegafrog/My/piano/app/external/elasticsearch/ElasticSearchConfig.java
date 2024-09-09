@@ -5,7 +5,6 @@ import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.rest_client.RestClientOptions;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
@@ -16,15 +15,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.elasticsearch.repository.config.EnableElasticsearchRepositories;
+
 @Configuration
 @EnableElasticsearchRepositories
-public class ElasticSearchConfig  {
+public class ElasticSearchConfig {
     @Value("${elasticsearch.host}")
     private String host;
     @Value("${elasticsearch.port}")
     private String port;
     @Value("${elasticsearch.apiKey}")
     private String apiKey;
+
     @Bean
     public ElasticsearchClient elasticsearchClient(ObjectMapper objectMapper) {
         String serverUrl = "https://" + host + ":" + port;
@@ -49,4 +50,5 @@ public class ElasticSearchConfig  {
     RestClientTransport restClientTransport(RestClient restClient, ObjectProvider<RestClientOptions> restClientOptions) {
         return new RestClientTransport(restClient, new JacksonJsonpMapper(), restClientOptions.getIfAvailable());
     }
+
 }

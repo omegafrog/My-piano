@@ -269,7 +269,8 @@ public class User implements Serializable {
     }
 
     public void likePost(Post post) {
-        assert likedPosts.stream().anyMatch(p -> p.getPost().equals(post));
+        // already liked post check
+        assert !likedPosts.stream().anyMatch(p -> p.getPost().equals(post));
         likedPosts.add(UserLikedPost.builder()
                 .post(post)
                 .user(this)

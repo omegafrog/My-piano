@@ -152,15 +152,15 @@ public class MapperUtil {
     public UpdateSheetPostDto parseUpdateSheetPostJson(String dto) throws JsonProcessingException {
         JsonNode node = objectMapper.readTree(dto);
         JsonNode title = node.get("title");
-        assert title == null;
+        assert title != null;
         JsonNode content = node.get("content");
-        assert content == null;
+        assert content != null;
         JsonNode sheetDto = node.get("sheet");
-        assert sheetDto == null;
+        assert sheetDto != null;
         JsonNode price = node.get("price");
-        assert price == null;
+        assert price != null;
         JsonNode discountRate = node.get("discountRate");
-        assert discountRate == null;
+        assert discountRate != null;
         return UpdateSheetPostDto.builder()
                 .title(title.asText())
                 .content(content.asText())

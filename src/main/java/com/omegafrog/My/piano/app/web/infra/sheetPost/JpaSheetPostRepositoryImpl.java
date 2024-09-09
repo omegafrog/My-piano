@@ -1,7 +1,10 @@
 package com.omegafrog.My.piano.app.web.infra.sheetPost;
 
 import com.omegafrog.My.piano.app.web.domain.comment.QComment;
-import com.omegafrog.My.piano.app.web.domain.sheet.*;
+import com.omegafrog.My.piano.app.web.domain.sheet.QSheet;
+import com.omegafrog.My.piano.app.web.domain.sheet.QSheetPost;
+import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
+import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.QUser;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SearchSheetPostFilter;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
@@ -69,15 +72,15 @@ public class JpaSheetPostRepositoryImpl implements SheetPostRepository {
         QSheetPost sheetPost = QSheetPost.sheetPost;
         BooleanExpression expressions = filter.getExpressions();
         JPAQuery<SheetPostDto> query = factory.select(
-                Projections.constructor(SheetPostDto.class,
-                        sheetPost.id,
-                        sheetPost.title,
-                        sheetPost.content,
-                        sheetPost.author,
-                        sheetPost.sheet,
-                        sheetPost.createdAt,
-                        sheetPost.modifiedAt
-                ))
+                        Projections.constructor(SheetPostDto.class,
+                                sheetPost.id,
+                                sheetPost.title,
+                                sheetPost.content,
+                                sheetPost.author,
+                                sheetPost.sheet,
+                                sheetPost.createdAt,
+                                sheetPost.modifiedAt
+                        ))
                 .from(sheetPost)
                 .where(expressions)
                 .offset(pageable.getOffset())
@@ -87,7 +90,7 @@ public class JpaSheetPostRepositoryImpl implements SheetPostRepository {
                 .where(expressions)
                 .fetch().size();
 
-        return PageableExecutionUtils.getPage(query.fetch(), pageable,()->count );
+        return PageableExecutionUtils.getPage(query.fetch(), pageable, () -> count);
     }
 
     @Override
@@ -96,18 +99,18 @@ public class JpaSheetPostRepositoryImpl implements SheetPostRepository {
         QSheetPost sheetPost = QSheetPost.sheetPost;
         BooleanExpression expressions = sheetPost.id.in(sheetPostIds);
         JPAQuery<SheetPostListDto> query = factory.select
-                (Projections.constructor(SheetPostListDto.class,
-                        sheetPost.id,
-                        sheetPost.title,
-                        sheetPost.author.name,
-                        sheetPost.author.profileSrc,
-                        sheetPost.sheet.title,
-                        sheetPost.sheet.difficulty,
-                        sheetPost.sheet.genres,
-                        sheetPost.sheet.instrument,
-                        sheetPost.createdAt,
-                        sheetPost.price
-                ))
+                        (Projections.constructor(SheetPostListDto.class,
+                                sheetPost.id,
+                                sheetPost.title,
+                                sheetPost.author.name,
+                                sheetPost.author.profileSrc,
+                                sheetPost.sheet.title,
+                                sheetPost.sheet.difficulty,
+                                sheetPost.sheet.genres,
+                                sheetPost.sheet.instrument,
+                                sheetPost.createdAt,
+                                sheetPost.price
+                        ))
                 .from(sheetPost)
                 .join(sheetPost.author, QUser.user)
                 .join(sheetPost.sheet, QSheet.sheet)
@@ -133,4 +136,8 @@ public class JpaSheetPostRepositoryImpl implements SheetPostRepository {
         return jpaRepository.count();
     }
 
+    @Override
+    public Iterable<SheetPost> findAllById(List<Long> list) {
+        return jpaRepository.findAllById(list);
+    }
 }

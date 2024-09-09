@@ -28,12 +28,12 @@ public class Order implements Serializable {
     private Long id;
 
     @NotNull
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "SELLER_ID")
     private User seller;
 
     @NotNull
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "BUYER_ID")
     private User buyer;
 

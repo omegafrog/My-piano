@@ -1,16 +1,15 @@
 package com.omegafrog.My.piano.app.security.entity;
 
-import com.omegafrog.My.piano.app.web.dto.user.SecurityUserDto;
 import com.omegafrog.My.piano.app.security.entity.authorities.Authority;
 import com.omegafrog.My.piano.app.security.entity.authorities.Role;
 import com.omegafrog.My.piano.app.web.domain.user.User;
+import com.omegafrog.My.piano.app.web.dto.user.SecurityUserDto;
+import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
-import jakarta.persistence.*;
 
 import javax.annotation.Nullable;
 import java.time.LocalDateTime;
@@ -18,13 +17,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-@Entity
+@Entity(name = "security_user")
 @NoArgsConstructor
 @Getter
 public class SecurityUser implements UserDetails {
 
     @Transient
-    private Long passwordExpirationPeriod=90L;
+    private Long passwordExpirationPeriod = 90L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,7 +38,7 @@ public class SecurityUser implements UserDetails {
     private LocalDateTime credentialChangedAt;
     private boolean locked;
 
-    @OneToOne(cascade = {CascadeType.MERGE,CascadeType.PERSIST, CascadeType.REMOVE})
+    @OneToOne(cascade = {CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinColumn(name = "USER_ID")
     @Getter
     private User user;
@@ -52,7 +51,7 @@ public class SecurityUser implements UserDetails {
         this.role = role;
         this.createdAt = LocalDateTime.now();
         this.credentialChangedAt = LocalDateTime.now();
-        this.locked=false;
+        this.locked = false;
     }
 
     @Override
@@ -109,7 +108,7 @@ public class SecurityUser implements UserDetails {
         return isAccountNonExpired() && isCredentialsNonExpired() && isAccountNonLocked();
     }
 
-    public SecurityUserDto toDto(){
+    public SecurityUserDto toDto() {
         return SecurityUserDto.builder()
                 .createdAt(createdAt)
                 .credentialChangedAt(credentialChangedAt)
@@ -121,13 +120,15 @@ public class SecurityUser implements UserDetails {
                 .build();
     }
 
-    public void disable(){
-        this.locked=true;
+    public void disable() {
+        this.locked = true;
     }
-    public void enable(){
-        this.locked=false;
+
+    public void enable() {
+        this.locked = false;
     }
-    public void changePassword(String encodedPassword){
+
+    public void changePassword(String encodedPassword) {
         this.password = encodedPassword;
     }
 
