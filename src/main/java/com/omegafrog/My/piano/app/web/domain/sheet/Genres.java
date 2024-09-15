@@ -3,6 +3,7 @@ package com.omegafrog.My.piano.app.web.domain.sheet;
 import com.omegafrog.My.piano.app.web.enums.Genre;
 import jakarta.persistence.Embeddable;
 import lombok.Builder;
+import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -13,6 +14,7 @@ import java.util.List;
 @Embeddable
 @NoArgsConstructor
 @Getter
+@Data
 public class Genres implements Serializable {
     private Genre genre1;
     private Genre genre2;
@@ -25,8 +27,8 @@ public class Genres implements Serializable {
 
     public List<Genre> getAll() {
         List<Genre> result = new ArrayList<>();
-        if (genre1!=null) result.add(genre1);
-        if (genre2!=null) result.add(genre2);
+        if (genre1 != null) result.add(genre1);
+        if (genre2 != null) result.add(genre2);
         return result;
     }
 }

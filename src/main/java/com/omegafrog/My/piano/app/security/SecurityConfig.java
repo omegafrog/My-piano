@@ -12,14 +12,13 @@ import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
 import com.omegafrog.My.piano.app.security.provider.AdminAuthenticationProvider;
 import com.omegafrog.My.piano.app.security.provider.CommonUserAuthenticationProvider;
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
-import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
-import com.omegafrog.My.piano.app.web.service.admin.AdminUserService;
-import com.omegafrog.My.piano.app.web.service.admin.CommonUserService;
-
 import com.omegafrog.My.piano.app.utils.MapperUtil;
+import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
 import com.omegafrog.My.piano.app.web.domain.post.PostRepository;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
+import com.omegafrog.My.piano.app.web.service.admin.AdminUserService;
+import com.omegafrog.My.piano.app.web.service.admin.CommonUserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,13 +27,15 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -48,19 +49,22 @@ public class SecurityConfig {
 
     @Autowired
     private S3Client s3Client;
+
     @Bean
-    public RefreshTokenRepository refreshTokenRepository(){
+    public RefreshTokenRepository refreshTokenRepository() {
         return new CommonUserRefreshTokenRepositoryImpl();
     }
+
     @Bean
-    public TokenUtils tokenUtils(){
+    public TokenUtils tokenUtils() {
         return new TokenUtils();
     }
 
     @Bean
-    public JwtTokenFilter jwtFilter(){
+    public JwtTokenFilter jwtFilter() {
         return new JwtTokenFilter(tokenUtils(), securityUserRepository, refreshTokenRepository());
     }
+
     @Autowired
     private SecurityUserRepository securityUserRepository;
     @Autowired
@@ -86,8 +90,8 @@ public class SecurityConfig {
         return new CommonUserService(passwordEncoder(),
                 securityUserRepository,
                 refreshTokenRepository(),
-                objectMapper,
                 googlePublicKeysManager,
+                authenticationUtil,
                 s3Client);
     }
 
@@ -105,7 +109,7 @@ public class SecurityConfig {
     private AuthenticationUtil authenticationUtil;
 
     @Bean
-    public AdminUserService adminUserService(){
+    public AdminUserService adminUserService() {
         return new AdminUserService(
                 passwordEncoder(),
                 userRepository,
@@ -141,43 +145,70 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AdminAuthenticationProvider adminAuthenticationProvider(){
+    public AdminAuthenticationProvider adminAuthenticationProvider() {
         return new AdminAuthenticationProvider(adminUserService(), passwordEncoder());
     }
 
+    @Bean
+    public SecurityFilterChain commentAuthentication(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/api/v1/**/comments/**")
+                .authenticationProvider(commonUserAuthenticationProvider()).authorizeHttpRequests(
+                        (authorizeHttpRequest) ->
+                                authorizeHttpRequest
+                                        .requestMatchers(HttpMethod.GET, "/api/v1/**/comments")
+                                        .permitAll()
+                                        .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value)
+                )
+                .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
+                .sessionManagement((sessionManagement) ->
+                        sessionManagement
+                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .exceptionHandling((exceptionadvisor) ->
+                        exceptionadvisor
+                                .authenticationEntryPoint(unAuthorizedEntryPoint())
+                                .accessDeniedHandler(commonUserAccessDeniedHandler())
+                )
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors((conf) -> conf.configurationSource(corsConfigurationSource()));
+        return http.build();
+    }
 
     @Bean
     public SecurityFilterChain adminAuthentication(HttpSecurity http) throws Exception {
         http
                 .securityMatcher("/api/v1/admin/**")
-                .authenticationProvider(adminAuthenticationProvider())
-                .authorizeHttpRequests()
-                .requestMatchers("/api/v1/admin/login", "/api/v1/admin/register", "/api/v1/admin/logout")
-                .permitAll()
-                .anyRequest()
-                .hasAnyRole(Role.ADMIN.value, Role.SUPER_ADMIN.value)
-                .and()
-                .formLogin()
-                .usernameParameter("username")
-                .passwordParameter("password")
-                .successHandler(new AdminLoginSuccessHandler(objectMapper, refreshTokenRepository(), tokenUtils()))
-                .failureHandler(new CommonUserLoginFailureHandler(objectMapper))
-                .loginProcessingUrl("/api/v1/admin/login")
-                .and()
-                .logout()
-                .logoutUrl("/api/v1/admin/logout")
-                .addLogoutHandler(commonUserLogoutHandler())
-                .and()
+                .authenticationProvider(adminAuthenticationProvider()).authorizeHttpRequests(
+                        (authorizeHttpRequest) ->
+                                authorizeHttpRequest
+                                        .requestMatchers("/api/v1/admin/login", "/api/v1/admin/register", "/api/v1/admin/logout")
+                                        .permitAll()
+                                        .anyRequest()
+                                        .hasAnyRole(Role.ADMIN.value, Role.SUPER_ADMIN.value)
+                )
+                .formLogin((formLogin) ->
+                        formLogin.usernameParameter("username")
+                                .passwordParameter("password")
+                                .successHandler(new AdminLoginSuccessHandler(objectMapper, refreshTokenRepository(), tokenUtils()))
+                                .failureHandler(new CommonUserLoginFailureHandler(objectMapper))
+                                .loginProcessingUrl("/api/v1/admin/login"))
+                .logout((logout) ->
+                        logout.logoutUrl("/api/v1/admin/logout")
+                                .addLogoutHandler(commonUserLogoutHandler()))
                 .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
-                .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
-                .exceptionHandling()
-                .authenticationEntryPoint(unAuthorizedEntryPoint())
-                .accessDeniedHandler(commonUserAccessDeniedHandler())
-                .and()
-                .csrf().disable()
-                .cors().configurationSource(corsConfigurationSource());
+                .sessionManagement((sessionManagement) ->
+                        sessionManagement
+                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .exceptionHandling((exceptionadvisor) ->
+                        exceptionadvisor
+                                .authenticationEntryPoint(unAuthorizedEntryPoint())
+                                .accessDeniedHandler(commonUserAccessDeniedHandler())
+                )
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors((conf) -> conf.configurationSource(corsConfigurationSource()));
+
         return http.build();
     }
 
@@ -238,6 +269,7 @@ public class SecurityConfig {
                 .and()
                 .logout()
                 .logoutUrl("/api/v1/user/logout").permitAll()
+                .logoutSuccessHandler(logoutHandler())
                 .addLogoutHandler(commonUserLogoutHandler())
                 .and()
                 .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
@@ -254,18 +286,20 @@ public class SecurityConfig {
         return http.build();
     }
 
+    private LogoutSuccessHandler logoutHandler() {
+        return new CommonUserLogoutSuccessHandler(objectMapper);
+    }
+
     @Bean
     public SecurityFilterChain postAuthentication(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/api/v1/posts/**")
+                .securityMatcher("/api/v1/community/posts/**")
                 .authenticationProvider(commonUserAuthenticationProvider())
                 .authorizeHttpRequests()
-                .requestMatchers(HttpMethod.GET, "/api/v1/posts",
+                .requestMatchers(HttpMethod.GET, "/api/v1/community/posts",
                         "/api/v1/community/video-post",
-                        "/api/v1/posts/{id:[0-9]+}",
-                        "/api/v1/community/video-post/{id:[0-9]+}",
-                        "/api/v1/community/video-post/{id:[0-9]+}/comments",
-                        "/api/v1/posts/{id:[0-9]+}/comments")
+                        "/api/v1/community/posts/{id:[0-9]+}",
+                        "/api/v1/community/video-post/{id:[0-9]+}")
                 .permitAll()
                 .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value)
                 .and()
@@ -285,19 +319,15 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain lessonAuthentication(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/api/v1/lesson/**")
+                .securityMatcher("/api/v1/lessons/**")
                 .authenticationProvider(commonUserAuthenticationProvider())
                 .authorizeHttpRequests()
                 .requestMatchers(HttpMethod.GET,
-                        "/api/v1/lesson",
-                        "/api/v1/lesson/{id:[0-9]+}",
-                        "/api/v1/lesson/{id:[0-9]+}/comments",
-                        "/api/v1/lesson/{id:[0-9]+}/scrap")
+                        "/api/v1/lessons",
+                        "/api/v1/lessons/{id:[0-9]+}")
                 .permitAll()
-                .requestMatchers(HttpMethod.PUT, "/api/v1/lesson/{id:[0-9]+}/scrap")
-                .permitAll()
-                .requestMatchers(HttpMethod.DELETE, "/api/v1/lesson/{id:[0-9]+}/scrap")
-                .permitAll()
+                .requestMatchers("/api/v1/lessons/{id:[0-9]+}/scrap", "/api/v1/lessons/{id:[0-9]+}/like")
+                .hasAnyRole(Role.CREATOR.value, Role.USER.value)
                 .anyRequest().hasRole(Role.CREATOR.value)
                 .and()
                 .sessionManagement()
@@ -314,15 +344,42 @@ public class SecurityConfig {
     }
 
     @Bean
+    public SecurityFilterChain CartAuthentication(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/api/v1/cart/**")
+                .authenticationProvider(commonUserAuthenticationProvider())
+                .authorizeHttpRequests(
+                        authorizationManagerRequestMatcherRegistry ->
+                                authorizationManagerRequestMatcherRegistry
+                                        .requestMatchers("/api/v1/cart/{mainResource:sheet|lessons}")
+                                        .hasAnyRole(Role.USER.value, Role.CREATOR.value)
+                                        .anyRequest().permitAll()
+                )
+                .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
+                .sessionManagement((sessionManagement) ->
+                        sessionManagement
+                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .exceptionHandling((exceptionadvisor) ->
+                        exceptionadvisor
+                                .authenticationEntryPoint(unAuthorizedEntryPoint())
+                                .accessDeniedHandler(commonUserAccessDeniedHandler())
+                )
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors((conf) -> conf.configurationSource(corsConfigurationSource()));
+        return http.build();
+    }
+
+    @Bean
     public SecurityFilterChain OrderAuthentication(HttpSecurity http) throws Exception {
         http
                 .securityMatcher("/api/v1/order/**")
                 .authenticationProvider(commonUserAuthenticationProvider())
                 .authorizeHttpRequests()
                 .requestMatchers(HttpMethod.GET, "/api/v1/order",
-                                                "/api/v1/order/{id:[0-9]+}")
+                        "/api/v1/order/{id:[0-9]+}")
                 .permitAll()
-                .anyRequest().hasAnyRole(Role.USER.value,Role.CREATOR.value)
+                .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value)
                 .and()
                 .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
                 .sessionManagement()
@@ -343,8 +400,7 @@ public class SecurityConfig {
                 .securityMatcher("/api/v1/sheet-post/**")
                 .authenticationProvider(commonUserAuthenticationProvider())
                 .authorizeHttpRequests()
-                .requestMatchers(HttpMethod.GET, "/api/v1/sheet-post/{id:[0-9]+}",
-                        "/api/v1/sheet-post/{id:[0-9]+}/comments")
+                .requestMatchers(HttpMethod.GET, "/api/v1/sheet-post/{id:[0-9]+}")
                 .permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/sheet-post")
                 .permitAll()
@@ -364,7 +420,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public  SecurityFilterChain cartAuthentication(HttpSecurity http) throws Exception {
+    public SecurityFilterChain cartAuthentication(HttpSecurity http) throws Exception {
         http
                 .securityMatcher("/api/v1/cart/**")
                 .authenticationProvider(commonUserAuthenticationProvider())
@@ -386,6 +442,7 @@ public class SecurityConfig {
 
         return http.build();
     }
+
     @Bean
     SecurityFilterChain ticketAuthentication(HttpSecurity http) throws Exception {
         http
@@ -424,15 +481,27 @@ public class SecurityConfig {
     public SecurityFilterChain defaultConfig(HttpSecurity http) throws Exception {
         http.
                 securityMatcher("/api/v1/**")
-                .authorizeHttpRequests()
-                .anyRequest().permitAll()
-                .and()
-                .csrf().disable()
-                .cors().configurationSource(corsConfigurationSource())
-                .and()
-                .headers()
-                .frameOptions()
-                .sameOrigin();
+                .authorizeHttpRequests(
+                        authorizationManagerRequestMatcherRegistry ->
+                                authorizationManagerRequestMatcherRegistry
+                                        .anyRequest().permitAll()
+
+                )
+                .csrf(
+                        httpSecurityCsrfConfigurer ->
+                                httpSecurityCsrfConfigurer.disable()
+                )
+                .cors(
+                        httpSecurityCorsConfigurer ->
+                                httpSecurityCorsConfigurer.configurationSource(corsConfigurationSource())
+                )
+                .headers(
+                        httpSecurityHeadersConfigurer ->
+                                httpSecurityHeadersConfigurer
+                                        .frameOptions(
+                                                HeadersConfigurer.FrameOptionsConfig::sameOrigin
+                                        )
+                );
         return http.build();
     }
 

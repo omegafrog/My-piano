@@ -1,44 +1,33 @@
 package com.omegafrog.My.piano.app.web.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.omegafrog.My.piano.app.Cleanup;
+import com.omegafrog.My.piano.app.TestUtil;
+import com.omegafrog.My.piano.app.TestUtilConfig;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
-import com.omegafrog.My.piano.app.web.service.admin.CommonUserService;
-import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
-import com.omegafrog.My.piano.app.web.domain.lesson.LessonInformation;
-import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
-import com.omegafrog.My.piano.app.web.domain.lesson.VideoInformation;
-import com.omegafrog.My.piano.app.web.domain.order.OrderRepository;
-import com.omegafrog.My.piano.app.web.domain.sheet.Genres;
-import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
-import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
-import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
-import com.omegafrog.My.piano.app.web.domain.user.User;
-import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
-import com.omegafrog.My.piano.app.web.dto.user.RegisterUserDto;
+import com.omegafrog.My.piano.app.security.entity.authorities.Role;
+import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
 import com.omegafrog.My.piano.app.web.dto.order.OrderRegisterDto;
-import com.omegafrog.My.piano.app.web.enums.*;
-import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
-import jakarta.servlet.http.Cookie;
-import lombok.Getter;
-import lombok.Setter;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
+import com.omegafrog.My.piano.app.web.dto.user.UserInfo;
+import jakarta.persistence.EntityNotFoundException;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalTime;
-import java.util.Map;
-import java.util.Optional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -48,132 +37,67 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@Import(TestUtilConfig.class)
 class CartControllerTest {
 
     @Autowired
-    private MockMvc mockMvc;
-    @Autowired
     private ObjectMapper objectMapper;
-    @Autowired
-    private CommonUserService userService;
-    @Autowired
-    private SheetPostRepository sheetPostRepository;
-    @Autowired
-    private LessonRepository lessonRepository;
-    @Autowired
-    private OrderRepository orderRepository;
-    @Autowired
-    private UserRepository userRepository;
 
-    private String accessToken;
-    private Cookie refreshToken;
-    private SecurityUser user;
-    private SheetPost savedSheetPost;
-    private Lesson savedLesson;
+    @Autowired
+    private Cleanup cleanup;
+
+    private TestUtil.TokenResponse sellerToken;
+    private TestUtil.TokenResponse buyerToken;
+
     @Autowired
     private SecurityUserRepository securityUserRepository;
+    @Autowired
+    private TestUtil testUtil;
+    @Autowired
+    private MockMvc mockMvc;
 
-    @Getter
-    @Setter
-    private static class LoginResult {
-        private String status;
-        private String message;
-        private Map<String, String> serializedData;
-    }
 
-    @BeforeAll
+    @BeforeEach
     public void login() throws Exception {
-        RegisterUserDto dto = RegisterUserDto.builder()
-                .username("username")
-                .password("password")
-                .name("user")
-                .email("email@email.com")
-                .profileSrc("src")
-                .loginMethod(LoginMethod.EMAIL)
-                .phoneNum("010-1111-2222")
-                .build();
+        // register seller
+        testUtil.register(mockMvc, TestUtil.user1);
+        SecurityUser securityUser = securityUserRepository.findByUsername(TestUtil.user1.getUsername())
+                .orElseThrow(() -> new EntityNotFoundException());
+        securityUser.changeRole(Role.CREATOR);
+        securityUserRepository.save(securityUser);
+        sellerToken =
+                testUtil.login(mockMvc, TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
 
-        mockMvc.perform(post("/user/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dto)))
-                .andExpect(status().isOk())
-                .andReturn();
-
-        MvcResult mvcResult = mockMvc.perform(post("/user/login")
-                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                        .content("username=username&password=password"))
-                .andExpect(status().isOk())
-//                .andExpect(jsonPath("$.status").value(HttpStatus.OK))
-                .andDo(print())
-                .andReturn();
-        String content = mvcResult.getResponse().getContentAsString();
-        LoginResult loginResult = objectMapper.readValue(content, LoginResult.class);
-        accessToken = loginResult.getSerializedData().get("access token");
-        refreshToken = mvcResult.getResponse().getCookie("refreshToken");
-        user = (SecurityUser) userService.loadUserByUsername("username");
+        // register buyer
+        testUtil.register(mockMvc, TestUtil.user2);
+        buyerToken =
+                testUtil.login(mockMvc, TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
     }
 
-    @BeforeAll
-    void setItem() {
-        SheetPost sheetPost = SheetPost.builder()
-                .sheet(Sheet.builder()
-                        .title("title")
-                        .sheetUrl("path1")
-                        .genres(Genres.builder().genre1(Genre.BGM).build())
-                        .user(user.getUser())
-                        .difficulty(Difficulty.MEDIUM)
-                        .instrument(Instrument.GUITAR_ACOUSTIC)
-                        .isSolo(true)
-                        .lyrics(false)
-                        .pageNum(3)
-                        .build())
-                .title("SheetPostTitle1")
-                .price(12000)
-                .artist(user.getUser())
-                .content("hihi this is content")
-                .build();
-
-        savedSheetPost = sheetPostRepository.save(sheetPost);
-        Lesson lesson = Lesson.builder()
-                .sheetPost(savedSheetPost)
-                .title("lesson1")
-                .price(2000)
-                .lessonInformation(LessonInformation.builder()
-                        .instrument(Instrument.GUITAR_ACOUSTIC)
-                        .lessonDescription("hoho")
-                        .category(Category.ACCOMPANIMENT)
-                        .artistDescription("god")
-                        .policy(RefundPolicy.REFUND_IN_7DAYS)
-                        .build())
-                .lessonProvider(user.getUser())
-                .subTitle("this is subtitle")
-                .videoInformation(
-                        VideoInformation.builder()
-                                .videoUrl("url")
-                                .runningTime(LocalTime.of(0, 20))
-                                .build())
-                .build();
-        savedLesson = lessonRepository.save(lesson);
+    @AfterEach
+    void cleanUp() {
+        cleanup.cleanUp();
     }
 
     @Test
     void saveToCartTest() throws Exception {
-
         // given
+        SheetPostDto savedSheetPostDto
+                = testUtil.writeSheetPost(mockMvc, sellerToken, TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1));
+        LessonDto savedLessonDto
+                = testUtil.writeLesson(mockMvc, sellerToken, TestUtil.registerLessonDto(savedSheetPostDto.getSheet().getId()));
+
         OrderRegisterDto build1 = OrderRegisterDto.builder()
-                .buyerId(user.getUser().getId())
-                .itemId(savedSheetPost.getId())
+                .itemId(savedSheetPostDto.getId())
                 .build();
         OrderRegisterDto build2 = OrderRegisterDto.builder()
-                .buyerId(user.getUser().getId())
-                .itemId(savedLesson.getId())
+                .itemId(savedLessonDto.getId())
                 .build();
         //when
-        MvcResult mvcResult = mockMvc.perform(post("/cart/sheet")
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken)
+        MvcResult mvcResult = mockMvc.perform(post("/api/v1/cart/sheet")
+                        .header(HttpHeaders.AUTHORIZATION, buyerToken.getAccessToken())
+                        .cookie(buyerToken.getRefreshToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(build1)))
                 .andExpect(status().isOk())
@@ -182,119 +106,131 @@ class CartControllerTest {
 
         //then
         String content = mvcResult.getResponse().getContentAsString();
-        String title = objectMapper.readTree(content).get("serializedData").get("contents").get(0).get("item").get("title").asText();
-        Assertions.assertThat(title).isEqualTo("SheetPostTitle1");
+        String title = objectMapper.readTree(content).get("data").get(0).get("item").get("title").asText();
+        Assertions.assertThat(title).isEqualTo(savedSheetPostDto.getTitle());
 
-        MvcResult mvcResult2 = mockMvc.perform(post("/cart/lesson")
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken)
+        MvcResult mvcResult2 = mockMvc.perform(post("/api/v1/cart/lesson")
+                        .header(HttpHeaders.AUTHORIZATION, buyerToken.getAccessToken())
+                        .cookie(buyerToken.getRefreshToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(build2)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
         String contentAsString = mvcResult2.getResponse().getContentAsString();
-        String title2 = objectMapper.readTree(contentAsString).get("serializedData").get("contents").get(1).get("item").get("title").asText();
-        Assertions.assertThat(title2).isEqualTo("lesson1");
+        String title2 = objectMapper.readTree(contentAsString).get("data").get(0).get("item").get("title").asText();
+        Assertions.assertThat(title2).isEqualTo(savedLessonDto.getTitle());
     }
 
     @Test
     void deleteFromCartTest() throws Exception {
+        //given
+        SheetPostDto savedSheetPostDto
+                = testUtil.writeSheetPost(mockMvc, sellerToken, TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1));
         OrderRegisterDto build1 = OrderRegisterDto.builder()
-                .buyerId(user.getUser().getId())
-                .itemId(savedSheetPost.getId())
+                .itemId(savedSheetPostDto.getId())
                 .build();
         //when
-        MvcResult mvcResult = mockMvc.perform(post("/cart/sheet")
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken)
+        MvcResult mvcResult = mockMvc.perform(post("/api/v1/cart/sheet")
+                        .header(HttpHeaders.AUTHORIZATION, buyerToken.getAccessToken())
+                        .cookie(buyerToken.getRefreshToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(build1)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
         String content = mvcResult.getResponse().getContentAsString();
-        Long id = objectMapper.readTree(content).get("serializedData").get("contents").get(0).get("id").asLong();
+        Long id = objectMapper.readTree(content).get("data").get(0).get("item").get("id").asLong();
 
-        mockMvc.perform(delete("/cart/" + id)
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken))
+        mockMvc.perform(delete("/api/v1/cart/" + id)
+                        .header(HttpHeaders.AUTHORIZATION, buyerToken.getAccessToken())
+                        .cookie(buyerToken.getRefreshToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
+
+        //then
+        mockMvc.perform(get("/api/v1/cart")
+                        .header(HttpHeaders.AUTHORIZATION, buyerToken.getAccessToken())
+                        .cookie(buyerToken.getRefreshToken()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+                .andExpect(jsonPath("$.data").isEmpty());
     }
 
     @Test
     void getAllContentFromCartTest() throws Exception {
+        //given
+        SheetPostDto savedSheetPostDto
+                = testUtil.writeSheetPost(mockMvc, sellerToken, TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1));
         OrderRegisterDto build1 = OrderRegisterDto.builder()
-                .buyerId(user.getUser().getId())
-                .itemId(savedSheetPost.getId())
+                .itemId(savedSheetPostDto.getId())
                 .build();
 
         //when
-        mockMvc.perform(post("/cart/sheet")
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken)
+        mockMvc.perform(post("/api/v1/cart/sheet")
+                        .header(HttpHeaders.AUTHORIZATION, buyerToken.getAccessToken())
+                        .cookie(buyerToken.getRefreshToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(build1)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
 
-        MvcResult mvcResult = mockMvc.perform(get("/cart")
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken))
+        MvcResult mvcResult = mockMvc.perform(get("/api/v1/cart")
+                        .header(HttpHeaders.AUTHORIZATION, buyerToken.getAccessToken())
+                        .cookie(buyerToken.getRefreshToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andDo(print())
                 .andReturn();
 
         String content = mvcResult.getResponse().getContentAsString();
-        Long id = objectMapper.readTree(content).get("serializedData").get("contents").get(0).get("item").get("id").asLong();
-        Assertions.assertThat(id).isEqualTo(savedSheetPost.getId());
+        Assertions.assertThat(objectMapper.readTree(content).get("data").get(0).get("item").get("id").asLong())
+                .isEqualTo(savedSheetPostDto.getId());
     }
 
     @Test
     void payAllInCartTest() throws Exception {
-
-        mockMvc.perform(post("/user/cash")
-                .header(HttpHeaders.AUTHORIZATION, accessToken)
-                .cookie(refreshToken)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(20000)));
+        //given
+        testUtil.chargeCash(mockMvc, 20000, buyerToken);
+        SheetPostDto savedSheetPostDto
+                = testUtil.writeSheetPost(mockMvc, sellerToken, TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1));
+        LessonDto savedLessonDto
+                = testUtil.writeLesson(mockMvc, sellerToken, TestUtil.registerLessonDto(savedSheetPostDto.getSheet().getId()));
         OrderRegisterDto build1 = OrderRegisterDto.builder()
-                .buyerId(user.getUser().getId())
-                .itemId(savedSheetPost.getId())
+                .itemId(savedSheetPostDto.getId())
                 .build();
         OrderRegisterDto build2 = OrderRegisterDto.builder()
-                .buyerId(user.getUser().getId())
-                .itemId(savedLesson.getId())
+                .itemId(savedLessonDto.getId())
                 .build();
-        mockMvc.perform(post("/cart/sheet")
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken)
+        mockMvc.perform(post("/api/v1/cart/sheet")
+                        .header(HttpHeaders.AUTHORIZATION, buyerToken.getAccessToken())
+                        .cookie(buyerToken.getRefreshToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(build1)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
-        mockMvc.perform(post("/cart/lesson")
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken)
+        mockMvc.perform(post("/api/v1/cart/lesson")
+                        .header(HttpHeaders.AUTHORIZATION, buyerToken.getAccessToken())
+                        .cookie(buyerToken.getRefreshToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(build2)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
 
-        mockMvc.perform(get("/cart/pay")
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken))
+        mockMvc.perform(patch("/api/v1/cart?orderId=" + build1.getItemId() + "," + build2.getItemId())
+                        .header(HttpHeaders.AUTHORIZATION, buyerToken.getAccessToken())
+                        .cookie(buyerToken.getRefreshToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()));
 
-        Optional<User> byId = userRepository.findById(user.getUser().getId());
-        System.out.println("byId.get().getCash() = " + byId.get().getCash());
-        Assertions.assertThat(byId.get().getCash()).isLessThan(20000);
+        UserInfo userInfo = testUtil.getUserInfo(mockMvc, buyerToken);
+
+        Assertions.assertThat(userInfo.getCash())
+                .isLessThan(20000);
     }
 }

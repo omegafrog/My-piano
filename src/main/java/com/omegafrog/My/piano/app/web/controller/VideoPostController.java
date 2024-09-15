@@ -1,15 +1,10 @@
 package com.omegafrog.My.piano.app.web.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
-import com.omegafrog.My.piano.app.web.response.success.ApiResponse;
-import com.omegafrog.My.piano.app.web.response.success.JsonAPIResponse;
-import com.omegafrog.My.piano.app.web.response.ResponseUtil;
-import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.post.UpdateVideoPostDto;
 import com.omegafrog.My.piano.app.web.dto.videoPost.VideoPostDto;
 import com.omegafrog.My.piano.app.web.dto.videoPost.VideoPostRegisterDto;
+import com.omegafrog.My.piano.app.web.response.success.ApiResponse;
+import com.omegafrog.My.piano.app.web.response.success.JsonAPIResponse;
 import com.omegafrog.My.piano.app.web.service.VideoPostApplicationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -17,7 +12,6 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -32,7 +26,7 @@ public class VideoPostController {
     }
 
     @GetMapping("/{id}")
-    public JsonAPIResponse findPost(@PathVariable Long id) {
+    public JsonAPIResponse findPost(@PathVariable(name="id") Long id) {
         VideoPostDto postById = videoPostApplicationService.findPostById(id);
         return new ApiResponse("Find videoPost success", postById);
     }
@@ -44,25 +38,25 @@ public class VideoPostController {
     }
 
     @PostMapping("/{id}")
-    public JsonAPIResponse updatePost(@PathVariable Long id, @RequestBody UpdateVideoPostDto post) {
+    public JsonAPIResponse updatePost(@PathVariable(name="id") Long id, @RequestBody UpdateVideoPostDto post) {
         VideoPostDto postDto = videoPostApplicationService.updatePost(id, post);
         return new ApiResponse("Update video post success", postDto);
     }
 
     @DeleteMapping("/{id}")
-    public JsonAPIResponse deletePost(@PathVariable Long id) {
+    public JsonAPIResponse deletePost(@PathVariable(name="id") Long id) {
         videoPostApplicationService.deletePost(id);
         return new ApiResponse("delete video post success");
     }
 
     @GetMapping("/{id}/like")
-    public JsonAPIResponse likePost(@PathVariable Long id) {
+    public JsonAPIResponse likePost(@PathVariable(name="id") Long id) {
         videoPostApplicationService.likePost(id);
         return new ApiResponse("Like video post success.");
     }
 
     @DeleteMapping("/{id}/like")
-    public JsonAPIResponse dislikePost(@PathVariable Long id) {
+    public JsonAPIResponse dislikePost(@PathVariable(name="id") Long id) {
         videoPostApplicationService.dislikePost(id);
         return new ApiResponse("Dislike video post success");
     }

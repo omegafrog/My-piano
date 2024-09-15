@@ -24,7 +24,6 @@ public class ViewCountItemWriter<T extends Article> implements ItemWriter<ViewCo
         List<T> fetched = factory.selectFrom(entityPath)
                 .where(GenericEntityPathUtil.getLongProperty(entityPath, "id").in(changedLessonViewCountMap.keySet()))
                 .fetch();
-
         fetched.forEach(toUpdate -> toUpdate.setViewCount(changedLessonViewCountMap.get(toUpdate.getId())));
     }
 }

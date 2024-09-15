@@ -1,7 +1,11 @@
 package com.omegafrog.My.piano.app.web.infra.sheetPost;
 
+import com.omegafrog.My.piano.app.web.domain.cart.QCart;
 import com.omegafrog.My.piano.app.web.domain.comment.QComment;
-import com.omegafrog.My.piano.app.web.domain.sheet.*;
+import com.omegafrog.My.piano.app.web.domain.sheet.QSheet;
+import com.omegafrog.My.piano.app.web.domain.sheet.QSheetPost;
+import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
+import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.QUser;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SearchSheetPostFilter;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
@@ -12,6 +16,8 @@ import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -26,10 +32,12 @@ import java.util.Optional;
 @Repository
 @AllArgsConstructor
 public class JpaSheetPostRepositoryImpl implements SheetPostRepository {
+
     @Autowired
     private SimpleJpaSheetPostRepository jpaRepository;
 
     private final JPAQueryFactory factory;
+    private final CacheManager cacheManager;
 
     @Override
     public SheetPost save(SheetPost sheetPost) {
@@ -42,15 +50,14 @@ public class JpaSheetPostRepositoryImpl implements SheetPostRepository {
     }
 
     @Override
-    @Cacheable("sheetpost")
     public Optional<SheetPost> findById(Long id) {
-        return Optional.ofNullable(factory.select(QSheetPost.sheetPost).from(QSheetPost.sheetPost)
-                .join(QSheetPost.sheetPost.author, QUser.user).fetchJoin()
-                .leftJoin(QSheetPost.sheetPost.comments, QComment.comment).fetchJoin()
-                .where(QSheetPost.sheetPost.id.eq(id))
-                .fetchOne());
+        Cache cache = getCacheOrThrow();
+        Optional<SheetPost> cachedSheetPost = getCachedSheetPost(cache, id);
+        if (cachedSheetPost.isPresent()) {
+            return cachedSheetPost;
+        }
+        return fetchAndCacheSheetPost(cache, id);
     }
-
 
     @Override
     public Optional<SheetPost> findBySheetId(Long sheetId) {
@@ -67,15 +74,15 @@ public class JpaSheetPostRepositoryImpl implements SheetPostRepository {
         QSheetPost sheetPost = QSheetPost.sheetPost;
         BooleanExpression expressions = filter.getExpressions();
         JPAQuery<SheetPostDto> query = factory.select(
-                Projections.constructor(SheetPostDto.class,
-                        sheetPost.id,
-                        sheetPost.title,
-                        sheetPost.content,
-                        sheetPost.author,
-                        sheetPost.sheet,
-                        sheetPost.createdAt,
-                        sheetPost.modifiedAt
-                ))
+                        Projections.constructor(SheetPostDto.class,
+                                sheetPost.id,
+                                sheetPost.title,
+                                sheetPost.content,
+                                sheetPost.author,
+                                sheetPost.sheet,
+                                sheetPost.createdAt,
+                                sheetPost.modifiedAt
+                        ))
                 .from(sheetPost)
                 .where(expressions)
                 .offset(pageable.getOffset())
@@ -85,7 +92,7 @@ public class JpaSheetPostRepositoryImpl implements SheetPostRepository {
                 .where(expressions)
                 .fetch().size();
 
-        return PageableExecutionUtils.getPage(query.fetch(), pageable,()->count );
+        return PageableExecutionUtils.getPage(query.fetch(), pageable, () -> count);
     }
 
     @Override
@@ -94,18 +101,18 @@ public class JpaSheetPostRepositoryImpl implements SheetPostRepository {
         QSheetPost sheetPost = QSheetPost.sheetPost;
         BooleanExpression expressions = sheetPost.id.in(sheetPostIds);
         JPAQuery<SheetPostListDto> query = factory.select
-                (Projections.constructor(SheetPostListDto.class,
-                        sheetPost.id,
-                        sheetPost.title,
-                        sheetPost.author.name,
-                        sheetPost.author.profileSrc,
-                        sheetPost.sheet.title,
-                        sheetPost.sheet.difficulty,
-                        sheetPost.sheet.genres,
-                        sheetPost.sheet.instrument,
-                        sheetPost.createdAt,
-                        sheetPost.price
-                ))
+                        (Projections.constructor(SheetPostListDto.class,
+                                sheetPost.id,
+                                sheetPost.title,
+                                sheetPost.author.name,
+                                sheetPost.author.profileSrc,
+                                sheetPost.sheet.title,
+                                sheetPost.sheet.difficulty,
+                                sheetPost.sheet.genres,
+                                sheetPost.sheet.instrument,
+                                sheetPost.createdAt,
+                                sheetPost.price
+                        ))
                 .from(sheetPost)
                 .join(sheetPost.author, QUser.user)
                 .join(sheetPost.sheet, QSheet.sheet)
@@ -131,4 +138,42 @@ public class JpaSheetPostRepositoryImpl implements SheetPostRepository {
         return jpaRepository.count();
     }
 
+    @Override
+    public Iterable<SheetPost> findAllById(List<Long> list) {
+        JPAQuery<SheetPost> query = factory.selectFrom(QSheetPost.sheetPost)
+                .join(QSheetPost.sheetPost.author, QUser.user).fetchJoin()
+                .join(QSheetPost.sheetPost.sheet, QSheet.sheet).fetchJoin()
+                .join(QSheetPost.sheetPost.author.cart, QCart.cart).fetchJoin()
+                .leftJoin(QSheetPost.sheetPost.comments, QComment.comment).fetchJoin()
+                .where(QSheetPost.sheetPost.id.in(list));
+        return query.fetch();
+    }
+
+    private Optional<SheetPost> getCachedSheetPost(Cache cache, Long id) {
+        Cache.ValueWrapper valueWrapper = cache.get(id);
+        return valueWrapper != null ? Optional.ofNullable((SheetPost) valueWrapper.get()) : Optional.empty();
+    }
+
+    private Optional<SheetPost> fetchAndCacheSheetPost(Cache cache, Long id) {
+        SheetPost sheetPost = fetchSheetPostFromDatabase(id);
+        cache.put(id, sheetPost);
+        return Optional.ofNullable(sheetPost);
+    }
+
+    private SheetPost fetchSheetPostFromDatabase(Long id) {
+        return factory.select(QSheetPost.sheetPost)
+                .from(QSheetPost.sheetPost)
+                .join(QSheetPost.sheetPost.author, QUser.user).fetchJoin()
+                .leftJoin(QSheetPost.sheetPost.comments, QComment.comment).fetchJoin()
+                .where(QSheetPost.sheetPost.id.eq(id))
+                .fetchOne();
+    }
+
+    private Cache getCacheOrThrow() {
+        Cache cache = cacheManager.getCache("sheetpost");
+        if (cache == null) {
+            throw new IllegalStateException("Cache is null");
+        }
+        return cache;
+    }
 }

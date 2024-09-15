@@ -13,15 +13,16 @@ public class SellableItemFactory {
 
     /**
      * 요청의 mainResource와 주어진 id에 따라 맞는 객체를 검색해 반환하는 함수
+     *
      * @param mainResourceName 구매 요청에 해당하는 물품의 종류.
-     *                         ("/{mainResource}/buy") Sheet, Lesson이 될 수 있음.
-     * @param id 구매 요청에 해당하는 물품의 id
-     * @return SellableItem의 서브클래스인 요청에 맞는 물품 엔티티 
+     *                         ("/{mainResource}/buy")
+     * @param id               구매 요청에 해당하는 물품의 id
+     * @return SellableItem의 서브클래스인 요청에 맞는 물품 엔티티
      * @throws EntityNotFoundException 찾으려는 객체 엔티티가 존재하지 않는 경우
      */
-    public SellableItem createDetailedItem(String mainResourceName, Long id){
+    public SellableItem createDetailedItem(String mainResourceName, Long id) {
         return switch (mainResourceName) {
-            case ("lesson") -> lessonRepository.findById(id)
+            case ("lessons") -> lessonRepository.findById(id)
                     .orElseThrow(() -> new EntityNotFoundException("Cannot find" + mainResourceName + " entity : "
                             + id));
             case ("sheet") -> sheetPostRepository.findById(id)

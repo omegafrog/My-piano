@@ -1,36 +1,38 @@
 package com.omegafrog.My.piano.app.web.domain.user;
 
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
-import com.omegafrog.My.piano.app.web.exception.AlreadyScrappedEntityException;
-import com.omegafrog.My.piano.app.web.exception.AlreadyLikedEntityException;
-import com.omegafrog.My.piano.app.web.exception.message.ExceptionMessage;
-
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
+import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.coupon.Coupon;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
 import com.omegafrog.My.piano.app.web.domain.order.Order;
-import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.order.SellableItem;
 import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPost;
 import com.omegafrog.My.piano.app.web.domain.relation.*;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.ArtistInfo;
 import com.omegafrog.My.piano.app.web.dto.user.ChangeUserDto;
 import com.omegafrog.My.piano.app.web.dto.user.UserInfo;
 import com.omegafrog.My.piano.app.web.dto.user.UserProfileDto;
 import com.omegafrog.My.piano.app.web.enums.OrderStatus;
+import com.omegafrog.My.piano.app.web.exception.AlreadyLikedEntityException;
+import com.omegafrog.My.piano.app.web.exception.AlreadyScrappedEntityException;
+import com.omegafrog.My.piano.app.web.exception.message.ExceptionMessage;
 import com.omegafrog.My.piano.app.web.exception.payment.NotEnoughCashException;
 import com.omegafrog.My.piano.app.web.exception.payment.PaymentException;
 import com.omegafrog.My.piano.app.web.vo.user.AlarmProperties;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
-import jakarta.validation.constraints.*;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-
-import jakarta.persistence.*;
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.AccessDeniedException;
 
@@ -46,6 +48,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @NoArgsConstructor
 @Getter
 public class User implements Serializable {
+
+    private static final long serialVersionUID = -3824428957293850193L;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Getter
@@ -75,9 +79,10 @@ public class User implements Serializable {
     private AlarmProperties alarmProperties;
 
     @OneToOne(mappedBy = "user")
+    @Setter
     private SecurityUser securityUser;
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
+    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
     @NotNull
     private Cart cart;
 
@@ -173,7 +178,7 @@ public class User implements Serializable {
     }
 
     public void scrapSheetPost(SheetPost sheetPost) {
-        if(isScrappedSheetPost(sheetPost))
+        if (isScrappedSheetPost(sheetPost))
             throw new AlreadyScrappedEntityException("이미 스크랩한 entity입니다.");
         scrappedSheetPosts.add(
                 UserScrappedSheetPost.builder()
@@ -186,14 +191,14 @@ public class User implements Serializable {
         return scrappedSheetPosts.stream().anyMatch(item -> item.getSheetPost().equals(sheetPost));
     }
 
+    // 좋아요 누른 sheetpost list에 추가한다.
     public void likeSheetPost(SheetPost sheetPost) {
-        if(isLikedSheetPost(sheetPost))
+        if (isLikedSheetPost(sheetPost))
             throw new AlreadyLikedEntityException();
         likedSheetPosts.add(UserLikedSheetPost.builder()
                 .user(this)
                 .sheetPost(sheetPost)
                 .build());
-        sheetPost.increaseLikedCount();
     }
 
     private boolean isLikedSheetPost(SheetPost sheetPost) {
@@ -202,7 +207,7 @@ public class User implements Serializable {
 
     public void dislikeSheetPost(SheetPost sheetPost) {
         boolean removed = likedSheetPosts.removeIf(item -> item.getSheetPost().equals(sheetPost));
-        if(!removed) throw new EntityNotFoundException("sheetPost entity를 찾을 수 없습니다.id:" + sheetPost.getId());
+        if (!removed) throw new EntityNotFoundException("sheetPost entity를 찾을 수 없습니다.id:" + sheetPost.getId());
         sheetPost.decreaseLikedCount();
     }
 
@@ -212,7 +217,7 @@ public class User implements Serializable {
 
 
     public void likeVideoPost(VideoPost videoPost) {
-        if (likedVideoPosts.stream().anyMatch(item->item.getVideoPost().equals(videoPost)))
+        if (likedVideoPosts.stream().anyMatch(item -> item.getVideoPost().equals(videoPost)))
             throw new EntityExistsException(ExceptionMessage.ENTITY_EXISTS);
         likedVideoPosts.add(UserLikedVideoPost.builder()
                 .videoPost(videoPost)
@@ -264,7 +269,8 @@ public class User implements Serializable {
     }
 
     public void likePost(Post post) {
-        assert likedPosts.stream().anyMatch(p -> p.getPost().equals(post));
+        // already liked post check
+        assert !likedPosts.stream().anyMatch(p -> p.getPost().equals(post));
         likedPosts.add(UserLikedPost.builder()
                 .post(post)
                 .user(this)
@@ -312,6 +318,7 @@ public class User implements Serializable {
 
     /**
      * 유저 엔티티가 이미 구매한 상품인지 확인하는 함수
+     *
      * @param item 구매 여부를 확인할 상품 엔티티. SellableItem의 서브클래스의 인스턴스.
      * @return 구매한 상품이라면 true, 구매하지 않은 상품이라면 false
      */
@@ -339,6 +346,17 @@ public class User implements Serializable {
                 .cash(cash)
                 .build();
     }
+
+    public ArtistInfo getArtistInfo() {
+        return ArtistInfo.builder()
+                .id(id)
+                .name(name)
+                .username(securityUser.getUsername())
+                .email(email)
+                .profileSrc(profileSrc)
+                .build();
+    }
+
     public UserProfileDto getUserProfileDto() {
         return new UserProfileDto(id, securityUser.getUsername(), profileSrc);
     }
@@ -363,7 +381,7 @@ public class User implements Serializable {
     }
 
     public void dislikeLesson(Lesson lesson) {
-        likedLessons.removeIf(item->item.getLesson().equals(lesson));
+        likedLessons.removeIf(item -> item.getLesson().equals(lesson));
     }
 
 
@@ -382,6 +400,23 @@ public class User implements Serializable {
 
     public void unScrapSheetPost(SheetPost sheetPost) {
         boolean removed = scrappedSheetPosts.removeIf(item -> item.getSheetPost().equals(sheetPost));
-        if(!removed) throw new EntityNotFoundException("스크랩하지 않았습니다.");
+        if (!removed) throw new EntityNotFoundException("스크랩하지 않았습니다.");
+    }
+
+//    public boolean deleteOrder(Order order) {
+//        SellableItem item = order.getItem();
+//        boolean removed = false;
+//        if (item instanceof SheetPost)
+//        else if (order.getItem() instanceof Lesson)
+//        else throw new ClassCastException("Wrong Order Item class.");
+//        return removed;
+//    }
+
+    public boolean deletePurchasedSheetPost(Order order) {
+        return purchasedSheets.removeIf(purchased -> purchased.getSheetPost().equals(order.getItem()));
+    }
+
+    public boolean deletePurchasedLesson(Order order) {
+        return purchasedLessons.removeIf(purchasedLesson -> purchasedLesson.getLesson().equals(order.getItem()));
     }
 }

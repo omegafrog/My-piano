@@ -22,7 +22,7 @@ public class PushNotificationController {
     @PostMapping("/notification/token")
     public JsonAPIResponse getClientToken(
             @Valid @NotNull @RequestBody String clientToken) throws JsonProcessingException {
-        notificationService.subscribeUser( mapperUtil.parseNotiClientToken(clientToken));
+        notificationService.subscribeUser(mapperUtil.parseNotiClientToken(clientToken));
         return new ApiResponse("구독 성공.");
     }
 
@@ -34,4 +34,9 @@ public class PushNotificationController {
         String id = notificationService.sendMessageTo(topic, message, userId);
         return new ApiResponse("Message 전송 성공.", id);
     }
+
+//    @GetMapping("/notification")
+//    public JsonAPIResponse getMessages() {
+//        notificationService.getMessages();
+//    }
 }

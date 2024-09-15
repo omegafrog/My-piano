@@ -16,36 +16,36 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @Slf4j
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/order")
 public class OrderController {
 
     private final OrderService orderService;
 
-    @PostMapping("/order/{mainResource}")
+    @PostMapping("/{mainResource}")
     public JsonAPIResponse orderItem(
-            @Valid @NotNull @PathVariable String mainResource,
+            @Valid @NotNull @PathVariable(name = "mainResource") String mainResource,
             @Valid @NotNull @RequestBody OrderRegisterDto order) {
         OrderDto createdOrder = orderService.makeOrder(mainResource, order);
         OrderDto processedOrder = orderService.makePayment(createdOrder);
         return new ApiResponse("Buy " + mainResource + " success.", processedOrder);
     }
 
-    @GetMapping("/order/{mainResource}/{id}")
+    @GetMapping("/{mainResource}/{id}")
     public JsonAPIResponse isOrderedItem(
-            @Valid @NotNull @PathVariable String mainResource,
-            @Valid @NotNull @PathVariable Long id){
+            @Valid @NotNull @PathVariable(name = "mainResource") String mainResource,
+            @Valid @NotNull @PathVariable(name = "id") Long id) {
         boolean isOrdered = orderService.isOrderedItem(mainResource, id);
         return new ApiResponse("Check isOrdered " + mainResource + "success.", isOrdered);
     }
 
-    @GetMapping(path = "/order/{id}/cancel")
+    @DeleteMapping(path = "/{id}")
     public JsonAPIResponse cancelOrder(
-            @Valid @NotNull @PathVariable Long id) {
+            @Valid @NotNull @PathVariable(name = "id") Long id) {
         orderService.deleteOrder(id);
         return new ApiResponse("Cancel order success.");
     }
 
-    @GetMapping(path = "/order")
+    @GetMapping(path = "")
     public JsonAPIResponse getOrders() {
         List<OrderDto> allOrders = orderService.getAllOrders();
         return new ApiResponse("Success get all orders.", allOrders);

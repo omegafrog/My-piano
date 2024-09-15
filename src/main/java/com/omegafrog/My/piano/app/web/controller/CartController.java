@@ -24,14 +24,14 @@ public class CartController {
     private final OrderService orderService;
 
     @PostMapping("{mainResource}")
-    public JsonAPIResponse addToCart(@RequestBody OrderRegisterDto dto, @PathVariable String mainResource)  {
+    public JsonAPIResponse addToCart(@RequestBody OrderRegisterDto dto, @PathVariable(name = "mainResource") String mainResource)  {
         OrderDto createdOrder = orderService.makeOrder(mainResource, dto);
         List<OrderDto> orderDtoList = cartService.addToCart(createdOrder);
         return new ApiResponse("Add order to cart success.", orderDtoList);
     }
 
     @DeleteMapping("/{id}")
-    public JsonAPIResponse deleteFromCart(@NotNull @PathVariable Long id){
+    public JsonAPIResponse deleteFromCart(@NotNull @PathVariable(name="id") Long id){
         cartService.deleteFromCart(id);
         return new ApiResponse("Delete order from cart success.");
     }

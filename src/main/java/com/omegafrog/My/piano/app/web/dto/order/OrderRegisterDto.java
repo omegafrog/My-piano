@@ -12,7 +12,5 @@ import lombok.*;
 public class OrderRegisterDto {
     @NotNull
     private Long itemId;
-    @NotNull
-    private Long buyerId;
     private String couponId;
 }

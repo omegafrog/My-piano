@@ -1,5 +1,6 @@
 package com.omegafrog.My.piano.app.web.domain.user;
 
+import com.omegafrog.My.piano.app.web.domain.article.Article;
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
 import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
@@ -20,7 +21,7 @@ class UserTest {
 
     @Test
     @DisplayName("유저의 내용을 수정할 수 있다.")
-    void updateUserTest(){
+    void updateUserTest() {
         User user = User.builder()
                 .name("hi")
                 .loginMethod(LoginMethod.EMAIL)
@@ -81,6 +82,7 @@ class UserTest {
         user.addUploadedVideoPost(post);
         Assertions.assertThat(user.getUploadedVideoPosts()).hasSize(1).contains(post);
     }
+
     @Test
     @DisplayName("lesson을 scrap할 수 있어야 한다.")
     @Order(1)
@@ -105,6 +107,7 @@ class UserTest {
                         .stream().filter(userScrappedLesson -> userScrappedLesson.getLesson().equals(lesson)))
                 .isNotEmpty();
     }
+
     @Test
     @DisplayName("유저가 해당 Lesson entity가 스크랩한 Lesson entity인지 알 수 있어야 한다.")
     @Order(2)
@@ -179,7 +182,7 @@ class UserTest {
         user.likeSheetPost(post);
         user.dislikeSheetPost(post);
         Assertions.assertThat(user.getLikedSheetPosts()
-                .stream().anyMatch(item->item.getSheetPost().equals(post))).isFalse();
+                .stream().anyMatch(item -> item.getSheetPost().equals(post))).isFalse();
     }
 
     @Test
@@ -213,7 +216,7 @@ class UserTest {
         Post post = new Post();
         user.likePost(post);
         Assertions.assertThat(user.getLikedPosts()
-                .stream().anyMatch(item->item.getPost().equals(post))).isTrue();
+                .stream().anyMatch(item -> item.getPost().equals(post))).isTrue();
     }
 
     @Test
@@ -230,7 +233,7 @@ class UserTest {
         VideoPost post = new VideoPost();
         user.likeVideoPost(post);
         Assertions.assertThat(user.getLikedVideoPosts()
-                .stream().anyMatch(item->item.getVideoPost().equals(post))).isTrue();
+                .stream().anyMatch(item -> item.getVideoPost().equals(post))).isTrue();
     }
 
     @Test
@@ -248,7 +251,7 @@ class UserTest {
         user.likeVideoPost(post);
         user.dislikeVideoPost(post);
         Assertions.assertThat(user.getLikedVideoPosts()
-                .stream().anyMatch(item->item.getVideoPost().equals(post))).isFalse();
+                .stream().anyMatch(item -> item.getVideoPost().equals(post))).isFalse();
     }
 
     @Test
@@ -280,7 +283,7 @@ class UserTest {
                 .phoneNum(new PhoneNum())
                 .build();
         ReflectionTestUtils.setField(user, "id", 1L);
-        Comment comment = new Comment(1L, user,"content",null);
+        Comment comment = new Comment(1L, user, "content", new Article(), null);
         user.addWroteComments(comment);
         user.deleteWroteComments(comment, user);
         Assertions.assertThat(user.getWroteComments()).doesNotContain(comment);
@@ -320,7 +323,7 @@ class UserTest {
         user.likePost(post);
         user.dislikePost(post);
         Assertions.assertThat(user.getLikedPosts()
-                .stream().anyMatch(item->item.getPost().equals(post))).isFalse();
+                .stream().anyMatch(item -> item.getPost().equals(post))).isFalse();
     }
 
     @Test

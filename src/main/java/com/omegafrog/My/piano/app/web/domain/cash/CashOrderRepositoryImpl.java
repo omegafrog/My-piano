@@ -4,9 +4,12 @@ import com.omegafrog.My.piano.app.web.enums.OrderStatus;
 import com.omegafrog.My.piano.app.web.dto.dateRange.DateRange;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.DateTimeExpression;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,14 +36,16 @@ public class CashOrderRepositoryImpl implements CashOrderRepositoryCustom {
      * @return {@link List}<{@link CashOrder}>
      */
     @Transactional
-    public List<CashOrder> findByUserId(Long userId, Pageable pageable) {
-        return jpaQueryFactory.select(qCashOrder)
+    public Page<CashOrder> findByUserId(Long userId, Pageable pageable) {
+        JPAQuery<CashOrder> query = jpaQueryFactory.select(qCashOrder)
                 .from(qCashOrder)
-                .where(qCashOrder.userId.eq(userId))
+                .where(qCashOrder.userId.eq(userId));
+        List<CashOrder> fetched = query
                 .orderBy(qCashOrder.createdAt.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
+        return PageableExecutionUtils.getPage(fetched, pageable, ()->query.fetchAll().stream().count());
     }
 
     /**
@@ -52,17 +57,19 @@ public class CashOrderRepositoryImpl implements CashOrderRepositoryCustom {
      * @return {@link List}<{@link CashOrder}>
      */
     @Transactional
-    public List<CashOrder> findByUserIdAndDate(Long userId, Pageable pageable, DateRange range) {
+    public Page<CashOrder> findByUserIdAndDate(Long userId, Pageable pageable, DateRange range) {
         LocalDateTime start =range.getStart().atStartOfDay();
         LocalDateTime end = range.getEnd().atTime(23, 59, 59);
-        return jpaQueryFactory.select(qCashOrder)
+        JPAQuery<CashOrder> query = jpaQueryFactory.select(qCashOrder)
                 .from(qCashOrder)
                 .where(qCashOrder.userId.eq(userId),
-                        qCashOrder.createdAt.between(start, end))
+                        qCashOrder.createdAt.between(start, end));
+        List<CashOrder> fetched = query
                 .orderBy(qCashOrder.createdAt.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
+        return PageableExecutionUtils.getPage(fetched, pageable, ()->query.fetchAll().stream().count());
     }
 
     @Transactional

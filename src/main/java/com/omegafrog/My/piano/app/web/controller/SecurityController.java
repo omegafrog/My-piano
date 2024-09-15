@@ -7,6 +7,7 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.security.jwt.TokenInfo;
 import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
+import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.utils.MapperUtil;
 import com.omegafrog.My.piano.app.web.dto.user.RegisterUserDto;
 import com.omegafrog.My.piano.app.web.dto.user.SecurityUserDto;
@@ -26,28 +27,18 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.CredentialsExpiredException;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Nullable;
-import javax.security.auth.login.AccountException;
 import javax.security.auth.login.AccountExpiredException;
 import javax.security.auth.login.AccountLockedException;
 import java.io.IOException;
 import java.net.URI;
 import java.security.GeneralSecurityException;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -58,6 +49,7 @@ public class SecurityController {
     private final TokenUtils tokenUtils;
     private final CommonUserService commonUserService;
     private final MapperUtil mapperUtil;
+    private final AuthenticationUtil authenticationUtil;
 
     @Value("${spring.security.oauth2.client.registration.google.client-id}")
     private String clientId;
@@ -98,8 +90,8 @@ public class SecurityController {
 
     @PostMapping("/user/register")
     public JsonAPIResponse<SecurityUserDto> registerCommonUser(
-            @Valid @RequestParam(name = "profileImg") @Nullable MultipartFile profileImg,
-            @Valid @NotNull @RequestParam String registerInfo)
+            @Valid @RequestPart(name = "profileImg") @Nullable MultipartFile profileImg,
+            @Valid @NotNull @RequestPart(name="registerInfo") String registerInfo)
             throws IOException, DuplicatePropertyException {
         RegisterUserDto dto = mapperUtil.parseRegisterUserInfo(registerInfo);
         SecurityUserDto securityUserDto;
@@ -157,9 +149,8 @@ public class SecurityController {
 
 
     @GetMapping("/user/signOut")
-    public JsonAPIResponse signOutUser(Authentication auth) {
-        SecurityUser user = (SecurityUser) auth.getPrincipal();
-        commonUserService.signOutUser(user.getUsername());
+    public JsonAPIResponse signOutUser() {
+        commonUserService.signOutUser();
         return new ApiResponse("회원탈퇴 성공.");
     }
 }

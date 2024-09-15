@@ -9,6 +9,7 @@ import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceException;
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.List;
 
 @RestControllerAdvice
+@Slf4j
 public class ExceptionAdvisor {
 
     /**
@@ -50,7 +52,8 @@ public class ExceptionAdvisor {
 
     @ExceptionHandler(value = {JsonProcessingException.class, PersistenceException.class})
     public Object internalServerError(Throwable ex) {
-        ex.printStackTrace();
+        log.error(ex.getLocalizedMessage());
+//        return new APIInternalServerResponse("예상하지 못한 에러입니다.");
         return new APIInternalServerResponse(ex.getMessage());
     }
 
@@ -60,19 +63,18 @@ public class ExceptionAdvisor {
      * @param ex EntityNotFoundException
      * @return APIBadRequestResponse : exception의 메세지를 담아 리턴함.
      */
-
     @ExceptionHandler({
             EntityNotFoundException.class,
             EntityExistsException.class, PaymentException.class,
             DuplicatePropertyException.class})
     public Object clientRequestError(RuntimeException ex) {
-        ex.printStackTrace();
+        log.error(ex.getLocalizedMessage());
         return new APIBadRequestResponse(ex.getMessage());
     }
 
     @ExceptionHandler({ConstraintViolationException.class })
     public Object JDBCBindingViolationExceptionHandler(ConstraintViolationException ex) {
-        ex.printStackTrace();
+        log.error(ex.getMessage(), ex);
         StringBuilder builder = new StringBuilder();
         ex.getConstraintViolations().forEach(
                 violation-> builder.append(violation.getMessage()).append("\n")
@@ -81,14 +83,7 @@ public class ExceptionAdvisor {
     }
     @ExceptionHandler(DataIntegrityViolationException.class)
     public Object JDBCBindingViolationExceptionHandler(DataIntegrityViolationException ex) {
-        ex.printStackTrace();
+        log.error(ex.getMessage(), ex);
         return new APIBadRequestResponse(ex.getCause().getCause().getMessage());
     }
-
-    @ExceptionHandler(Exception.class)
-    public Object exceptionHandler(Exception ex) {
-        ex.printStackTrace();
-        return new APIInternalServerResponse(ex.getMessage());
-    }
-
 }

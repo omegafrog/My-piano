@@ -1,7 +1,6 @@
 package com.omegafrog.My.piano.app.web.infra.post;
 
 import com.omegafrog.My.piano.app.web.domain.article.Article;
-import com.omegafrog.My.piano.app.web.domain.article.ViewCount;
 import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.post.PostViewCount;
 import com.omegafrog.My.piano.app.web.domain.post.PostViewCountRepository;
@@ -13,7 +12,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class PostViewCountRepositoryImpl implements PostViewCountRepository {
     private final RedisTemplate<String, PostViewCount> redisTemplate;
-    private final RedisPostVIewCountRepository repository;
+    private final RedisPostViewCountRepository repository;
     @Override
     public int incrementViewCount(Article article) {
         if(!(article instanceof Post post)) throw new IllegalArgumentException("Article is not Post");

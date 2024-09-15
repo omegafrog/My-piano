@@ -2,44 +2,36 @@ package com.omegafrog.My.piano.app.web.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.omegafrog.My.piano.app.Cleanup;
+import com.omegafrog.My.piano.app.TestUtil;
+import com.omegafrog.My.piano.app.TestUtilConfig;
 import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
-import com.omegafrog.My.piano.app.security.jwt.RefreshToken;
-import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
-import com.omegafrog.My.piano.app.web.service.admin.CommonUserService;
-import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
-import com.omegafrog.My.piano.app.web.domain.lesson.LessonInformation;
-import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
-import com.omegafrog.My.piano.app.web.domain.lesson.VideoInformation;
-import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
-import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
-import com.omegafrog.My.piano.app.web.domain.user.User;
-import com.omegafrog.My.piano.app.web.dto.user.SecurityUserDto;
-import com.omegafrog.My.piano.app.web.dto.lesson.UpdateLessonDto;
+import com.omegafrog.My.piano.app.security.entity.authorities.Role;
+import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
 import com.omegafrog.My.piano.app.web.dto.comment.RegisterCommentDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
-import com.omegafrog.My.piano.app.web.dto.lesson.LessonRegisterDto;
-import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
-import com.omegafrog.My.piano.app.web.enums.*;
-import jakarta.servlet.http.Cookie;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.omegafrog.My.piano.app.web.dto.lesson.RegisterLessonDto;
+import com.omegafrog.My.piano.app.web.dto.lesson.UpdateLessonDto;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.RegisterSheetPostDto;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
+import jakarta.persistence.EntityNotFoundException;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -50,7 +42,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@Transactional
+@Import(TestUtilConfig.class)
 class LessonControllerTest {
 
     @Autowired
@@ -58,281 +50,312 @@ class LessonControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
     @Autowired
-    private SheetPostRepository sheetPostRepository;
-    @Autowired
     private SecurityUserRepository securityUserRepository;
+    private TestUtil.TokenResponse artistToken;
+    private TestUtil.TokenResponse otherToken;
+    private TestUtil.TokenResponse otherToken2;
     @Autowired
-    private LessonRepository lessonRepository;
-    @Autowired
-    private CommonUserService commonUserService;
+    private TestUtil testUtil;
 
     @Autowired
-    private RefreshTokenRepository refreshTokenRepository;
-    User artist;
-    Lesson lesson;
-    SheetPost savedSheetPost;
-
-    @BeforeAll
-    void settings() throws Exception {
-
-        SecurityUserDto securityUserDto = commonUserService.registerUserWithoutProfile(TestLoginUtil.user1);
-        commonUserService.registerUserWithoutProfile(TestLoginUtil.user2);
-        artist = ((SecurityUser) commonUserService.loadUserByUsername(securityUserDto.getUsername())).getUser();
-
-        savedSheetPost = sheetPostRepository.save(DummyData.sheetPost(artist));
-
-        MvcResult mvcResult = mockMvc.perform(post("/user/login")
-                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                        .content("username=user1&password=password"))
-                .andReturn();
-        String contentAsString = mvcResult.getResponse().getContentAsString();
-        System.out.println("contentAsString = " + contentAsString);
-        LoginResult loginResult = objectMapper.readValue(contentAsString, LoginResult.class);
-        accessToken = loginResult.getSerializedData().get("access token");
-        refreshToken = mvcResult.getResponse().getCookie("refreshToken");
-
-        MvcResult mvcResult2 = mockMvc.perform(post("/user/login")
-                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                        .content("username=user2&password=password"))
-                .andReturn();
-        String contentAsString2 = mvcResult2.getResponse().getContentAsString();
-        LoginResult loginResult2 = objectMapper.readValue(contentAsString2, LoginResult.class);
-        wrongAccessToken = loginResult2.getSerializedData().get("access token");
-        wrongRefreshToken = mvcResult2.getResponse().getCookie("refreshToken");
-    }
+    private Cleanup cleanUp;
 
     @BeforeEach
-    void setLesson() {
-        lesson = DummyData.lesson(savedSheetPost, artist);
+    void settings() throws Exception {
+        // register lesson artist
+        testUtil.register(mockMvc, TestUtil.user1);
+        SecurityUser securityUser = securityUserRepository.findByUsername(TestUtil.user1.getUsername())
+                .orElseThrow(() -> new EntityNotFoundException());
+        securityUser.changeRole(Role.CREATOR);
+        securityUserRepository.save(securityUser);
+
+        artistToken = testUtil.login(mockMvc, TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
+        // register other user
+        testUtil.register(mockMvc, TestUtil.user2);
+        otherToken = testUtil.login(mockMvc, TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
+
+        testUtil.register(mockMvc, TestUtil.user3);
+        otherToken2 = testUtil.login(mockMvc, TestUtil.user3.getUsername(), TestUtil.user3.getPassword());
     }
 
-
-    String accessToken;
-    Cookie refreshToken;
-
-    String wrongAccessToken;
-    Cookie wrongRefreshToken;
-
-    @NoArgsConstructor
-    @Data
-    private static class LoginResult {
-        private String status;
-        private String message;
-        private Map<String, String> serializedData;
+    @AfterEach
+    void cleanUp() {
+        cleanUp.cleanUp();
     }
 
     @Test
-    @Transactional
     @DisplayName("로그인하고 lesson을 생성할 수 있어야 한다.")
     void createLessonTest() throws Exception {
-        LessonRegisterDto lessonRegisterDto = LessonRegisterDto.builder()
-                .sheetId(lesson.getSheetPost().getId())
-                .title(lesson.getTitle())
-                .videoInformation(lesson.getVideoInformation())
-                .lessonInformation(lesson.getLessonInformation())
-                .price(lesson.getPrice())
-                .subTitle(lesson.getContent())
-                .build();
-        String body = objectMapper.writeValueAsString(lessonRegisterDto);
-        System.out.println("body = " + body);
+        //given
+        RegisterSheetPostDto registerSheetPostDto = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1);
+        SheetPostDto sheetPostDto = testUtil.writeSheetPost(mockMvc, artistToken, registerSheetPostDto);
+        RegisterLessonDto registerLessonDto = TestUtil.registerLessonDto(sheetPostDto.getSheet().getId());
 
-        mockMvc.perform(post("/lesson")
+        //when
+        String savedLessonString = mockMvc.perform(post("/api/v1/lessons")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(body)
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
-                .andDo(print());
-    }
-
-    @Test
-    @Transactional
-    @DisplayName("로그인하지 않으면 lesson을 등록할 수 없다.")
-    void createLessonAuthorizationTest() throws Exception {
-        LessonRegisterDto lessonRegisterDto = LessonRegisterDto.builder()
-                .sheetId(lesson.getSheetPost().getId())
-                .title(lesson.getTitle())
-                .videoInformation(lesson.getVideoInformation())
-                .lessonInformation(lesson.getLessonInformation())
-                .price(lesson.getPrice())
-                .subTitle(lesson.getContent())
-                .build();
-        String body = objectMapper.writeValueAsString(lessonRegisterDto);
-        mockMvc.perform(post("/lesson")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body)
-                )
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.value()))
-                .andDo(print());
-    }
-
-    @Test
-    @Transactional
-    @DisplayName("로그인하고 lesson을 수정할 수 있어야 한다.")
-    void updateLessonTest() throws Exception {
-        Lesson savedLesson = lessonRepository.save(lesson);
-        UpdateLessonDto updatedLessonDto = UpdateLessonDto.builder()
-                .lessonInformation(lesson.getLessonInformation())
-                .sheetId(lesson.getSheetPost().getId())
-                .videoInformation(lesson.getVideoInformation())
-                .price(30000)
-                .title("changedTitle")
-                .subTitle(lesson.getContent())
-                .build();
-        String contentAsString = mockMvc.perform(post("/lesson/" + savedLesson.getId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updatedLessonDto))
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken))
+                        .content(objectMapper.writeValueAsString(registerLessonDto))
+                        .header(HttpHeaders.AUTHORIZATION, artistToken.getAccessToken())
+                        .cookie(artistToken.getRefreshToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andDo(print())
                 .andReturn().getResponse().getContentAsString();
-        ;
-        long id = objectMapper.readTree(contentAsString).get("serializedData").get("lesson").get("id").asLong();
-        Optional<Lesson> byId = lessonRepository.findById(id);
-        Assertions.assertThat(byId).isPresent();
-        Assertions.assertThat(byId).contains(savedLesson);
-        Assertions.assertThat(byId.get().getTitle()).isEqualTo("changedTitle");
+        long id = objectMapper.readTree(savedLessonString).get("data").get("id").asLong();
 
+        //then
+        String contentAsString = mockMvc.perform(get("/api/v1/lessons"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+                .andDo(print())
+                .andReturn().getResponse().getContentAsString();
+        Assertions.assertThat(objectMapper.readTree(contentAsString).get("data").get(0).get("id").asLong())
+                .isEqualTo(id);
+    }
 
+    @Test
+    @DisplayName("로그인하지 않으면 lesson을 등록할 수 없다.")
+    void createLessonAuthorizationTest() throws Exception {
+        //given
+        RegisterSheetPostDto registerSheetPostDto = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1);
+        SheetPostDto sheetPostDto = testUtil.writeSheetPost(mockMvc, artistToken, registerSheetPostDto);
+        RegisterLessonDto registerLessonDto = TestUtil.registerLessonDto(sheetPostDto.getSheet().getId());
+
+        // when, then
+        String body = objectMapper.writeValueAsString(registerLessonDto);
+        mockMvc.perform(post("/api/v1/lessons")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body)
+                )
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.value()))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("로그인하고 lesson을 수정할 수 있어야 한다.")
+    void updateLessonTest() throws Exception {
+        //given
+        RegisterSheetPostDto registerSheetPostDto = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1);
+        SheetPostDto sheetPostDto = testUtil.writeSheetPost(mockMvc, artistToken, registerSheetPostDto);
+        RegisterLessonDto registerLessonDto = TestUtil.registerLessonDto(sheetPostDto.getSheet().getId());
+        LessonDto lessonDto = testUtil.writeLesson(mockMvc, artistToken, registerLessonDto);
+
+        //when
+        UpdateLessonDto updatedLessonDto = UpdateLessonDto.builder()
+                .lessonInformation(lessonDto.getLessonInformation())
+                .sheetId(lessonDto.getSheet().getId())
+                .videoInformation(lessonDto.getVideoInformation())
+                .price(30000)
+                .title("changedTitle")
+                .subTitle(lessonDto.getSubTitle())
+                .build();
+        String contentAsString = mockMvc.perform(post("/api/v1/lessons/" + lessonDto.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updatedLessonDto))
+                        .header(HttpHeaders.AUTHORIZATION, artistToken.getAccessToken())
+                        .cookie(artistToken.getRefreshToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+                .andDo(print())
+                .andReturn().getResponse().getContentAsString();
+        long id = objectMapper.readTree(contentAsString).get("data").get("id").asLong();
+
+        //then
+        mockMvc.perform(get("/api/v1/lessons/" + id))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.title").value("changedTitle"))
+                .andDo(print());
     }
 
     @Test
     @DisplayName("작성자가 아닌 유저는 수정할 수 없다")
     void updateAuthorizationTest() throws Exception {
-        Lesson savedLesson = lessonRepository.save(lesson);
+        // given
+        // write lesson by artist
+        RegisterSheetPostDto registerSheetPostDto = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1);
+        SheetPostDto sheetPostDto = testUtil.writeSheetPost(mockMvc, artistToken, registerSheetPostDto);
+        RegisterLessonDto registerLessonDto = TestUtil.registerLessonDto(sheetPostDto.getSheet().getId());
+
+        LessonDto lessonDto = testUtil.writeLesson(mockMvc, artistToken, registerLessonDto);
+
+        // when
+        // update lesson by other user
         UpdateLessonDto updatedLessonDto = UpdateLessonDto.builder()
-                .lessonInformation(lesson.getLessonInformation())
-                .sheetId(lesson.getSheetPost().getId())
-                .videoInformation(lesson.getVideoInformation())
+                .lessonInformation(lessonDto.getLessonInformation())
+                .sheetId(lessonDto.getSheet().getId())
+                .videoInformation(lessonDto.getVideoInformation())
                 .price(30000)
                 .title("changedTitle")
-                .subTitle(lesson.getContent())
+                .subTitle(lessonDto.getSubTitle())
                 .build();
 
         // 작성자가 아닌 유저는 접근할 수 없다.
-        mockMvc.perform(post("/lesson/" + savedLesson.getId())
+        mockMvc.perform(post("/api/v1/lessons/" + lessonDto.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updatedLessonDto))
-                        .header(HttpHeaders.AUTHORIZATION, wrongAccessToken)
-                        .cookie(wrongRefreshToken))
-                .andExpect(status().isOk())
+                        .header(HttpHeaders.AUTHORIZATION, otherToken.getAccessToken())
+                        .cookie(otherToken.getRefreshToken()))
+                .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.value()));
     }
 
     @Test
     @DisplayName("작성자가 아닌 유저는 레슨을 삭제할 수 없다")
     void deleteAuthorizationTest() throws Exception {
-        Lesson savedLesson = lessonRepository.save(lesson);
-        mockMvc.perform(delete("/lesson/" + savedLesson.getId())
-                        .header(HttpHeaders.AUTHORIZATION, wrongAccessToken)
-                        .cookie(wrongRefreshToken))
-                .andExpect(status().isOk())
+        //given
+        RegisterSheetPostDto registerSheetPostDto = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1);
+        SheetPostDto sheetPostDto = testUtil.writeSheetPost(mockMvc, artistToken, registerSheetPostDto);
+        RegisterLessonDto registerLessonDto = TestUtil.registerLessonDto(sheetPostDto.getSheet().getId());
+
+        LessonDto lessonDto = testUtil.writeLesson(mockMvc, artistToken, registerLessonDto);
+        // when, then
+        // delete lesson by other user
+        mockMvc.perform(delete("/api/v1/lessons/" + lessonDto.getId())
+                        .header(HttpHeaders.AUTHORIZATION, otherToken.getAccessToken())
+                        .cookie(otherToken.getRefreshToken()))
+                .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.value()))
                 .andDo(print());
     }
 
     @Test
-    @Transactional
     @DisplayName("로그인하고 레슨을 삭제할 수 있다.")
     void deleteLessonTest() throws Exception {
-        Lesson savedLesson = lessonRepository.save(lesson);
-        mockMvc.perform(delete("/lesson/" + savedLesson.getId())
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken))
+        //given
+        RegisterSheetPostDto registerSheetPostDto = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1);
+        SheetPostDto sheetPostDto = testUtil.writeSheetPost(mockMvc, artistToken, registerSheetPostDto);
+        RegisterLessonDto registerLessonDto = TestUtil.registerLessonDto(sheetPostDto.getSheet().getId());
+
+        LessonDto lessonDto = testUtil.writeLesson(mockMvc, artistToken, registerLessonDto);
+
+        //when, then
+        // delete lesson by artist
+        mockMvc.perform(delete("/api/v1/lessons/" + lessonDto.getId())
+                        .header(HttpHeaders.AUTHORIZATION, artistToken.getAccessToken())
+                        .cookie(artistToken.getRefreshToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andDo(print());
     }
 
     @Test
-    @Transactional
     @DisplayName("로그인하고 댓글을 작성할 수 있다.")
     void addCommentTest() throws Exception {
-        List<RefreshToken> all = refreshTokenRepository.findAll();
-        System.out.println("all = " + all);
-        Lesson savedLesson = lessonRepository.save(lesson);
+        // given
+        RegisterSheetPostDto registerSheetPostDto = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1);
+        SheetPostDto sheetPostDto = testUtil.writeSheetPost(mockMvc, artistToken, registerSheetPostDto);
+        RegisterLessonDto registerLessonDto = TestUtil.registerLessonDto(sheetPostDto.getSheet().getId());
+
+        LessonDto lessonDto = testUtil.writeLesson(mockMvc, artistToken, registerLessonDto);
+
+        // when
+        // write comment by other user
         RegisterCommentDto comment = RegisterCommentDto.builder()
                 .content("comment")
                 .build();
-        String contentAsString = mockMvc.perform(post("/lesson/" + savedLesson.getId() + "/comment")
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken)
+
+        String contentAsString = mockMvc.perform(post("/api/v1/lessons/" + lessonDto.getId() + "/comments")
+                        .header(HttpHeaders.AUTHORIZATION, otherToken.getAccessToken())
+                        .cookie(otherToken.getRefreshToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(comment)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andDo(print())
                 .andReturn().getResponse().getContentAsString();
-        ;
-        String content = objectMapper.readTree(contentAsString).get("serializedData").get("comments").get(0).get("content").asText();
-        Assertions.assertThat(content).isEqualTo("comment");
+        String content = objectMapper.readTree(contentAsString).get("data").get(0).get("content").asText();
+
+        // then
+        Assertions.assertThat(content).isEqualTo(comment.getContent());
     }
 
     @Test
     @DisplayName("로그인하지 않으면 댓글을 작성할 수 없다.")
     void addCommentAuthenticationTest() throws Exception {
-        Lesson savedLesson = lessonRepository.save(lesson);
+        //given
+        RegisterSheetPostDto registerSheetPostDto = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1);
+        SheetPostDto sheetPostDto = testUtil.writeSheetPost(mockMvc, artistToken, registerSheetPostDto);
+        RegisterLessonDto registerLessonDto = TestUtil.registerLessonDto(sheetPostDto.getSheet().getId());
+
+        LessonDto lessonDto = testUtil.writeLesson(mockMvc, artistToken, registerLessonDto);
+
+        // when
+        // write comment without authorization header
         CommentDto comment = CommentDto.builder()
                 .content("comment")
                 .build();
-        mockMvc.perform(post("/lesson/" + savedLesson.getId() + "/comment")
+        mockMvc.perform(post("/api/v1/lessons/" + lessonDto.getId() + "/comments")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(comment)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.value()));
+                // then
+                // forbidden response
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.value()));
     }
 
     @Test
-    @Transactional
     @DisplayName("자신이 쓴 댓글을 삭제할 수 있다.")
     void deleteCommentTest() throws Exception {
         // given
-        Lesson savedLesson = lessonRepository.save(lesson);
+        RegisterSheetPostDto registerSheetPostDto = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1);
+        SheetPostDto sheetPostDto = testUtil.writeSheetPost(mockMvc, artistToken, registerSheetPostDto);
+        RegisterLessonDto registerLessonDto = TestUtil.registerLessonDto(sheetPostDto.getSheet().getId());
 
+        LessonDto lessonDto = testUtil.writeLesson(mockMvc, artistToken, registerLessonDto);
+
+        // write comment by other user
         RegisterCommentDto comment = RegisterCommentDto.builder()
                 .content("comment")
                 .build();
 
-        String contentAsString = mockMvc.perform(post("/lesson/" + savedLesson.getId() + "/comment")
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken)
+        String contentAsString = mockMvc.perform(post("/api/v1/lessons/" + lessonDto.getId() + "/comments")
+                        .header(HttpHeaders.AUTHORIZATION, otherToken.getAccessToken())
+                        .cookie(otherToken.getRefreshToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(comment)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andDo(print())
                 .andReturn().getResponse().getContentAsString();
-        ;
-        Long commentId = objectMapper.readTree(contentAsString).get("serializedData").get("comments").get(0).get("id").asLong();
 
-        MvcResult deleteCommentResult = mockMvc.perform(delete("/lesson/" + savedLesson.getId() + "/comment/" + commentId)
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken))
+        Long commentId = objectMapper.readTree(contentAsString).get("data").get(0).get("id").asLong();
+
+        // when
+        // delete comment by other user
+        String contentAsString2 =
+                mockMvc.perform(delete("/api/v1/lessons/" + lessonDto.getId() + "/comments/" + commentId)
+                                .header(HttpHeaders.AUTHORIZATION, otherToken.getAccessToken())
+                                .cookie(otherToken.getRefreshToken()))
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+                        .andReturn().getResponse().getContentAsString();
+
+        // then
+        // get all comments in lesson and it must be empty
+        mockMvc.perform(get("/api/v1/lessons/" + lessonDto.getId() + "/comments"))
+                .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
-                .andReturn();
-
-        String responseBody = deleteCommentResult.getResponse().getContentAsString();
-        JsonNode jsonNode = objectMapper.readTree(responseBody).get("serializedData").get("comments");
-        Assertions.assertThat(jsonNode).isEmpty();
+                .andExpect(jsonPath("$.data.content").isEmpty());
     }
 
     @Test
     @DisplayName("남의 댓글은 삭제할 수 없다.")
     void deleteCommentAuthorizationTest() throws Exception {
-        Lesson savedLesson = lessonRepository.save(lesson);
+        //given
+        RegisterSheetPostDto registerSheetPostDto = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1);
+        SheetPostDto sheetPostDto = testUtil.writeSheetPost(mockMvc, artistToken, registerSheetPostDto);
+        RegisterLessonDto registerLessonDto = TestUtil.registerLessonDto(sheetPostDto.getSheet().getId());
+
+        LessonDto lessonDto = testUtil.writeLesson(mockMvc, artistToken, registerLessonDto);
 
         RegisterCommentDto comment = RegisterCommentDto.builder()
                 .content("comment")
                 .build();
 
-        String contentAsString = mockMvc.perform(post("/lesson/" + savedLesson.getId() + "/comment")
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken)
+        String contentAsString = mockMvc.perform(post("/api/v1/lessons/" + lessonDto.getId() + "/comments")
+                        .header(HttpHeaders.AUTHORIZATION, otherToken.getAccessToken())
+                        .cookie(otherToken.getRefreshToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(comment)))
                 .andExpect(status().isOk())
@@ -340,78 +363,102 @@ class LessonControllerTest {
                 .andDo(print())
                 .andReturn().getResponse().getContentAsString();
         ;
-        Long commentId = objectMapper.readTree(contentAsString).get("serializedData").get("comments").get(0).get("id").asLong();
-        mockMvc.perform(delete("/lesson/" + savedLesson.getId() + "/comment/" + commentId)
-                        .header(HttpHeaders.AUTHORIZATION, wrongAccessToken)
-                        .cookie(wrongRefreshToken))
-                .andExpect(status().isOk())
+        Long commentId = objectMapper.readTree(contentAsString).get("data").get(0).get("id").asLong();
+
+        // when
+        // delete comment by other user 2 who does not wrote comment.
+        mockMvc.perform(delete("/api/v1/lessons/" + lessonDto.getId() + "/comments/" + commentId)
+                        .header(HttpHeaders.AUTHORIZATION, otherToken2.getAccessToken())
+                        .cookie(otherToken2.getRefreshToken()))
+                // then
+                // get forbidden response
+                .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.value()));
     }
 
     @Test
-    @Transactional
     void findLessonTest() throws Exception {
-        Lesson saved1 = lessonRepository.save(lesson);
-        String contentAsString = mockMvc.perform(get("/lesson/" + saved1.getId()))
+        // given
+        RegisterSheetPostDto registerSheetPostDto = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1);
+        SheetPostDto sheetPostDto = testUtil.writeSheetPost(mockMvc, artistToken, registerSheetPostDto);
+        RegisterLessonDto registerLessonDto = TestUtil.registerLessonDto(sheetPostDto.getSheet().getId());
+
+        LessonDto savedLessonDto = testUtil.writeLesson(mockMvc, artistToken, registerLessonDto);
+
+        // when
+        // get lesson by Id
+        String contentAsString = mockMvc.perform(get("/api/v1/lessons/" + savedLessonDto.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
-                .andReturn().getResponse().getContentAsString();;
-        LessonDto lessonDto = objectMapper.convertValue(
-                objectMapper.readTree(contentAsString).get("serializedData").get("lesson"), LessonDto.class);
+                .andReturn().getResponse().getContentAsString();
 
-        Assertions.assertThat(lessonDto.getId()).isEqualTo(saved1.getId());
-        Assertions.assertThat(lessonDto.getTitle()).isEqualTo(saved1.getTitle());
+        // then
+        // get lessonDto by response is equal to savedLessonDto
+        LessonDto foundedLessonDto = objectMapper.convertValue(
+                objectMapper.readTree(contentAsString).get("data"), LessonDto.class);
+
+        Assertions.assertThat(savedLessonDto.getId()).isEqualTo(foundedLessonDto.getId());
+        Assertions.assertThat(savedLessonDto.getTitle()).isEqualTo(foundedLessonDto.getTitle());
     }
 
     @Test
-    @Transactional
     @DisplayName("존재하지 않는 Lesson을 조회할 수 없다.")
     void findLessonFailedTest() throws Exception {
-        mockMvc.perform(get("/lesson/1"))
-                .andExpect(status().isOk())
+        //given
+        RegisterSheetPostDto registerSheetPostDto = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1);
+        SheetPostDto sheetPostDto = testUtil.writeSheetPost(mockMvc, artistToken, registerSheetPostDto);
+        RegisterLessonDto registerLessonDto = TestUtil.registerLessonDto(sheetPostDto.getSheet().getId());
+
+        LessonDto savedLessonDto = testUtil.writeLesson(mockMvc, artistToken, registerLessonDto);
+        Long notExisteId = 1L;
+        while (savedLessonDto.getId().equals(notExisteId)) {
+            notExisteId++;
+        }
+        // when
+        // get lesson by not existed Id
+        mockMvc.perform(get("/api/v1/lessons/" + notExisteId))
+                // then
+                // get 400 bad response
+                .andExpect(status().is4xxClientError())
                 .andExpect(jsonPath("$.status").value(HttpStatus.BAD_REQUEST.value()))
                 .andDo(print());
     }
 
     @Test
-    @Transactional
     void findAllLessonTest() throws Exception {
-        Lesson saved1 = lessonRepository.save(lesson);
-        Lesson lesson2 = Lesson.builder()
-                .sheetPost(savedSheetPost)
-                .title("lesson2")
-                .price(2000)
-                .lessonInformation(LessonInformation.builder()
-                        .instrument(Instrument.GUITAR_ACOUSTIC)
-                        .lessonDescription("hoho")
-                        .category(Category.ACCOMPANIMENT)
-                        .artistDescription("god")
-                        .policy(RefundPolicy.REFUND_IN_7DAYS)
-                        .build())
-                .lessonProvider(artist)
-                .subTitle("this is subtitle")
-                .videoInformation(
-                        VideoInformation.builder()
-                                .videoUrl("url")
-                                .runningTime(LocalTime.of(0, 20))
-                                .build())
-                .build();
-        lessonRepository.save(lesson2);
-        MvcResult mvcResult = mockMvc.perform(get("/lessons")
+        // given
+        // write lesson 1, 2
+        RegisterSheetPostDto registerSheetPostDto1 = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1);
+        RegisterSheetPostDto registerSheetPostDto2 = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto2);
+        SheetPostDto sheetPostDto1 = testUtil.writeSheetPost(mockMvc, artistToken, registerSheetPostDto1);
+        SheetPostDto sheetPostDto2 = testUtil.writeSheetPost(mockMvc, artistToken, registerSheetPostDto2);
+        RegisterLessonDto registerLessonDto1 = TestUtil.registerLessonDto(sheetPostDto1.getSheet().getId());
+        RegisterLessonDto registerLessonDto2 = TestUtil.registerLessonDto(sheetPostDto2.getSheet().getId());
+
+        LessonDto savedLessonDto1 = testUtil.writeLesson(mockMvc, artistToken, registerLessonDto1);
+        LessonDto savedLessonDto2 = testUtil.writeLesson(mockMvc, artistToken, registerLessonDto2);
+
+        // when
+        // get lessons
+        String contentAsString = mockMvc.perform(get("/api/v1/lessons")
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
-                .andReturn();
+                .andDo(print())
+                .andReturn().getResponse().getContentAsString();
 
-        String contentAsString = mvcResult.getResponse().getContentAsString();
-        Iterator<JsonNode> elements = objectMapper.readTree(contentAsString).get("serializedData").get("lessons").elements();
-        List<LessonDto> list = new ArrayList<>();
-        while (elements.hasNext()) {
-            list.add(objectMapper.convertValue(elements.next(), LessonDto.class));
+        // then
+        // get list of lessonDto have savedLessons
+        List<LessonDto> lessonDtoList = new ArrayList<>();
+        Iterator<JsonNode> data = objectMapper.readTree(contentAsString).get("data").elements();
+        while (data.hasNext()) {
+            JsonNode next = data.next();
+            lessonDtoList.add(objectMapper.convertValue(next, LessonDto.class));
         }
-        Assertions.assertThat(list).size().isGreaterThan(1);
-        Assertions.assertThat(list.get(0).getId()).isEqualTo(saved1.getId());
+
+        Assertions.assertThat(lessonDtoList).size().isGreaterThan(1);
+        Assertions.assertThat(lessonDtoList).extracting("id").contains(savedLessonDto1.getId(), savedLessonDto2.getId());
     }
 
 

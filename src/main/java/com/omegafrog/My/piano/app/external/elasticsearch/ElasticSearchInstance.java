@@ -37,7 +37,7 @@ public class ElasticSearchInstance {
     @Autowired
     private SheetPostIndexRepository sheetPostIndexRepository;
 
-    private final String SHEET_POST_INDEX_NAME="sheetpost";
+    private final String SHEET_POST_INDEX_NAME = "sheetpost";
 
 
     @Async("ThreadPoolTaskExecutor")
@@ -52,20 +52,20 @@ public class ElasticSearchInstance {
                                       @Nullable List<String> genres,
                                       Pageable pageable) throws IOException {
         List<Query> searchOptions = new ArrayList<>();
-        if (instruments!=null && !instruments.isEmpty()) {
+        if (instruments != null && !instruments.isEmpty()) {
             Query instrumentFilter = getQuery("instrument.keyword", instruments);
             searchOptions.add(instrumentFilter);
         }
-        if (difficulties!=null && !difficulties.isEmpty()) {
+        if (difficulties != null && !difficulties.isEmpty()) {
             Query difficultyFilter = getQuery("difficulty.keyword", difficulties);
             searchOptions.add(difficultyFilter);
         }
-        if (genres!=null && !genres.isEmpty()) {
-            Query genreFilter= getQuery("genre.keyword", genres);
+        if (genres != null && !genres.isEmpty()) {
+            Query genreFilter = getQuery("genre.keyword", genres);
             searchOptions.add(genreFilter);
         }
         SearchResponse<SheetPostIndex> response = esClient.search(
-                s -> getRequest(searchSentence, s, searchOptions, pageable),SheetPostIndex.class);
+                s -> getRequest(searchSentence, s, searchOptions, pageable), SheetPostIndex.class);
 
 
         long count = esClient.count(builder ->
@@ -89,11 +89,11 @@ public class ElasticSearchInstance {
     private SearchRequest.Builder getRequest(@Nullable String searchSentence, SearchRequest.Builder s,
                                              List<Query> searchOptions, Pageable pageable) {
         return s.index(SHEET_POST_INDEX_NAME)
-                        .from((pageable.getPageNumber()) * pageable.getPageSize())
-                        .size(pageable.getPageSize())
+                .from((pageable.getPageNumber()) * pageable.getPageSize())
+                .size(pageable.getPageSize())
                 .sort(SortOptions.of(so -> so.field(FieldSort.of(f -> f.field("created_at")
                         .order(SortOrder.Desc)))))
-                .query(q->getSearchTermQueryBuilder(searchSentence, searchOptions, q));
+                .query(q -> getSearchTermQueryBuilder(searchSentence, searchOptions, q));
     }
 
     private static ObjectBuilder<Query> getSearchTermQueryBuilder(@Nullable String searchSentence, List<Query> searchOptions, Query.Builder q) {
@@ -137,5 +137,9 @@ public class ElasticSearchInstance {
 
         List<Hit<SheetPostIndex>> hits = response.hits().hits();
         return hits.stream().map(Hit::source).toList();
+    }
+
+    public void updateSheetPostIndex() {
+
     }
 }

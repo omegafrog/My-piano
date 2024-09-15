@@ -1,22 +1,24 @@
 package com.omegafrog.My.piano.app.web.service.lesson;
+
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
+import com.omegafrog.My.piano.app.web.domain.article.LikeCount;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
+import com.omegafrog.My.piano.app.web.domain.lesson.LessonLikeCountRepository;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonViewCountRepository;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
-import com.omegafrog.My.piano.app.web.dto.lesson.UpdateLessonDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
-import com.omegafrog.My.piano.app.web.dto.lesson.LessonRegisterDto;
+import com.omegafrog.My.piano.app.web.dto.lesson.RegisterLessonDto;
+import com.omegafrog.My.piano.app.web.dto.lesson.UpdateLessonDto;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,30 +28,29 @@ import java.util.List;
 @Transactional
 @RequiredArgsConstructor
 public class LessonService {
-
-
     private static final Logger log = LoggerFactory.getLogger(LessonService.class);
     private final SheetPostRepository sheetPostRepository;
     private final LessonRepository lessonRepository;
     private final UserRepository userRepository;
     private final LessonViewCountRepository lessonViewCountRepository;
     private final AuthenticationUtil authenticationUtil;
+    private final LessonLikeCountRepository lessonLikeCountRepository;
 
-    public LessonDto createLesson(LessonRegisterDto lessonRegisterDto) {
+    public LessonDto createLesson(RegisterLessonDto registerLessonDto) {
         User loggedInUser = authenticationUtil.getLoggedInUser();
 
-        SheetPost sheetPost = sheetPostRepository.findById(lessonRegisterDto.getSheetPostId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity : " + lessonRegisterDto.getSheetPostId()));
+        SheetPost sheetPost = sheetPostRepository.findById(registerLessonDto.getSheetPostId())
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity : " + registerLessonDto.getSheetPostId()));
 
         Lesson lesson = Lesson.builder()
                 .sheetPost(sheetPost)
                 .lessonProvider(loggedInUser)
-                .title(lessonRegisterDto.getTitle())
-                .subTitle(lessonRegisterDto.getSubTitle())
-                .videoInformation(lessonRegisterDto.getVideoInformation())
-                .lessonInformation(lessonRegisterDto.getLessonInformation())
+                .title(registerLessonDto.getTitle())
+                .subTitle(registerLessonDto.getSubTitle())
+                .videoInformation(registerLessonDto.getVideoInformation())
+                .lessonInformation(registerLessonDto.getLessonInformation())
                 .lessonProvider(loggedInUser)
-                .price(lessonRegisterDto.getPrice())
+                .price(registerLessonDto.getPrice())
                 .build();
 
         Lesson saved = lessonRepository.save(lesson);
@@ -69,7 +70,9 @@ public class LessonService {
         LessonDto dto = lesson.toDto();
 
         int incrementedViewCount = lessonViewCountRepository.incrementViewCount(lesson);
+        LikeCount byId = lessonLikeCountRepository.findById(id);
         dto.setViewCount(incrementedViewCount);
+        dto.setLikeCount(byId.getLikeCount());
         return dto;
     }
 
@@ -105,29 +108,25 @@ public class LessonService {
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson Entity : " + id));
         lesson.increaseLikedCount();
 
-        User loggedUser = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
-        loggedUser.likeLesson(lesson);
+        loggedInUser.likeLesson(lesson);
+        lessonLikeCountRepository.incrementLikeCount(lesson);
     }
-    public void dislikeLesson(Long id){
+
+    public void dislikeLesson(Long id) {
         User loggedInUser = authenticationUtil.getLoggedInUser();
         Lesson lesson = lessonRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson Entity : " + id));
-        User loggedUser = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
-        if(!loggedUser.isLikedLesson(lesson)) throw new IllegalArgumentException("이 글에 좋아요를 누르지 않았습니다.");
+        if (!loggedInUser.isLikedLesson(lesson)) throw new IllegalArgumentException("이 글에 좋아요를 누르지 않았습니다.");
 
-        lesson.decreaseLikedCount();
-        loggedUser.dislikeLesson(lesson);
+        lessonLikeCountRepository.decrementLikeCount(lesson);
+        loggedInUser.dislikeLesson(lesson);
     }
 
-    public boolean isLikedLesson(Long id){
+    public boolean isLikedLesson(Long id) {
         User loggedInUser = authenticationUtil.getLoggedInUser();
         Lesson lesson = lessonRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson Entity : " + id));
-        User loggedUser = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
-        return loggedUser.isLikedLesson(lesson);
+        return loggedInUser.isLikedLesson(lesson);
     }
 
     public boolean isScrappedLesson(Long id) {

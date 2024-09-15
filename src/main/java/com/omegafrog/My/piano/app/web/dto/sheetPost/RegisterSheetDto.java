@@ -2,7 +2,7 @@ package com.omegafrog.My.piano.app.web.dto.sheetPost;
 
 import com.omegafrog.My.piano.app.web.domain.sheet.Genres;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
-import com.omegafrog.My.piano.app.web.domain.sheet.Sheet.SheetBuilder;
+import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.enums.Difficulty;
 import com.omegafrog.My.piano.app.web.enums.Instrument;
 import lombok.*;
@@ -18,26 +18,29 @@ public class RegisterSheetDto {
     private String title;
     @Range(min = 0, max = 4)
     private int difficulty;
-    @Range(min=0,max=12)
+    @Range(min = 0, max = 12)
     private int instrument;
 
     private Genres genres;
     private Boolean isSolo;
     private boolean lyrics;
-    private String filePath;
+    private String sheetUrl;
+    private String originalFileName;
 
     @Builder
     public RegisterSheetDto(String title, int difficulty, int instrument, Genres genres, boolean isSolo,
-                            boolean lyrics, String filePath) {
+                            boolean lyrics, String sheetUrl, String originalFileName) {
         this.title = title;
         this.difficulty = difficulty;
         this.instrument = instrument;
         this.isSolo = isSolo;
         this.lyrics = lyrics;
-        this.filePath = filePath;
+        this.sheetUrl = sheetUrl;
+        this.originalFileName = originalFileName;
+        this.genres = genres;
     }
 
-    public SheetBuilder getEntityBuilderWithoutAuthor() {
+    public Sheet createEntity(User user, int pageNum) {
         return Sheet.builder()
                 .title(title)
                 .difficulty(Arrays.stream(Difficulty.values()).filter(iter -> iter.ordinal() == difficulty).findFirst().get())
@@ -45,7 +48,11 @@ public class RegisterSheetDto {
                 .genres(genres)
                 .isSolo(isSolo)
                 .lyrics(lyrics)
-                .sheetUrl(filePath);
+                .sheetUrl(sheetUrl)
+                .originalFileName(originalFileName)
+                .user(user)
+                .pageNum(pageNum)
+                .build();
     }
 
 }

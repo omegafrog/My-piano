@@ -2,48 +2,48 @@ package com.omegafrog.My.piano.app.web.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.omegafrog.My.piano.app.security.entity.SecurityUser;
-import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
-import com.omegafrog.My.piano.app.security.exception.DuplicatePropertyException;
-import com.omegafrog.My.piano.app.web.service.admin.CommonUserService;
+import com.omegafrog.My.piano.app.Cleanup;
+import com.omegafrog.My.piano.app.TestUtil;
+import com.omegafrog.My.piano.app.TestUtilConfig;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPost;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPostRepository;
-import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
 import com.omegafrog.My.piano.app.web.dto.comment.RegisterCommentDto;
 import com.omegafrog.My.piano.app.web.dto.post.UpdateVideoPostDto;
+import com.omegafrog.My.piano.app.web.dto.user.RegisterUserDto;
 import com.omegafrog.My.piano.app.web.dto.videoPost.VideoPostDto;
 import com.omegafrog.My.piano.app.web.dto.videoPost.VideoPostRegisterDto;
+import com.omegafrog.My.piano.app.web.service.admin.CommonUserService;
 import jakarta.servlet.http.Cookie;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
-@Transactional
-@RequiredArgsConstructor
+@ExtendWith(SpringExtension.class)
 @AutoConfigureMockMvc
+@SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@Import(TestUtilConfig.class)
 class VideoPostControllerTest {
 
     @Autowired
@@ -54,43 +54,59 @@ class VideoPostControllerTest {
     @Autowired
     private CommonUserService commonUserService;
 
-    String accessToken;
-    Cookie refreshToken;
-    String wrongAccessToken;
-    Cookie wrongRefreshToken;
+    String user1AccessToken;
+    Cookie user1RefreshToken;
+    String user2user1AccessToken;
+    Cookie user2user1RefreshToken;
+
     @Autowired
     private VideoPostRepository videoPostRepository;
     @Autowired
-    private SecurityUserRepository securityUserRepository;
+    private Cleanup cleanup;
 
-    @NoArgsConstructor
-    @Data
-    private static class LoginResult {
-        private String status;
-        private String message;
-        private Map<String, String> serializedData;
+    @AfterEach
+    void cleanUp() {
+        cleanup.cleanUp();
     }
 
-    @BeforeAll
-    void getTokens() throws Exception, DuplicatePropertyException {
-        commonUserService.registerUserWithoutProfile(TestLoginUtil.user1);
-        commonUserService.registerUserWithoutProfile(TestLoginUtil.user2);
-        MvcResult mvcResult = mockMvc.perform(post("/user/login")
+    @BeforeEach
+    public void loginNRegister() throws Exception {
+        register(TestUtil.user1);
+        register(TestUtil.user2);
+
+        MvcResult user1Result = login(TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
+
+        user1AccessToken = objectMapper.readTree(user1Result.getResponse().getContentAsString())
+                .get("data").get("access token").asText();
+        user1RefreshToken = user1Result.getResponse().getCookie("refreshToken");
+
+        MvcResult user2Result = login(TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
+
+        user2user1AccessToken = objectMapper.readTree(user2Result.getResponse().getContentAsString())
+                .get("data").get("access token").asText();
+        user2user1RefreshToken = user2Result.getResponse().getCookie("refreshToken");
+    }
+
+    private MvcResult login(String username, String password) throws Exception {
+        String content = "username=" + username + "&password=" + password;
+        return mockMvc.perform(post("/api/v1/user/login")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                        .content("username=user1&password=password"))
+                        .content(content))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+                .andDo(print())
                 .andReturn();
-        LoginResult loginResult = objectMapper
-                .readValue(mvcResult.getResponse().getContentAsString(), LoginResult.class);
-        accessToken = loginResult.getSerializedData().get("access token");
-        refreshToken = mvcResult.getResponse().getCookie("refreshToken");
-        MvcResult mvcResult2 = mockMvc.perform(post("/user/login")
-                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                        .content("username=user2&password=password"))
-                .andReturn();
-        LoginResult loginResult2 = objectMapper
-                .readValue(mvcResult2.getResponse().getContentAsString(), LoginResult.class);
-        wrongAccessToken = loginResult2.getSerializedData().get("access token");
-        wrongRefreshToken = mvcResult.getResponse().getCookie("refreshToken");
+    }
+
+    private void register(RegisterUserDto user1) throws Exception {
+        String s = objectMapper.writeValueAsString(user1);
+        MockMultipartFile registerInfo = new MockMultipartFile("registerInfo", "", "application/json",
+                s.getBytes());
+        mockMvc.perform(multipart("/api/v1/user/register")
+                        .file(registerInfo)
+                        .header(HttpHeaders.CONTENT_TYPE, MediaType.MULTIPART_FORM_DATA_VALUE))
+                .andExpect(status().isOk())
+                .andDo(print());
     }
 
     @Test
@@ -101,20 +117,27 @@ class VideoPostControllerTest {
                 .content("content")
                 .videoUrl("url")
                 .build();
-        String contentAsString = mockMvc.perform(post("/community/video-post")
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken)
+        String videoPost1 = mockMvc.perform(post("/api/v1/video-post")
+                        .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
+                        .cookie(user1RefreshToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn().getResponse().getContentAsString();
-        String title = objectMapper.readTree(contentAsString).get("serializedData").get("videoPost").get("title").asText();
-        Long id = objectMapper.readTree(contentAsString).get("serializedData").get("videoPost").get("id").asLong();
+        String title = objectMapper.readTree(videoPost1).get("data").get("title").asText();
+        Long id = objectMapper.readTree(videoPost1).get("data").get("id").asLong();
 
         Assertions.assertThat(title.equals("title"));
-        SecurityUser user = (SecurityUser) commonUserService.loadUserByUsername(TestLoginUtil.user1.getUsername());
-        Assertions.assertThat(user.getUser().getUploadedVideoPosts().get(0).getId()).isEqualTo(id);
+
+        String responseBody = mockMvc.perform(get("/api/v1/user/uploaded-video-posts")
+                        .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
+                        .cookie(user1RefreshToken))
+                .andReturn().getResponse().getContentAsString();
+
+        JsonNode node = objectMapper.readTree(responseBody).get("data").get("content");
+
+        Assertions.assertThat(node.get(0).get("id").asLong()).isEqualTo(id);
     }
 
     @Test
@@ -125,11 +148,13 @@ class VideoPostControllerTest {
                 .content("content")
                 .videoUrl("url")
                 .build();
-        mockMvc.perform(post("/community/video-post")
+        mockMvc.perform(post("/api/v1/video-post")
+                        .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
+                        .cookie(user1RefreshToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.value()));
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()));
     }
 
     @Test
@@ -137,35 +162,43 @@ class VideoPostControllerTest {
     void updateVideoPostTest() throws Exception {
         // given
         // video post 등록
-        SecurityUser securityUser = (SecurityUser) commonUserService.loadUserByUsername(TestLoginUtil.user1.getUsername());
-        User user = securityUser.getUser();
-        VideoPost saved = videoPostRepository.save(VideoPost.builder()
+        VideoPostRegisterDto dto = VideoPostRegisterDto.builder()
                 .title("title")
                 .content("content")
                 .videoUrl("url")
-                .author(user)
-                .build());
+                .build();
+        String contentAsString = mockMvc.perform(post("/api/v1/video-post")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto))
+                        .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
+                        .cookie(user1RefreshToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+                .andReturn().getResponse().getContentAsString();
+
+        long id = objectMapper.readTree(contentAsString).get("data").get("id").asLong();
+
         // when
         // video post update
-        UpdateVideoPostDto dto = UpdateVideoPostDto
+        UpdateVideoPostDto updateVideoDto = UpdateVideoPostDto
                 .builder()
                 .title("changed")
                 .content("changedContent")
                 .videoUrl("changedUrl")
                 .build();
-        String contentAsString = mockMvc.perform(post("/community/video-post/" + saved.getId())
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken)
+        String changedVideoPost = mockMvc.perform(post("/api/v1/video-post/" + id)
+                        .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
+                        .cookie(user1RefreshToken)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dto)))
+                        .content(objectMapper.writeValueAsString(updateVideoDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn().getResponse().getContentAsString();
 
         // then
-        JsonNode jsonNode = objectMapper.readTree(contentAsString).get("serializedData").get("videoPost");
+        JsonNode jsonNode = objectMapper.readTree(changedVideoPost).get("data");
         VideoPostDto videoPostDto = objectMapper.convertValue(jsonNode, VideoPostDto.class);
-        Assertions.assertThat(videoPostDto.getId()).isEqualTo(saved.getId());
+        Assertions.assertThat(videoPostDto.getId()).isEqualTo(id);
         Assertions.assertThat(videoPostDto.getTitle()).isEqualTo("changed");
         Assertions.assertThat(videoPostDto.getContent()).isEqualTo("changedContent");
     }
@@ -175,29 +208,29 @@ class VideoPostControllerTest {
     void updateVideoPostAuthorizationTest() throws Exception {
         // given
         // video post 등록
-        SecurityUser securityUser = (SecurityUser) commonUserService.loadUserByUsername(TestLoginUtil.user1.getUsername());
-        User user = securityUser.getUser();
-        VideoPost saved = videoPostRepository.save(VideoPost.builder()
+        VideoPostRegisterDto dto = VideoPostRegisterDto.builder()
                 .title("title")
                 .content("content")
                 .videoUrl("url")
-                .author(user)
-                .build());
+                .build();
+        String contentAsString = mockMvc.perform(post("/api/v1/video-post")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto))
+                        .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
+                        .cookie(user1RefreshToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+                .andReturn().getResponse().getContentAsString();
+
+        long id = objectMapper.readTree(contentAsString).get("data").get("id").asLong();
         // when
         // video post update
-        UpdateVideoPostDto dto = UpdateVideoPostDto
-                .builder()
-                .title("changed")
-                .content("changedContent")
-                .videoUrl("changedUrl")
-                .build();
-        mockMvc.perform(post("/community/video-post/" + saved.getId())
-                        .header(HttpHeaders.AUTHORIZATION, wrongAccessToken)
-                        .cookie(wrongRefreshToken)
+        mockMvc.perform(post("/api/v1/video-post/" + id)
+                        .header(HttpHeaders.AUTHORIZATION, user2user1AccessToken)
+                        .cookie(user2user1RefreshToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.value()));
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -205,51 +238,82 @@ class VideoPostControllerTest {
     void deleteVideoPostTest() throws Exception {
         // given
         // video post 등록
-        SecurityUser securityUser = (SecurityUser) commonUserService.loadUserByUsername(TestLoginUtil.user1.getUsername());
-        User user = securityUser.getUser();
-        VideoPost saved = videoPostRepository.save(VideoPost.builder()
+        VideoPostRegisterDto dto = VideoPostRegisterDto.builder()
                 .title("title")
                 .content("content")
                 .videoUrl("url")
-                .author(user)
-                .build());
+                .build();
+        String contentAsString = mockMvc.perform(post("/api/v1/video-post")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto))
+                        .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
+                        .cookie(user1RefreshToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+                .andReturn().getResponse().getContentAsString();
+
+        long id = objectMapper.readTree(contentAsString).get("data").get("id").asLong();
         //when
-        mockMvc.perform(delete("/community/video-post/" + saved.getId())
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken))
+        mockMvc.perform(delete("/api/v1/video-post/" + id)
+                        .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
+                        .cookie(user1RefreshToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()));
-        Optional<VideoPost> byId = videoPostRepository.findById(saved.getId());
-        securityUser = (SecurityUser) commonUserService.loadUserByUsername(TestLoginUtil.user1.getUsername());
-        user = securityUser.getUser();
+
+        String responseBody = mockMvc.perform(get("/api/v1/user/uploaded-video-posts")
+                        .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
+                        .cookie(user1RefreshToken))
+                .andReturn().getResponse().getContentAsString();
+
+        JsonNode node = objectMapper.readTree(responseBody)
+                .get("data").get("content");
+
+
+        Optional<VideoPost> byId = videoPostRepository.findById(id);
+
         //then
         Assertions.assertThat(byId).isEmpty();
-        Assertions.assertThat(user.getUploadedVideoPosts()).isEmpty();
+        Assertions.assertThat(node).isEmpty();
     }
 
     @Test
     @DisplayName("video post를 모두 조회할 수 있어야 한다.")
     void findAllVideoPostTest() throws Exception {
         //given
-        SecurityUser securityUser = (SecurityUser) commonUserService.loadUserByUsername(TestLoginUtil.user1.getUsername());
-        User user = securityUser.getUser();
-        VideoPost saved = videoPostRepository.save(VideoPost.builder()
+        VideoPostRegisterDto dto = VideoPostRegisterDto.builder()
                 .title("title")
                 .content("content")
                 .videoUrl("url")
-                .author(user)
-                .build());
-        SecurityUser securityUser2 = (SecurityUser) commonUserService.loadUserByUsername(TestLoginUtil.user2.getUsername());
-        User user2 = securityUser2.getUser();
-        VideoPost saved2 = videoPostRepository.save(VideoPost.builder()
-                .title("title2")
-                .content("content2")
-                .videoUrl("url")
-                .author(user)
-                .build());
+                .build();
+        String contentAsString = mockMvc.perform(post("/api/v1/video-post")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto))
+                        .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
+                        .cookie(user1RefreshToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+                .andReturn().getResponse().getContentAsString();
 
+        long id1 = objectMapper.readTree(contentAsString).get("data").get("id").asLong();
+
+
+        VideoPostRegisterDto dto2 = VideoPostRegisterDto.builder()
+                .title("title")
+                .content("content")
+                .videoUrl("url")
+                .build();
+        String contentAsString2 = mockMvc.perform(post("/api/v1/video-post")
+                        .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
+                        .cookie(user1RefreshToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto2)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+                .andReturn().getResponse().getContentAsString();
+
+        long id2 = objectMapper.readTree(contentAsString2).get("data").get("id").asLong();
         //when
-        String contentAsString = mockMvc.perform(get("/community/video-post")
+        String comments1 = mockMvc.perform(get("/api/v1/video-post")
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk())
@@ -257,128 +321,171 @@ class VideoPostControllerTest {
                 .andReturn().getResponse().getContentAsString();
 
         List<VideoPostDto> videoPostDtos = new ArrayList<>();
-        JsonNode jsonNode = objectMapper.readTree(contentAsString).get("serializedData").get("videoPosts");
+        JsonNode jsonNode = objectMapper.readTree(comments1).get("data");
         jsonNode.forEach(node -> videoPostDtos.add(objectMapper.convertValue(node, VideoPostDto.class)));
         Assertions.assertThat(videoPostDtos).hasSize(2);
-        Assertions.assertThat(videoPostDtos.get(0).getId()).isEqualTo(saved.getId());
-        Assertions.assertThat(videoPostDtos.get(1).getId()).isEqualTo(saved2.getId());
+        Assertions.assertThat(videoPostDtos.get(0).getId()).isEqualTo(id1);
+        Assertions.assertThat(videoPostDtos.get(1).getId()).isEqualTo(id2);
     }
 
     @Test
     @DisplayName("로그인한 유저가 댓글을 달 수 있어야 한다.")
     void addCommentTest() throws Exception {
         //given
-        SecurityUser securityUser = (SecurityUser) commonUserService.loadUserByUsername(TestLoginUtil.user1.getUsername());
-        User user = securityUser.getUser();
-        VideoPost saved = videoPostRepository.save(VideoPost.builder()
+        VideoPostRegisterDto dto = VideoPostRegisterDto.builder()
                 .title("title")
                 .content("content")
                 .videoUrl("url")
-                .author(user)
-                .build());
+                .build();
+        String contentAsString = mockMvc.perform(post("/api/v1/video-post")
+                        .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
+                        .cookie(user1RefreshToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+                .andReturn().getResponse().getContentAsString();
+
+        long id = objectMapper.readTree(contentAsString).get("data").get("id").asLong();
 
         //when
         RegisterCommentDto content = RegisterCommentDto.builder()
                 .content("content")
                 .build();
 
-        String contentAsString = mockMvc.perform(post("/community/video-post/" + saved.getId() + "/comment")
+        String comments1 = mockMvc.perform(post("/api/v1/video-post/" + id + "/comments")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(content))
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken))
+                        .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
+                        .cookie(user1RefreshToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn().getResponse().getContentAsString();
 
         //then
-        JsonNode jsonNode = objectMapper.readTree(contentAsString).get("serializedData").get("comments");
+        JsonNode jsonNode = objectMapper.readTree(comments1).get("data");
         List<CommentDto> commentDtos = new ArrayList<>();
         jsonNode.forEach(comment -> commentDtos.add(objectMapper.convertValue(comment, CommentDto.class)));
         Assertions.assertThat(commentDtos).hasSize(1);
         Assertions.assertThat(commentDtos.get(0).getContent()).isEqualTo("content");
-        user = ((SecurityUser) commonUserService.loadUserByUsername(TestLoginUtil.user1.getUsername())).getUser();
-        Assertions.assertThat(user.getWroteComments()).hasSize(1);
-        Assertions.assertThat(user.getWroteComments().get(0).getContent()).isEqualTo("content");
+
+        String bodyString = mockMvc.perform(get("/api/v1/user/comments")
+                        .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
+                        .cookie(user1RefreshToken))
+                .andDo(print())
+                .andReturn().getResponse().getContentAsString();
+        JsonNode wroteComments = objectMapper.readTree(bodyString).get("data");
+
+        Assertions.assertThat(wroteComments).hasSize(1);
+        Assertions.assertThat(wroteComments.get(0).get("content").asText()).isEqualTo("content");
     }
+
     @Test
     @DisplayName("로그인하지 않은 유저는 댓글을 달 수 없다.")
-    void addCommentAuthorizationTest() throws Exception{
+    void addCommentAuthorizationTest() throws Exception {
         //given
-        SecurityUser securityUser = (SecurityUser) commonUserService.loadUserByUsername(TestLoginUtil.user1.getUsername());
-        User user = securityUser.getUser();
-        VideoPost saved = videoPostRepository.save(VideoPost.builder()
+        VideoPostRegisterDto dto = VideoPostRegisterDto.builder()
                 .title("title")
                 .content("content")
                 .videoUrl("url")
-                .author(user)
-                .build());
+                .build();
+        String contentAsString = mockMvc.perform(post("/api/v1/video-post")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto))
+                        .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
+                        .cookie(user1RefreshToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+                .andReturn().getResponse().getContentAsString();
+
+        long id = objectMapper.readTree(contentAsString).get("data").get("id").asLong();
+
         //when
         RegisterCommentDto content = RegisterCommentDto.builder()
                 .content("content")
                 .build();
 
-        mockMvc.perform(post("/community/video-post/" + saved.getId() + "/comment")
+        mockMvc.perform(post("/api/v1/video-post/" + id + "/comments")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(content))
                 )
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.value()));
+                .andExpect(status().isUnauthorized())
+                .andDo(print());
     }
 
     @Test
     @DisplayName("작성자는 댓글을 삭제할 수 있다.")
-    void deleteCommentTest() throws Exception{
+    void deleteCommentTest() throws Exception {
         //given
-        SecurityUser securityUser = (SecurityUser) commonUserService.loadUserByUsername(TestLoginUtil.user1.getUsername());
-        User user = securityUser.getUser();
-        VideoPost saved = videoPostRepository.save(VideoPost.builder()
+        // write videoPost
+        VideoPostRegisterDto dto = VideoPostRegisterDto.builder()
                 .title("title")
                 .content("content")
                 .videoUrl("url")
-                .author(user)
-                .build());
-        RegisterCommentDto content = RegisterCommentDto.builder()
-                .content("content")
                 .build();
-
-        String contentAsString = mockMvc.perform(post("/community/video-post/" + saved.getId() + "/comment")
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken)
+        String comments1 = mockMvc.perform(post("/api/v1/video-post")
+                        .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
+                        .cookie(user1RefreshToken)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(content))
-                )
+                        .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn().getResponse().getContentAsString();
+        long id = objectMapper.readTree(comments1).get("data").get("id").asLong();
 
-        JsonNode jsonNode = objectMapper.readTree(contentAsString).get("serializedData").get("comments");
+        // write comment in this video post
+        String s2 = mockMvc.perform(post("/api/v1/video-post/" + id + "/comments")
+                        .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
+                        .cookie(user1RefreshToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(RegisterCommentDto.builder().content("hi").build()))
+                )
+                .andExpect(status().isOk())
+                .andDo(print())
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+                .andReturn().getResponse().getContentAsString();
+
+        JsonNode jsonNode = objectMapper.readTree(s2).get("data");
         List<CommentDto> commentDtos = new ArrayList<>();
         jsonNode.forEach(comment -> commentDtos.add(objectMapper.convertValue(comment, CommentDto.class)));
 
 
         //when
-        mockMvc.perform(delete("/community/video-post/" + saved.getId() + "/comment/" + commentDtos.get(0).getId())
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken))
+        mockMvc.perform(delete("/api/v1/video-post/" + id + "/comments/" + commentDtos.get(0).getId())
+                        .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
+                        .cookie(user1RefreshToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()));
-        user = ((SecurityUser) commonUserService.loadUserByUsername(TestLoginUtil.user1.getUsername())).getUser();
-        Assertions.assertThat(user.getWroteComments()).isEmpty();
+        String comments = mockMvc.perform(get("/api/v1/video-post/" + id + "/comments"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+                .andReturn().getResponse().getContentAsString();
+        JsonNode commentNodes = objectMapper.readTree(comments).get("data").get("content");
 
+        Assertions.assertThat(commentNodes).isEmpty();
     }
 
     @Test
     @DisplayName("video post에 달린 모든 댓글을 조회할 수 있다.")
-    void getCommentsTest() throws Exception{
-        SecurityUser securityUser = (SecurityUser) commonUserService.loadUserByUsername(TestLoginUtil.user1.getUsername());
-        User user = securityUser.getUser();
-        VideoPost saved = videoPostRepository.save(VideoPost.builder()
+    void getCommentsTest() throws Exception {
+        //given
+        // write videoPost
+        VideoPostRegisterDto dto = VideoPostRegisterDto.builder()
                 .title("title")
                 .content("content")
                 .videoUrl("url")
-                .author(user)
-                .build());
+                .build();
+        String comments1 = mockMvc.perform(post("/api/v1/video-post")
+                        .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
+                        .cookie(user1RefreshToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+                .andReturn().getResponse().getContentAsString();
+        long id = objectMapper.readTree(comments1).get("data").get("id").asLong();
+
+        //write comments
         RegisterCommentDto content = RegisterCommentDto.builder()
                 .content("content")
                 .build();
@@ -386,41 +493,48 @@ class VideoPostControllerTest {
                 .content("content2")
                 .build();
 
-        mockMvc.perform(post("/community/video-post/" + saved.getId() + "/comment")
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken)
+        mockMvc.perform(post("/api/v1/video-post/" + id + "/comments")
+                        .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
+                        .cookie(user1RefreshToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(content))
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()));
-        mockMvc.perform(post("/community/video-post/" + saved.getId() + "/comment")
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken)
+        mockMvc.perform(post("/api/v1/video-post/" + id + "/comments")
+                        .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
+                        .cookie(user1RefreshToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(content2))
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()));
 
-        String contentAsString = mockMvc.perform(get("/community/video-post/" + saved.getId() + "/comments")
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken))
+        //when
+        //get videoPost's comments
+        String comments = mockMvc.perform(get("/api/v1/video-post/" + id + "/comments")
+                        .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
+                        .cookie(user1RefreshToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn().getResponse().getContentAsString();
-        JsonNode jsonNode = objectMapper.readTree(contentAsString).get("serializedData").get("comments");
-        List<CommentDto> comments = new ArrayList<>();
-        jsonNode.forEach(node -> comments.add(objectMapper.convertValue(node, CommentDto.class)));
+        JsonNode jsonNode = objectMapper.readTree(comments).get("data").get("content");
+        List<CommentDto> commentList = new ArrayList<>();
+        jsonNode.forEach(node -> commentList.add(objectMapper.convertValue(node, CommentDto.class)));
 
-        Assertions.assertThat(comments).hasSize(2);
-        Assertions.assertThat(comments.get(0).getContent()).isEqualTo("content");
-        Assertions.assertThat(comments.get(1).getContent()).isEqualTo("content2");
+        Assertions.assertThat(commentList).hasSize(2);
+        Assertions.assertThat(commentList).extracting("content").contains("content", "content2");
 
-        user = ((SecurityUser) commonUserService.loadUserByUsername(TestLoginUtil.user1.getUsername())).getUser();
-        Assertions.assertThat(user.getWroteComments()).hasSize(2);
-        Assertions.assertThat(user.getWroteComments().get(0).getContent()).isEqualTo("content");
-        Assertions.assertThat(user.getWroteComments().get(1).getContent()).isEqualTo("content2");
+        // 작성한 유저가 2개의 댓글을 가지고 있는지
+        String bodyString = mockMvc.perform(get("/api/v1/user/comments")
+                        .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
+                        .cookie(user1RefreshToken))
+                .andDo(print())
+                .andReturn().getResponse().getContentAsString();
+        JsonNode wroteComments = objectMapper.readTree(bodyString).get("data");
+
+        Assertions.assertThat(wroteComments).hasSize(2);
+        Assertions.assertThat(wroteComments.get(0).get("content").asText()).containsAnyOf("content", "content2");
 
     }
 

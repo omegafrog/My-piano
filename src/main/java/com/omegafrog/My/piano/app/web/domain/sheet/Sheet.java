@@ -1,14 +1,15 @@
 package com.omegafrog.My.piano.app.web.domain.sheet;
 
+import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetDto;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.UpdateSheetDto;
 import com.omegafrog.My.piano.app.web.enums.Difficulty;
 import com.omegafrog.My.piano.app.web.enums.Instrument;
-import com.omegafrog.My.piano.app.web.dto.sheetPost.UpdateSheetDto;
-import com.omegafrog.My.piano.app.web.domain.user.User;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -16,7 +17,8 @@ import java.time.LocalDateTime;
 @Entity
 @NoArgsConstructor
 @Getter
-public class Sheet  implements Serializable {
+public class Sheet implements Serializable {
+    private final static long serialVersionUID = 3998165768159256704L;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -32,12 +34,13 @@ public class Sheet  implements Serializable {
     private String sheetUrl;
     private String originalFileName;
 
-    @OneToOne(mappedBy ="sheet")
+    @OneToOne(mappedBy = "sheet")
+    @Setter
     private SheetPost sheetPost;
 
-    private LocalDateTime createdAt=LocalDateTime.now();
+    private LocalDateTime createdAt = LocalDateTime.now();
 
-    @OneToOne(cascade = { CascadeType.MERGE})
+    @ManyToOne(cascade = {CascadeType.MERGE})
     @JoinColumn(name = "CREATOR_ID")
     private User user;
 
@@ -66,7 +69,7 @@ public class Sheet  implements Serializable {
         this.sheetPost = sheetPost;
     }
 
-    public Sheet update(UpdateSheetDto dto){
+    public Sheet update(UpdateSheetDto dto) {
         this.title = dto.getTitle();
         this.pageNum = dto.getPageNum();
         this.difficulty = dto.getDifficulty();
@@ -79,7 +82,7 @@ public class Sheet  implements Serializable {
         return this;
     }
 
-    public SheetDto toSheetDto(){
+    public SheetDto toSheetDto() {
         return SheetDto.builder()
                 .id(id)
                 .createdAt(createdAt)
