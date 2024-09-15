@@ -1,4 +1,4 @@
-package com.omegafrog.My.piano.app.web.controller;
+package com.omegafrog.My.piano.app;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
@@ -46,7 +46,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class TestUtil {
     @Autowired
     private ObjectMapper objectMapper;
-
 
     @AllArgsConstructor
     @Getter
@@ -153,7 +152,8 @@ public class TestUtil {
                     .title("title")
                     .instrument(Instrument.GUITAR_ACOUSTIC.ordinal())
                     .lyrics(false)
-                    .filePath(sheetUrl)
+                    .sheetUrl(sheetUrl)
+                    .originalFileName("originalFileName")
                     .difficulty(Difficulty.MEDIUM.ordinal())
                     .genres(new Genres(Genre.BGM, Genre.CAROL))
                     .isSolo(true)
@@ -163,11 +163,13 @@ public class TestUtil {
                     .title("title")
                     .instrument(Instrument.GUITAR_ACOUSTIC.ordinal())
                     .lyrics(false)
-                    .filePath(sheetUrl)
+                    .sheetUrl(sheetUrl)
+                    .originalFileName("originalFileName")
                     .difficulty(Difficulty.MEDIUM.ordinal())
                     .genres(new Genres(Genre.BGM, Genre.CAROL))
                     .isSolo(true)
                     .build();
+
 
     public MvcResult chargeCash(MockMvc mockMvc, int amount, TokenResponse tokenResponse) throws Exception {
         return mockMvc.perform(get("/api/v1/cash/charge")

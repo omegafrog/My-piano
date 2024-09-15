@@ -1,5 +1,6 @@
 package com.omegafrog.My.piano.app.batch;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import com.omegafrog.My.piano.app.external.elasticsearch.SheetPostIndex;
 import com.omegafrog.My.piano.app.external.elasticsearch.SheetPostIndexRepository;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
@@ -18,12 +19,9 @@ import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.database.JpaPagingItemReader;
 import org.springframework.batch.item.database.builder.JpaPagingItemReaderBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
-import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import java.util.List;
@@ -48,8 +46,7 @@ public class RankingJobConfig {
     private final SheetPostRepository sheetPostRepository;
 
     @Autowired
-    @Qualifier("elasticsearchTemplate")
-    private ElasticsearchOperations elasticsearchOperations;
+    private ElasticsearchClient elasticsearchClient;
 
 
     @Bean
@@ -72,9 +69,8 @@ public class RankingJobConfig {
     @Bean
     public ElasticsearchItemReader<SheetPostIndex> deleteJpaPagingItemReader() {
         return new ElasticsearchItemReader<>(
-                elasticsearchOperations,
-                Query.findAll(),
-                SheetPostIndex.class
+                100,
+                elasticsearchClient
         );
     }
 
@@ -83,6 +79,7 @@ public class RankingJobConfig {
         return new ItemWriter<SheetPostIndex>() {
             @Override
             public void write(Chunk<? extends SheetPostIndex> chunk) throws Exception {
+                log.info("{}", chunk.getItems().get(0).getId());
                 Iterable<SheetPost> allById = sheetPostRepository.findAllById(chunk.getItems()
                         .stream().map(SheetPostIndex::getId).toList());
                 List<Long> allIds = ((List<SheetPost>) allById).stream().map(item -> item.getId())
@@ -90,14 +87,17 @@ public class RankingJobConfig {
 
                 List<Long> a = chunk.getItems().stream().map(item -> item.getId())
                         .collect(Collectors.toList());
-                for (Long id : a) {
-                    for (Long id2 : allIds) {
-                        if (id.equals(id2)) {
-                            a.remove(id);
-                        }
-                    }
-                }
-                sheetPostIndexRepository.deleteAllById(a);
+                List<Long> list = a.stream().filter(
+                        id -> !allIds.contains(id)
+                ).toList();
+//                for (Long id : a) {
+//                    for (Long id2 : allIds) {
+//                        if (id.equals(id2)) {
+//                            a.remove(id);
+//                        }
+//                    }
+//                }
+                sheetPostIndexRepository.deleteByIdIn(list);
             }
         };
 

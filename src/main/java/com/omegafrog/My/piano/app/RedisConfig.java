@@ -31,20 +31,21 @@ public class RedisConfig {
     @Value("${spring.redis.cache.port}")
     private int cachePort;
 
-    private int CACHE_BATCH_SIZE=1000;
+    private int CACHE_BATCH_SIZE = 1000;
 
     @Bean
-    public RedisConnectionFactory commonUserRedisConnectionFactory(){
+    public RedisConnectionFactory commonUserRedisConnectionFactory() {
         return new LettuceConnectionFactory(host, port);
     }
-    @Bean(name="cacheConnectionFactory")
-    public RedisConnectionFactory cacheConnectionFactory(){
+
+    @Bean(name = "cacheConnectionFactory")
+    public RedisConnectionFactory cacheConnectionFactory() {
         return new LettuceConnectionFactory(cacheHost, cachePort);
     }
 
     @Qualifier("CommonUserRedisTemplate")
     @Bean
-    public RedisTemplate<?, ?> redisTemplate(){
+    public RedisTemplate<?, ?> redisTemplate() {
         RedisTemplate<?, ?> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(commonUserRedisConnectionFactory());
         redisTemplate.setKeySerializer(new StringRedisSerializer());
@@ -56,7 +57,8 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisCacheManager cacheManager(){
+    public RedisCacheManager cacheManager() {
+        StringRedisSerializer stringRedisSerializer = new StringRedisSerializer();
         return RedisCacheManager.builder()
                 .cacheWriter(RedisCacheWriter.lockingRedisCacheWriter(cacheConnectionFactory(), BatchStrategies.scan(CACHE_BATCH_SIZE)))
                 .cacheDefaults(RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofMinutes(10L)))

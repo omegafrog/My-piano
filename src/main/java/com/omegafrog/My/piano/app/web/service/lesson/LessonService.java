@@ -1,7 +1,9 @@
 package com.omegafrog.My.piano.app.web.service.lesson;
 
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
+import com.omegafrog.My.piano.app.web.domain.article.LikeCount;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
+import com.omegafrog.My.piano.app.web.domain.lesson.LessonLikeCountRepository;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonViewCountRepository;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
@@ -26,14 +28,13 @@ import java.util.List;
 @Transactional
 @RequiredArgsConstructor
 public class LessonService {
-
-
     private static final Logger log = LoggerFactory.getLogger(LessonService.class);
     private final SheetPostRepository sheetPostRepository;
     private final LessonRepository lessonRepository;
     private final UserRepository userRepository;
     private final LessonViewCountRepository lessonViewCountRepository;
     private final AuthenticationUtil authenticationUtil;
+    private final LessonLikeCountRepository lessonLikeCountRepository;
 
     public LessonDto createLesson(RegisterLessonDto registerLessonDto) {
         User loggedInUser = authenticationUtil.getLoggedInUser();
@@ -69,7 +70,9 @@ public class LessonService {
         LessonDto dto = lesson.toDto();
 
         int incrementedViewCount = lessonViewCountRepository.incrementViewCount(lesson);
+        LikeCount byId = lessonLikeCountRepository.findById(id);
         dto.setViewCount(incrementedViewCount);
+        dto.setLikeCount(byId.getLikeCount());
         return dto;
     }
 
@@ -105,30 +108,25 @@ public class LessonService {
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson Entity : " + id));
         lesson.increaseLikedCount();
 
-        User loggedUser = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
-        loggedUser.likeLesson(lesson);
+        loggedInUser.likeLesson(lesson);
+        lessonLikeCountRepository.incrementLikeCount(lesson);
     }
 
     public void dislikeLesson(Long id) {
         User loggedInUser = authenticationUtil.getLoggedInUser();
         Lesson lesson = lessonRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson Entity : " + id));
-        User loggedUser = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
-        if (!loggedUser.isLikedLesson(lesson)) throw new IllegalArgumentException("이 글에 좋아요를 누르지 않았습니다.");
+        if (!loggedInUser.isLikedLesson(lesson)) throw new IllegalArgumentException("이 글에 좋아요를 누르지 않았습니다.");
 
-        lesson.decreaseLikedCount();
-        loggedUser.dislikeLesson(lesson);
+        lessonLikeCountRepository.decrementLikeCount(lesson);
+        loggedInUser.dislikeLesson(lesson);
     }
 
     public boolean isLikedLesson(Long id) {
         User loggedInUser = authenticationUtil.getLoggedInUser();
         Lesson lesson = lessonRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find lesson Entity : " + id));
-        User loggedUser = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
-        return loggedUser.isLikedLesson(lesson);
+        return loggedInUser.isLikedLesson(lesson);
     }
 
     public boolean isScrappedLesson(Long id) {

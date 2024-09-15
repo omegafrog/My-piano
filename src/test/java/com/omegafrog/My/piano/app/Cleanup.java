@@ -21,6 +21,7 @@ public class Cleanup {
         EntityTransaction transaction = entityManager.getTransaction();
         transaction.begin();
         entityManager.createNativeQuery("SET FOREIGN_KEY_CHECKS = 0").executeUpdate();
+//        entityManager.createNativeQuery("SET REFERENTIAL_INTEGRITY FALSE;").executeUpdate();
         List<String> collect = entityManager.getMetamodel().getEntities().stream().map(entity -> CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, entity.getName()))
                 .collect(Collectors.toList());
 
@@ -29,6 +30,7 @@ public class Cleanup {
             if (table.equals("order")) table = "orders";
             entityManager.createNativeQuery("TRUNCATE TABLE " + table).executeUpdate();
         }
+//        entityManager.createNativeQuery("SET REFERENTIAL_INTEGRITY TRUE;").executeUpdate();
         entityManager.createNativeQuery("SET FOREIGN_KEY_CHECKS = 1").executeUpdate();
         transaction.commit();
         entityManager.close();

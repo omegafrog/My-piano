@@ -10,20 +10,20 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
-public class SheetPostViewCountImpl implements SheetPostViewCountRepository {
+public class SheetPostViewCountRepositoryImpl implements SheetPostViewCountRepository {
 
     private final RedisSheetPostViewCountRepository repository;
     private final RedisTemplate<String, SheetPostViewCount> redisTemplate;
 
     @Override
     public int incrementViewCount(SheetPost sheetPost) {
-        if(!exist(sheetPost.getId())) {
+        if (!exist(sheetPost.getId())) {
             SheetPostViewCount saved = save(SheetPostViewCount.builder()
                     .id(sheetPost.getId())
                     .viewCount(sheetPost.getViewCount() + 1).build());
             return saved.getViewCount();
         }
-        return redisTemplate.opsForHash().increment(SheetPostViewCount.KEY_NAME+":"+ sheetPost.getId(),
+        return redisTemplate.opsForHash().increment(SheetPostViewCount.KEY_NAME + ":" + sheetPost.getId(),
                 "viewCount", 1L).intValue();
     }
 
@@ -35,11 +35,13 @@ public class SheetPostViewCountImpl implements SheetPostViewCountRepository {
 
     @Override
     public boolean exist(Long id) {
-        return redisTemplate.opsForHash().hasKey(SheetPostViewCount.KEY_NAME+":"+id, "viewCount");
+        return redisTemplate.opsForHash().hasKey(SheetPostViewCount.KEY_NAME + ":" + id, "viewCount");
     }
 
     @Override
     public SheetPostViewCount save(SheetPostViewCount viewCount) {
-        return repository.save(viewCount);
+        redisTemplate.opsForHash().put(SheetPostViewCount.KEY_NAME + ":" + viewCount.getId(),
+                "viewCount", String.valueOf(viewCount.getViewCount()));
+        return viewCount;
     }
 }

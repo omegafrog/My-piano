@@ -1,8 +1,8 @@
 package com.omegafrog.My.piano.app.web.infrastructure.lesson;
 
 import com.omegafrog.My.piano.app.DataJpaTestConfig;
+import com.omegafrog.My.piano.app.TestUtil;
 import com.omegafrog.My.piano.app.web.controller.DummyData;
-import com.omegafrog.My.piano.app.web.controller.TestUtil;
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonInformation;

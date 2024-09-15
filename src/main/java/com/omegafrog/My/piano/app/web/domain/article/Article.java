@@ -16,6 +16,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @NoArgsConstructor
 @Getter
@@ -38,6 +39,7 @@ public class Article implements Serializable {
     @Setter
     protected int viewCount = 0;
     @PositiveOrZero
+    @Setter
     protected int likeCount = 0;
 
     protected boolean disabled = false;
@@ -127,4 +129,11 @@ public class Article implements Serializable {
         return id.hashCode();
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Article)) return false;
+        Article article = (Article) o;
+        return Objects.equals(getId(), article.getId());
+    }
 }

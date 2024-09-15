@@ -27,7 +27,7 @@ public class RankingScheduler {
     private Job UpdateRankingJob;
 
 
-    //    @Scheduled(cron = "0 0 12 * * ?")
+    //    @Scheduled(cron = "0 0 0/1 * * ?")
     @Scheduled(cron = "0 0/1 * * * ?")
     public void jobScheduled() throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
         log.info("scheduling start");

@@ -12,8 +12,6 @@ import com.omegafrog.My.piano.app.web.dto.order.OrderDto;
 import com.omegafrog.My.piano.app.web.exception.message.ExceptionMessage;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,7 +24,6 @@ import java.util.Set;
 @Transactional
 public class CartApplicationService {
 
-    private static final Logger log = LoggerFactory.getLogger(CartApplicationService.class);
     private final UserRepository userRepository;
     private final OrderRepository orderRepository;
     @Autowired
@@ -67,9 +64,7 @@ public class CartApplicationService {
     public boolean isItemInCart(String mainResource, Long id) {
         User loggedInUser = authenticationUtil.getLoggedInUser();
         SellableItem detailedItem = sellableItemFactory.createDetailedItem(mainResource, id);
-        User user = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInUser.getId()));
-        return user.getCart().getContents().stream().anyMatch(order -> order.getItem().equals(detailedItem));
+        return loggedInUser.getCart().getContents().stream().anyMatch(order -> order.getItem().equals(detailedItem));
     }
 
     public int purchaseInCart(Set<Long> orderIds) {

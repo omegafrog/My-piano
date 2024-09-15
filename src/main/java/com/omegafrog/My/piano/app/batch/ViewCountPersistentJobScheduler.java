@@ -1,14 +1,8 @@
 package com.omegafrog.My.piano.app.batch;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.*;
-
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import lombok.RequiredArgsConstructor;
-import org.springframework.batch.core.JobParameter;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
 import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
@@ -19,6 +13,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
 @Configuration
 @Profile("!test")
 @RequiredArgsConstructor
@@ -26,9 +25,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 public class ViewCountPersistentJobScheduler {
     private final JobLauncher jobLauncher;
 
-    @Qualifier("persistViewCountJob")
+    @Qualifier("persistCountJob")
     @Autowired
-    private Job viewCountPersistentJob;
+    private Job countPersistentJob;
 
     @Scheduled(cron = "0 0/1 * * * ?")
     //@Scheduled(cron = "0 0 0 * * ?")
@@ -39,7 +38,7 @@ public class ViewCountPersistentJobScheduler {
         String timeString = simpleDateFormat.format(time);
         jobParameterMap.put("date", new JobParameter<>(timeString, String.class));
         JobParameters jobParameters = new JobParameters(jobParameterMap);
-        JobExecution jobExecution = jobLauncher.run(viewCountPersistentJob, jobParameters);
+        JobExecution jobExecution = jobLauncher.run(countPersistentJob, jobParameters);
         while (jobExecution.isRunning()) {
             log.info("batch is running. Start at {}.", jobExecution.getJobParameters().getString("date"));
         }

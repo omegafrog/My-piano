@@ -5,7 +5,7 @@ import com.omegafrog.My.piano.app.external.elasticsearch.SheetPostIndexRepositor
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.utils.MapperUtil;
 import com.omegafrog.My.piano.app.web.domain.S3UploadFileExecutor;
-import com.omegafrog.My.piano.app.web.domain.comment.CommentRepository;
+import com.omegafrog.My.piano.app.web.domain.article.LikeCountRepository;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
@@ -23,6 +23,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
@@ -47,7 +49,6 @@ public class SheetPostApplicationService {
 
     private final SheetPostRepository sheetPostRepository;
     private final UserRepository userRepository;
-    private final CommentRepository commentRepository;
 
 
     private final ElasticSearchInstance elasticSearchInstance;
@@ -55,14 +56,19 @@ public class SheetPostApplicationService {
     private final MapperUtil mapperUtil;
     private final SheetPostViewCountRepository sheetPostViewCountRepository;
     private final AuthenticationUtil authenticationUtil;
+    @Autowired
+    @Qualifier("SheetPostLikeCountRepository")
+    private LikeCountRepository likeCountRepository;
 
 
     public SheetPostDto getSheetPost(Long id) {
         SheetPost sheetPost = sheetPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find SheetPost entity : " + id));
-        int incremented = sheetPostViewCountRepository.incrementViewCount(sheetPost);
+        int incrementedViewCount = sheetPostViewCountRepository.incrementViewCount(sheetPost);
+        int likeCount = likeCountRepository.findById(sheetPost.getId()).getLikeCount();
         SheetPostDto dto = sheetPost.toDto();
-        dto.setViewCount(incremented);
+        dto.setLikeCount(likeCount);
+        dto.setViewCount(incrementedViewCount);
         return dto;
     }
 
@@ -171,18 +177,15 @@ public class SheetPostApplicationService {
         User loggedInUser = authenticationUtil.getLoggedInUser();
         SheetPost sheetPost = sheetPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity:" + id));
-        User user = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find user entity:" + id));
-        user.likeSheetPost(sheetPost);
+        loggedInUser.likeSheetPost(sheetPost);
+        likeCountRepository.incrementLikeCount(sheetPost);
     }
 
     public boolean isLikedSheetPost(Long id) {
         User loggedInUser = authenticationUtil.getLoggedInUser();
         SheetPost targetSheetPost = sheetPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(("Cannot find SheetPost entity:" + id)));
-        User user = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find user entity:" + id));
-        return user.getLikedSheetPosts()
+        return loggedInUser.getLikedSheetPosts()
                 .stream().anyMatch(likedSheetPost -> likedSheetPost.getSheetPost().equals(targetSheetPost));
     }
 
@@ -190,11 +193,9 @@ public class SheetPostApplicationService {
         User loggedInUser = authenticationUtil.getLoggedInUser();
         SheetPost sheetPost = sheetPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
-        User user = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
-        boolean removed = user.getLikedSheetPosts().removeIf(item -> item.getSheetPost().getId().equals(id));
+        boolean removed = loggedInUser.getLikedSheetPosts().removeIf(item -> item.getSheetPost().getId().equals(id));
         if (!removed) throw new EntityNotFoundException("좋아요를 누르지 않았습니다." + id);
-        sheetPost.decreaseLikedCount();
+        likeCountRepository.decrementLikeCount(sheetPost);
     }
 
     public void scrapSheetPost(Long id) {

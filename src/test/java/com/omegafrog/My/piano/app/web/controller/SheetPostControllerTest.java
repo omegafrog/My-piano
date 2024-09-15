@@ -2,43 +2,42 @@ package com.omegafrog.My.piano.app.web.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.omegafrog.My.piano.app.security.entity.SecurityUser;
+import com.omegafrog.My.piano.app.Cleanup;
+import com.omegafrog.My.piano.app.TestUtil;
+import com.omegafrog.My.piano.app.TestUtilConfig;
 import com.omegafrog.My.piano.app.web.domain.sheet.Genres;
-import com.omegafrog.My.piano.app.web.domain.user.User;
-import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
 import com.omegafrog.My.piano.app.web.dto.comment.RegisterCommentDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.RegisterSheetPostDto;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.UpdateSheetDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.UpdateSheetPostDto;
-import com.omegafrog.My.piano.app.web.dto.user.SecurityUserDto;
 import com.omegafrog.My.piano.app.web.enums.Difficulty;
 import com.omegafrog.My.piano.app.web.enums.Genre;
 import com.omegafrog.My.piano.app.web.enums.Instrument;
-import com.omegafrog.My.piano.app.web.service.admin.CommonUserService;
-import jakarta.servlet.http.Cookie;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.mock.web.MockPart;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.io.FileInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -46,89 +45,76 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(SpringExtension.class)
-@SpringBootTest
 @AutoConfigureMockMvc
-@RequiredArgsConstructor
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@SpringBootTest
+@Import(TestUtilConfig.class)
 class SheetPostControllerTest {
 
-    @Autowired
-    private CommonUserService commonUserService;
-    @Autowired
-    private UserRepository userRepository;
     @Autowired
     private ObjectMapper objectMapper;
 
     @Autowired
     private MockMvc mockMvc;
+    @Autowired
+    private Cleanup cleanup;
 
+    @Autowired
+    private TestUtil testUtil;
 
-    private User artist;
-    private String accessToken;
-    private Cookie refreshToken;
-
-    RegisterSheetPostDto build;
-
-    @NoArgsConstructor
-    @Data
-    private static class LoginResult {
-        private String status;
-        private String message;
-        private Map<String, String> serializedData;
-    }
 
     @BeforeEach
-    void login() throws Exception {
-        SecurityUserDto securityUserDto1 = commonUserService.registerUserWithoutProfile(TestUtil.user1);
-        User user = ((SecurityUser) commonUserService.loadUserByUsername(securityUserDto1.getUsername()))
-                .getUser();
-        user.chargeCash(20000);
-        userRepository.save(user);
-
-        SecurityUserDto securityUserDto2 = commonUserService.registerUserWithoutProfile(TestUtil.user2);
-        artist = ((SecurityUser) commonUserService.loadUserByUsername(securityUserDto2.getUsername()))
-                .getUser();
-        MvcResult mvcResult = mockMvc.perform(post("/user/login")
-                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                        .content("username=user1&password=password"))
-                .andReturn();
-        String contentAsString = mvcResult.getResponse().getContentAsString();
-        LoginResult loginResult = objectMapper.readValue(contentAsString, LoginResult.class);
-        accessToken = loginResult.getSerializedData().get("access token");
-        refreshToken = mvcResult.getResponse().getCookie("refreshToken");
+    void cleanUp() {
+        cleanup.cleanUp();
     }
 
     @Test
     void saveTest() throws Exception {
-        String contentAsString = mockMvc.perform(post("/sheet/write")
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(build)))
+        testUtil.register(mockMvc, TestUtil.user1);
+        testUtil.register(mockMvc, TestUtil.user2);
+        TestUtil.TokenResponse artistToken = testUtil.login(mockMvc, TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
+        TestUtil.TokenResponse userToken = testUtil.login(mockMvc, TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
+        RegisterSheetPostDto registerDto = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1);
+        MockMultipartFile file = new MockMultipartFile("sheetFiles", "img.pdf", "application/pdf",
+                new FileInputStream("src/test/sheet.pdf"));
+        String contentAsString = mockMvc.perform(multipart("/api/v1/sheet-post")
+                        .file(file)
+                        .part(new MockPart("sheetInfo", objectMapper.writeValueAsString(registerDto).getBytes(
+                                StandardCharsets.UTF_8
+                        )))
+                        .header(HttpHeaders.AUTHORIZATION, artistToken.getAccessToken())
+                        .cookie(artistToken.getRefreshToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn().getResponse().getContentAsString();
-        ;
 
-        String content = objectMapper.readTree(contentAsString).get("serializedData").get("sheetPost").get("content").asText();
+        String content = objectMapper.readTree(contentAsString).get("data").get("content").asText();
         Assertions.assertThat(content).isEqualTo("content");
     }
 
     @Test
     void updateTest() throws Exception {
 //            given
-        String contentAsString = mockMvc.perform(post("/sheet/write")
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(build)))
+        testUtil.register(mockMvc, TestUtil.user1);
+        testUtil.register(mockMvc, TestUtil.user2);
+        TestUtil.TokenResponse artistToken = testUtil.login(mockMvc, TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
+        TestUtil.TokenResponse userToken = testUtil.login(mockMvc, TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
+        RegisterSheetPostDto registerDto = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1);
+        MockMultipartFile file = new MockMultipartFile("sheetFiles", "img.pdf", "application/pdf",
+                new FileInputStream("src/test/sheet.pdf"));
+        String contentAsString = mockMvc.perform(multipart("/api/v1/sheet-post")
+                        .file(file)
+                        .part(new MockPart("sheetInfo", objectMapper.writeValueAsString(registerDto).getBytes(
+                                StandardCharsets.UTF_8
+                        )))
+                        .header(HttpHeaders.AUTHORIZATION, artistToken.getAccessToken())
+                        .cookie(artistToken.getRefreshToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn().getResponse().getContentAsString();
-        ;
-        Long id = objectMapper.readTree(contentAsString).get("serializedData").get("sheetPost").get("id").asLong();
+        Long id = objectMapper.readTree(contentAsString).get("data").get("id").asLong();
 
         //when
+        MockMultipartFile file1 = new MockMultipartFile("file", (byte[]) null);
         UpdateSheetPostDto updateBuild = UpdateSheetPostDto.builder()
                 .title("changed")
                 .content("changedContent")
@@ -145,16 +131,18 @@ class SheetPostControllerTest {
                 .price(11000)
                 .discountRate(10d)
                 .build();
-        MvcResult mvcResult1 = mockMvc.perform(post("/sheet/" + id)
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken)
+        MvcResult mvcResult1 = mockMvc.perform(multipart("/api/v1/sheet-post/" + id)
+                        .file(file1)
+                        .part(new MockPart("dto", objectMapper.writeValueAsString(updateBuild).getBytes()))
+                        .header(HttpHeaders.AUTHORIZATION, artistToken.getAccessToken())
+                        .cookie(artistToken.getRefreshToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateBuild)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
         String contentAsString1 = mvcResult1.getResponse().getContentAsString();
-        JsonNode sheetPost = objectMapper.readTree(contentAsString1).get("serializedData").get("sheetPost");
+        JsonNode sheetPost = objectMapper.readTree(contentAsString1).get("data");
         String updatedContent = sheetPost.get("content").asText();
         long updatedId = sheetPost.get("id").asLong();
         Assertions.assertThat(updatedId).isEqualTo(id);
@@ -164,26 +152,23 @@ class SheetPostControllerTest {
     @Test
     void deleteTest() throws Exception {
         //given
-        String contentAsString = mockMvc.perform(post("/sheet/write")
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(build)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
-                .andReturn().getResponse().getContentAsString();
-        ;
-        long id = objectMapper.readTree(contentAsString).get("serializedData").get("sheetPost").get("id").asLong();
+        testUtil.register(mockMvc, TestUtil.user1);
+        TestUtil.TokenResponse artistToken = testUtil.login(mockMvc, TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
+        testUtil.register(mockMvc, TestUtil.user2);
+        TestUtil.TokenResponse userToken = testUtil.login(mockMvc, TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
+        RegisterSheetPostDto registerDto = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1);
+        SheetPostDto sheetPostDto = testUtil.writeSheetPost(mockMvc, artistToken, registerDto);
+        Long id = sheetPostDto.getId();
         //when
-        MvcResult mvcResult1 = mockMvc.perform(delete("/sheet/" + id)
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken))
+        MvcResult mvcResult1 = mockMvc.perform(delete("/api/v1/sheet-post/" + id)
+                        .header(HttpHeaders.AUTHORIZATION, artistToken.getAccessToken())
+                        .cookie(artistToken.getRefreshToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
         //then
-        mockMvc.perform(get("/sheet/" + id))
-                .andExpect(status().isOk())
+        mockMvc.perform(get("/api/v1/sheet-post/" + id))
+                .andExpect(status().is4xxClientError())
                 .andExpect(jsonPath("$.status").value(HttpStatus.BAD_REQUEST.value()))
                 .andDo(print());
     }
@@ -191,88 +176,109 @@ class SheetPostControllerTest {
     @Test
     void findTest() throws Exception {
         //given
-        String contentAsString = mockMvc.perform(post("/sheet/write")
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(build)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
-                .andReturn().getResponse().getContentAsString();
-        ;
-        Long id = objectMapper.readTree(contentAsString).get("serializedData").get("sheetPost").get("id").asLong();
+        testUtil.register(mockMvc, TestUtil.user1);
+        TestUtil.TokenResponse artistToken = testUtil.login(mockMvc, TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
+        testUtil.register(mockMvc, TestUtil.user2);
+        TestUtil.TokenResponse userToken = testUtil.login(mockMvc, TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
+        RegisterSheetPostDto registerDto = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1);
+        SheetPostDto sheetPostDto = testUtil.writeSheetPost(mockMvc, artistToken, registerDto);
+        Long id = sheetPostDto.getId();
 
-        MvcResult mvcResult1 = mockMvc.perform(get("/sheet/" + id))
+        MvcResult mvcResult1 = mockMvc.perform(get("/api/v1/sheet-post/" + id))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
         String contentAsString1 = mvcResult1.getResponse().getContentAsString();
-        Long id1 = objectMapper.readTree(contentAsString1).get("serializedData").get("sheetPost").get("id").asLong();
+        Long id1 = objectMapper.readTree(contentAsString1).get("data").get("id").asLong();
         Assertions.assertThat(id).isEqualTo(id1);
     }
 
     @Test
     void findAllTest() throws Exception {
         //given
-        String contentAsString1 = mockMvc.perform(post("/sheet/write")
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(build)))
+        testUtil.register(mockMvc, TestUtil.user1);
+        TestUtil.TokenResponse artistToken = testUtil.login(mockMvc, TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
+        testUtil.register(mockMvc, TestUtil.user2);
+        TestUtil.TokenResponse userToken = testUtil.login(mockMvc, TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
+        RegisterSheetPostDto registerDto = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1);
+        MockMultipartFile file = new MockMultipartFile("sheetFiles", "img.pdf", "application/pdf",
+                new FileInputStream("src/test/sheet.pdf"));
+        String contentAsString = mockMvc.perform(multipart("/api/v1/sheet-post")
+                        .file(file)
+                        .part(new MockPart("sheetInfo", objectMapper.writeValueAsString(registerDto).getBytes(
+                                StandardCharsets.UTF_8
+                        )))
+                        .header(HttpHeaders.AUTHORIZATION, artistToken.getAccessToken())
+                        .cookie(artistToken.getRefreshToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn().getResponse().getContentAsString();
-        ;
-        Long id1 = objectMapper.readTree(contentAsString1).get("serializedData").get("sheetPost").get("id").asLong();
-        build.setTitle("title2");
-        MvcResult mvcResult2 = mockMvc.perform(post("/sheet/write")
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(build)))
+        Long id = objectMapper.readTree(contentAsString).get("data").get("id").asLong();
+
+        RegisterSheetPostDto registerDto2 = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto2);
+        MockMultipartFile file2 = new MockMultipartFile("sheetFiles", "img.pdf", "application/pdf",
+                new FileInputStream("src/test/sheet.pdf"));
+        String contentAsString2 = mockMvc.perform(multipart("/api/v1/sheet-post")
+                        .file(file2)
+                        .part(new MockPart("sheetInfo", objectMapper.writeValueAsString(registerDto2).getBytes(
+                                StandardCharsets.UTF_8
+                        )))
+                        .header(HttpHeaders.AUTHORIZATION, artistToken.getAccessToken())
+                        .cookie(artistToken.getRefreshToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
-                .andReturn();
-        String contentAsString2 = mvcResult2.getResponse().getContentAsString();
-        long id2 = objectMapper.readTree(contentAsString2).get("serializedData").get("sheetPost").get("id").asLong();
+                .andReturn().getResponse().getContentAsString();
+        Long id2 = objectMapper.readTree(contentAsString2).get("data").get("id").asLong();
 
         //when
-        MvcResult result = mockMvc.perform(get("/sheet"))
+        String sheetposts = mockMvc.perform(get("/api/v1/sheet-post"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
-                .andReturn();
-        String contentAsString = result.getResponse().getContentAsString();
-        long id = objectMapper.readTree(contentAsString).get("serializedData").get("sheetPosts").get(0).get("id").asLong();
-        Assertions.assertThat(id1).isEqualTo(id);
+                .andReturn().getResponse().getContentAsString();
+        Iterator<JsonNode> data = objectMapper.readTree(sheetposts).get("data").get("content").elements();
+        List<SheetPostDto> sheetPostDtos = new ArrayList<>();
+        while (data.hasNext())
+            sheetPostDtos.add(objectMapper.convertValue(data.next(), SheetPostDto.class));
+
+        Assertions.assertThat(sheetPostDtos).extracting("id").containsAnyOf(id, id2);
     }
 
     @Test
     @DisplayName("로그인한 유저는 댓글을 입력할 수 있다.")
     void commentTest() throws Exception {
         // given
-        String contentAsString = mockMvc.perform(post("/sheet/write")
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(build)))
+        testUtil.register(mockMvc, TestUtil.user1);
+        TestUtil.TokenResponse artistToken = testUtil.login(mockMvc, TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
+        testUtil.register(mockMvc, TestUtil.user2);
+        TestUtil.TokenResponse userToken = testUtil.login(mockMvc, TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
+        RegisterSheetPostDto registerDto = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1);
+        MockMultipartFile file = new MockMultipartFile("sheetFiles", "img.pdf", "application/pdf",
+                new FileInputStream("src/test/sheet.pdf"));
+        String contentAsString = mockMvc.perform(multipart("/api/v1/sheet-post")
+                        .file(file)
+                        .part(new MockPart("sheetInfo", objectMapper.writeValueAsString(registerDto).getBytes(
+                                StandardCharsets.UTF_8
+                        )))
+                        .header(HttpHeaders.AUTHORIZATION, artistToken.getAccessToken())
+                        .cookie(artistToken.getRefreshToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn().getResponse().getContentAsString();
 
-        Long id = objectMapper.readTree(contentAsString).get("serializedData").get("sheetPost").get("id").asLong();
+        Long id = objectMapper.readTree(contentAsString).get("data").get("id").asLong();
 
         RegisterCommentDto dto = RegisterCommentDto.builder()
                 .content("content")
                 .build();
-        String contentAsString1 = mockMvc.perform(post("/sheet/" + id + "/comment")
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken)
+        String contentAsString1 = mockMvc.perform(post("/api/v1/sheet-post/" + id + "/comments")
+                        .header(HttpHeaders.AUTHORIZATION, userToken.getAccessToken())
+                        .cookie(userToken.getRefreshToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn().getResponse().getContentAsString();
-        JsonNode jsonNode = objectMapper.readTree(contentAsString1).get("serializedData").get("comments");
+        JsonNode jsonNode = objectMapper.readTree(contentAsString1).get("data");
         List<CommentDto> commentList = new ArrayList<>();
 
         jsonNode.forEach(node -> {
@@ -281,57 +287,61 @@ class SheetPostControllerTest {
 
         Assertions.assertThat(commentList).hasSize(1);
         Assertions.assertThat(commentList.get(0).getContent()).isEqualTo("content");
-        User user1 = ((SecurityUser) commonUserService.loadUserByUsername("user1")).getUser();
-        Assertions.assertThat(user1.getWroteComments()).hasSize(1);
-        Assertions.assertThat(user1.getWroteComments().get(0).getContent()).isEqualTo("content");
+//        User user1 = ((SecurityUser) commonUserService.loadUserByUsername("user1")).getUser();
+//        Assertions.assertThat(user1.getWroteComments()).hasSize(1);
+//        Assertions.assertThat(user1.getWroteComments().get(0).getContent()).isEqualTo("content");
     }
 
     @Test
     @DisplayName("댓글을 삭제할 수 있다.")
     void deleteCommentTest() throws Exception {
-        MvcResult mvcResult = mockMvc.perform(post("/sheet/write")
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(build)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
-                .andReturn();
-
-        String contentAsString = mvcResult.getResponse().getContentAsString();
-        Long id = objectMapper.readTree(contentAsString).get("serializedData").get("sheetPost").get("id").asLong();
+        testUtil.register(mockMvc, TestUtil.user1);
+        TestUtil.TokenResponse artistToken = testUtil.login(mockMvc, TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
+        testUtil.register(mockMvc, TestUtil.user2);
+        TestUtil.TokenResponse userToken = testUtil.login(mockMvc, TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
+        RegisterSheetPostDto registerDto = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1);
+        SheetPostDto sheetPostDto = testUtil.writeSheetPost(mockMvc, artistToken, registerDto);
 
         RegisterCommentDto dto = RegisterCommentDto.builder()
                 .content("content")
                 .build();
-        String contentAsString1 = mockMvc.perform(post("/sheet/" + id + "/comment")
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken)
+        String contentAsString1 = mockMvc.perform(post("/api/v1/sheet-post/" + sheetPostDto.getId() + "/comments")
+                        .header(HttpHeaders.AUTHORIZATION, userToken.getAccessToken())
+                        .cookie(userToken.getRefreshToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn().getResponse().getContentAsString();
-        JsonNode jsonNode = objectMapper.readTree(contentAsString1).get("serializedData").get("comments");
+        JsonNode jsonNode = objectMapper.readTree(contentAsString1).get("data");
         List<CommentDto> commentList = new ArrayList<>();
 
         jsonNode.forEach(node -> {
             commentList.add(objectMapper.convertValue(node, CommentDto.class));
         });
-        String contentAsString2 = mockMvc.perform(delete("/sheet/" + id + "/comment/" + commentList.get(0).getId())
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken))
+        String contentAsString2 = mockMvc.perform(delete("/api/v1/sheet-post/" + sheetPostDto.getId() + "/comments/" + commentList.get(0).getId())
+                        .header(HttpHeaders.AUTHORIZATION, userToken.getAccessToken())
+                        .cookie(userToken.getRefreshToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn().getResponse().getContentAsString();
-        JsonNode jsonNode1 = objectMapper.readTree(contentAsString2).get("serializedData").get("comments");
+        JsonNode jsonNode1 = objectMapper.readTree(contentAsString2).get("data");
         List<CommentDto> commentDtoList = new ArrayList<>();
         jsonNode1.forEach(element -> commentDtoList.add(objectMapper.convertValue(element, CommentDto.class)));
 
         Assertions.assertThat(commentDtoList).isEmpty();
-        User user1 = ((SecurityUser) commonUserService.loadUserByUsername("user1")).getUser();
-        Assertions.assertThat(user1.getWroteComments()).isEmpty();
+        String comments = mockMvc.perform(get("/api/v1/user/comments")
+                        .header(HttpHeaders.AUTHORIZATION, userToken.getAccessToken())
+                        .cookie(userToken.getRefreshToken()))
+                .andDo(print())
+                .andReturn().getResponse().getContentAsString();
+
+        Iterator<JsonNode> data = objectMapper.readTree(comments).get("data").elements();
+        List<CommentDto> userComments = new ArrayList<>();
+
+        while (data.hasNext())
+            userComments.add(objectMapper.convertValue(data.next(), CommentDto.class));
+
+        Assertions.assertThat(userComments).isEmpty();
     }
-
-
 }

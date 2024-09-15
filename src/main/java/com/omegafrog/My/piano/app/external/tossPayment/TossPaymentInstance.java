@@ -3,9 +3,10 @@ package com.omegafrog.My.piano.app.external.tossPayment;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.util.Base64;
 import com.omegafrog.My.piano.app.utils.MapperUtil;
+import com.omegafrog.My.piano.app.web.domain.cash.CashOrder;
 import com.omegafrog.My.piano.app.web.exception.payment.CashOrderConfirmFailedException;
 import com.omegafrog.My.piano.app.web.exception.payment.TossAPIException;
-import com.omegafrog.My.piano.app.web.domain.cash.CashOrder;
+import com.omegafrog.My.piano.app.web.exception.toss.TossError;
 import lombok.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -56,27 +57,28 @@ public class TossPaymentInstance {
         HttpEntity<RequestBody> entity = new HttpEntity<>(requestBody, headers);
 
 
-        try{
+        try {
             ResponseEntity<String> exchange = restTemplate.exchange(baseURL + "/confirm", HttpMethod.POST, entity, String.class);
             if (exchange.getStatusCode().is2xxSuccessful())
                 // DONE
                 return mapperUtil.parsePayment(exchange.getBody());
             else throw new HttpClientErrorException(exchange.getStatusCode());
-        }catch (HttpClientErrorException e){
-            if(e.getStatusCode().is4xxClientError()){
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode().is4xxClientError()) {
                 // ABORTED
                 TossError tossError = mapperUtil.parseTossError(e.getLocalizedMessage());
                 throw new TossAPIException(tossError.message());
-            }else{
+            } else {
                 // ABORTED
                 throw new CashOrderConfirmFailedException("현금 결제 승인 서버에 요청 전송 실패.");
             }
         }
     }
+
     public void cancelPayment(String paymentKey, String cancelReason) {
         RestClient restClient = RestClient.create();
-        URI uri = URI.create(baseURL+"/" + paymentKey + "/cancel");
-        String basicAuth = "Basic "+ Base64.encode(secretKey+":");
+        URI uri = URI.create(baseURL + "/" + paymentKey + "/cancel");
+        String basicAuth = "Basic " + Base64.encode(secretKey + ":");
 
         CancelBody build = CancelBody.builder()
                 .cancelReason(cancelReason)
@@ -93,7 +95,7 @@ public class TossPaymentInstance {
 
     @Builder
     @Getter
-    private static class CancelBody{
+    private static class CancelBody {
         private String cancelReason;
     }
 }

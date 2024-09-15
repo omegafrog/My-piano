@@ -1,5 +1,6 @@
 package com.omegafrog.My.piano.app.batch;
 
+import com.omegafrog.My.piano.app.web.domain.article.LikeCount;
 import com.omegafrog.My.piano.app.web.domain.article.ViewCount;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.batch.item.database.AbstractPagingItemReader;
@@ -12,11 +13,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class ViewCountPagingItemReader<T extends ViewCount> extends AbstractPagingItemReader<ViewCount> {
+public class LikeCountPagingItemReader<T extends LikeCount> extends AbstractPagingItemReader<LikeCount> {
+
     private final Class<T> targetType;
     private final RedisTemplate<String, ViewCount> redisTemplate;
 
-    public ViewCountPagingItemReader(Class<T> targetType, RedisTemplate<String, ViewCount> redisTemplate) {
+    public LikeCountPagingItemReader(Class<T> targetType, RedisTemplate<String, ViewCount> redisTemplate) {
         this.targetType = targetType;
         this.redisTemplate = redisTemplate;
     }
@@ -28,11 +30,11 @@ public class ViewCountPagingItemReader<T extends ViewCount> extends AbstractPagi
         } else {
             results.clear();
         }
-        List<ViewCount> viewCounts = redisTemplate.execute(new SessionCallback<>() {
+        List<LikeCount> viewCounts = redisTemplate.execute(new SessionCallback<>() {
             @Override
-            public List<ViewCount> execute(RedisOperations operations) throws DataAccessException {
+            public List<LikeCount> execute(RedisOperations operations) throws DataAccessException {
                 List<String> keys = getKeys();
-                List<ViewCount> items = new ArrayList<>();
+                List<LikeCount> items = new ArrayList<>();
                 Constructor<T> constructor = getConstructor();
 
                 int start = (getPage() * getPageSize());
@@ -44,7 +46,7 @@ public class ViewCountPagingItemReader<T extends ViewCount> extends AbstractPagi
                     try {
                         items.add(constructor.newInstance(
                                 Long.valueOf(key.split(":")[1]),
-                                (int) operations.opsForHash().get(key, "viewCount")
+                                (int) operations.opsForHash().get(key, "likeCount")
                         ));
                     } catch (InstantiationException e) {
                         throw new RuntimeException(e);

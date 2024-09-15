@@ -191,6 +191,7 @@ public class User implements Serializable {
         return scrappedSheetPosts.stream().anyMatch(item -> item.getSheetPost().equals(sheetPost));
     }
 
+    // 좋아요 누른 sheetpost list에 추가한다.
     public void likeSheetPost(SheetPost sheetPost) {
         if (isLikedSheetPost(sheetPost))
             throw new AlreadyLikedEntityException();
@@ -198,7 +199,6 @@ public class User implements Serializable {
                 .user(this)
                 .sheetPost(sheetPost)
                 .build());
-        sheetPost.increaseLikedCount();
     }
 
     private boolean isLikedSheetPost(SheetPost sheetPost) {
