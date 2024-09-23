@@ -1,8 +1,8 @@
 package com.omegafrog.My.piano.app.web.domain.admin;
 
 
-import com.omegafrog.My.piano.app.security.entity.authorities.Authority;
-import com.omegafrog.My.piano.app.security.entity.authorities.Role;
+import com.omegafrog.My.piano.app.web.domain.user.authorities.Authority;
+import com.omegafrog.My.piano.app.web.domain.user.authorities.Role;
 import com.omegafrog.My.piano.app.web.dto.admin.AdminDto;
 import com.omegafrog.My.piano.app.web.dto.admin.UpdateAdminDto;
 import jakarta.persistence.Entity;
@@ -20,7 +20,7 @@ import java.util.Collection;
 import java.util.List;
 
 
-@Entity(name = "administrator")
+@Entity(name = "admin")
 @NoArgsConstructor
 @Getter
 public class Admin implements UserDetails {

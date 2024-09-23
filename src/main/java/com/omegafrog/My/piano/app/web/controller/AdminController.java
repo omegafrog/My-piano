@@ -1,24 +1,24 @@
 package com.omegafrog.My.piano.app.web.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.omegafrog.My.piano.app.security.entity.SecurityUser;
-import com.omegafrog.My.piano.app.security.entity.authorities.Role;
-import com.omegafrog.My.piano.app.web.dto.lesson.LessonListDto;
-import com.omegafrog.My.piano.app.web.dto.lesson.SearchLessonFilter;
-import com.omegafrog.My.piano.app.web.enums.Difficulty;
-import com.omegafrog.My.piano.app.web.enums.Instrument;
-import com.omegafrog.My.piano.app.web.service.admin.AdminUserService;
-import com.omegafrog.My.piano.app.web.response.success.ApiResponse;
-import com.omegafrog.My.piano.app.web.response.success.JsonAPIResponse;
+import com.omegafrog.My.piano.app.web.domain.user.SecurityUser;
+import com.omegafrog.My.piano.app.web.domain.user.authorities.Role;
 import com.omegafrog.My.piano.app.web.dto.admin.AdminDto;
 import com.omegafrog.My.piano.app.web.dto.admin.ControlUserDto;
 import com.omegafrog.My.piano.app.web.dto.admin.ReturnSessionDto;
 import com.omegafrog.My.piano.app.web.dto.admin.SearchUserFilter;
+import com.omegafrog.My.piano.app.web.dto.lesson.LessonListDto;
+import com.omegafrog.My.piano.app.web.dto.lesson.SearchLessonFilter;
 import com.omegafrog.My.piano.app.web.dto.post.PostListDto;
 import com.omegafrog.My.piano.app.web.dto.post.SearchPostFilter;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SearchSheetPostFilter;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostListDto;
 import com.omegafrog.My.piano.app.web.dto.user.UserDto;
+import com.omegafrog.My.piano.app.web.enums.Difficulty;
+import com.omegafrog.My.piano.app.web.enums.Instrument;
+import com.omegafrog.My.piano.app.web.response.success.ApiResponse;
+import com.omegafrog.My.piano.app.web.response.success.JsonAPIResponse;
+import com.omegafrog.My.piano.app.web.service.admin.AdminUserService;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -64,7 +64,7 @@ public class AdminController {
     @GetMapping("/sessions")
     public JsonAPIResponse<Page<ReturnSessionDto>> getLoggedInUsers(Pageable pageable) {
         Page<ReturnSessionDto> sessions = adminUserService.getLoggedInUsers(pageable);
-        return new ApiResponse<>("Load all users success.",sessions);
+        return new ApiResponse<>("Load all users success.", sessions);
     }
 
 
@@ -77,13 +77,14 @@ public class AdminController {
             @Nullable @RequestParam LoginMethod loginMethod,
             @Nullable @RequestParam String dateStart,
             @Nullable @RequestParam String dateEnd,
-            @Nullable @RequestParam Boolean locked){
+            @Nullable @RequestParam Boolean locked) {
         Page<UserDto> users = adminUserService.getAllUsers(pageable, new SearchUserFilter(id, email, username, loginMethod,
                 dateStart, dateEnd, locked));
         return new ApiResponse<>("Load all users success.", users);
     }
+
     @GetMapping("/log-in-users/count")
-    public JsonAPIResponse<Long> countLoggedInUsers(){
+    public JsonAPIResponse<Long> countLoggedInUsers() {
         Long data = adminUserService.countLoggedInUsers();
         return new ApiResponse<>("Count logged in users success.", data);
     }
@@ -111,6 +112,7 @@ public class AdminController {
         adminUserService.update(id, options);
         return new ApiResponse<>("disable post success.");
     }
+
     @DeleteMapping("/posts/{id}")
     public JsonAPIResponse<Void> deletePost(@PathVariable Long id) {
         adminUserService.deletePost(id);
@@ -119,13 +121,13 @@ public class AdminController {
 
     @PostMapping("/posts")
     public JsonAPIResponse<Void> writeNoticePost(@RequestBody String body) throws JsonProcessingException {
-        SecurityUser loggedInAdmin =(SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        SecurityUser loggedInAdmin = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         adminUserService.writeNotiPost(body, loggedInAdmin);
         return new ApiResponse<>("write notice post success");
     }
 
     @GetMapping("/sheets")
-    public JsonAPIResponse< Page<SheetPostListDto>> getAllSheets(
+    public JsonAPIResponse<Page<SheetPostListDto>> getAllSheets(
             @Valid @PageableDefault(size = 30, page = 0) Pageable pageable,
             @Nullable @RequestParam Long id,
             @Nullable @RequestParam String title,
@@ -134,28 +136,31 @@ public class AdminController {
             @Nullable @RequestParam Instrument instrument,
             @Nullable @RequestParam Difficulty difficulty,
             @Nullable @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
-            @Nullable @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate){
+            @Nullable @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
         Page<SheetPostListDto> data = adminUserService.getAllSheetPosts(pageable,
                 new SearchSheetPostFilter(id, title, username, sheetId, instrument, difficulty, startDate, endDate));
         return new ApiResponse<>("Load all users success.", data);
     }
+
     @PutMapping("/sheets/{id}")
     public JsonAPIResponse<Void> updateSheet(@PathVariable Long id, @RequestBody String options) throws JsonProcessingException {
         adminUserService.updateSheetPost(id, options);
         return new ApiResponse<>("update sheet post success.");
     }
+
     @DeleteMapping("/sheets/{id}")
-    public JsonAPIResponse<Void> deleteSheet(@PathVariable Long id){
+    public JsonAPIResponse<Void> deleteSheet(@PathVariable Long id) {
         adminUserService.deleteSheetPost(id);
         return new ApiResponse<>("delete sheet post success.");
     }
+
     @GetMapping("/lessons")
     public JsonAPIResponse<Page<LessonListDto>> getLessons(
             @Valid @PageableDefault(size = 30, page = 0) Pageable pageable,
             @Nullable @RequestParam Long id,
             @Nullable @RequestParam String title,
-            @Nullable @RequestParam @DateTimeFormat(pattern="yyyy-MM-dd") LocalDate startDate,
-            @Nullable @RequestParam @DateTimeFormat(pattern="yyyy-MM-dd") LocalDate endDate
+            @Nullable @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @Nullable @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate
     ) throws JsonProcessingException {
         Page<LessonListDto> data = adminUserService.getAllLessons(pageable,
                 new SearchLessonFilter(id, title, startDate, endDate));

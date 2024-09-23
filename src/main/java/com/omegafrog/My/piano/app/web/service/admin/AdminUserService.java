@@ -1,9 +1,6 @@
 package com.omegafrog.My.piano.app.web.service.admin;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.omegafrog.My.piano.app.security.entity.SecurityUser;
-import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
-import com.omegafrog.My.piano.app.security.entity.authorities.Role;
 import com.omegafrog.My.piano.app.security.jwt.RefreshToken;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
@@ -15,8 +12,11 @@ import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.post.PostRepository;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
+import com.omegafrog.My.piano.app.web.domain.user.SecurityUser;
+import com.omegafrog.My.piano.app.web.domain.user.SecurityUserRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
+import com.omegafrog.My.piano.app.web.domain.user.authorities.Role;
 import com.omegafrog.My.piano.app.web.dto.admin.AdminDto;
 import com.omegafrog.My.piano.app.web.dto.admin.ControlUserDto;
 import com.omegafrog.My.piano.app.web.dto.admin.ReturnSessionDto;
@@ -69,7 +69,7 @@ public class AdminUserService implements UserDetailsService {
     }
 
 
-    public void register(String username, String password, String name, String email,  Role role) {
+    public void register(String username, String password, String name, String email, Role role) {
         securityUserRepository.save(SecurityUser.builder()
                 .role(role)
                 .password(passwordEncoder.encode(password))
@@ -79,14 +79,14 @@ public class AdminUserService implements UserDetailsService {
     }
 
     public AdminDto getAdminProfile() {
-        User admin= authenticationUtil.getLoggedInUser();
+        User admin = authenticationUtil.getLoggedInUser();
         return new AdminDto(admin.getId(),
                 admin.getName(), admin.getEmail(), admin.getSecurityUser().getRole());
     }
 
     public Page<ReturnSessionDto> getLoggedInUsers(Pageable pageable) {
         Role[] roles = {Role.USER, Role.CREATOR};
-        Page<RefreshToken> token= refreshTokenRepository.findAllByRole(roles, pageable);
+        Page<RefreshToken> token = refreshTokenRepository.findAllByRole(roles, pageable);
         Page<SecurityUser> allById = securityUserRepository.findAllByUserId(
                 token.stream().map(RefreshToken::getUserId).toList(),
                 pageable);
@@ -136,13 +136,13 @@ public class AdminUserService implements UserDetailsService {
     public void controlUser(Long id, ControlUserDto dto) {
         SecurityUser user = securityUserRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find SecurityUser entity. id : " + id));
-        if(dto.remove() != null)
-            if(dto.remove() == true) securityUserRepository.deleteById(id);
+        if (dto.remove() != null)
+            if (dto.remove() == true) securityUserRepository.deleteById(id);
         if (dto.locked() != null) {
             if (Boolean.TRUE.equals(dto.locked())) user.disable();
             else user.enable();
         }
-        if(dto.role() != null) user.changeRole(dto.role());
+        if (dto.role() != null) user.changeRole(dto.role());
     }
 
     public Page<PostListDto> getAllPosts(SearchPostFilter filter, Pageable pageable) {
@@ -152,7 +152,7 @@ public class AdminUserService implements UserDetailsService {
 
     public void disablePost(Long id, Boolean disabled) {
         Post post = postRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Cannot find Post entity. id : " + id));
-        if(disabled) post.disable();
+        if (disabled) post.disable();
     }
 
     public void deletePost(Long id) {
@@ -185,7 +185,7 @@ public class AdminUserService implements UserDetailsService {
                         item.getSheet().getGenres(),
                         item.getSheet().getInstrument(),
                         item.getCreatedAt(),
-                        item.getPrice())).toList(),pageable, ()->all.getTotalElements());
+                        item.getPrice())).toList(), pageable, () -> all.getTotalElements());
     }
 
     public void updateSheetPost(Long id, String options) throws JsonProcessingException {

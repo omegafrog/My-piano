@@ -1,7 +1,7 @@
 package com.omegafrog.My.piano.app.web.domain;
 
-import com.omegafrog.My.piano.app.security.entity.authorities.Role;
 import com.omegafrog.My.piano.app.web.domain.ticket.Ticket;
+import com.omegafrog.My.piano.app.web.domain.user.authorities.Role;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;

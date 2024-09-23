@@ -5,9 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.Cleanup;
 import com.omegafrog.My.piano.app.TestUtil;
 import com.omegafrog.My.piano.app.TestUtilConfig;
-import com.omegafrog.My.piano.app.security.entity.SecurityUser;
-import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
-import com.omegafrog.My.piano.app.security.entity.authorities.Role;
+import com.omegafrog.My.piano.app.web.domain.user.SecurityUser;
+import com.omegafrog.My.piano.app.web.domain.user.SecurityUserRepository;
+import com.omegafrog.My.piano.app.web.domain.user.authorities.Role;
 import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
 import com.omegafrog.My.piano.app.web.dto.comment.RegisterCommentDto;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
@@ -17,7 +17,10 @@ import com.omegafrog.My.piano.app.web.dto.sheetPost.RegisterSheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
 import jakarta.persistence.EntityNotFoundException;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -60,8 +63,16 @@ class LessonControllerTest {
     @Autowired
     private Cleanup cleanUp;
 
-    @BeforeEach
-    void settings() throws Exception {
+    @AfterEach
+    void cleanUp() {
+        cleanUp.cleanUp();
+    }
+
+
+    @Test
+    @DisplayName("로그인하고 lesson을 생성할 수 있어야 한다.")
+    void createLessonTest() throws Exception {
+        //given
         // register lesson artist
         testUtil.register(mockMvc, TestUtil.user1);
         SecurityUser securityUser = securityUserRepository.findByUsername(TestUtil.user1.getUsername())
@@ -76,17 +87,8 @@ class LessonControllerTest {
 
         testUtil.register(mockMvc, TestUtil.user3);
         otherToken2 = testUtil.login(mockMvc, TestUtil.user3.getUsername(), TestUtil.user3.getPassword());
-    }
 
-    @AfterEach
-    void cleanUp() {
-        cleanUp.cleanUp();
-    }
 
-    @Test
-    @DisplayName("로그인하고 lesson을 생성할 수 있어야 한다.")
-    void createLessonTest() throws Exception {
-        //given
         RegisterSheetPostDto registerSheetPostDto = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1);
         SheetPostDto sheetPostDto = testUtil.writeSheetPost(mockMvc, artistToken, registerSheetPostDto);
         RegisterLessonDto registerLessonDto = TestUtil.registerLessonDto(sheetPostDto.getSheet().getId());
@@ -117,6 +119,21 @@ class LessonControllerTest {
     @DisplayName("로그인하지 않으면 lesson을 등록할 수 없다.")
     void createLessonAuthorizationTest() throws Exception {
         //given
+        // register lesson artist
+        testUtil.register(mockMvc, TestUtil.user1);
+        SecurityUser securityUser = securityUserRepository.findByUsername(TestUtil.user1.getUsername())
+                .orElseThrow(() -> new EntityNotFoundException());
+        securityUser.changeRole(Role.CREATOR);
+        securityUserRepository.save(securityUser);
+
+        artistToken = testUtil.login(mockMvc, TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
+        // register other user
+        testUtil.register(mockMvc, TestUtil.user2);
+        otherToken = testUtil.login(mockMvc, TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
+
+        testUtil.register(mockMvc, TestUtil.user3);
+        otherToken2 = testUtil.login(mockMvc, TestUtil.user3.getUsername(), TestUtil.user3.getPassword());
+
         RegisterSheetPostDto registerSheetPostDto = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1);
         SheetPostDto sheetPostDto = testUtil.writeSheetPost(mockMvc, artistToken, registerSheetPostDto);
         RegisterLessonDto registerLessonDto = TestUtil.registerLessonDto(sheetPostDto.getSheet().getId());
@@ -136,6 +153,21 @@ class LessonControllerTest {
     @DisplayName("로그인하고 lesson을 수정할 수 있어야 한다.")
     void updateLessonTest() throws Exception {
         //given
+        // register lesson artist
+        testUtil.register(mockMvc, TestUtil.user1);
+        SecurityUser securityUser = securityUserRepository.findByUsername(TestUtil.user1.getUsername())
+                .orElseThrow(() -> new EntityNotFoundException());
+        securityUser.changeRole(Role.CREATOR);
+        securityUserRepository.save(securityUser);
+
+        artistToken = testUtil.login(mockMvc, TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
+        // register other user
+        testUtil.register(mockMvc, TestUtil.user2);
+        otherToken = testUtil.login(mockMvc, TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
+
+        testUtil.register(mockMvc, TestUtil.user3);
+        otherToken2 = testUtil.login(mockMvc, TestUtil.user3.getUsername(), TestUtil.user3.getPassword());
+
         RegisterSheetPostDto registerSheetPostDto = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1);
         SheetPostDto sheetPostDto = testUtil.writeSheetPost(mockMvc, artistToken, registerSheetPostDto);
         RegisterLessonDto registerLessonDto = TestUtil.registerLessonDto(sheetPostDto.getSheet().getId());
@@ -172,6 +204,21 @@ class LessonControllerTest {
     @DisplayName("작성자가 아닌 유저는 수정할 수 없다")
     void updateAuthorizationTest() throws Exception {
         // given
+        // register lesson artist
+        testUtil.register(mockMvc, TestUtil.user1);
+        SecurityUser securityUser = securityUserRepository.findByUsername(TestUtil.user1.getUsername())
+                .orElseThrow(() -> new EntityNotFoundException());
+        securityUser.changeRole(Role.CREATOR);
+        securityUserRepository.save(securityUser);
+
+        artistToken = testUtil.login(mockMvc, TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
+        // register other user
+        testUtil.register(mockMvc, TestUtil.user2);
+        otherToken = testUtil.login(mockMvc, TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
+
+        testUtil.register(mockMvc, TestUtil.user3);
+        otherToken2 = testUtil.login(mockMvc, TestUtil.user3.getUsername(), TestUtil.user3.getPassword());
+
         // write lesson by artist
         RegisterSheetPostDto registerSheetPostDto = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1);
         SheetPostDto sheetPostDto = testUtil.writeSheetPost(mockMvc, artistToken, registerSheetPostDto);
@@ -204,6 +251,21 @@ class LessonControllerTest {
     @DisplayName("작성자가 아닌 유저는 레슨을 삭제할 수 없다")
     void deleteAuthorizationTest() throws Exception {
         //given
+        // register lesson artist
+        testUtil.register(mockMvc, TestUtil.user1);
+        SecurityUser securityUser = securityUserRepository.findByUsername(TestUtil.user1.getUsername())
+                .orElseThrow(() -> new EntityNotFoundException());
+        securityUser.changeRole(Role.CREATOR);
+        securityUserRepository.save(securityUser);
+
+        artistToken = testUtil.login(mockMvc, TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
+        // register other user
+        testUtil.register(mockMvc, TestUtil.user2);
+        otherToken = testUtil.login(mockMvc, TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
+
+        testUtil.register(mockMvc, TestUtil.user3);
+        otherToken2 = testUtil.login(mockMvc, TestUtil.user3.getUsername(), TestUtil.user3.getPassword());
+
         RegisterSheetPostDto registerSheetPostDto = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1);
         SheetPostDto sheetPostDto = testUtil.writeSheetPost(mockMvc, artistToken, registerSheetPostDto);
         RegisterLessonDto registerLessonDto = TestUtil.registerLessonDto(sheetPostDto.getSheet().getId());
@@ -223,6 +285,21 @@ class LessonControllerTest {
     @DisplayName("로그인하고 레슨을 삭제할 수 있다.")
     void deleteLessonTest() throws Exception {
         //given
+        // register lesson artist
+        testUtil.register(mockMvc, TestUtil.user1);
+        SecurityUser securityUser = securityUserRepository.findByUsername(TestUtil.user1.getUsername())
+                .orElseThrow(() -> new EntityNotFoundException());
+        securityUser.changeRole(Role.CREATOR);
+        securityUserRepository.save(securityUser);
+
+        artistToken = testUtil.login(mockMvc, TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
+        // register other user
+        testUtil.register(mockMvc, TestUtil.user2);
+        otherToken = testUtil.login(mockMvc, TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
+
+        testUtil.register(mockMvc, TestUtil.user3);
+        otherToken2 = testUtil.login(mockMvc, TestUtil.user3.getUsername(), TestUtil.user3.getPassword());
+
         RegisterSheetPostDto registerSheetPostDto = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1);
         SheetPostDto sheetPostDto = testUtil.writeSheetPost(mockMvc, artistToken, registerSheetPostDto);
         RegisterLessonDto registerLessonDto = TestUtil.registerLessonDto(sheetPostDto.getSheet().getId());
@@ -243,6 +320,21 @@ class LessonControllerTest {
     @DisplayName("로그인하고 댓글을 작성할 수 있다.")
     void addCommentTest() throws Exception {
         // given
+        // register lesson artist
+        testUtil.register(mockMvc, TestUtil.user1);
+        SecurityUser securityUser = securityUserRepository.findByUsername(TestUtil.user1.getUsername())
+                .orElseThrow(() -> new EntityNotFoundException());
+        securityUser.changeRole(Role.CREATOR);
+        securityUserRepository.save(securityUser);
+
+        artistToken = testUtil.login(mockMvc, TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
+        // register other user
+        testUtil.register(mockMvc, TestUtil.user2);
+        otherToken = testUtil.login(mockMvc, TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
+
+        testUtil.register(mockMvc, TestUtil.user3);
+        otherToken2 = testUtil.login(mockMvc, TestUtil.user3.getUsername(), TestUtil.user3.getPassword());
+
         RegisterSheetPostDto registerSheetPostDto = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1);
         SheetPostDto sheetPostDto = testUtil.writeSheetPost(mockMvc, artistToken, registerSheetPostDto);
         RegisterLessonDto registerLessonDto = TestUtil.registerLessonDto(sheetPostDto.getSheet().getId());
@@ -274,6 +366,21 @@ class LessonControllerTest {
     @DisplayName("로그인하지 않으면 댓글을 작성할 수 없다.")
     void addCommentAuthenticationTest() throws Exception {
         //given
+        // register lesson artist
+        testUtil.register(mockMvc, TestUtil.user1);
+        SecurityUser securityUser = securityUserRepository.findByUsername(TestUtil.user1.getUsername())
+                .orElseThrow(() -> new EntityNotFoundException());
+        securityUser.changeRole(Role.CREATOR);
+        securityUserRepository.save(securityUser);
+
+        artistToken = testUtil.login(mockMvc, TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
+        // register other user
+        testUtil.register(mockMvc, TestUtil.user2);
+        otherToken = testUtil.login(mockMvc, TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
+
+        testUtil.register(mockMvc, TestUtil.user3);
+        otherToken2 = testUtil.login(mockMvc, TestUtil.user3.getUsername(), TestUtil.user3.getPassword());
+
         RegisterSheetPostDto registerSheetPostDto = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1);
         SheetPostDto sheetPostDto = testUtil.writeSheetPost(mockMvc, artistToken, registerSheetPostDto);
         RegisterLessonDto registerLessonDto = TestUtil.registerLessonDto(sheetPostDto.getSheet().getId());
@@ -298,6 +405,21 @@ class LessonControllerTest {
     @DisplayName("자신이 쓴 댓글을 삭제할 수 있다.")
     void deleteCommentTest() throws Exception {
         // given
+        // register lesson artist
+        testUtil.register(mockMvc, TestUtil.user1);
+        SecurityUser securityUser = securityUserRepository.findByUsername(TestUtil.user1.getUsername())
+                .orElseThrow(() -> new EntityNotFoundException());
+        securityUser.changeRole(Role.CREATOR);
+        securityUserRepository.save(securityUser);
+
+        artistToken = testUtil.login(mockMvc, TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
+        // register other user
+        testUtil.register(mockMvc, TestUtil.user2);
+        otherToken = testUtil.login(mockMvc, TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
+
+        testUtil.register(mockMvc, TestUtil.user3);
+        otherToken2 = testUtil.login(mockMvc, TestUtil.user3.getUsername(), TestUtil.user3.getPassword());
+
         RegisterSheetPostDto registerSheetPostDto = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1);
         SheetPostDto sheetPostDto = testUtil.writeSheetPost(mockMvc, artistToken, registerSheetPostDto);
         RegisterLessonDto registerLessonDto = TestUtil.registerLessonDto(sheetPostDto.getSheet().getId());
@@ -343,6 +465,21 @@ class LessonControllerTest {
     @DisplayName("남의 댓글은 삭제할 수 없다.")
     void deleteCommentAuthorizationTest() throws Exception {
         //given
+        // register lesson artist
+        testUtil.register(mockMvc, TestUtil.user1);
+        SecurityUser securityUser = securityUserRepository.findByUsername(TestUtil.user1.getUsername())
+                .orElseThrow(() -> new EntityNotFoundException());
+        securityUser.changeRole(Role.CREATOR);
+        securityUserRepository.save(securityUser);
+
+        artistToken = testUtil.login(mockMvc, TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
+        // register other user
+        testUtil.register(mockMvc, TestUtil.user2);
+        otherToken = testUtil.login(mockMvc, TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
+
+        testUtil.register(mockMvc, TestUtil.user3);
+        otherToken2 = testUtil.login(mockMvc, TestUtil.user3.getUsername(), TestUtil.user3.getPassword());
+
         RegisterSheetPostDto registerSheetPostDto = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1);
         SheetPostDto sheetPostDto = testUtil.writeSheetPost(mockMvc, artistToken, registerSheetPostDto);
         RegisterLessonDto registerLessonDto = TestUtil.registerLessonDto(sheetPostDto.getSheet().getId());
@@ -379,6 +516,21 @@ class LessonControllerTest {
     @Test
     void findLessonTest() throws Exception {
         // given
+        // register lesson artist
+        testUtil.register(mockMvc, TestUtil.user1);
+        SecurityUser securityUser = securityUserRepository.findByUsername(TestUtil.user1.getUsername())
+                .orElseThrow(() -> new EntityNotFoundException());
+        securityUser.changeRole(Role.CREATOR);
+        securityUserRepository.save(securityUser);
+
+        artistToken = testUtil.login(mockMvc, TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
+        // register other user
+        testUtil.register(mockMvc, TestUtil.user2);
+        otherToken = testUtil.login(mockMvc, TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
+
+        testUtil.register(mockMvc, TestUtil.user3);
+        otherToken2 = testUtil.login(mockMvc, TestUtil.user3.getUsername(), TestUtil.user3.getPassword());
+
         RegisterSheetPostDto registerSheetPostDto = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1);
         SheetPostDto sheetPostDto = testUtil.writeSheetPost(mockMvc, artistToken, registerSheetPostDto);
         RegisterLessonDto registerLessonDto = TestUtil.registerLessonDto(sheetPostDto.getSheet().getId());
@@ -405,6 +557,21 @@ class LessonControllerTest {
     @DisplayName("존재하지 않는 Lesson을 조회할 수 없다.")
     void findLessonFailedTest() throws Exception {
         //given
+        // register lesson artist
+        testUtil.register(mockMvc, TestUtil.user1);
+        SecurityUser securityUser = securityUserRepository.findByUsername(TestUtil.user1.getUsername())
+                .orElseThrow(() -> new EntityNotFoundException());
+        securityUser.changeRole(Role.CREATOR);
+        securityUserRepository.save(securityUser);
+
+        artistToken = testUtil.login(mockMvc, TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
+        // register other user
+        testUtil.register(mockMvc, TestUtil.user2);
+        otherToken = testUtil.login(mockMvc, TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
+
+        testUtil.register(mockMvc, TestUtil.user3);
+        otherToken2 = testUtil.login(mockMvc, TestUtil.user3.getUsername(), TestUtil.user3.getPassword());
+
         RegisterSheetPostDto registerSheetPostDto = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1);
         SheetPostDto sheetPostDto = testUtil.writeSheetPost(mockMvc, artistToken, registerSheetPostDto);
         RegisterLessonDto registerLessonDto = TestUtil.registerLessonDto(sheetPostDto.getSheet().getId());
@@ -427,6 +594,21 @@ class LessonControllerTest {
     @Test
     void findAllLessonTest() throws Exception {
         // given
+        // register lesson artist
+        testUtil.register(mockMvc, TestUtil.user1);
+        SecurityUser securityUser = securityUserRepository.findByUsername(TestUtil.user1.getUsername())
+                .orElseThrow(() -> new EntityNotFoundException());
+        securityUser.changeRole(Role.CREATOR);
+        securityUserRepository.save(securityUser);
+
+        artistToken = testUtil.login(mockMvc, TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
+        // register other user
+        testUtil.register(mockMvc, TestUtil.user2);
+        otherToken = testUtil.login(mockMvc, TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
+
+        testUtil.register(mockMvc, TestUtil.user3);
+        otherToken2 = testUtil.login(mockMvc, TestUtil.user3.getUsername(), TestUtil.user3.getPassword());
+
         // write lesson 1, 2
         RegisterSheetPostDto registerSheetPostDto1 = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1);
         RegisterSheetPostDto registerSheetPostDto2 = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto2);
@@ -460,6 +642,5 @@ class LessonControllerTest {
         Assertions.assertThat(lessonDtoList).size().isGreaterThan(1);
         Assertions.assertThat(lessonDtoList).extracting("id").contains(savedLessonDto1.getId(), savedLessonDto2.getId());
     }
-
 
 }

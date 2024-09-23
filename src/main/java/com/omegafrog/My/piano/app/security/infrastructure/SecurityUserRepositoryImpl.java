@@ -1,10 +1,6 @@
 package com.omegafrog.My.piano.app.security.infrastructure;
 
-import com.omegafrog.My.piano.app.security.entity.QSecurityUser;
-import com.omegafrog.My.piano.app.security.entity.SecurityUser;
-import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
-import com.omegafrog.My.piano.app.web.domain.user.QUser;
-import com.omegafrog.My.piano.app.web.domain.user.User;
+import com.omegafrog.My.piano.app.web.domain.user.*;
 import com.omegafrog.My.piano.app.web.dto.admin.SearchUserFilter;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;

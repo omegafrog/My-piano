@@ -1,6 +1,6 @@
 package com.omegafrog.My.piano.app.security.infrastructure;
 
-import com.omegafrog.My.piano.app.security.entity.SecurityUser;
+import com.omegafrog.My.piano.app.web.domain.user.SecurityUser;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

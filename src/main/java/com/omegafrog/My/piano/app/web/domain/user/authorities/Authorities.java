@@ -1,4 +1,4 @@
-package com.omegafrog.My.piano.app.security.entity.authorities;
+package com.omegafrog.My.piano.app.web.domain.user.authorities;
 
 public enum Authorities {
     WRITE_POST("커뮤니티 글 작성"),

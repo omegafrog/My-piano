@@ -1,8 +1,8 @@
 package com.omegafrog.My.piano.app.security.infrastructure.redis;
 
-import com.omegafrog.My.piano.app.security.entity.authorities.Role;
 import com.omegafrog.My.piano.app.security.jwt.RefreshToken;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
+import com.omegafrog.My.piano.app.web.domain.user.authorities.Role;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,7 +84,7 @@ public class CommonUserRefreshTokenRepositoryImpl implements RefreshTokenReposit
     public Page<RefreshToken> findAllByRole(Role[] role, Pageable pageable) {
         List<RefreshToken> list = new ArrayList<>();
         long count = 0;
-        for(Role r: role){
+        for (Role r : role) {
             Set members = redisTemplate.opsForSet().members("refresh:" + r.value);
             count += members.size();
             for (Object member : members) {
@@ -93,18 +93,19 @@ public class CommonUserRefreshTokenRepositoryImpl implements RefreshTokenReposit
                 list.add(new RefreshToken((String) entries.get("id"), (String) entries.get("refreshToken"),
                         Long.parseLong((String) entries.get("userId")), Long.parseLong((String) entries.get("expiration")),
                         Role.valueOf((String) entries.get("role")), LocalDateTime.parse((String) entries.get("createdAt"))));
-                if(list.size() == pageable.getPageSize()) break;
+                if (list.size() == pageable.getPageSize()) break;
             }
-            if(list.size() == pageable.getPageSize()) break;
+            if (list.size() == pageable.getPageSize()) break;
         }
         long finalCount = count;
         return PageableExecutionUtils.getPage(list, pageable, () -> finalCount);
     }
 
     private Long countKeys(String pattern) {
-        Cursor<byte[]> cursor = redisTemplate.getConnectionFactory().getConnection().scan( ScanOptions.scanOptions().match(pattern).build());
+        Cursor<byte[]> cursor = redisTemplate.getConnectionFactory().getConnection().scan(ScanOptions.scanOptions().match(pattern).build());
         return cursor.stream().count();
     }
+
     @Override
     public Long countByRole(Role role) {
         return redisTemplate.opsForSet().size("refresh:" + role.value);

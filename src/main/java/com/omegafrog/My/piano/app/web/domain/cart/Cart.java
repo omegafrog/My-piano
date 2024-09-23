@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-@Entity
+@Entity(name = "cart")
 @NoArgsConstructor
 @Getter
 public class Cart implements Serializable {

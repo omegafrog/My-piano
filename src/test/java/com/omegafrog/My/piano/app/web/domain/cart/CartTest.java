@@ -1,6 +1,5 @@
 package com.omegafrog.My.piano.app.web.domain.cart;
 
-import com.omegafrog.My.piano.app.web.exception.cart.DuplicateItemOrderException;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonInformation;
 import com.omegafrog.My.piano.app.web.domain.lesson.VideoInformation;
@@ -8,6 +7,7 @@ import com.omegafrog.My.piano.app.web.domain.order.Order;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.user.User;
+import com.omegafrog.My.piano.app.web.exception.cart.DuplicateItemOrderException;
 import jakarta.persistence.EntityNotFoundException;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -27,9 +27,9 @@ public class CartTest {
     }
 
     @Test
-    void cannotAddCollapsedOrderTest(){
+    void cannotAddCollapsedOrderTest() {
         Cart cart = new Cart();
-        SheetPost sheetPost =SheetPost.builder()
+        SheetPost sheetPost = SheetPost.builder()
                 .title("title")
                 .content("content")
                 .price(100)
@@ -54,6 +54,7 @@ public class CartTest {
                 .isInstanceOf(DuplicateItemOrderException.class);
         Assertions.assertThat(cart.getContents()).doesNotContain(sameItemOrder);
     }
+
     @Test
     void deleteContent() {
         Cart cart = new Cart();
@@ -64,7 +65,7 @@ public class CartTest {
     }
 
     @Test
-    void deleteNonExistingOrderTest(){
+    void deleteNonExistingOrderTest() {
         Cart cart = new Cart();
         cart.addContent(Order.builder().id(1L).totalPrice(100).build());
 
@@ -79,12 +80,15 @@ public class CartTest {
 
         User artist = makeArtist();
 
-        SheetPost item1 =new SheetPost( "title1", "content1", artist,new Sheet(), 100);
+        SheetPost item1 = new SheetPost("title1", "content1", artist, new Sheet(), 100);
+        ReflectionTestUtils.setField(item1, "id", 1L);
         Lesson item2 = new Lesson("title2", "content2", 200,
                 VideoInformation.builder().build(),
                 artist,
                 item1,
                 LessonInformation.builder().build());
+        ReflectionTestUtils.setField(item2, "id", 2L);
+
         Order order1 = new Order(artist, user, item1, 0.0, null);
         Order order2 = new Order(artist, user, item2, 0.0, null);
 

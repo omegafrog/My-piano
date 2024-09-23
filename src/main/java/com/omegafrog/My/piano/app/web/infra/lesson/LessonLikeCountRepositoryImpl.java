@@ -8,11 +8,13 @@ import com.omegafrog.My.piano.app.web.domain.lesson.LessonLikeCount;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostLikeCount;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
+@Qualifier("LessonLikeCountRepositoryImpl")
 public class LessonLikeCountRepositoryImpl implements LikeCountRepository {
 
     private final RedisTemplate<String, LessonLikeCount> redisTemplate;
@@ -41,7 +43,7 @@ public class LessonLikeCountRepositoryImpl implements LikeCountRepository {
     @Override
     public LikeCount save(LikeCount likeCount) {
         redisTemplate.opsForHash().put(LessonLikeCount.KEY_NAME + ":" + likeCount.getId(),
-                "likeCount", likeCount.getLikeCount());
+                "likeCount", String.valueOf(likeCount.getLikeCount()));
         return likeCount;
     }
 

@@ -1,8 +1,7 @@
-package com.omegafrog.My.piano.app.security.entity;
+package com.omegafrog.My.piano.app.web.domain.user;
 
-import com.omegafrog.My.piano.app.security.entity.authorities.Authority;
-import com.omegafrog.My.piano.app.security.entity.authorities.Role;
-import com.omegafrog.My.piano.app.web.domain.user.User;
+import com.omegafrog.My.piano.app.web.domain.user.authorities.Authority;
+import com.omegafrog.My.piano.app.web.domain.user.authorities.Role;
 import com.omegafrog.My.piano.app.web.dto.user.SecurityUserDto;
 import jakarta.persistence.*;
 import lombok.Builder;

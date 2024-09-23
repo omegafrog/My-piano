@@ -1,6 +1,5 @@
 package com.omegafrog.My.piano.app.web.domain.user;
 
-import com.omegafrog.My.piano.app.security.entity.SecurityUser;
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
 import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.coupon.Coupon;

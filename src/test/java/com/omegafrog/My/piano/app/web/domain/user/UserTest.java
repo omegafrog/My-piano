@@ -180,6 +180,7 @@ class UserTest {
         ReflectionTestUtils.setField(user, "id", 1L);
         SheetPost post = new SheetPost();
         user.likeSheetPost(post);
+        ReflectionTestUtils.setField(post, "likeCount", 1);
         user.dislikeSheetPost(post);
         Assertions.assertThat(user.getLikedSheetPosts()
                 .stream().anyMatch(item -> item.getSheetPost().equals(post))).isFalse();

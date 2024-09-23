@@ -4,14 +4,14 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeToken
 import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
-import com.omegafrog.My.piano.app.security.entity.SecurityUser;
+import com.omegafrog.My.piano.app.security.exception.DuplicatePropertyException;
 import com.omegafrog.My.piano.app.security.jwt.TokenInfo;
 import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.utils.MapperUtil;
+import com.omegafrog.My.piano.app.web.domain.user.SecurityUser;
 import com.omegafrog.My.piano.app.web.dto.user.RegisterUserDto;
 import com.omegafrog.My.piano.app.web.dto.user.SecurityUserDto;
-import com.omegafrog.My.piano.app.security.exception.DuplicatePropertyException;
 import com.omegafrog.My.piano.app.web.response.APIBadRequestResponse;
 import com.omegafrog.My.piano.app.web.response.success.APIRedirectResponse;
 import com.omegafrog.My.piano.app.web.response.success.ApiResponse;
@@ -59,8 +59,8 @@ public class SecurityController {
     private String redirectUri;
 
 
-    private String GOOGLE_LOGIN_URI="/oauth2/google/login";
-    private String GOOGLE_REGISTER_URI="/user/register";
+    private String GOOGLE_LOGIN_URI = "/oauth2/google/login";
+    private String GOOGLE_REGISTER_URI = "/user/register";
 
     @GetMapping("/validate")
     public JsonAPIResponse<Void> validateToken() {
@@ -73,7 +73,7 @@ public class SecurityController {
 
         try {
             tokenUtils.extractClaims(accessToken);
-        }catch (ExpiredJwtException e) {
+        } catch (ExpiredJwtException e) {
             TokenInfo tokenInfo = commonUserService.getTokenInfo(e);
             String accessTokenString = tokenInfo.getGrantType() + " " + tokenInfo.getAccessToken();
             tokenUtils.setRefreshToken(response, tokenInfo);
@@ -91,7 +91,7 @@ public class SecurityController {
     @PostMapping("/user/register")
     public JsonAPIResponse<SecurityUserDto> registerCommonUser(
             @Valid @RequestPart(name = "profileImg") @Nullable MultipartFile profileImg,
-            @Valid @NotNull @RequestPart(name="registerInfo") String registerInfo)
+            @Valid @NotNull @RequestPart(name = "registerInfo") String registerInfo)
             throws IOException, DuplicatePropertyException {
         RegisterUserDto dto = mapperUtil.parseRegisterUserInfo(registerInfo);
         SecurityUserDto securityUserDto;
@@ -110,12 +110,12 @@ public class SecurityController {
         try {
             validateEnabled(commonUserService.findGoogleUser(idToken));
 
-            TokenInfo tokenInfo = commonUserService.loginGoogleUser(idToken );
+            TokenInfo tokenInfo = commonUserService.loginGoogleUser(idToken);
             tokenUtils.setRefreshToken(response, tokenInfo);
             String param = tokenInfo.getGrantType() + "%20" + tokenInfo.getAccessToken();
             HttpHeaders headers = new HttpHeaders();
-            headers.setLocation(URI.create("http://localhost:3000"+GOOGLE_LOGIN_URI
-                    +"?access-token="+param));
+            headers.setLocation(URI.create("http://localhost:3000" + GOOGLE_LOGIN_URI
+                    + "?access-token=" + param));
             return new APIRedirectResponse<>("Google OAuth login success",
                     headers);
         } catch (UsernameNotFoundException e) {
@@ -131,19 +131,19 @@ public class SecurityController {
 
     private String getGoogleIdToken(String code) throws IOException {
         GoogleTokenResponse executed = new GoogleAuthorizationCodeTokenRequest(
-                new NetHttpTransport(), new GsonFactory(), clientId, clientSecret, code,redirectUri)
+                new NetHttpTransport(), new GsonFactory(), clientId, clientSecret, code, redirectUri)
                 .execute();
-        String idToken= executed.getIdToken();
+        String idToken = executed.getIdToken();
         return idToken;
     }
 
     private static void validateEnabled(SecurityUser user) throws AccountExpiredException, AccountLockedException {
-        if(!user.isEnabled()){
-            if(!user.isAccountNonExpired()) throw new AccountExpiredException("Account is expired. ");
-            if(!user.isCredentialsNonExpired())
+        if (!user.isEnabled()) {
+            if (!user.isAccountNonExpired()) throw new AccountExpiredException("Account is expired. ");
+            if (!user.isCredentialsNonExpired())
                 throw new CredentialsExpiredException("Credential is expired at : " +
                         user.getCredentialChangedAt().plusMonths(user.getPasswordExpirationPeriod()));
-            if(user.isLocked()) throw new AccountLockedException("Accound is locked.");
+            if (user.isLocked()) throw new AccountLockedException("Accound is locked.");
         }
     }
 

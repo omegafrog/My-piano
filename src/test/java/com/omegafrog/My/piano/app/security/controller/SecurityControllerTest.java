@@ -10,7 +10,7 @@ import com.omegafrog.My.piano.app.web.service.admin.CommonUserService;
 import jakarta.servlet.http.Cookie;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -58,7 +58,7 @@ class SecurityControllerTest {
     private TestUtil testUtil;
 
 
-    @AfterEach
+    @BeforeEach
     void cleanUp() {
         cleanup.cleanUp();
     }
@@ -187,13 +187,9 @@ class SecurityControllerTest {
     @DisplayName("로그인한 사용자는 회원탈퇴할 수 있어야 한다.")
     void signOutTest() throws Exception, DuplicatePropertyException {
         String s = objectMapper.writeValueAsString(TestUtil.user1);
-        MockMultipartFile registerInfo = new MockMultipartFile("registerInfo", "", "application/json",
-                s.getBytes());
-        mockMvc.perform(multipart("/api/v1/user/register")
-                        .file(registerInfo)
-                        .header(HttpHeaders.CONTENT_TYPE, MediaType.MULTIPART_FORM_DATA_VALUE))
-                .andExpect(status().isOk())
-                .andDo(print());
+
+        testUtil.register(mockMvc, TestUtil.user1);
+
         MvcResult mvcResult = mockMvc.perform(post("/api/v1/user/login")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content("username=" + TestUtil.user1.getUsername() + "&password=" + TestUtil.user1.getPassword()))

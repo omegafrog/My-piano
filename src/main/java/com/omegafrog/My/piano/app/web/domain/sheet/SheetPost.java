@@ -1,7 +1,5 @@
 package com.omegafrog.My.piano.app.web.domain.sheet;
 
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.omegafrog.My.piano.app.utils.cache.serializer.SheetPostCacheSerializer;
 import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.order.SellableItem;
 import com.omegafrog.My.piano.app.web.domain.relation.UserLikedSheetPost;
@@ -23,7 +21,6 @@ import java.util.List;
 @Entity
 @NoArgsConstructor
 @Getter
-@JsonSerialize(using = SheetPostCacheSerializer.class)
 public class SheetPost extends SellableItem {
 
     @OneToOne(cascade = {CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REMOVE})

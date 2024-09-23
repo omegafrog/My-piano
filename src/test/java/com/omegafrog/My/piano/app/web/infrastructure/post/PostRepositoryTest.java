@@ -2,25 +2,32 @@ package com.omegafrog.My.piano.app.web.infrastructure.post;
 
 import com.omegafrog.My.piano.app.DataJpaTestConfig;
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
-import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
-import com.omegafrog.My.piano.app.web.dto.post.UpdatePostDto;
-import com.omegafrog.My.piano.app.web.domain.user.User;
-import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
-import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.post.PostRepository;
+import com.omegafrog.My.piano.app.web.domain.user.User;
+import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
+import com.omegafrog.My.piano.app.web.dto.post.UpdatePostDto;
+import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
+import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.Optional;
 
 @DataJpaTest
-@Import(DataJpaTestConfig.class)
+@Import(value = DataJpaTestConfig.class)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@ExtendWith({SpringExtension.class, MockitoExtension.class})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PostRepositoryTest {
 
@@ -34,7 +41,8 @@ class PostRepositoryTest {
 
     @BeforeEach
     void settings() {
-        User build = User.builder()
+
+        user1 = userRepository.save(User.builder()
                 .name("user1")
                 .profileSrc("profile1")
                 .loginMethod(LoginMethod.EMAIL)
@@ -43,8 +51,7 @@ class PostRepositoryTest {
                         .build())
                 .email("user1@gmail.com")
                 .cart(new Cart())
-                .build();
-        user1 = userRepository.save(build);
+                .build());
     }
 
     @Test
@@ -101,7 +108,6 @@ class PostRepositoryTest {
         Optional<Post> byId = postRepository.findById(saved.getId());
         Assertions.assertThat(byId).isEmpty();
     }
-
 
 
 }

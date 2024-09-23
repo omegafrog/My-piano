@@ -4,9 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.Cleanup;
 import com.omegafrog.My.piano.app.TestUtil;
 import com.omegafrog.My.piano.app.TestUtilConfig;
-import com.omegafrog.My.piano.app.security.entity.SecurityUser;
-import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
-import com.omegafrog.My.piano.app.security.entity.authorities.Role;
+import com.omegafrog.My.piano.app.web.domain.user.SecurityUser;
+import com.omegafrog.My.piano.app.web.domain.user.SecurityUserRepository;
+import com.omegafrog.My.piano.app.web.domain.user.authorities.Role;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
 import com.omegafrog.My.piano.app.web.dto.order.OrderRegisterDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
@@ -121,7 +121,7 @@ class OrderControllerTest {
                 .itemId(savedLesson.getId())
                 .build();
 
-        mockMvc.perform(post(baseUrl + "/lesson")
+        mockMvc.perform(post(baseUrl + "/lessons")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(order2))
                         .header(HttpHeaders.AUTHORIZATION, buyerTokens.getAccessToken())

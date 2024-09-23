@@ -2,8 +2,8 @@ package com.omegafrog.My.piano.app.web.service.lesson;
 
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.web.domain.article.LikeCount;
+import com.omegafrog.My.piano.app.web.domain.article.LikeCountRepository;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
-import com.omegafrog.My.piano.app.web.domain.lesson.LessonLikeCountRepository;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonViewCountRepository;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
@@ -17,6 +17,8 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -34,7 +36,9 @@ public class LessonService {
     private final UserRepository userRepository;
     private final LessonViewCountRepository lessonViewCountRepository;
     private final AuthenticationUtil authenticationUtil;
-    private final LessonLikeCountRepository lessonLikeCountRepository;
+    @Qualifier("LessonLikeCountRepositoryImpl")
+    @Autowired
+    private LikeCountRepository lessonLikeCountRepository;
 
     public LessonDto createLesson(RegisterLessonDto registerLessonDto) {
         User loggedInUser = authenticationUtil.getLoggedInUser();

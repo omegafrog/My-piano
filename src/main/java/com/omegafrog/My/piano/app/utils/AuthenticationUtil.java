@@ -1,6 +1,6 @@
 package com.omegafrog.My.piano.app.utils;
 
-import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
+import com.omegafrog.My.piano.app.web.domain.user.SecurityUserRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

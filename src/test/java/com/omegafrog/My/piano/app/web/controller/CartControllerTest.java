@@ -4,16 +4,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.Cleanup;
 import com.omegafrog.My.piano.app.TestUtil;
 import com.omegafrog.My.piano.app.TestUtilConfig;
-import com.omegafrog.My.piano.app.security.entity.SecurityUser;
-import com.omegafrog.My.piano.app.security.entity.SecurityUserRepository;
-import com.omegafrog.My.piano.app.security.entity.authorities.Role;
+import com.omegafrog.My.piano.app.web.domain.user.SecurityUser;
+import com.omegafrog.My.piano.app.web.domain.user.SecurityUserRepository;
+import com.omegafrog.My.piano.app.web.domain.user.authorities.Role;
 import com.omegafrog.My.piano.app.web.dto.lesson.LessonDto;
 import com.omegafrog.My.piano.app.web.dto.order.OrderRegisterDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.user.UserInfo;
 import jakarta.persistence.EntityNotFoundException;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -59,7 +58,14 @@ class CartControllerTest {
 
 
     @BeforeEach
-    public void login() throws Exception {
+    public void cleanUp() {
+        cleanup.cleanUp();
+    }
+
+
+    @Test
+    void saveToCartTest() throws Exception {
+        // given
         // register seller
         testUtil.register(mockMvc, TestUtil.user1);
         SecurityUser securityUser = securityUserRepository.findByUsername(TestUtil.user1.getUsername())
@@ -73,16 +79,7 @@ class CartControllerTest {
         testUtil.register(mockMvc, TestUtil.user2);
         buyerToken =
                 testUtil.login(mockMvc, TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
-    }
 
-    @AfterEach
-    void cleanUp() {
-        cleanup.cleanUp();
-    }
-
-    @Test
-    void saveToCartTest() throws Exception {
-        // given
         SheetPostDto savedSheetPostDto
                 = testUtil.writeSheetPost(mockMvc, sellerToken, TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1));
         LessonDto savedLessonDto
@@ -109,7 +106,7 @@ class CartControllerTest {
         String title = objectMapper.readTree(content).get("data").get(0).get("item").get("title").asText();
         Assertions.assertThat(title).isEqualTo(savedSheetPostDto.getTitle());
 
-        MvcResult mvcResult2 = mockMvc.perform(post("/api/v1/cart/lesson")
+        MvcResult mvcResult2 = mockMvc.perform(post("/api/v1/cart/lessons")
                         .header(HttpHeaders.AUTHORIZATION, buyerToken.getAccessToken())
                         .cookie(buyerToken.getRefreshToken())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -125,6 +122,19 @@ class CartControllerTest {
     @Test
     void deleteFromCartTest() throws Exception {
         //given
+        testUtil.register(mockMvc, TestUtil.user1);
+        SecurityUser securityUser = securityUserRepository.findByUsername(TestUtil.user1.getUsername())
+                .orElseThrow(() -> new EntityNotFoundException());
+        securityUser.changeRole(Role.CREATOR);
+        securityUserRepository.save(securityUser);
+        sellerToken =
+                testUtil.login(mockMvc, TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
+
+        // register buyer
+        testUtil.register(mockMvc, TestUtil.user2);
+        buyerToken =
+                testUtil.login(mockMvc, TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
+
         SheetPostDto savedSheetPostDto
                 = testUtil.writeSheetPost(mockMvc, sellerToken, TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1));
         OrderRegisterDto build1 = OrderRegisterDto.builder()
@@ -162,6 +172,19 @@ class CartControllerTest {
     @Test
     void getAllContentFromCartTest() throws Exception {
         //given
+        testUtil.register(mockMvc, TestUtil.user1);
+        SecurityUser securityUser = securityUserRepository.findByUsername(TestUtil.user1.getUsername())
+                .orElseThrow(() -> new EntityNotFoundException());
+        securityUser.changeRole(Role.CREATOR);
+        securityUserRepository.save(securityUser);
+        sellerToken =
+                testUtil.login(mockMvc, TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
+
+        // register buyer
+        testUtil.register(mockMvc, TestUtil.user2);
+        buyerToken =
+                testUtil.login(mockMvc, TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
+
         SheetPostDto savedSheetPostDto
                 = testUtil.writeSheetPost(mockMvc, sellerToken, TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1));
         OrderRegisterDto build1 = OrderRegisterDto.builder()
@@ -194,6 +217,19 @@ class CartControllerTest {
     @Test
     void payAllInCartTest() throws Exception {
         //given
+        testUtil.register(mockMvc, TestUtil.user1);
+        SecurityUser securityUser = securityUserRepository.findByUsername(TestUtil.user1.getUsername())
+                .orElseThrow(() -> new EntityNotFoundException());
+        securityUser.changeRole(Role.CREATOR);
+        securityUserRepository.save(securityUser);
+        sellerToken =
+                testUtil.login(mockMvc, TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
+
+        // register buyer
+        testUtil.register(mockMvc, TestUtil.user2);
+        buyerToken =
+                testUtil.login(mockMvc, TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
+
         testUtil.chargeCash(mockMvc, 20000, buyerToken);
         SheetPostDto savedSheetPostDto
                 = testUtil.writeSheetPost(mockMvc, sellerToken, TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1));
@@ -213,7 +249,7 @@ class CartControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
-        mockMvc.perform(post("/api/v1/cart/lesson")
+        mockMvc.perform(post("/api/v1/cart/lessons")
                         .header(HttpHeaders.AUTHORIZATION, buyerToken.getAccessToken())
                         .cookie(buyerToken.getRefreshToken())
                         .contentType(MediaType.APPLICATION_JSON)
