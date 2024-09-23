@@ -2,21 +2,22 @@ package com.omegafrog.My.piano.app.web.domain.comment;
 
 import com.omegafrog.My.piano.app.web.domain.article.Article;
 import com.omegafrog.My.piano.app.web.domain.user.User;
-import com.omegafrog.My.piano.app.web.dto.ReturnCommentDto;
 import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
+import com.omegafrog.My.piano.app.web.dto.comment.ReturnCommentDto;
+import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import jakarta.persistence.*;
+import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 @Entity
 @Getter
 @NoArgsConstructor
-public class Comment {
+public class Comment implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,50 +28,53 @@ public class Comment {
     private User author;
 
     @Temporal(TemporalType.TIMESTAMP)
-    private LocalDateTime createdAt=LocalDateTime.now();
+    private LocalDateTime createdAt = LocalDateTime.now();
 
     private String content;
 
     private int likeCount;
 
-    @OneToMany(cascade = {CascadeType.PERSIST,CascadeType.MERGE})
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "parent", orphanRemoval = true)
+    private final List<Comment> replies = new ArrayList<>();
+    @ManyToOne
     @JoinColumn(name = "PARENT_ID")
-    private List<Comment> replies = new CopyOnWriteArrayList<>();
+    private Comment parent;
 
     @ManyToOne
     private Article target;
 
-    public void setTarget(Article article){
+    public void setTarget(Article article) {
         target = article;
     }
 
-    public void increaseLikeCount(){
+    public void increaseLikeCount() {
         likeCount++;
     }
-    public void decreaseLikeCount(){
+
+    public void decreaseLikeCount() {
         likeCount--;
     }
 
     @Builder
-    public Comment(Long id, User author, String content) {
+    public Comment(Long id, User author, String content, Article target, Comment parent) {
         this.id = id;
         this.author = author;
         this.content = content;
         this.likeCount = 0;
+        this.parent = parent;
     }
 
-    public CommentDto toDto(){
+    public CommentDto toDto() {
         return CommentDto.builder()
                 .id(id)
                 .author(author.getUserInfo())
                 .content(content)
                 .createdAt(createdAt)
                 .likeCount(likeCount)
-                .replies(replies.stream().map(Comment::toDto).toList())
                 .build();
     }
 
-    public ReturnCommentDto toReturnCommentDto(){
+    public ReturnCommentDto toReturnCommentDto() {
         return ReturnCommentDto.builder()
                 .id(id)
                 .content(content)
@@ -84,5 +88,9 @@ public class Comment {
 
     public void addReply(Comment saved) {
         replies.add(saved);
+    }
+
+    public void setAuthor(User author) {
+        this.author = author;
     }
 }

@@ -4,17 +4,21 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.external.tossPayment.*;
-import com.omegafrog.My.piano.app.security.entity.SecurityUser;
+import com.omegafrog.My.piano.app.web.domain.cash.PaymentHistory;
+import com.omegafrog.My.piano.app.web.domain.post.Post;
+import com.omegafrog.My.piano.app.web.domain.user.SecurityUser;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.RegisterSheetDto;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.RegisterSheetPostDto;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.UpdateSheetDto;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.UpdateSheetPostDto;
+import com.omegafrog.My.piano.app.web.dto.user.ChangeUserDto;
+import com.omegafrog.My.piano.app.web.dto.user.RegisterUserDto;
+import com.omegafrog.My.piano.app.web.enums.OrderStatus;
+import com.omegafrog.My.piano.app.web.enums.PaymentType;
+import com.omegafrog.My.piano.app.web.exception.toss.TossError;
 import com.omegafrog.My.piano.app.web.service.admin.option.DisablePostStrategy;
 import com.omegafrog.My.piano.app.web.service.admin.option.DisableSheetPostStrategy;
 import com.omegafrog.My.piano.app.web.service.admin.option.PostStrategy;
-import com.omegafrog.My.piano.app.web.domain.cash.PaymentHistory;
-import com.omegafrog.My.piano.app.web.domain.post.Post;
-import com.omegafrog.My.piano.app.web.domain.user.User;
-import com.omegafrog.My.piano.app.web.dto.*;
-import com.omegafrog.My.piano.app.web.dto.sheetPost.RegisterSheetPostDto;
-import com.omegafrog.My.piano.app.web.enums.OrderStatus;
-import com.omegafrog.My.piano.app.web.enums.PaymentType;
 import com.omegafrog.My.piano.app.web.service.admin.option.SheetPostStrategy;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import lombok.RequiredArgsConstructor;
@@ -27,25 +31,27 @@ import java.util.List;
 public class MapperUtil {
     private final ObjectMapper objectMapper;
     private final TossWebHookResultFactory tossWebHookResultFactory;
+    private final AuthenticationUtil authenticationUtil;
 
-    public MapperUtil(ObjectMapper objectMapper) {
+    public MapperUtil(ObjectMapper objectMapper, AuthenticationUtil authenticationUtil) {
         this.objectMapper = objectMapper;
         this.tossWebHookResultFactory = new TossWebHookResultFactoryImpl(objectMapper);
+        this.authenticationUtil = authenticationUtil;
     }
 
     public PaymentHistory parsePaymentHistory(String result) throws JsonProcessingException {
-            JsonNode node = objectMapper.readTree(result);
-            return new PaymentHistory(
-                    node.get("paymentKey").asText(),
-                    node.get("orderId").asText(),
-                    PaymentType.valueOf(node.get("paymentType").asText()),
-                    node.get("orderName").asText(),
-                    node.get("totalAmount").asInt(),
-                    LocalDateTime.parse(node.get("requestedAt").asText()),
-                    OrderStatus.valueOf(node.get("status").asText()));
-}
+        JsonNode node = objectMapper.readTree(result);
+        return new PaymentHistory(
+                node.get("paymentKey").asText(),
+                node.get("orderId").asText(),
+                PaymentType.valueOf(node.get("paymentType").asText()),
+                node.get("orderName").asText(),
+                node.get("totalAmount").asInt(),
+                LocalDateTime.parse(node.get("requestedAt").asText()),
+                OrderStatus.valueOf(node.get("status").asText()));
+    }
 
-    public RegisterSheetPostDto parseRegisterSheetPostInfo(String registerSheetInfo, User loggedInUser) throws JsonProcessingException {
+    public RegisterSheetPostDto parseRegisterSheetPostInfo(String registerSheetInfo) throws JsonProcessingException {
         JsonNode node = objectMapper.readTree(registerSheetInfo);
 
         return RegisterSheetPostDto.builder()
@@ -53,7 +59,6 @@ public class MapperUtil {
                 .content(node.get("content").asText())
                 .price(node.get("price").asInt())
                 .discountRate(node.get("discountRate").asDouble())
-                .artistId(loggedInUser.getId())
                 .sheetDto(objectMapper.convertValue(node.get("sheet"), RegisterSheetDto.class))
                 .build();
     }
@@ -96,7 +101,11 @@ public class MapperUtil {
     }
 
     public Payment parsePayment(String json) throws JsonProcessingException {
+        List<CancelHistory> cancels = new ArrayList<>();
         JsonNode jsonNode = objectMapper.readTree(json);
+        jsonNode.get("cancels").forEach(cancel -> cancels.add(
+                objectMapper.convertValue(cancel, CancelHistory.class))
+        );
         return new Payment(jsonNode.get("paymentKey").asText(),
                 jsonNode.get("type").asText(),
                 jsonNode.get("orderId").asText(),
@@ -104,11 +113,12 @@ public class MapperUtil {
                 jsonNode.get("mId").asText(),
                 jsonNode.get("currency").asText(),
                 jsonNode.get("method").asText(),
+                cancels,
                 jsonNode.get("totalAmount").asLong(),
                 jsonNode.get("status").asText());
     }
 
-    public TossError parseTossError(String json){
+    public TossError parseTossError(String json) {
         return objectMapper.convertValue(json, TossError.class);
     }
 
@@ -120,7 +130,7 @@ public class MapperUtil {
         List<PostStrategy> strategies = new ArrayList<>();
         JsonNode jsonNode = objectMapper.readTree(body);
         jsonNode.fields().forEachRemaining(entry -> {
-            switch (entry.getKey()){
+            switch (entry.getKey()) {
                 case DisablePostStrategy.OPTION_NAME ->
                         strategies.add(new DisablePostStrategy(entry.getValue().asBoolean()));
             }
@@ -143,15 +153,15 @@ public class MapperUtil {
     public UpdateSheetPostDto parseUpdateSheetPostJson(String dto) throws JsonProcessingException {
         JsonNode node = objectMapper.readTree(dto);
         JsonNode title = node.get("title");
-        assert title==null;
+        assert title != null;
         JsonNode content = node.get("content");
-        assert content==null;
+        assert content != null;
         JsonNode sheetDto = node.get("sheet");
-        assert sheetDto==null;
+        assert sheetDto != null;
         JsonNode price = node.get("price");
-        assert price==null;
+        assert price != null;
         JsonNode discountRate = node.get("discountRate");
-        assert discountRate==null;
+        assert discountRate != null;
         return UpdateSheetPostDto.builder()
                 .title(title.asText())
                 .content(content.asText())
@@ -164,13 +174,18 @@ public class MapperUtil {
     public List<SheetPostStrategy> parseUpdateSheetPostOption(String options) throws JsonProcessingException {
         List<SheetPostStrategy> strategies = new ArrayList<>();
         JsonNode nodes = objectMapper.readTree(options);
-        nodes.fields().forEachRemaining(entry->{
-            switch (entry.getKey()){
+        nodes.fields().forEachRemaining(entry -> {
+            switch (entry.getKey()) {
                 case (DisableSheetPostStrategy.OPTION_NAME) -> {
                     strategies.add(new DisableSheetPostStrategy(entry.getValue().asBoolean()));
                 }
             }
         });
         return strategies;
+    }
+
+    public String parseNotiClientToken(String clientToken) throws JsonProcessingException {
+
+        return objectMapper.readTree(clientToken).get("token").asText();
     }
 }

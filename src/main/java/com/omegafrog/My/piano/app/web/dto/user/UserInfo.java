@@ -1,6 +1,6 @@
 package com.omegafrog.My.piano.app.web.dto.user;
 
-import com.omegafrog.My.piano.app.security.entity.authorities.Role;
+import com.omegafrog.My.piano.app.web.domain.user.authorities.Role;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import lombok.*;
 

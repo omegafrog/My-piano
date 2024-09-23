@@ -1,41 +1,34 @@
 package com.omegafrog.My.piano.app.web.infrastructure.sheet;
 
-import com.omegafrog.My.piano.app.DataJpaUnitConfig;
+import com.omegafrog.My.piano.app.DataJpaTestConfig;
 import com.omegafrog.My.piano.app.web.controller.DummyData;
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
 import com.omegafrog.My.piano.app.web.domain.sheet.Genres;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
-import com.omegafrog.My.piano.app.web.dto.UpdateSheetDto;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.UpdateSheetDto;
 import com.omegafrog.My.piano.app.web.enums.Difficulty;
 import com.omegafrog.My.piano.app.web.enums.Genre;
 import com.omegafrog.My.piano.app.web.enums.Instrument;
-import com.omegafrog.My.piano.app.web.dto.UpdateSheetPostDto;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.UpdateSheetPostDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
-import com.omegafrog.My.piano.app.web.infra.sheetPost.JpaSheetPostRepositoryImpl;
-import com.omegafrog.My.piano.app.web.infra.sheetPost.SimpleJpaSheetPostRepository;
-import com.omegafrog.My.piano.app.web.infra.user.JpaUserRepositoryImpl;
-import com.omegafrog.My.piano.app.web.infra.user.SimpleJpaUserRepository;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
-import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
 @DataJpaTest
-@Import(DataJpaUnitConfig.class)
+@Import(DataJpaTestConfig.class)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ExtendWith({MockitoExtension.class})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -81,12 +74,12 @@ class SheetPostRepositoryTest {
         SheetPost saved = sheetPostRepository.save(DummyData.sheetPost(a));
         //when
         UpdateSheetPostDto updated = UpdateSheetPostDto.builder()
-                .sheetDto(UpdateSheetDto.builder()
+                .sheet(UpdateSheetDto.builder()
                         .genres(Genres.builder().genre1(Genre.BGM).build())
                         .isSolo(false)
                         .difficulty(Difficulty.MEDIUM)
                         .lyrics(false)
-                        .filePath("changed")
+                        .sheetUrl("changed")
                         .pageNum(5)
                         .instrument(Instrument.GUITAR_BASE)
                         .build())

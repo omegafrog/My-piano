@@ -5,6 +5,7 @@ import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonInformation;
 import com.omegafrog.My.piano.app.web.domain.lesson.VideoInformation;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
+import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -23,7 +24,7 @@ class OrderTest {
                 2000,
                 new VideoInformation(),
                 new User(),
-                new Sheet(),
+                new SheetPost(),
                 new LessonInformation());
         Coupon coupon = new Coupon("name", "code", 0.3D,
                 LocalDateTime.of(2024, 01, 01, 00, 00));

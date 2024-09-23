@@ -1,12 +1,13 @@
 package com.omegafrog.My.piano.app.web.domain.user;
 
+import com.omegafrog.My.piano.app.web.domain.article.Article;
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
 import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
 import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
-import com.omegafrog.My.piano.app.web.dto.ChangeUserDto;
+import com.omegafrog.My.piano.app.web.dto.user.ChangeUserDto;
 import com.omegafrog.My.piano.app.web.enums.PostType;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
@@ -20,7 +21,7 @@ class UserTest {
 
     @Test
     @DisplayName("유저의 내용을 수정할 수 있다.")
-    void updateUserTest(){
+    void updateUserTest() {
         User user = User.builder()
                 .name("hi")
                 .loginMethod(LoginMethod.EMAIL)
@@ -81,6 +82,7 @@ class UserTest {
         user.addUploadedVideoPost(post);
         Assertions.assertThat(user.getUploadedVideoPosts()).hasSize(1).contains(post);
     }
+
     @Test
     @DisplayName("lesson을 scrap할 수 있어야 한다.")
     @Order(1)
@@ -101,8 +103,11 @@ class UserTest {
         User scrappedUser = User.builder().build();
 
         scrappedUser.scrapLesson(lesson);
-        Assertions.assertThat(scrappedUser.getScrappedLesson()).contains(lesson);
+        Assertions.assertThat(scrappedUser.getScrappedLesson()
+                        .stream().filter(userScrappedLesson -> userScrappedLesson.getLesson().equals(lesson)))
+                .isNotEmpty();
     }
+
     @Test
     @DisplayName("유저가 해당 Lesson entity가 스크랩한 Lesson entity인지 알 수 있어야 한다.")
     @Order(2)
@@ -122,7 +127,9 @@ class UserTest {
         user.scrapLesson(lesson);
 
         Assertions.assertThat(user.isScrappedLesson(lesson)).isTrue();
-        Assertions.assertThat(user.getScrappedLesson()).contains(lesson);
+        Assertions.assertThat(user.getScrappedLesson()
+                        .stream().anyMatch(userScrappedLesson -> userScrappedLesson.getLesson().equals(lesson)))
+                .isTrue();
     }
 
     @Test
@@ -138,7 +145,9 @@ class UserTest {
         ReflectionTestUtils.setField(user, "id", 1L);
         SheetPost post = new SheetPost();
         user.scrapSheetPost(post);
-        Assertions.assertThat(user.getScrappedSheetPosts()).contains(post);
+        Assertions.assertThat(user.getScrappedSheetPosts()
+                        .stream().anyMatch(userScrappedSheetPost -> userScrappedSheetPost.getSheetPost().equals(post)))
+                .isTrue();
     }
 
     @Test
@@ -154,7 +163,8 @@ class UserTest {
         ReflectionTestUtils.setField(user, "id", 1L);
         SheetPost post = new SheetPost();
         user.likeSheetPost(post);
-        Assertions.assertThat(user.getLikedSheetPosts()).contains(post);
+        Assertions.assertThat(user.getLikedSheetPosts()
+                .stream().anyMatch(item -> item.getSheetPost().equals(post))).isTrue();
     }
 
     @Test
@@ -170,8 +180,10 @@ class UserTest {
         ReflectionTestUtils.setField(user, "id", 1L);
         SheetPost post = new SheetPost();
         user.likeSheetPost(post);
+        ReflectionTestUtils.setField(post, "likeCount", 1);
         user.dislikeSheetPost(post);
-        Assertions.assertThat(user.getLikedSheetPosts()).doesNotContain(post);
+        Assertions.assertThat(user.getLikedSheetPosts()
+                .stream().anyMatch(item -> item.getSheetPost().equals(post))).isFalse();
     }
 
     @Test
@@ -204,7 +216,8 @@ class UserTest {
         ReflectionTestUtils.setField(user, "id", 1L);
         Post post = new Post();
         user.likePost(post);
-        Assertions.assertThat(user.getLikedPosts()).contains(post);
+        Assertions.assertThat(user.getLikedPosts()
+                .stream().anyMatch(item -> item.getPost().equals(post))).isTrue();
     }
 
     @Test
@@ -220,7 +233,8 @@ class UserTest {
         ReflectionTestUtils.setField(user, "id", 1L);
         VideoPost post = new VideoPost();
         user.likeVideoPost(post);
-        Assertions.assertThat(user.getLikedVideoPosts()).contains(post);
+        Assertions.assertThat(user.getLikedVideoPosts()
+                .stream().anyMatch(item -> item.getVideoPost().equals(post))).isTrue();
     }
 
     @Test
@@ -237,7 +251,8 @@ class UserTest {
         VideoPost post = new VideoPost();
         user.likeVideoPost(post);
         user.dislikeVideoPost(post);
-        Assertions.assertThat(user.getLikedVideoPosts()).doesNotContain(post);
+        Assertions.assertThat(user.getLikedVideoPosts()
+                .stream().anyMatch(item -> item.getVideoPost().equals(post))).isFalse();
     }
 
     @Test
@@ -269,7 +284,7 @@ class UserTest {
                 .phoneNum(new PhoneNum())
                 .build();
         ReflectionTestUtils.setField(user, "id", 1L);
-        Comment comment = new Comment(1L, user,"content");
+        Comment comment = new Comment(1L, user, "content", new Article(), null);
         user.addWroteComments(comment);
         user.deleteWroteComments(comment, user);
         Assertions.assertThat(user.getWroteComments()).doesNotContain(comment);
@@ -308,7 +323,8 @@ class UserTest {
         Post post = new Post();
         user.likePost(post);
         user.dislikePost(post);
-        Assertions.assertThat(user.getLikedPosts()).doesNotContain(post);
+        Assertions.assertThat(user.getLikedPosts()
+                .stream().anyMatch(item -> item.getPost().equals(post))).isFalse();
     }
 
     @Test

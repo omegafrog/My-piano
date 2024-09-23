@@ -1,6 +1,6 @@
 package com.omegafrog.My.piano.app.web.domain;
 
-import com.omegafrog.My.piano.app.utils.exception.CreateThumbnailFailedException;
+import com.omegafrog.My.piano.app.web.exception.CreateThumbnailFailedException;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import io.awspring.cloud.s3.ObjectMetadata;
 import io.awspring.cloud.s3.S3Template;

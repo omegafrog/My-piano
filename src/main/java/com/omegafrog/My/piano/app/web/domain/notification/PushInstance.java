@@ -8,11 +8,8 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 @Slf4j
@@ -28,7 +25,9 @@ public class PushInstance {
         FirebaseOptions options = new FirebaseOptions.Builder()
                 .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                 .build();
-        app = FirebaseApp.initializeApp(options);
+        if (FirebaseApp.getApps().size() == 0)
+            app = FirebaseApp.initializeApp(options);
+        else app = FirebaseApp.getApps().get(0);
     }
 
     public String sendMessageTo(String topic, String body, String clientToken) throws FirebaseMessagingException {
@@ -38,11 +37,17 @@ public class PushInstance {
                 .setToken(clientToken)
                 .build());
     }
+
     public String sendMessageTo(String topic, String body) throws FirebaseMessagingException {
         FirebaseMessaging firebaseMessaging = FirebaseMessaging.getInstance(app);
         return firebaseMessaging.send(Message.builder()
                 .putData("body", body)
                 .setTopic(topic)
                 .build());
+    }
+
+    public String getMessages() {
+        FirebaseMessaging instance = FirebaseMessaging.getInstance(app);
+        return null;
     }
 }

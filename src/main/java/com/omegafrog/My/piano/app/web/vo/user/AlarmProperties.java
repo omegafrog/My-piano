@@ -5,9 +5,11 @@ import lombok.Builder;
 import jakarta.persistence.Embeddable;
 import lombok.Getter;
 
+import java.io.Serializable;
+
 @Embeddable
 @Getter
-public class AlarmProperties {
+public class AlarmProperties implements Serializable {
 
     private boolean myFollowerAlarm;
     private boolean newFollowerAlarm;

@@ -1,7 +1,6 @@
 package com.omegafrog.My.piano.app.web.domain.post;
 
 import com.omegafrog.My.piano.app.web.domain.article.Article;
-import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.dto.post.UpdateVideoPostDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.dto.videoPost.VideoPostDto;
@@ -39,7 +38,6 @@ public class VideoPost extends Article {
     /**
      * VideoPost의 내용을 수정한다.
      * @param updateVideoPostDto update할 내용이 담긴 DTO
-     * @return this : 수정된 VideoPost자신을 반환한다.
      */
     public void update(UpdateVideoPostDto updateVideoPostDto){
          this.viewCount=updateVideoPostDto.getViewCount();
@@ -57,7 +55,6 @@ public class VideoPost extends Article {
                 .likeCount(likeCount)
                 .viewCount(viewCount)
                 .createdAt(createdAt)
-                .comments(getComments().stream().map(Comment::toDto).toList())
                 .videoUrl(videoUrl)
                 .build();
     }

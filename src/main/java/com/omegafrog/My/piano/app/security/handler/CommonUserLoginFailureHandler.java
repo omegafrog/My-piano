@@ -1,8 +1,8 @@
 package com.omegafrog.My.piano.app.security.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.omegafrog.My.piano.app.utils.response.APIBadRequestResponse;
-import com.omegafrog.My.piano.app.utils.response.JsonAPIResponse;
+import com.omegafrog.My.piano.app.web.response.APIBadRequestResponse;
+import com.omegafrog.My.piano.app.web.response.success.JsonAPIResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -24,7 +24,7 @@ public class CommonUserLoginFailureHandler implements AuthenticationFailureHandl
         log.debug("login failed");
         JsonAPIResponse apiResponse = new APIBadRequestResponse("login failed");
         PrintWriter writer = response.getWriter();
-        writer.write(objectMapper.writeValueAsString(apiResponse));
+        writer.write(objectMapper.writeValueAsString(apiResponse.getBody()));
         writer.flush();
     }
 }

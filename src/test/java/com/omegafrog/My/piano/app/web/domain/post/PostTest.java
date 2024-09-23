@@ -1,11 +1,10 @@
 package com.omegafrog.My.piano.app.web.domain.post;
 
-import com.omegafrog.My.piano.app.web.dto.post.UpdatePostDto;
+import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.user.User;
+import com.omegafrog.My.piano.app.web.dto.post.UpdatePostDto;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
-import com.omegafrog.My.piano.app.web.domain.comment.Comment;
-import com.omegafrog.My.piano.app.web.domain.post.Post;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -63,8 +62,10 @@ class PostTest {
                                 .phoneNum("010-1111-1112")
                                 .build())
                         .build(),
-                content
-               );
+                content,
+                post,
+                null
+        );
         post.addComment(comment);
         Assertions.assertThat(post.getComments().get(0).getContent()).isEqualTo(content);
     }
@@ -96,7 +97,9 @@ class PostTest {
         Comment comment = new Comment(
                 0L,
                 build,
-                content);
+                content,
+                post,
+                null);
         post.addComment(comment);
         post.deleteComment(0L, build);
         Assertions.assertThat(post.getComments()).isEmpty();

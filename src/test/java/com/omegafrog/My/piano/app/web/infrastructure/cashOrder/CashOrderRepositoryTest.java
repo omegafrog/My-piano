@@ -1,13 +1,12 @@
 package com.omegafrog.My.piano.app.web.infrastructure.cashOrder;
 
-import com.omegafrog.My.piano.app.DataJpaUnitConfig;
+import com.omegafrog.My.piano.app.DataJpaTestConfig;
 import com.omegafrog.My.piano.app.web.domain.cash.CashOrder;
 import com.omegafrog.My.piano.app.web.domain.cash.CashOrderRepository;
 import com.omegafrog.My.piano.app.web.domain.cash.CashOrderRepositoryImpl;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.dateRange.CustomDateRange;
-import com.omegafrog.My.piano.app.web.dto.dateRange.DateRange;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -32,7 +32,7 @@ import java.util.UUID;
 import static org.mockito.Mockito.when;
 
 @DataJpaTest
-@Import(value = DataJpaUnitConfig.class)
+@Import(value = DataJpaTestConfig.class)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ExtendWith({SpringExtension.class, MockitoExtension.class})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -121,7 +121,7 @@ class CashOrderRepositoryTest {
 
         //when
         CustomDateRange range = new CustomDateRange(saved.getCreatedAt().toLocalDate(), saved.getCreatedAt().plusDays(1).toLocalDate());
-        List<CashOrder> founded = cashOrderRepository.findByUserIdAndDate(saved.getUserId(), pageable, range);
+        Page<CashOrder> founded = cashOrderRepository.findByUserIdAndDate(saved.getUserId(), pageable, range);
 
         //then
         Assertions.assertThat(founded).isNotEmpty().contains(saved);

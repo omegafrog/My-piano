@@ -1,7 +1,7 @@
 package com.omegafrog.My.piano.app.security.infrastructure.redis;
 
-import com.omegafrog.My.piano.app.security.entity.authorities.Role;
 import com.omegafrog.My.piano.app.security.jwt.RefreshToken;
+import com.omegafrog.My.piano.app.web.domain.user.authorities.Role;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.CrudRepository;
 

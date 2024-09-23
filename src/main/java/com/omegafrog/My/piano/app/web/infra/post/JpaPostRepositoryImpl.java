@@ -3,18 +3,18 @@ package com.omegafrog.My.piano.app.web.infra.post;
 import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.post.PostRepository;
 import com.omegafrog.My.piano.app.web.domain.post.QPost;
+import com.omegafrog.My.piano.app.web.domain.user.QUser;
 import com.omegafrog.My.piano.app.web.dto.post.SearchPostFilter;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import jakarta.persistence.*;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,12 +23,10 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class JpaPostRepositoryImpl implements PostRepository {
 
-    @PersistenceUnit
-    private EntityManagerFactory emf;
-
     private final JPAQueryFactory factory;
 
     private final SimpleJpaPostRepository postRepository;
+
     @Override
     public Post save(Post post) {
         return postRepository.save(post);
@@ -36,16 +34,19 @@ public class JpaPostRepositoryImpl implements PostRepository {
 
     @Override
     public Optional<Post> findById(Long id) {
-        return postRepository.findById(id);
+        return Optional.ofNullable(factory.select(QPost.post).from(QPost.post)
+                .join(QPost.post.author, QUser.user).fetchJoin()
+//                .join(QPost.post.author.securityUser, QSecurityUser.securityUser).fetchJoin()
+                .where(QPost.post.id.eq(id))
+                .fetchOne());
     }
 
     @Override
-    @Transactional
     public void deleteById(Long id) {
         Post byId = findById(id).orElseThrow(() -> new EntityNotFoundException("Cannot find Post entity."));
         byId.getAuthor().deleteUploadedPost(byId);
 
-        postRepository.deleteAllLikedPostById(id);
+//        postRepository.deleteAllLikedPostById(id);
         postRepository.deleteById(id);
     }
 
@@ -71,13 +72,12 @@ public class JpaPostRepositoryImpl implements PostRepository {
         QPost post = QPost.post;
         BooleanExpression expression = filter.getExpression();
         JPAQuery<Post> query = factory.selectFrom(post)
-                .where(expression)
+                .where(expression);
+        List<Post> fetched = query
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
-                .orderBy(post.createdAt.desc());
-        List<Post> fetched = query.fetch();
-        Long count = query.fetchCount();
-        return PageableExecutionUtils.getPage(fetched, pageable, count::longValue);
+                .orderBy(post.createdAt.desc()).fetch();
+        return PageableExecutionUtils.getPage(fetched, pageable, () -> query.fetch().size());
 
     }
 

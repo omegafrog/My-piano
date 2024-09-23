@@ -1,12 +1,12 @@
 package com.omegafrog.My.piano.app.security.jwt;
 
-import com.omegafrog.My.piano.app.security.entity.authorities.Role;
+import com.nimbusds.oauth2.sdk.GrantType;
+import com.omegafrog.My.piano.app.web.domain.user.authorities.Role;
 import io.jsonwebtoken.*;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.AuthenticationException;
 
@@ -29,7 +29,7 @@ public class TokenUtils {
     //토큰 생성
     public TokenInfo generateToken(String securityUserId, Role role) {
         String accessToken = getToken(securityUserId, role, Long.parseLong(accessTokenExpirationPeriod));
-        String refreshToken = getToken(null,role, Long.parseLong(refreshTokenExpirationPeriod));
+        String refreshToken = getToken(null, role, Long.parseLong(refreshTokenExpirationPeriod));
         return TokenInfo.builder()
                 .grantType("Bearer")
                 .accessToken(accessToken)
@@ -44,7 +44,7 @@ public class TokenUtils {
                 .build();
     }
 
-    private  String getToken(String payload, Role role, Long expirationPeriod) {
+    private String getToken(String payload, Role role, Long expirationPeriod) {
         Claims claims = Jwts.claims();
         claims.put("id", payload);
         claims.put("role", role.value);
@@ -58,18 +58,16 @@ public class TokenUtils {
     }
 
 
-
-    public  String getAccessTokenStringFromHeaders(HttpServletRequest request) throws AuthenticationException {
-        String tokenString = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (tokenString != null) {
-            String[] tokenSplit = tokenString.split(" ");
+    public String getAccessTokenString(String authHeader) throws AuthenticationException {
+        if (authHeader != null) {
+            String[] tokenSplit = authHeader.split(" ");
             if (verifyAccessTokenString(tokenSplit))
                 return tokenSplit[1];
         }
-        throw new AuthenticationCredentialsNotFoundException("Invalid Access token");
+        throw new AuthenticationCredentialsNotFoundException("Token string is null");
     }
 
-    public  String getRefreshTokenStringFromCookies(HttpServletRequest request) throws AuthenticationException {
+    public String getRefreshTokenStringFromCookies(HttpServletRequest request) throws AuthenticationException {
         Cookie[] cookies = request.getCookies();
         return Arrays.stream(cookies).filter(cookie ->
                 cookie.getName().equals("refreshToken")
@@ -78,31 +76,39 @@ public class TokenUtils {
         ).getValue();
     }
 
-    private  boolean verifyAccessTokenString(String[] accessToken) throws AuthenticationException {
+    public TokenInfo wrap(String accessToken, RefreshToken refreshToken) {
+        return TokenInfo.builder()
+                .grantType(GrantType.JWT_BEARER.getValue())
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
+    }
+
+    private boolean verifyAccessTokenString(String[] accessToken) throws AuthenticationException {
         if (accessToken.length == 2) {
             String[] splitted = accessToken[1].split("\\.");
             return accessToken[0].equals("Bearer") && splitted.length == 3;
         } else {
-            throw new AuthenticationCredentialsNotFoundException("Invalid access token");
+            throw new AuthenticationCredentialsNotFoundException("Token string is wrong. token:" + accessToken);
         }
     }
 
-    public  Claims extractClaims(String token) {
-        return Jwts.parser().setSigningKey(secret).parseClaimsJws(token).getBody();
+    public Claims extractClaims(String token) {
+        return Jwts.parserBuilder().setSigningKey(secret).build()
+                .parseClaimsJws(token).getBody();
     }
 
 
-    //토큰 유효성 검증
-    public  boolean isNonExpired(String token) {
-        try{
+    public boolean isNonExpired(String token) {
+        try {
             Claims body = extractClaims(token);
             return body.getExpiration().after(new Date());
-        }catch (JwtException e){
+        } catch (JwtException e) {
             return false;
         }
     }
 
-    public  void setRefreshToken(HttpServletResponse response, TokenInfo tokenInfo) {
+    public void setRefreshToken(HttpServletResponse response, TokenInfo tokenInfo) {
         Cookie refreshToken = new Cookie("refreshToken", tokenInfo.getRefreshToken().getPayload());
         refreshToken.setPath("/");
         refreshToken.setHttpOnly(true);

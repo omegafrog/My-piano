@@ -1,40 +1,43 @@
 package com.omegafrog.My.piano.app.web.infrastructure.lesson;
 
-import com.omegafrog.My.piano.app.DataJpaUnitConfig;
+import com.omegafrog.My.piano.app.DataJpaTestConfig;
+import com.omegafrog.My.piano.app.TestUtil;
 import com.omegafrog.My.piano.app.web.controller.DummyData;
-import com.omegafrog.My.piano.app.web.infra.user.JpaUserRepositoryImpl;
-import com.omegafrog.My.piano.app.web.infra.user.SimpleJpaUserRepository;
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
-import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
-import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
-import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
-import com.omegafrog.My.piano.app.web.dto.UpdateLessonDto;
-import com.omegafrog.My.piano.app.web.enums.*;
-import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
-import com.omegafrog.My.piano.app.web.domain.user.User;
-import com.omegafrog.My.piano.app.web.infra.sheetPost.JpaSheetPostRepositoryImpl;
-import com.omegafrog.My.piano.app.web.infra.sheetPost.SimpleJpaSheetPostRepository;
-import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
-import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonInformation;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
 import com.omegafrog.My.piano.app.web.domain.lesson.VideoInformation;
+import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
+import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
+import com.omegafrog.My.piano.app.web.domain.user.User;
+import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
+import com.omegafrog.My.piano.app.web.dto.lesson.UpdateLessonDto;
+import com.omegafrog.My.piano.app.web.enums.Category;
+import com.omegafrog.My.piano.app.web.enums.Instrument;
+import com.omegafrog.My.piano.app.web.enums.RefundPolicy;
+import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
+import com.omegafrog.My.piano.app.web.vo.user.PhoneNum;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.time.LocalTime;
 import java.util.Optional;
 
 @DataJpaTest
-@Import(DataJpaUnitConfig.class)
+@Import(value = DataJpaTestConfig.class)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@ExtendWith({SpringExtension.class, MockitoExtension.class})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class LessonRepositoryTest {
 
@@ -47,11 +50,10 @@ class LessonRepositoryTest {
     @Autowired
     private SheetPostRepository sheetPostRepository;
 
-
-
     private User author;
 
     private SheetPost savedSheetPost;
+
 
     @BeforeEach
     void settings() {
@@ -68,25 +70,29 @@ class LessonRepositoryTest {
         savedSheetPost = sheetPostRepository.save(DummyData.sheetPost(author));
     }
 
+
     @Test
     @DisplayName("lesson을 추가하고 조회할 수 있어야 한다.")
     void addNFindTest() {
         //given
-
+        Lesson lesson = TestUtil.lesson(savedSheetPost, author);
         //when
-        Lesson saved = lessonRepository.save(DummyData.lesson(savedSheetPost.getSheet(), author));
+        Lesson saved = lessonRepository.save(lesson);
 
+        System.out.println("saved = " + saved);
+        System.out.println("lesson = " + lesson);
         //then
         Optional<Lesson> founded = lessonRepository.findById(saved.getId());
-        Assertions.assertThat(founded).isNotEmpty().contains(saved);
+        System.out.println("founded.get().getAuthor() = " + founded.get().getAuthor());
+        Assertions.assertThat(founded).isPresent();
+        Assertions.assertThat(founded.get()).isEqualTo(saved);
     }
 
     @Test
     @DisplayName("레슨을 수정할 수 있어야 한다.")
     void updateTest() {
         //given
-
-        Lesson saved = lessonRepository.save(DummyData.lesson(savedSheetPost.getSheet(), author));
+        Lesson saved = lessonRepository.save(TestUtil.lesson(savedSheetPost, author));
         //when
         Lesson updated = saved.update(UpdateLessonDto.builder()
                 .title("changedTitle")
@@ -104,8 +110,8 @@ class LessonRepositoryTest {
                         .runningTime(LocalTime.of(1, 12, 40))
                         .build()
                 )
-                .sheetId(saved.getSheet().getId())
-                .build(), saved.getSheet());
+                .sheetId(saved.getSheetPost().getId())
+                .build(), saved.getSheetPost());
         //then
         Assertions.assertThat(updated).isEqualTo(saved);
     }
@@ -114,7 +120,7 @@ class LessonRepositoryTest {
     @DisplayName("레슨을 삭제할 수 있어야 한다.")
     void deleteTest() {
         //given
-        Lesson saved = lessonRepository.save(DummyData.lesson(savedSheetPost.getSheet(), author));
+        Lesson saved = lessonRepository.save(TestUtil.lesson(savedSheetPost, author));
         //when
         lessonRepository.deleteById(saved.getId());
         //then

@@ -1,7 +1,7 @@
 package com.omegafrog.My.piano.app.web.dto.lesson;
 
 import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
-import com.omegafrog.My.piano.app.web.dto.sheet.SheetDto;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetDto;
 import com.omegafrog.My.piano.app.web.dto.user.UserInfo;
 
 import java.time.LocalDateTime;
