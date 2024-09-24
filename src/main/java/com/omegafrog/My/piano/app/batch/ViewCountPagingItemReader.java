@@ -1,6 +1,8 @@
 package com.omegafrog.My.piano.app.batch;
 
-import com.omegafrog.My.piano.app.web.domain.article.ViewCount;
+import com.omegafrog.My.piano.app.web.domain.lesson.LessonViewCount;
+import com.omegafrog.My.piano.app.web.domain.post.PostViewCount;
+import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostViewCount;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.batch.item.database.AbstractPagingItemReader;
 import org.springframework.dao.DataAccessException;
@@ -8,15 +10,13 @@ import org.springframework.data.redis.core.*;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
-public class ViewCountPagingItemReader<T extends ViewCount> extends AbstractPagingItemReader<ViewCount> {
-    private final Class<T> targetType;
+public class ViewCountPagingItemReader<ViewCount> extends AbstractPagingItemReader<ViewCount> {
+    private final Class<ViewCount> targetType;
     private final RedisTemplate<String, ViewCount> redisTemplate;
 
-    public ViewCountPagingItemReader(Class<T> targetType, RedisTemplate<String, ViewCount> redisTemplate) {
+    public ViewCountPagingItemReader(Class<ViewCount> targetType, RedisTemplate<String, ViewCount> redisTemplate) {
         this.targetType = targetType;
         this.redisTemplate = redisTemplate;
     }
@@ -33,10 +33,10 @@ public class ViewCountPagingItemReader<T extends ViewCount> extends AbstractPagi
             public List<ViewCount> execute(RedisOperations operations) throws DataAccessException {
                 List<String> keys = getKeys();
                 List<ViewCount> items = new ArrayList<>();
-                Constructor<T> constructor = getConstructor();
+                Constructor<ViewCount> constructor = getConstructor();
 
                 int start = (getPage() * getPageSize());
-                int end = (keys.size() < (getPage() + 1) * getPageSize() ? keys.size() : (getPage() + 1) * getPageSize());
+                int end = (Math.min(keys.size(), (getPage() + 1) * getPageSize()));
 
                 List<String> pagingKeys = new ArrayList<>(keys).subList(start,
                         end);
@@ -44,7 +44,7 @@ public class ViewCountPagingItemReader<T extends ViewCount> extends AbstractPagi
                     try {
                         items.add(constructor.newInstance(
                                 Long.valueOf(key.split(":")[1]),
-                                (int) operations.opsForHash().get(key, "viewCount")
+                                Integer.parseInt((String) operations.opsForHash().get(key, "viewCount"))
                         ));
                     } catch (InstantiationException e) {
                         throw new RuntimeException(e);
@@ -61,8 +61,8 @@ public class ViewCountPagingItemReader<T extends ViewCount> extends AbstractPagi
         results.addAll(viewCounts);
     }
 
-    private @NotNull Constructor<T> getConstructor() {
-        Constructor<T> constructor = null;
+    private @NotNull Constructor<ViewCount> getConstructor() {
+        Constructor<ViewCount> constructor = null;
         try {
             constructor = targetType.getConstructor(Long.class, int.class);
         } catch (NoSuchMethodException e) {
@@ -71,15 +71,16 @@ public class ViewCountPagingItemReader<T extends ViewCount> extends AbstractPagi
         return constructor;
     }
 
+    private static final Map<Class<?>, String> TYPE_PATTERNS = Map.of(
+            SheetPostViewCount.class, "sheetpost:*",
+            LessonViewCount.class, "lesson:*",
+            PostViewCount.class, "post:*"
+    );
+
     private @NotNull List<String> getKeys() {
-        List<String> keys = null;
-        try {
-            keys = scanKeys(
-                    targetType.getField("KEY_NAME") + ":*");
-        } catch (NoSuchFieldException e) {
-            throw new RuntimeException(e);
-        }
-        return keys;
+        String pattern = Optional.ofNullable(TYPE_PATTERNS.get(targetType))
+                .orElseThrow(() -> new IllegalArgumentException("Unsupported type: " + targetType));
+        return scanKeys(pattern);
     }
 
     private List<String> scanKeys(String pattern) {

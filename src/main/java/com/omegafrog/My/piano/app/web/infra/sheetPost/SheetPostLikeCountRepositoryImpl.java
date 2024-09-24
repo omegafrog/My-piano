@@ -11,12 +11,13 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.util.Objects;
+
 @Repository
 @Qualifier("SheetPostLikeCountRepository")
 @RequiredArgsConstructor
 public class SheetPostLikeCountRepositoryImpl implements LikeCountRepository {
     private final RedisTemplate<String, SheetPostLikeCount> redisTemplate;
-    private final RedisSheetPostLikeCountRepository jpaRepository;
     private final JpaSheetPostRepositoryImpl sheetPostRepository;
 
     @Override
@@ -35,8 +36,10 @@ public class SheetPostLikeCountRepositoryImpl implements LikeCountRepository {
             return (SheetPostLikeCount) save(new SheetPostLikeCount(id, sheetPost.getLikeCount()));
         }
         // redis에 존재할 경우 가져와서 반환
-        return jpaRepository.findById(id).
-                orElseThrow(() -> new EntityNotFoundException("Cannot find sheet like count."));
+        return new SheetPostLikeCount(id,
+                Integer.parseInt((String) Objects.requireNonNull(
+                        redisTemplate.opsForHash().get(SheetPostLikeCount.KEY_NAME + ":" + id,
+                                "likeCount"))));
     }
 
 
@@ -63,5 +66,4 @@ public class SheetPostLikeCountRepositoryImpl implements LikeCountRepository {
                 "likeCount", -1L);
         return sheetPost.getLikeCount() - 1;
     }
-
 }

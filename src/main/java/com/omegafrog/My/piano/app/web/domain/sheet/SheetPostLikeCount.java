@@ -16,4 +16,11 @@ public class SheetPostLikeCount extends LikeCount {
     public SheetPostLikeCount(Long id, int likeCount) {
         super(id, likeCount);
     }
+
+    public static SheetPostLikeCount of(LikeCount sheetPostLikeCount) {
+        return SheetPostLikeCount.builder()
+                .id(sheetPostLikeCount.getId())
+                .likeCount(sheetPostLikeCount.getLikeCount())
+                .build();
+    }
 }

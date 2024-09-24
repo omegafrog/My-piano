@@ -10,11 +10,11 @@ import org.springframework.data.redis.core.RedisHash;
 @NoArgsConstructor
 @Getter
 public class LessonViewCount extends ViewCount {
-    public static String KEY_NAME="lesson";
+    public static String KEY_NAME = "lesson";
 
     @Builder
     public LessonViewCount(Long id, int viewCount) {
-        this.id= id;
+        this.id = id;
         this.viewCount = viewCount;
     }
 }

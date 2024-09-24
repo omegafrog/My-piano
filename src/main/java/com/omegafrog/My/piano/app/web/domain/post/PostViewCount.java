@@ -9,7 +9,8 @@ import org.springframework.data.redis.core.RedisHash;
 @NoArgsConstructor
 @Getter
 public class PostViewCount extends ViewCount {
-    public static final String KEY_NAME="post";
+    public static final String KEY_NAME = "post";
+
     public PostViewCount(Long postId, int viewCount) {
         this.id = postId;
         this.viewCount = viewCount;
