@@ -1,6 +1,6 @@
 # My-piano
 
-악보 구매/판매 및 공유 사이트
+악보 구매/판매 및 공유 사이트인 마음만은 피아니스트 서비스를 분석하고 재현한 프로젝트
 
 ## 아키텍처
 ![image](https://github.com/user-attachments/assets/c0334ad9-72c7-4afc-9962-858a24c6d8ff)
@@ -13,3 +13,12 @@
 ### infra
 <img src="https://img.shields.io/badge/aws-FF9900?style=for-the-badge&logo=amazonec2&logoColor=white"> <img src="https://img.shields.io/badge/redis-FF4438?style=for-the-badge&logo=redis&logoColor=white"> <img src="https://img.shields.io/badge/jenkins-D24939?style=for-the-badge&logo=jenkins&logoColor=white">
 
+## 실행 화면
+메인 화면
+![image](https://github.com/user-attachments/assets/c13c3beb-659f-4e43-b11d-d64541d21034)
+
+악보 리스트 화면
+![image](https://github.com/user-attachments/assets/67226adb-06a5-4885-81ca-c8dafe911336)
+
+레슨 리스트 화면
+![image](https://github.com/user-attachments/assets/213d3621-3d1a-4c96-a74f-a340a6eb1145)
