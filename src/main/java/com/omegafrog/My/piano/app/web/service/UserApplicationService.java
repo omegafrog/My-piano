@@ -2,7 +2,7 @@ package com.omegafrog.My.piano.app.web.service;
 
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.utils.MapperUtil;
-import com.omegafrog.My.piano.app.web.domain.S3UploadFileExecutor;
+import com.omegafrog.My.piano.app.web.domain.FileStorageExecutor;
 import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPost;
 import com.omegafrog.My.piano.app.web.domain.relation.UserLikedSheetPost;
@@ -51,7 +51,7 @@ public class UserApplicationService {
     private MapperUtil mapperUtil;
 
     @Autowired
-    private S3UploadFileExecutor s3UploadFileExecutor;
+    private FileStorageExecutor fileStorageExecutor;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -185,9 +185,9 @@ public class UserApplicationService {
                     throw new IllegalArgumentException("Wrong image type.");
             }
             if (!user.getProfileSrc().isBlank())
-                s3UploadFileExecutor.removeProfileImg(user.getProfileSrc());
+                fileStorageExecutor.removeProfileImg(user.getProfileSrc());
 
-            s3UploadFileExecutor.uploadProfileImg(profileImg, profileImg.getOriginalFilename(), ObjectMetadata.builder()
+            fileStorageExecutor.uploadProfileImg(profileImg, profileImg.getOriginalFilename(), ObjectMetadata.builder()
                     .contentType(contentType).build());
         }
 

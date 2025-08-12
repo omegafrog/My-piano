@@ -4,6 +4,10 @@ package com.omegafrog.My.piano.app.web.service;
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.post.PostRepository;
+import com.omegafrog.My.piano.app.web.event.EventPublisher;
+import com.omegafrog.My.piano.app.web.event.PostCreatedEvent;
+import com.omegafrog.My.piano.app.web.event.PostDeletedEvent;
+import com.omegafrog.My.piano.app.web.event.PostUpdatedEvent;
 import com.omegafrog.My.piano.app.web.domain.post.PostViewCountRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
@@ -28,6 +32,7 @@ public class PostApplicationService {
     private final PostRepository postRepository;
     private final AuthenticationUtil authenticationUtil;
     private final PostViewCountRepository postViewCountRepository;
+    private final EventPublisher eventPublisher;
 
     public PostDto writePost(PostRegisterDto post) {
         User loggedInUser = authenticationUtil.getLoggedInUser();
@@ -41,6 +46,18 @@ public class PostApplicationService {
                 .build();
         Post saved = postRepository.save(build);
         user.addUploadedPost(saved);
+        
+        // Publish post created event
+        PostCreatedEvent event = new PostCreatedEvent(
+            saved.getId(),
+            saved.getTitle(),
+            saved.getContent(),
+            saved.getPostType().toString(),
+            saved.getAuthor().getId(),
+            saved.getAuthor().getUsername()
+        );
+        eventPublisher.publishPostCreated(event);
+        
         return saved.toDto();
     }
 
@@ -57,8 +74,20 @@ public class PostApplicationService {
         User loggedInUser = authenticationUtil.getLoggedInUser();
         Post post = getPostById(id);
         if (post.getAuthor().equals(loggedInUser)) {
-            return post.update(updatePostDto).toDto();
-
+            Post updatedPost = post.update(updatePostDto);
+            
+            // Publish post updated event
+            PostUpdatedEvent event = new PostUpdatedEvent(
+                updatedPost.getId(),
+                updatedPost.getTitle(),
+                updatedPost.getContent(),
+                updatedPost.getPostType().toString(),
+                updatedPost.getAuthor().getId(),
+                updatedPost.getAuthor().getUsername()
+            );
+            eventPublisher.publishPostUpdated(event);
+            
+            return updatedPost.toDto();
         } else throw new AccessDeniedException("Cannot update other user's post");
     }
 
@@ -67,6 +96,10 @@ public class PostApplicationService {
         Post post = getPostById(id);
         if (post.getAuthor().equals(loggedInUser)) {
             postRepository.deleteById(id);
+            
+            // Publish post deleted event
+            PostDeletedEvent event = new PostDeletedEvent(id);
+            eventPublisher.publishPostDeleted(event);
         } else throw new AccessDeniedException("Cannot delete other user's post");
     }
 

@@ -4,7 +4,7 @@ import com.omegafrog.My.piano.app.external.elasticsearch.ElasticSearchInstance;
 import com.omegafrog.My.piano.app.external.elasticsearch.SheetPostIndexRepository;
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.utils.MapperUtil;
-import com.omegafrog.My.piano.app.web.domain.S3UploadFileExecutor;
+import com.omegafrog.My.piano.app.web.domain.FileStorageExecutor;
 import com.omegafrog.My.piano.app.web.domain.article.LikeCountRepository;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
@@ -52,7 +52,7 @@ public class SheetPostApplicationService {
 
 
     private final ElasticSearchInstance elasticSearchInstance;
-    private final S3UploadFileExecutor uploadFileExecutor;
+    private final FileStorageExecutor uploadFileExecutor;
     private final MapperUtil mapperUtil;
     private final SheetPostViewCountRepository sheetPostViewCountRepository;
     private final AuthenticationUtil authenticationUtil;

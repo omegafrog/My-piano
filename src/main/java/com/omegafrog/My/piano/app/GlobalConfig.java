@@ -35,9 +35,11 @@ import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.message.BasicHeader;
 import org.elasticsearch.client.RestClient;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
@@ -153,8 +155,20 @@ public class GlobalConfig {
     }
 
     @Bean
+    @Profile("!dev")
     public S3UploadFileExecutor s3UploadFileExecutor() {
         return new S3UploadFileExecutor(s3Template(), s3Client());
+    }
+
+    @Bean
+    public com.omegafrog.My.piano.app.web.domain.LocalFileStorageExecutor localFileStorageExecutor() {
+        return new com.omegafrog.My.piano.app.web.domain.LocalFileStorageExecutor();
+    }
+
+    @Bean
+    public com.omegafrog.My.piano.app.web.domain.FileStorageExecutor fileStorageExecutor(
+            @Autowired(required = false) S3UploadFileExecutor s3UploadFileExecutor) {
+        return new com.omegafrog.My.piano.app.web.domain.FileStorageExecutor(s3UploadFileExecutor, localFileStorageExecutor());
     }
 
     @Bean
@@ -168,6 +182,7 @@ public class GlobalConfig {
     }
 
     @Bean
+    @Profile("!dev")
     public S3Client s3Client() {
         return S3Client.builder()
                 .region(Region.of(region))
@@ -178,6 +193,7 @@ public class GlobalConfig {
     }
 
     @Bean
+    @Profile("!dev")
     public S3Template s3Template() {
         return new S3Template(s3Client(), new InMemoryBufferingS3OutputStreamProvider(s3Client(), null),
                 new Jackson2JsonS3ObjectConverter(objectMapper()), S3Presigner.create());

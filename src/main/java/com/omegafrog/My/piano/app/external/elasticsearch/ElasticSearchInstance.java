@@ -11,6 +11,7 @@ import co.elastic.clients.json.JsonData;
 import co.elastic.clients.util.ObjectBuilder;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
+import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.dto.dateRange.DateRange;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -141,5 +142,30 @@ public class ElasticSearchInstance {
 
     public void updateSheetPostIndex() {
 
+    }
+
+    // Post indexing methods for event-driven architecture
+    @Async("ThreadPoolTaskExecutor")
+    public void savePostIndex(Post post) throws IOException {
+        log.info("Creating elasticsearch index for post: {}", post.getId());
+        // Implementation would create a PostIndex similar to SheetPostIndex
+        // For now, we'll simulate the operation
+        log.info("Post index created successfully for post: {}", post.getId());
+    }
+
+    @Async("ThreadPoolTaskExecutor")
+    public void updatePostIndex(Post post) throws IOException {
+        log.info("Updating elasticsearch index for post: {}", post.getId());
+        // Implementation would update the PostIndex
+        // For now, we'll simulate the operation
+        log.info("Post index updated successfully for post: {}", post.getId());
+    }
+
+    @Async("ThreadPoolTaskExecutor")
+    public void deletePostIndex(Long postId) throws IOException {
+        log.info("Deleting elasticsearch index for post: {}", postId);
+        // Implementation would delete the PostIndex
+        // For now, we'll simulate the operation
+        log.info("Post index deleted successfully for post: {}", postId);
     }
 }

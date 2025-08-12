@@ -28,7 +28,7 @@ public class ElasticSearchConfig {
 
     @Bean
     public ElasticsearchClient elasticsearchClient(ObjectMapper objectMapper) {
-        String serverUrl = "https://" + host + ":" + port;
+        String serverUrl = "http://" + host + ":" + port;
 
         // Create the low-level client
         RestClient restClient = RestClient
