@@ -47,7 +47,7 @@ import software.amazon.awssdk.services.s3.S3Client;
 public class SecurityConfig {
 
 
-    @Autowired
+    @Autowired(required = false)
     private S3Client s3Client;
 
     @Bean
@@ -216,12 +216,11 @@ public class SecurityConfig {
     public SecurityFilterChain oauth2Authentication(HttpSecurity http) throws Exception {
         http
                 .securityMatcher("/api/v1/oauth2/**")
-                .authorizeHttpRequests()
-                .requestMatchers("/api/v1/oauth2/**")
-                .permitAll()
-                .and()
-                .csrf().disable()
-                .cors().configurationSource(corsConfigurationSource());
+                .authorizeHttpRequests(authz -> authz
+                        .requestMatchers("/api/v1/oauth2/**").permitAll()
+                )
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()));
         return http.build();
     }
 
@@ -229,21 +228,20 @@ public class SecurityConfig {
     public SecurityFilterChain cashApiAuthentication(HttpSecurity http) throws Exception {
         http.securityMatcher("/api/v1/cash/**")
                 .authenticationProvider(commonUserAuthenticationProvider())
-                .authorizeHttpRequests()
-                .requestMatchers("/api/v1/cash/webhook")
-                .permitAll()
-                .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value)
-                .and()
+                .authorizeHttpRequests(authz -> authz
+                        .requestMatchers("/api/v1/cash/webhook").permitAll()
+                        .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value)
+                )
                 .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
-                .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
-                .exceptionHandling()
-                .authenticationEntryPoint(unAuthorizedEntryPoint())
-                .accessDeniedHandler(commonUserAccessDeniedHandler())
-                .and()
-                .csrf().disable()
-                .cors().configurationSource(corsConfigurationSource());
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(unAuthorizedEntryPoint())
+                        .accessDeniedHandler(commonUserAccessDeniedHandler())
+                )
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()));
         return http.build();
     }
 
@@ -253,35 +251,34 @@ public class SecurityConfig {
         http
                 .securityMatcher("/api/v1/user/**")
                 .authenticationProvider(commonUserAuthenticationProvider())
-                .authorizeHttpRequests()
-                .requestMatchers("/api/v1/user/register", "/api/v1/user/profile/register")
-                .permitAll()
-                .requestMatchers("/api/v1/user/login/**", "/api/v1/user/logout/**")
-                .permitAll()
-                .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value)
-                .and()
-                .formLogin().permitAll()
-                .loginProcessingUrl("/api/v1/user/login")
-                .usernameParameter("username")
-                .passwordParameter("password")
-                .successHandler(new CommonUserLoginSuccessHandler(objectMapper, refreshTokenRepository(), tokenUtils()))
-                .failureHandler(new CommonUserLoginFailureHandler(objectMapper))
-                .and()
-                .logout()
-                .logoutUrl("/api/v1/user/logout").permitAll()
-                .logoutSuccessHandler(logoutHandler())
-                .addLogoutHandler(commonUserLogoutHandler())
-                .and()
+                .authorizeHttpRequests(authz -> authz
+                        .requestMatchers("/api/v1/user/register", "/api/v1/user/profile/register").permitAll()
+                        .requestMatchers("/api/v1/user/login/**", "/api/v1/user/logout/**").permitAll()
+                        .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value)
+                )
+                .formLogin(form -> form
+                        .permitAll()
+                        .loginProcessingUrl("/api/v1/user/login")
+                        .usernameParameter("username")
+                        .passwordParameter("password")
+                        .successHandler(new CommonUserLoginSuccessHandler(objectMapper, refreshTokenRepository(), tokenUtils()))
+                        .failureHandler(new CommonUserLoginFailureHandler(objectMapper))
+                )
+                .logout(logout -> logout
+                        .logoutUrl("/api/v1/user/logout").permitAll()
+                        .logoutSuccessHandler(logoutHandler())
+                        .addLogoutHandler(commonUserLogoutHandler())
+                )
                 .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
-                .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
-                .exceptionHandling()
-                .authenticationEntryPoint(unAuthorizedEntryPoint())
-                .accessDeniedHandler(commonUserAccessDeniedHandler())
-                .and()
-                .csrf().disable()
-                .cors().configurationSource(corsConfigurationSource());
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(unAuthorizedEntryPoint())
+                        .accessDeniedHandler(commonUserAccessDeniedHandler())
+                )
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()));
 
         return http.build();
     }
@@ -295,24 +292,23 @@ public class SecurityConfig {
         http
                 .securityMatcher("/api/v1/community/posts/**")
                 .authenticationProvider(commonUserAuthenticationProvider())
-                .authorizeHttpRequests()
-                .requestMatchers(HttpMethod.GET, "/api/v1/community/posts",
-                        "/api/v1/community/video-post",
-                        "/api/v1/community/posts/{id:[0-9]+}",
-                        "/api/v1/community/video-post/{id:[0-9]+}")
-                .permitAll()
-                .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value)
-                .and()
-                .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
-                .exceptionHandling()
-                .authenticationEntryPoint(unAuthorizedEntryPoint())
-                .accessDeniedHandler(commonUserAccessDeniedHandler())
-                .and()
+                .authorizeHttpRequests(authz -> authz
+                        .requestMatchers(HttpMethod.GET, "/api/v1/community/posts",
+                                "/api/v1/community/video-post",
+                                "/api/v1/community/posts/{id:[0-9]+}",
+                                "/api/v1/community/video-post/{id:[0-9]+}").permitAll()
+                        .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value)
+                )
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(unAuthorizedEntryPoint())
+                        .accessDeniedHandler(commonUserAccessDeniedHandler())
+                )
                 .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
-                .csrf().disable()
-                .cors().configurationSource(corsConfigurationSource());
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()));
         return http.build();
     }
 
@@ -321,25 +317,21 @@ public class SecurityConfig {
         http
                 .securityMatcher("/api/v1/lessons/**")
                 .authenticationProvider(commonUserAuthenticationProvider())
-                .authorizeHttpRequests()
-                .requestMatchers(HttpMethod.GET,
-                        "/api/v1/lessons",
-                        "/api/v1/lessons/{id:[0-9]+}")
-                .permitAll()
-                .requestMatchers("/api/v1/lessons/{id:[0-9]+}/scrap", "/api/v1/lessons/{id:[0-9]+}/like")
-                .hasAnyRole(Role.CREATOR.value, Role.USER.value)
-                .anyRequest().hasRole(Role.CREATOR.value)
-                .and()
-                .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
+                .authorizeHttpRequests(authz -> authz
+                        .requestMatchers(HttpMethod.GET, "/api/v1/lessons", "/api/v1/lessons/{id:[0-9]+}").permitAll()
+                        .requestMatchers("/api/v1/lessons/{id:[0-9]+}/scrap", "/api/v1/lessons/{id:[0-9]+}/like").hasAnyRole(Role.CREATOR.value, Role.USER.value)
+                        .anyRequest().hasRole(Role.CREATOR.value)
+                )
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
                 .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
-                .exceptionHandling()
-                .authenticationEntryPoint(unAuthorizedEntryPoint())
-                .accessDeniedHandler(commonUserAccessDeniedHandler())
-                .and()
-                .csrf().disable()
-                .cors().configurationSource(corsConfigurationSource());
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(unAuthorizedEntryPoint())
+                        .accessDeniedHandler(commonUserAccessDeniedHandler())
+                )
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()));
         return http.build();
     }
 
@@ -375,22 +367,20 @@ public class SecurityConfig {
         http
                 .securityMatcher("/api/v1/order/**")
                 .authenticationProvider(commonUserAuthenticationProvider())
-                .authorizeHttpRequests()
-                .requestMatchers(HttpMethod.GET, "/api/v1/order",
-                        "/api/v1/order/{id:[0-9]+}")
-                .permitAll()
-                .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value)
-                .and()
+                .authorizeHttpRequests(authz -> authz
+                        .requestMatchers(HttpMethod.GET, "/api/v1/order", "/api/v1/order/{id:[0-9]+}").permitAll()
+                        .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value)
+                )
                 .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
-                .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
-                .exceptionHandling()
-                .authenticationEntryPoint(unAuthorizedEntryPoint())
-                .accessDeniedHandler(commonUserAccessDeniedHandler())
-                .and()
-                .csrf().disable()
-                .cors().configurationSource(corsConfigurationSource());
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(unAuthorizedEntryPoint())
+                        .accessDeniedHandler(commonUserAccessDeniedHandler())
+                )
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()));
         return http.build();
     }
 
@@ -399,23 +389,20 @@ public class SecurityConfig {
         http
                 .securityMatcher("/api/v1/sheet-post/**")
                 .authenticationProvider(commonUserAuthenticationProvider())
-                .authorizeHttpRequests()
-                .requestMatchers(HttpMethod.GET, "/api/v1/sheet-post/{id:[0-9]+}")
-                .permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/v1/sheet-post")
-                .permitAll()
-                .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value)
-                .and()
-                .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
+                .authorizeHttpRequests(authz -> authz
+                        .requestMatchers(HttpMethod.GET, "/api/v1/sheet-post/{id:[0-9]+}", "/api/v1/sheet-post").permitAll()
+                        .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value)
+                )
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
                 .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
-                .exceptionHandling()
-                .authenticationEntryPoint(unAuthorizedEntryPoint())
-                .accessDeniedHandler(commonUserAccessDeniedHandler())
-                .and()
-                .csrf().disable()
-                .cors().configurationSource(corsConfigurationSource());
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(unAuthorizedEntryPoint())
+                        .accessDeniedHandler(commonUserAccessDeniedHandler())
+                )
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()));
         return http.build();
     }
 
@@ -424,21 +411,20 @@ public class SecurityConfig {
         http
                 .securityMatcher("/api/v1/cart/**")
                 .authenticationProvider(commonUserAuthenticationProvider())
-                .authorizeHttpRequests()
-                .requestMatchers("/api/v1/cart")
-                .permitAll()
-                .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value)
-                .and()
-                .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
+                .authorizeHttpRequests(authz -> authz
+                        .requestMatchers("/api/v1/cart").permitAll()
+                        .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value)
+                )
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
                 .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
-                .exceptionHandling()
-                .authenticationEntryPoint(unAuthorizedEntryPoint())
-                .accessDeniedHandler(commonUserAccessDeniedHandler())
-                .and()
-                .csrf().disable()
-                .cors().configurationSource(corsConfigurationSource());
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(unAuthorizedEntryPoint())
+                        .accessDeniedHandler(commonUserAccessDeniedHandler())
+                )
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()));
 
         return http.build();
     }
@@ -447,21 +433,20 @@ public class SecurityConfig {
     SecurityFilterChain ticketAuthentication(HttpSecurity http) throws Exception {
         http
                 .securityMatcher("/api/v1/tickets")
-                .authorizeHttpRequests()
-                .requestMatchers(HttpMethod.PUT, "/api/v1/tickets")
-                .hasRole(Role.USER.value)
-                .anyRequest().permitAll()
-                .and()
-                .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
+                .authorizeHttpRequests(authz -> authz
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/tickets").hasRole(Role.USER.value)
+                        .anyRequest().permitAll()
+                )
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
                 .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
-                .exceptionHandling()
-                .authenticationEntryPoint(unAuthorizedEntryPoint())
-                .accessDeniedHandler(commonUserAccessDeniedHandler())
-                .and()
-                .csrf().disable()
-                .cors().configurationSource(corsConfigurationSource());
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(unAuthorizedEntryPoint())
+                        .accessDeniedHandler(commonUserAccessDeniedHandler())
+                )
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()));
         return http.build();
     }
 
@@ -469,11 +454,11 @@ public class SecurityConfig {
     SecurityFilterChain h2console(HttpSecurity http) throws Exception {
         http
                 .securityMatcher("/h2-console/**")
-                .authorizeHttpRequests()
-                .anyRequest().permitAll()
-                .and()
-                .csrf().disable()
-                .cors().disable();
+                .authorizeHttpRequests(authz -> authz
+                        .anyRequest().permitAll()
+                )
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(AbstractHttpConfigurer::disable);
         return http.build();
     }
 

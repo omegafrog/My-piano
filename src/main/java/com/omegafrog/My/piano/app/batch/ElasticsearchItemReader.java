@@ -11,7 +11,6 @@ import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omegafrog.My.piano.app.external.elasticsearch.SheetPostIndex;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.data.AbstractPaginatedDataItemReader;
 import org.springframework.beans.factory.InitializingBean;
@@ -43,33 +42,37 @@ public class ElasticsearchItemReader<T> extends AbstractPaginatedDataItemReader<
         this.pageSize = pageSize;
     }
 
-    @SneakyThrows
     @Override
     @SuppressWarnings("unchecked")
     protected Iterator<T> doPageRead() {
         List<SheetPostIndex> result = new ArrayList<>();
-        SearchRequest searchRequest = new SearchRequest.Builder()
-                .index("sheetpost")
-                .query(Query.of(q -> q.matchAll(t -> t)))
-                .size(pageSize)
-                .scroll(Time.of(t -> t.time("1m")))
-                .sort(SortOptions.of(so -> so.field(f -> f.field("id").order(SortOrder.Asc))))
-                .build();
-
-        if (scrollId == null) {
-            SearchResponse<SheetPostIndex> search = client.search(searchRequest, SheetPostIndex.class);
-            scrollId = search.scrollId();
-            search.hits().hits().forEach(hit -> result.add(
-                    hit.source()));
-        } else {
-            ScrollRequest scrollRequest = new ScrollRequest.Builder()
-                    .scrollId(scrollId)
+        try {
+            SearchRequest searchRequest = new SearchRequest.Builder()
+                    .index("sheetpost")
+                    .query(Query.of(q -> q.matchAll(t -> t)))
+                    .size(pageSize)
                     .scroll(Time.of(t -> t.time("1m")))
+                    .sort(SortOptions.of(so -> so.field(f -> f.field("id").order(SortOrder.Asc))))
                     .build();
-            ScrollResponse<SheetPostIndex> scrollResponse = client.scroll(scrollRequest, SheetPostIndex.class);
-            scrollId = scrollResponse.scrollId();
-            scrollResponse.hits().hits().forEach(hit -> result.add(
-                    hit.source()));
+
+            if (scrollId == null) {
+                SearchResponse<SheetPostIndex> search = client.search(searchRequest, SheetPostIndex.class);
+                scrollId = search.scrollId();
+                search.hits().hits().forEach(hit -> result.add(
+                        hit.source()));
+            } else {
+                ScrollRequest scrollRequest = new ScrollRequest.Builder()
+                        .scrollId(scrollId)
+                        .scroll(Time.of(t -> t.time("1m")))
+                        .build();
+                ScrollResponse<SheetPostIndex> scrollResponse = client.scroll(scrollRequest, SheetPostIndex.class);
+                scrollId = scrollResponse.scrollId();
+                scrollResponse.hits().hits().forEach(hit -> result.add(
+                        hit.source()));
+            }
+        } catch (Exception e) {
+            log.error("Error reading from Elasticsearch", e);
+            throw new RuntimeException(e);
         }
         return (Iterator<T>) result.iterator();
     }

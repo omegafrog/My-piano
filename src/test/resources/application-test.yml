@@ -1,0 +1,68 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/mypianotest?characterEncoding=UTF-8&serverTimezone=UTC
+    username: jiwoo
+    password: password
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: false
+        generate_statistics: true
+        use_sql_comments: true
+    hibernate:
+      ddl-auto: update
+  cloud:
+    aws:
+      region:
+        static: ap-northeast-2
+      bucket:
+        name: mypianobucket
+
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 25MB
+  redis:
+    user:
+      host: 127.0.0.1
+      port: 6379
+    cache:
+      host: 127.0.0.1
+      port: 6380
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+
+logging:
+  level:
+    org.springframework.web: DEBUG
+    org.springframework.http.converter.json: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql: TRACE
+
+elasticsearch:
+  host: localhost
+  port: 9200
+
+async:
+  pool:
+    core: 16
+    max: 100
+  queue:
+    capacity: 20000
+
+
+
+firebase:
+  app:
+    admin:
+      json: src/main/resources/firebase-admin.json
+
+
+
+server:
+  tomcat:
+    threads:
+      max: 200
