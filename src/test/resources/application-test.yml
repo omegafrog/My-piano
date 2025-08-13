@@ -19,7 +19,6 @@ spring:
         static: ap-northeast-2
       bucket:
         name: mypianobucket
-
   servlet:
     multipart:
       max-file-size: 20MB
@@ -54,12 +53,10 @@ async:
     capacity: 20000
 
 
-
 firebase:
   app:
     admin:
       json: src/main/resources/firebase-admin.json
-
 
 
 server:
