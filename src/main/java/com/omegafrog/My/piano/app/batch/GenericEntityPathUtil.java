@@ -12,6 +12,11 @@ public class GenericEntityPathUtil {
         return pathBuilder.getNumber(propertyName, Long.class);
     }
 
+    public static <T> NumberPath<Integer> getIntegerProperty(EntityPathBase<T> entityPathBase, String propertyName) {
+        PathBuilder<T> pathBuilder = new PathBuilder<>(entityPathBase.getType(), entityPathBase.getMetadata());
+        return pathBuilder.getNumber(propertyName, Integer.class);
+    }
+
     public static <T extends Article> Path<T> getProperty(EntityPathBase<T> entityPath, String propertyName, Class<T> propertyClass) {
         PathBuilder<T> pathBuilder = new PathBuilder<>(entityPath.getType(), entityPath.getMetadata());
         return pathBuilder.get(propertyName, propertyClass);

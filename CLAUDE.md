@@ -203,3 +203,14 @@ The application creates a `local-storage` directory for file uploads in developm
   - **변경 이유**: 왜 이 변경이 필요한지
   - **테스트 계획**: 어떻게 테스트했는지
   - **영향 범위**: 다른 기능에 미치는 영향
+
+## Code Changes and Build Verification
+
+**IMPORTANT**: 코드 변경을 포함하는 모든 작업이 완료되었을 때는 반드시 빌드와 컴파일을 진행하고 오류가 없는지 확인해야 합니다.
+
+```bash
+# 코드 변경 후 빌드 확인
+./gradlew build
+```
+
+이 과정을 통해 코드 변경사항이 컴파일 오류나 빌드 실패를 일으키지 않는지 검증합니다.

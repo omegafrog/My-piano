@@ -3,6 +3,7 @@ package com.omegafrog.My.piano.app.batch;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonViewCount;
 import com.omegafrog.My.piano.app.web.domain.post.PostViewCount;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostViewCount;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.batch.item.database.AbstractPagingItemReader;
 import org.springframework.dao.DataAccessException;
@@ -12,13 +13,40 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
+@Slf4j
 public class ViewCountPagingItemReader<ViewCount> extends AbstractPagingItemReader<ViewCount> {
     private final Class<ViewCount> targetType;
     private final RedisTemplate<String, ViewCount> redisTemplate;
+    private List<String> allKeys;
+    private int totalProcessed = 0;
+    private int totalReset = 0;
 
     public ViewCountPagingItemReader(Class<ViewCount> targetType, RedisTemplate<String, ViewCount> redisTemplate) {
         this.targetType = targetType;
         this.redisTemplate = redisTemplate;
+        this.allKeys = new ArrayList<>();
+    }
+
+    @Override
+    protected void doOpen() throws Exception {
+        super.doOpen();
+        long startTime = System.currentTimeMillis();
+        this.allKeys = getKeys();
+        Collections.sort(this.allKeys);
+        long endTime = System.currentTimeMillis();
+        
+        log.info("ViewCountPagingItemReader opened - Type: {}, Total keys found: {}, Scan time: {}ms", 
+                targetType.getSimpleName(), allKeys.size(), endTime - startTime);
+    }
+
+    @Override
+    protected void doClose() throws Exception {
+        super.doClose();
+        log.info("ViewCountPagingItemReader closed - Type: {}, Total processed: {}, Total reset: {}", 
+                targetType.getSimpleName(), totalProcessed, totalReset);
+        this.allKeys.clear();
+        this.totalProcessed = 0;
+        this.totalReset = 0;
     }
 
     @Override
@@ -28,36 +56,46 @@ public class ViewCountPagingItemReader<ViewCount> extends AbstractPagingItemRead
         } else {
             results.clear();
         }
+        
+        int start = getPage() * getPageSize();
+        int end = Math.min(allKeys.size(), (getPage() + 1) * getPageSize());
+        
+        if (start >= allKeys.size()) {
+            return;
+        }
+        
+        List<String> pageKeys = allKeys.subList(start, end);
+        
         List<ViewCount> viewCounts = redisTemplate.execute(new SessionCallback<>() {
             @Override
             public List<ViewCount> execute(RedisOperations operations) throws DataAccessException {
-                List<String> keys = getKeys();
                 List<ViewCount> items = new ArrayList<>();
                 Constructor<ViewCount> constructor = getConstructor();
-
-                int start = (getPage() * getPageSize());
-                int end = (Math.min(keys.size(), (getPage() + 1) * getPageSize()));
-
-                List<String> pagingKeys = new ArrayList<>(keys).subList(start,
-                        end);
-                for (String key : pagingKeys) {
+                
+                for (String key : pageKeys) {
                     try {
-                        items.add(constructor.newInstance(
-                                Long.valueOf(key.split(":")[1]),
-                                Integer.parseInt((String) operations.opsForHash().get(key, "viewCount"))
-                        ));
-                    } catch (InstantiationException e) {
-                        throw new RuntimeException(e);
-                    } catch (IllegalAccessException e) {
-                        throw new RuntimeException(e);
-                    } catch (InvocationTargetException e) {
-                        throw new RuntimeException(e);
+                        Object viewCountValue = operations.opsForHash().get(key, "viewCount");
+                        if (viewCountValue != null) {
+                            int currentViewCount = Integer.parseInt(viewCountValue.toString());
+                            if (currentViewCount > 0) {
+                                items.add(constructor.newInstance(
+                                        Long.valueOf(key.split(":")[1]),
+                                        currentViewCount
+                                ));
+                                // 읽은 후 0으로 초기화
+                                operations.opsForHash().put(key, "viewCount", "0");
+                                totalProcessed++;
+                                totalReset++;
+                            }
+                        }
+                    } catch (Exception e) {
+                        throw new RuntimeException("Error processing key: " + key, e);
                     }
                 }
-                return new ArrayList<>(items);
+                return items;
             }
-
         });
+        
         results.addAll(viewCounts);
     }
 
@@ -84,13 +122,16 @@ public class ViewCountPagingItemReader<ViewCount> extends AbstractPagingItemRead
     }
 
     private List<String> scanKeys(String pattern) {
-        List<String> keys = new ArrayList<>();
-        Cursor<byte[]> cursor = redisTemplate.getConnectionFactory().getConnection().scan(ScanOptions.scanOptions().
-                match(pattern).build());
-        while (cursor.hasNext()) {
-            keys.add(new String(cursor.next()));
-        }
-        Collections.sort(keys); // 순서를 보장하기 위해 정렬
-        return keys;
+        return redisTemplate.execute((RedisCallback<List<String>>) connection -> {
+            List<String> keys = new ArrayList<>();
+            try (Cursor<byte[]> cursor = connection.scan(ScanOptions.scanOptions().match(pattern).build())) {
+                while (cursor.hasNext()) {
+                    keys.add(new String(cursor.next()));
+                }
+            } catch (Exception e) {
+                throw new RuntimeException("Error scanning Redis keys with pattern: " + pattern, e);
+            }
+            return keys;
+        });
     }
 }

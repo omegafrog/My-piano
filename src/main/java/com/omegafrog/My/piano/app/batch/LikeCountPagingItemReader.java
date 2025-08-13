@@ -2,6 +2,7 @@ package com.omegafrog.My.piano.app.batch;
 
 import com.omegafrog.My.piano.app.web.domain.article.LikeCount;
 import com.omegafrog.My.piano.app.web.domain.article.ViewCount;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.batch.item.database.AbstractPagingItemReader;
 import org.springframework.dao.DataAccessException;
@@ -13,14 +14,41 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@Slf4j
 public class LikeCountPagingItemReader<T extends LikeCount> extends AbstractPagingItemReader<LikeCount> {
 
     private final Class<T> targetType;
     private final RedisTemplate<String, ViewCount> redisTemplate;
+    private List<String> allKeys;
+    private int totalProcessed = 0;
+    private int totalReset = 0;
 
     public LikeCountPagingItemReader(Class<T> targetType, RedisTemplate<String, ViewCount> redisTemplate) {
         this.targetType = targetType;
         this.redisTemplate = redisTemplate;
+        this.allKeys = new ArrayList<>();
+    }
+
+    @Override
+    protected void doOpen() throws Exception {
+        super.doOpen();
+        long startTime = System.currentTimeMillis();
+        this.allKeys = getKeys();
+        Collections.sort(this.allKeys);
+        long endTime = System.currentTimeMillis();
+        
+        log.info("LikeCountPagingItemReader opened - Type: {}, Total keys found: {}, Scan time: {}ms", 
+                targetType.getSimpleName(), allKeys.size(), endTime - startTime);
+    }
+
+    @Override
+    protected void doClose() throws Exception {
+        super.doClose();
+        log.info("LikeCountPagingItemReader closed - Type: {}, Total processed: {}, Total reset: {}", 
+                targetType.getSimpleName(), totalProcessed, totalReset);
+        this.allKeys.clear();
+        this.totalProcessed = 0;
+        this.totalReset = 0;
     }
 
     @Override
@@ -30,37 +58,47 @@ public class LikeCountPagingItemReader<T extends LikeCount> extends AbstractPagi
         } else {
             results.clear();
         }
-        List<LikeCount> viewCounts = redisTemplate.execute(new SessionCallback<>() {
+        
+        int start = getPage() * getPageSize();
+        int end = Math.min(allKeys.size(), (getPage() + 1) * getPageSize());
+        
+        if (start >= allKeys.size()) {
+            return;
+        }
+        
+        List<String> pageKeys = allKeys.subList(start, end);
+        
+        List<LikeCount> likeCounts = redisTemplate.execute(new SessionCallback<>() {
             @Override
             public List<LikeCount> execute(RedisOperations operations) throws DataAccessException {
-                List<String> keys = getKeys();
                 List<LikeCount> items = new ArrayList<>();
                 Constructor<T> constructor = getConstructor();
-
-                int start = (getPage() * getPageSize());
-                int end = (keys.size() < (getPage() + 1) * getPageSize() ? keys.size() : (getPage() + 1) * getPageSize());
-
-                List<String> pagingKeys = new ArrayList<>(keys).subList(start,
-                        end);
-                for (String key : pagingKeys) {
+                
+                for (String key : pageKeys) {
                     try {
-                        items.add(constructor.newInstance(
-                                Long.valueOf(key.split(":")[1]),
-                                (int) operations.opsForHash().get(key, "likeCount")
-                        ));
-                    } catch (InstantiationException e) {
-                        throw new RuntimeException(e);
-                    } catch (IllegalAccessException e) {
-                        throw new RuntimeException(e);
-                    } catch (InvocationTargetException e) {
-                        throw new RuntimeException(e);
+                        Object likeCountValue = operations.opsForHash().get(key, "likeCount");
+                        if (likeCountValue != null) {
+                            int currentLikeCount = Integer.parseInt(likeCountValue.toString());
+                            if (currentLikeCount > 0) {
+                                items.add(constructor.newInstance(
+                                        Long.valueOf(key.split(":")[1]),
+                                        currentLikeCount
+                                ));
+                                // 읽은 후 0으로 초기화
+                                operations.opsForHash().put(key, "likeCount", "0");
+                                totalProcessed++;
+                                totalReset++;
+                            }
+                        }
+                    } catch (Exception e) {
+                        throw new RuntimeException("Error processing key: " + key, e);
                     }
                 }
-                return new ArrayList<>(items);
+                return items;
             }
-
         });
-        results.addAll(viewCounts);
+        
+        results.addAll(likeCounts);
     }
 
     private @NotNull Constructor<T> getConstructor() {
@@ -74,24 +112,25 @@ public class LikeCountPagingItemReader<T extends LikeCount> extends AbstractPagi
     }
 
     private @NotNull List<String> getKeys() {
-        List<String> keys = null;
         try {
-            keys = scanKeys(
-                    targetType.getField("KEY_NAME") + ":*");
-        } catch (NoSuchFieldException e) {
-            throw new RuntimeException(e);
+            String keyName = (String) targetType.getField("KEY_NAME").get(null);
+            return scanKeys(keyName + ":*");
+        } catch (Exception e) {
+            throw new RuntimeException("Error getting key pattern for type: " + targetType, e);
         }
-        return keys;
     }
 
     private List<String> scanKeys(String pattern) {
-        List<String> keys = new ArrayList<>();
-        Cursor<byte[]> cursor = redisTemplate.getConnectionFactory().getConnection().scan(ScanOptions.scanOptions().
-                match(pattern).build());
-        while (cursor.hasNext()) {
-            keys.add(new String(cursor.next()));
-        }
-        Collections.sort(keys); // 순서를 보장하기 위해 정렬
-        return keys;
+        return redisTemplate.execute((RedisCallback<List<String>>) connection -> {
+            List<String> keys = new ArrayList<>();
+            try (Cursor<byte[]> cursor = connection.scan(ScanOptions.scanOptions().match(pattern).build())) {
+                while (cursor.hasNext()) {
+                    keys.add(new String(cursor.next()));
+                }
+            } catch (Exception e) {
+                throw new RuntimeException("Error scanning Redis keys with pattern: " + pattern, e);
+            }
+            return keys;
+        });
     }
 }
