@@ -293,12 +293,10 @@ public class SecurityConfig {
                 .securityMatcher("/api/v1/community/posts/**")
                 .authenticationProvider(commonUserAuthenticationProvider())
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers(HttpMethod.GET, "/api/v1/community/posts",
-                                "/api/v1/community/video-post",
-                                "/api/v1/community/posts/{id:[0-9]+}",
-                                "/api/v1/community/video-post/{id:[0-9]+}").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/community/posts", "/api/v1/community/posts/{id:[0-9]+}").permitAll()
                         .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value)
                 )
+                .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
@@ -306,7 +304,6 @@ public class SecurityConfig {
                         .authenticationEntryPoint(unAuthorizedEntryPoint())
                         .accessDeniedHandler(commonUserAccessDeniedHandler())
                 )
-                .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()));
         return http.build();

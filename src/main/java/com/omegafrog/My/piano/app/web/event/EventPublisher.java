@@ -36,4 +36,14 @@ public class EventPublisher {
         log.warn("Publishing compensation required event: {}", event.getSagaId());
         kafkaTemplate.send("compensation-topic", event.getPostId().toString(), event);
     }
+    
+    public void publishFileUploadCompleted(FileUploadCompletedEvent event) {
+        log.info("Publishing file upload completed event: {}", event.getEventId());
+        kafkaTemplate.send("file-upload-completed-topic", event.getUploadId(), event);
+    }
+    
+    public void publishFileUploadFailed(FileUploadFailedEvent event) {
+        log.warn("Publishing file upload failed event: {}", event.getEventId());
+        kafkaTemplate.send("file-upload-failed-topic", event.getUploadId(), event);
+    }
 }

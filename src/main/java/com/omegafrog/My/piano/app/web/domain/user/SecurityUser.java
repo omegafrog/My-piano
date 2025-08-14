@@ -1,137 +1,155 @@
 package com.omegafrog.My.piano.app.web.domain.user;
 
-import com.omegafrog.My.piano.app.web.domain.user.authorities.Authority;
-import com.omegafrog.My.piano.app.web.domain.user.authorities.Role;
-import com.omegafrog.My.piano.app.web.dto.user.SecurityUserDto;
-import jakarta.persistence.*;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
-
-import javax.annotation.Nullable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import javax.annotation.Nullable;
+
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.omegafrog.My.piano.app.web.domain.user.authorities.Authority;
+import com.omegafrog.My.piano.app.web.domain.user.authorities.Role;
+import com.omegafrog.My.piano.app.web.dto.user.SecurityUserDto;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Transient;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 @Entity(name = "security_user")
 @NoArgsConstructor
 @Getter
+@Setter(AccessLevel.PRIVATE)
 public class SecurityUser implements UserDetails {
 
-    @Transient
-    private Long passwordExpirationPeriod = 90L;
+	@Transient
+	private Long passwordExpirationPeriod = 90L;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Getter
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Getter
+	private Long id;
 
-    @Column(unique = true)
-    private String username;
-    private String password;
-    private Role role;
-    private LocalDateTime createdAt;
-    private LocalDateTime credentialChangedAt;
-    private boolean locked;
+	@Column(unique = true)
+	private String username;
+	private String password;
+	private Role role;
+	private LocalDateTime createdAt;
+	private LocalDateTime credentialChangedAt;
+	private boolean locked;
 
-    @OneToOne(cascade = {CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REMOVE})
-    @JoinColumn(name = "USER_ID")
-    @Getter
-    private User user;
+	@JsonBackReference(value = "user-securityUser")
+	@OneToOne(cascade = {CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REMOVE})
+	@JoinColumn(name = "USER_ID")
+	@Getter
+	private User user;
 
-    @Builder
-    public SecurityUser(String username, String password, @Nullable User user, Role role) {
-        this.username = username;
-        this.password = password;
-        this.user = user;
-        this.role = role;
-        this.createdAt = LocalDateTime.now();
-        this.credentialChangedAt = LocalDateTime.now();
-        this.locked = false;
-    }
+	@Builder
+	public SecurityUser(String username, String password, @Nullable User user, Role role) {
+		this.username = username;
+		this.password = password;
+		this.user = user;
+		this.role = role;
+		this.createdAt = LocalDateTime.now();
+		this.credentialChangedAt = LocalDateTime.now();
+		this.locked = false;
+	}
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+	@Override
+	public boolean equals(Object o) {
+		if (this == o)
+			return true;
+		if (o == null || getClass() != o.getClass())
+			return false;
 
-        SecurityUser that = (SecurityUser) o;
+		SecurityUser that = (SecurityUser)o;
 
-        return id.equals(that.id);
-    }
+		return id.equals(that.id);
+	}
 
-    @Override
-    public int hashCode() {
-        return id.hashCode();
-    }
+	@Override
+	public int hashCode() {
+		return id.hashCode();
+	}
 
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        List<GrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new Authority(role.value));
+	@Override
+	public Collection<? extends GrantedAuthority> getAuthorities() {
+		List<GrantedAuthority> authorities = new ArrayList<>();
+		authorities.add(new Authority(role.value));
 
-        return authorities;
-    }
+		return authorities;
+	}
 
-    @Override
-    public String getPassword() {
-        return password;
-    }
+	@Override
+	public String getPassword() {
+		return password;
+	}
 
-    @Override
-    public String getUsername() {
-        return username;
-    }
+	@Override
+	public String getUsername() {
+		return username;
+	}
 
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
+	@Override
+	public boolean isAccountNonExpired() {
+		return true;
+	}
 
-    @Override
-    public boolean isAccountNonLocked() {
-        return !locked;
-    }
+	@Override
+	public boolean isAccountNonLocked() {
+		return !locked;
+	}
 
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return credentialChangedAt.plusMonths(passwordExpirationPeriod)
-                .isAfter(LocalDateTime.now());
-    }
+	@Override
+	public boolean isCredentialsNonExpired() {
+		return credentialChangedAt.plusMonths(passwordExpirationPeriod)
+			.isAfter(LocalDateTime.now());
+	}
 
-    @Override
-    public boolean isEnabled() {
-        return isAccountNonExpired() && isCredentialsNonExpired() && isAccountNonLocked();
-    }
+	@Override
+	public boolean isEnabled() {
+		return isAccountNonExpired() && isCredentialsNonExpired() && isAccountNonLocked();
+	}
 
-    public SecurityUserDto toDto() {
-        return SecurityUserDto.builder()
-                .createdAt(createdAt)
-                .credentialChangedAt(credentialChangedAt)
-                .locked(locked)
-                .id(id)
-                .password(password)
-                .username(username)
-                .role(role)
-                .build();
-    }
+	public SecurityUserDto toDto() {
+		return SecurityUserDto.builder()
+			.createdAt(createdAt)
+			.credentialChangedAt(credentialChangedAt)
+			.locked(locked)
+			.id(id)
+			.password(password)
+			.username(username)
+			.role(role)
+			.build();
+	}
 
-    public void disable() {
-        this.locked = true;
-    }
+	public void disable() {
+		this.locked = true;
+	}
 
-    public void enable() {
-        this.locked = false;
-    }
+	public void enable() {
+		this.locked = false;
+	}
 
-    public void changePassword(String encodedPassword) {
-        this.password = encodedPassword;
-    }
+	public void changePassword(String encodedPassword) {
+		this.password = encodedPassword;
+	}
 
-    public void changeRole(Role role) {
-        this.role = role;
-    }
+	public void changeRole(Role role) {
+		this.role = role;
+	}
 }

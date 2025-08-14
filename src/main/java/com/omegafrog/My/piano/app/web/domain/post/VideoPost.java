@@ -1,61 +1,64 @@
 package com.omegafrog.My.piano.app.web.domain.post;
 
 import com.omegafrog.My.piano.app.web.domain.article.Article;
-import com.omegafrog.My.piano.app.web.dto.post.UpdateVideoPostDto;
 import com.omegafrog.My.piano.app.web.domain.user.User;
+import com.omegafrog.My.piano.app.web.dto.post.UpdateVideoPostDto;
 import com.omegafrog.My.piano.app.web.dto.videoPost.VideoPostDto;
+
+import jakarta.persistence.Entity;
 import jakarta.validation.constraints.NotEmpty;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import jakarta.persistence.*;
+import lombok.Setter;
 
 @Entity
 @NoArgsConstructor
 @Getter
+@Setter(AccessLevel.PRIVATE)
 public class VideoPost extends Article {
 
-    @NotEmpty
-    private String videoUrl;
+	@NotEmpty
+	private String videoUrl;
 
-    @Override
-    public void setAuthor(User author){
-        this.author = author;
-        if(!author.getUploadedVideoPosts().contains(this)){
-            author.addUploadedVideoPost(this);
-        }
-    }
+	@Override
+	public void setAuthor(User author) {
+		this.author = author;
+		if (!author.getUploadedVideoPosts().contains(this)) {
+			author.addUploadedVideoPost(this);
+		}
+	}
 
-    @Builder
-    public VideoPost(User author, String title, String content, String videoUrl) {
-        this.author=author;
-        this.title=title;
-        this.content = content;
-        this.videoUrl = videoUrl;
-    }
+	@Builder
+	public VideoPost(User author, String title, String content, String videoUrl) {
+		this.author = author;
+		this.title = title;
+		this.content = content;
+		this.videoUrl = videoUrl;
+	}
 
-    /**
-     * VideoPost의 내용을 수정한다.
-     * @param updateVideoPostDto update할 내용이 담긴 DTO
-     */
-    public void update(UpdateVideoPostDto updateVideoPostDto){
-         this.viewCount=updateVideoPostDto.getViewCount();
-         this.title= updateVideoPostDto.getTitle();
-         this.content= updateVideoPostDto.getContent();
-         this.videoUrl= updateVideoPostDto.getVideoUrl();
-    }
+	/**
+	 * VideoPost의 내용을 수정한다.
+	 * @param updateVideoPostDto update할 내용이 담긴 DTO
+	 */
+	public void update(UpdateVideoPostDto updateVideoPostDto) {
+		this.viewCount = updateVideoPostDto.getViewCount();
+		this.title = updateVideoPostDto.getTitle();
+		this.content = updateVideoPostDto.getContent();
+		this.videoUrl = updateVideoPostDto.getVideoUrl();
+	}
 
-    public VideoPostDto toDto(){
-        return VideoPostDto.builder()
-                .id(id)
-                .title(title)
-                .content(content)
-                .author(author.getUserProfileDto())
-                .likeCount(likeCount)
-                .viewCount(viewCount)
-                .createdAt(createdAt)
-                .videoUrl(videoUrl)
-                .build();
-    }
+	public VideoPostDto toDto() {
+		return VideoPostDto.builder()
+			.id(id)
+			.title(title)
+			.content(content)
+			.author(author.getUserProfileDto())
+			.likeCount(likeCount)
+			.viewCount(viewCount)
+			.createdAt(createdAt)
+			.videoUrl(videoUrl)
+			.build();
+	}
 }
