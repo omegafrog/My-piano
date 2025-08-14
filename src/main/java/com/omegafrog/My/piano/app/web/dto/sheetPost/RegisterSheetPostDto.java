@@ -21,13 +21,16 @@ public class RegisterSheetPostDto {
     private Double discountRate;
     @NotNull
     private RegisterSheetDto sheet;
+    @NotEmpty
+    private String uploadId;
 
     @Builder
-    public RegisterSheetPostDto(String title, String content, int price, Double discountRate, RegisterSheetDto sheetDto) {
+    public RegisterSheetPostDto(String title, String content, int price, Double discountRate, RegisterSheetDto sheetDto, String uploadId) {
         this.title = title;
         this.content = content;
         this.price = price;
         this.discountRate = discountRate;
         this.sheet = sheetDto;
+        this.uploadId = uploadId;
     }
 }

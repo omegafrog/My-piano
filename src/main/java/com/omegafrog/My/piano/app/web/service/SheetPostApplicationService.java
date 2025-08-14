@@ -1,5 +1,20 @@
 package com.omegafrog.My.piano.app.web.service;
 
+import java.io.IOException;
+import java.net.URL;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.support.PageableExecutionUtils;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.omegafrog.My.piano.app.external.elasticsearch.ElasticSearchInstance;
 import com.omegafrog.My.piano.app.external.elasticsearch.SheetPostIndexRepository;
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
@@ -16,224 +31,292 @@ import com.omegafrog.My.piano.app.web.dto.sheetPost.RegisterSheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostListDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.UpdateSheetPostDto;
-import com.omegafrog.My.piano.app.web.exception.WrongFileExtensionException;
-import io.awspring.cloud.s3.ObjectMetadata;
+
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.pdfbox.Loader;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.support.PageableExecutionUtils;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.net.URL;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 @Slf4j
 public class SheetPostApplicationService {
-    private final SheetPostIndexRepository sheetPostIndexRepository;
+	private final SheetPostIndexRepository sheetPostIndexRepository;
 
-    private final SheetPostRepository sheetPostRepository;
-    private final UserRepository userRepository;
+	private final SheetPostRepository sheetPostRepository;
+	private final UserRepository userRepository;
 
+	private final ElasticSearchInstance elasticSearchInstance;
+	private final FileStorageExecutor uploadFileExecutor;
+	private final MapperUtil mapperUtil;
+	private final SheetPostViewCountRepository sheetPostViewCountRepository;
+	private final AuthenticationUtil authenticationUtil;
+	private final FileUploadService fileUploadService;
+	@Autowired
+	@Qualifier("SheetPostLikeCountRepository")
+	private LikeCountRepository likeCountRepository;
 
-    private final ElasticSearchInstance elasticSearchInstance;
-    private final FileStorageExecutor uploadFileExecutor;
-    private final MapperUtil mapperUtil;
-    private final SheetPostViewCountRepository sheetPostViewCountRepository;
-    private final AuthenticationUtil authenticationUtil;
-    @Autowired
-    @Qualifier("SheetPostLikeCountRepository")
-    private LikeCountRepository likeCountRepository;
+	public SheetPostDto getSheetPost(Long id) {
+		SheetPost sheetPost = sheetPostRepository.findById(id)
+			.orElseThrow(() -> new EntityNotFoundException("Cannot find SheetPost entity : " + id));
+		int incrementedViewCount = sheetPostViewCountRepository.incrementViewCount(sheetPost);
+		int likeCount = likeCountRepository.findById(sheetPost.getId()).getLikeCount();
+		SheetPostDto dto = sheetPost.toDto();
+		dto.setLikeCount(likeCount);
+		dto.setViewCount(incrementedViewCount);
+		return dto;
+	}
 
+	public SheetPostDto writeSheetPost(RegisterSheetPostDto dto) throws IOException {
+		User loggedInUser = authenticationUtil.getLoggedInUser();
 
-    public SheetPostDto getSheetPost(Long id) {
-        SheetPost sheetPost = sheetPostRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find SheetPost entity : " + id));
-        int incrementedViewCount = sheetPostViewCountRepository.incrementViewCount(sheetPost);
-        int likeCount = likeCountRepository.findById(sheetPost.getId()).getLikeCount();
-        SheetPostDto dto = sheetPost.toDto();
-        dto.setLikeCount(likeCount);
-        dto.setViewCount(incrementedViewCount);
-        return dto;
-    }
+		// uploadId 검증
+		String uploadId = dto.getUploadId();
+		if (uploadId == null || uploadId.trim().isEmpty()) {
+			throw new IllegalArgumentException("uploadId는 필수입니다.");
+		}
 
-    public SheetPostDto writeSheetPost(
-            RegisterSheetPostDto dto,
-            List<MultipartFile> files) throws IOException {
-        User loggedInUser = authenticationUtil.getLoggedInUser();
-        try {
-            MultipartFile file = files.get(0);
+		// Redis Hash에서 업로드 데이터 조회
+		Map<String, String> uploadData = fileUploadService.getUploadData(uploadId);
+		if (uploadData == null) {
+			throw new IllegalArgumentException("유효하지 않은 uploadId입니다: " + uploadId);
+		}
 
-            SheetPostTempFile tempFile = getSheetPostTempFile(file);
+		try {
+			// Redis에서 originalFileName 조회
+			String originalFileName = uploadData.get("originalFileName");
 
-            uploadFileExecutor.uploadSheet(tempFile.temp(), file.getOriginalFilename(), tempFile.metadata);
-            uploadFileExecutor.uploadThumbnail(
-                    tempFile.document, tempFile.filename,
-                    new ObjectMetadata.Builder().contentType("jpg").build());
+			// Sheet 엔티티 생성 (초기에는 URL이 없음, originalFileName 설정)
+			Sheet sheet = dto.getSheet().createEntity(loggedInUser, 0); // pageNum은 나중에 업데이트
 
-            Sheet sheet = dto.getSheet().createEntity(loggedInUser, tempFile.pageNum);
+			// Sheet 엔티티에 원본 파일명 설정
+			if (originalFileName != null && !originalFileName.isEmpty()) {
+				sheet = Sheet.builder()
+					.title(sheet.getTitle())
+					.pageNum(sheet.getPageNum())
+					.difficulty(sheet.getDifficulty())
+					.instrument(sheet.getInstrument())
+					.genres(sheet.getGenres())
+					.isSolo(sheet.isSolo())
+					.lyrics(sheet.isLyrics())
+					.sheetUrl(sheet.getSheetUrl())
+					.thumbnailUrl(sheet.getThumbnailUrl())
+					.originalFileName(originalFileName)
+					.user(loggedInUser)
+					.build();
+			}
 
-            SheetPost sheetPost = SheetPost.builder()
-                    .title(dto.getTitle())
-                    .sheet(sheet)
-                    .artist(loggedInUser)
-                    .price(dto.getPrice())
-                    .content(dto.getContent())
-                    .build();
+			SheetPost sheetPost = SheetPost.builder()
+				.title(dto.getTitle())
+				.sheet(sheet)
+				.artist(loggedInUser)
+				.price(dto.getPrice())
+				.content(dto.getContent())
+				.build();
 
-            sheet.setSheetPost(sheetPost);
-            SheetPost saved = sheetPostRepository.save(sheetPost);
-            elasticSearchInstance.invertIndexingSheetPost(saved);
-            return saved.toDto();
-        } catch (IOException e) {
-            log.error(e.getLocalizedMessage());
-            throw e;
-        }
-    }
+			sheet.setSheetPost(sheetPost);
+			SheetPost saved = sheetPostRepository.save(sheetPost);
 
-    public SheetPostDto update(Long id, String dto, MultipartFile file) throws IOException {
-        User loggedInUser = authenticationUtil.getLoggedInUser();
-        SheetPost sheetPost = sheetPostRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
-        UpdateSheetPostDto updateDto = mapperUtil.parseUpdateSheetPostJson(dto);
-        log.debug("updateDto : {}", updateDto);
-        if (sheetPost.getAuthor().equals(loggedInUser)) {
-            if (file.getBytes().length > 0) {
-                SheetPostTempFile tmp = getSheetPostTempFile(file);
+			// Redis에 uploadId:sheetPostId 매핑 저장
+			fileUploadService.updateUploadMapping(uploadId, saved.getId());
 
-                // 기존 파일 삭제 후 다시 업로드
-                uploadFileExecutor.removeSheetPost(sheetPost);
-                uploadFileExecutor.uploadSheet(tmp.temp(), file.getOriginalFilename(), tmp.metadata());
-                uploadFileExecutor.uploadThumbnail(
-                        tmp.document(), tmp.filename(),
-                        new ObjectMetadata.Builder().contentType("jpg").build());
-                updateDto.getSheet().setPageNum(tmp.pageNum());
-            }
-            return sheetPost.update(updateDto).toDto();
-        } else throw new AccessDeniedException("Cannot update other user's sheet post." + id);
-    }
+			// 업로드가 이미 완료된 경우 즉시 URL 업데이트
+			if (fileUploadService.isUploadCompleted(uploadId)) {
+				String sheetUrl = uploadData.get("sheetUrl");
+				String thumbnailUrl = uploadData.get("thumbnailUrl");
+				String pageNumStr = uploadData.get("pageNum");
 
-    private static SheetPostTempFile getSheetPostTempFile(MultipartFile file) throws IOException {
-        String filename = file.getOriginalFilename();
-        String contentType = filename.split("\\.")[1];
-        if (!contentType.equals("pdf"))
-            throw new WrongFileExtensionException("Cannot save file extension. " + filename);
-        ObjectMetadata metadata = ObjectMetadata.builder().contentType(contentType).build();
+				if (sheetUrl != null && !sheetUrl.isEmpty() &&
+					thumbnailUrl != null && !thumbnailUrl.isEmpty() &&
+					pageNumStr != null && !pageNumStr.isEmpty()) {
 
-        File temp = File.createTempFile("temp", ".data");
-        FileOutputStream dest = new FileOutputStream(temp);
-        dest.write(file.getBytes());
-        dest.close();
+					int pageNum = Integer.parseInt(pageNumStr);
+					sheet.updateUrls(sheetUrl, thumbnailUrl);
+					sheet.updatePageNum(pageNum);
 
-        PDDocument document = Loader.loadPDF(temp);
-        int pageNum = document.getNumberOfPages();
-        temp.deleteOnExit();
-        return new SheetPostTempFile(filename, metadata, temp, document, pageNum);
-    }
+					// 변경사항 저장
+					sheetPostRepository.save(saved);
 
-    public String getSheetUrl(Long id) {
-        User loggedInUser = authenticationUtil.getLoggedInUser();
-        SheetPost sheetPost = sheetPostRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find Sheetpost entity."));
-        User user = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity."));
-        if (!user.isPurchased(sheetPost))
-            throw new BadCredentialsException("구매하지 않은 sheet post 를 조회할 수 없습니다.");
-        URL fileUrl = uploadFileExecutor.createFileUrl(sheetPost.getSheet().getSheetUrl());
-        return fileUrl.toString();
-    }
+					log.info(
+						"Immediately updated URLs for SheetPost: uploadId={}, sheetPostId={}, sheetUrl={}, thumbnailUrl={}, pageNum={}",
+						uploadId, saved.getId(), sheetUrl, thumbnailUrl, pageNum);
+				}
+			}
 
-    private record SheetPostTempFile(String filename, ObjectMetadata metadata, File temp, PDDocument document,
-                                     int pageNum) {
-    }
+			elasticSearchInstance.invertIndexingSheetPost(saved);
 
-    public void delete(Long id) {
-        User loggedInUser = authenticationUtil.getLoggedInUser();
-        SheetPost sheetPost = sheetPostRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
-        uploadFileExecutor.removeSheetPost(sheetPost);
-        sheetPostIndexRepository.deleteById(id);
-        if (sheetPost.getAuthor().equals(loggedInUser))
-            sheetPostRepository.deleteById(sheetPost.getId());
-        else throw new AccessDeniedException("Cannot delete other user's sheet post entity : " + id);
-    }
+			log.info("SheetPost created with uploadId: {}, sheetPostId: {}", uploadId, saved.getId());
+			return saved.toDto();
 
-    public void likePost(Long id) {
-        User loggedInUser = authenticationUtil.getLoggedInUser();
-        SheetPost sheetPost = sheetPostRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity:" + id));
-        loggedInUser.likeSheetPost(sheetPost);
-        likeCountRepository.incrementLikeCount(sheetPost);
-    }
+		} catch (Exception e) {
+			log.error("Failed to create SheetPost with uploadId: {}", uploadId, e);
+			throw e;
+		}
+	}
 
-    public boolean isLikedSheetPost(Long id) {
-        User loggedInUser = authenticationUtil.getLoggedInUser();
-        SheetPost targetSheetPost = sheetPostRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(("Cannot find SheetPost entity:" + id)));
-        return loggedInUser.getLikedSheetPosts()
-                .stream().anyMatch(likedSheetPost -> likedSheetPost.getSheetPost().equals(targetSheetPost));
-    }
+	public SheetPostDto update(Long id, UpdateSheetPostDto dto) throws IOException {
+		User loggedInUser = authenticationUtil.getLoggedInUser();
+		SheetPost sheetPost = sheetPostRepository.findById(id)
+			.orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
+		log.debug("updateDto : {}", dto);
 
-    public void dislikeSheetPost(Long id) {
-        User loggedInUser = authenticationUtil.getLoggedInUser();
-        SheetPost sheetPost = sheetPostRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
-        boolean removed = loggedInUser.getLikedSheetPosts().removeIf(item -> item.getSheetPost().getId().equals(id));
-        if (!removed) throw new EntityNotFoundException("좋아요를 누르지 않았습니다." + id);
-        likeCountRepository.decrementLikeCount(sheetPost);
-    }
+		if (!sheetPost.getAuthor().equals(loggedInUser)) {
+			throw new AccessDeniedException("Cannot update other user's sheet post." + id);
+		}
 
-    public void scrapSheetPost(Long id) {
-        User loggedInUser = authenticationUtil.getLoggedInUser();
-        SheetPost sheetPost = sheetPostRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity:" + id));
-        User user = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
-        user.scrapSheetPost(sheetPost);
-    }
+		// uploadId가 있다면 새로운 파일이 업로드된 것으로 처리
+		if (dto.getUploadId() != null && !dto.getUploadId().trim().isEmpty()) {
+			String uploadId = dto.getUploadId();
 
-    public boolean isScrappedSheetPost(Long id) {
-        User loggedInUser = authenticationUtil.getLoggedInUser();
-        SheetPost targetSheetPost = sheetPostRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
-        User user = userRepository.findById(loggedInUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
-        return user.getScrappedSheetPosts().stream().anyMatch(item -> item.getSheetPost().equals(targetSheetPost));
-    }
+			// Redis Hash에서 업로드 데이터 조회
+			Map<String, String> uploadData = fileUploadService.getUploadData(uploadId);
+			if (uploadData == null) {
+				throw new IllegalArgumentException("유효하지 않은 uploadId입니다: " + uploadId);
+			}
 
-    public void unScrapSheetPost(Long id) {
-        User loggedInUser = authenticationUtil.getLoggedInUser();
-        SheetPost sheetPost = sheetPostRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
+			// 기존 파일 삭제
+			uploadFileExecutor.removeSheetPost(sheetPost);
 
-        loggedInUser.unScrapSheetPost(sheetPost);
-    }
+			// Redis에 uploadId:sheetPostId 매핑 저장 (기존 SheetPost에 새 파일 연결)
+			fileUploadService.updateUploadMapping(uploadId, sheetPost.getId());
 
-    public Page<SheetPostListDto> getSheetPosts(
-            String searchSentence,
-            List<String> instrument,
-            List<String> difficulty,
-            List<String> genre,
-            Pageable pageable) throws IOException {
-        Page<Long> sheetPostIds = elasticSearchInstance.searchSheetPost(
-                searchSentence, instrument, difficulty, genre, pageable);
-        List<SheetPostListDto> res = sheetPostRepository.findByIds(sheetPostIds.getContent(), pageable);
-        return PageableExecutionUtils.getPage(res, pageable, sheetPostIds::getTotalElements);
-    }
+			// 업로드가 이미 완료된 경우 즉시 URL 업데이트
+			if (fileUploadService.isUploadCompleted(uploadId)) {
+				String sheetUrl = uploadData.get("sheetUrl");
+				String thumbnailUrl = uploadData.get("thumbnailUrl");
+				String pageNumStr = uploadData.get("pageNum");
+				String originalFileName = uploadData.get("originalFileName");
+
+				if (sheetUrl != null && !sheetUrl.isEmpty() &&
+					thumbnailUrl != null && !thumbnailUrl.isEmpty() &&
+					pageNumStr != null && !pageNumStr.isEmpty()) {
+
+					Sheet sheet = sheetPost.getSheet();
+					int pageNum = Integer.parseInt(pageNumStr);
+
+					// Sheet URL, 썸네일, 페이지 수 업데이트
+					sheet.updateUrls(sheetUrl, thumbnailUrl);
+					sheet.updatePageNum(pageNum);
+
+					// originalFileName 업데이트
+					if (originalFileName != null && !originalFileName.isEmpty()) {
+						sheet.updateOriginalFileName(originalFileName);
+					}
+
+					// updateDto의 sheet에도 pageNum 설정 (기존 로직 호환성)
+					if (dto.getSheet() != null) {
+						dto.getSheet().setPageNum(pageNum);
+					}
+					sheetPost.updateSheet(sheet);
+
+					log.info(
+						"Immediately updated URLs for existing SheetPost: uploadId={}, sheetPostId={}, sheetUrl={}, thumbnailUrl={}, pageNum={}",
+						uploadId, sheetPost.getId(), sheetPost.getSheet().getSheetUrl(),
+						sheetPost.getSheet().getThumbnailUrl(), pageNum);
+				}
+			}
+		}
+
+		// SheetPost 업데이트 (기본 정보: title, content, price 등)
+		SheetPost updated = sheetPost.update(dto);
+		elasticSearchInstance.invertIndexingSheetPost(updated);
+		return updated.toDto();
+	}
+
+	public String getSheetUrl(Long id) {
+		User loggedInUser = authenticationUtil.getLoggedInUser();
+		SheetPost sheetPost = sheetPostRepository.findById(id)
+			.orElseThrow(() -> new EntityNotFoundException("Cannot find Sheetpost entity."));
+		User user = userRepository.findById(loggedInUser.getId())
+			.orElseThrow(() -> new EntityNotFoundException("Cannot find User entity."));
+		if (!user.isPurchased(sheetPost))
+			throw new BadCredentialsException("구매하지 않은 sheet post 를 조회할 수 없습니다.");
+		URL fileUrl = uploadFileExecutor.createFileUrl(sheetPost.getSheet().getSheetUrl());
+		return fileUrl.toString();
+	}
+
+	public void delete(Long id) {
+		User loggedInUser = authenticationUtil.getLoggedInUser();
+		SheetPost sheetPost = sheetPostRepository.findById(id)
+			.orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
+		uploadFileExecutor.removeSheetPost(sheetPost);
+		sheetPostIndexRepository.deleteById(id);
+		if (sheetPost.getAuthor().equals(loggedInUser))
+			sheetPostRepository.deleteById(sheetPost.getId());
+		else
+			throw new AccessDeniedException("Cannot delete other user's sheet post entity : " + id);
+	}
+
+	public void likePost(Long id) {
+		User loggedInUser = authenticationUtil.getLoggedInUser();
+		SheetPost sheetPost = sheetPostRepository.findById(id)
+			.orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity:" + id));
+		loggedInUser.likeSheetPost(sheetPost);
+		likeCountRepository.incrementLikeCount(sheetPost);
+	}
+
+	public boolean isLikedSheetPost(Long id) {
+		User loggedInUser = authenticationUtil.getLoggedInUser();
+		SheetPost targetSheetPost = sheetPostRepository.findById(id)
+			.orElseThrow(() -> new EntityNotFoundException(("Cannot find SheetPost entity:" + id)));
+		return loggedInUser.getLikedSheetPosts()
+			.stream().anyMatch(likedSheetPost -> likedSheetPost.getSheetPost().equals(targetSheetPost));
+	}
+
+	public void dislikeSheetPost(Long id) {
+		User loggedInUser = authenticationUtil.getLoggedInUser();
+		SheetPost sheetPost = sheetPostRepository.findById(id)
+			.orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
+		boolean removed = loggedInUser.getLikedSheetPosts().removeIf(item -> item.getSheetPost().getId().equals(id));
+		if (!removed)
+			throw new EntityNotFoundException("좋아요를 누르지 않았습니다." + id);
+		likeCountRepository.decrementLikeCount(sheetPost);
+	}
+
+	public void scrapSheetPost(Long id) {
+		User loggedInUser = authenticationUtil.getLoggedInUser();
+		SheetPost sheetPost = sheetPostRepository.findById(id)
+			.orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity:" + id));
+		User user = userRepository.findById(loggedInUser.getId())
+			.orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
+		user.scrapSheetPost(sheetPost);
+	}
+
+	public boolean isScrappedSheetPost(Long id) {
+		User loggedInUser = authenticationUtil.getLoggedInUser();
+		SheetPost targetSheetPost = sheetPostRepository.findById(id)
+			.orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
+		User user = userRepository.findById(loggedInUser.getId())
+			.orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
+		return user.getScrappedSheetPosts().stream().anyMatch(item -> item.getSheetPost().equals(targetSheetPost));
+	}
+
+	public void unScrapSheetPost(Long id) {
+		User loggedInUser = authenticationUtil.getLoggedInUser();
+		SheetPost sheetPost = sheetPostRepository.findById(id)
+			.orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
+
+		loggedInUser.unScrapSheetPost(sheetPost);
+	}
+
+	public Page<SheetPostListDto> getSheetPosts(
+		String searchSentence,
+		List<String> instrument,
+		List<String> difficulty,
+		List<String> genre,
+		Pageable pageable) throws IOException {
+		Page<Long> sheetPostIds = elasticSearchInstance.searchSheetPost(
+			searchSentence, instrument, difficulty, genre, pageable);
+		List<SheetPostListDto> res = sheetPostRepository.findByIds(sheetPostIds.getContent(), pageable);
+		Map<Long, Integer> viewCountsBySheetPostIds = elasticSearchInstance.getViewCountsBySheetPostIds(
+			sheetPostIds.getContent());
+		List<SheetPostListDto> sheetPostLists = res.stream().map(sheetPostListDto -> {
+				sheetPostListDto.updateViewCount(
+					viewCountsBySheetPostIds.get(sheetPostListDto.getId()));
+				return sheetPostListDto;
+			}
+		).toList();
+		return PageableExecutionUtils.getPage(sheetPostLists, pageable, sheetPostIds::getTotalElements);
+	}
 
 }
