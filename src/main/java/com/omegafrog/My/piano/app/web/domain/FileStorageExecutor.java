@@ -74,4 +74,20 @@ public class FileStorageExecutor {
         }
         return null;
     }
+
+    public void uploadSheetAsync(File file, String filename, ObjectMetadata metadata, String uploadId) throws IOException {
+        if ("dev".equals(activeProfile)) {
+            localFileStorageExecutor.uploadSheetAsync(file, filename, uploadId);
+        } else if (s3UploadFileExecutor != null) {
+            s3UploadFileExecutor.uploadSheetAsync(file, filename, metadata, uploadId);
+        }
+    }
+
+    public void uploadThumbnailAsync(PDDocument document, String filename, ObjectMetadata metadata, String uploadId) throws IOException {
+        if ("dev".equals(activeProfile)) {
+            localFileStorageExecutor.uploadThumbnailAsync(document, filename, uploadId);
+        } else if (s3UploadFileExecutor != null) {
+            s3UploadFileExecutor.uploadThumbnailAsync(document, filename, metadata, uploadId);
+        }
+    }
 }
