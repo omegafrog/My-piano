@@ -2,8 +2,6 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/mypianotest?characterEncoding=UTF-8&serverTimezone=UTC
-    username: jiwoo
-    password: password
   jpa:
     properties:
       hibernate:
@@ -19,6 +17,12 @@ spring:
         static: ap-northeast-2
       bucket:
         name: mypianobucket
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            redirect-uri: http://localhost:8080/api/v1/oauth2/google/callback
   servlet:
     multipart:
       max-file-size: 20MB
@@ -52,12 +56,24 @@ async:
   queue:
     capacity: 20000
 
+security:
+  password:
+    expire:
+      period: 90L
+  jwt:
+    accessToken:
+      period: 6000000
+    refreshToken:
+      period: 1209600
 
 firebase:
   app:
     admin:
       json: src/main/resources/firebase-admin.json
 
+payment:
+  toss:
+    api-url: https://api.tosspayments.com/v1/payments
 
 server:
   tomcat:

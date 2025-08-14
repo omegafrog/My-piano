@@ -38,6 +38,7 @@ out/
 
 /src/main/resources/application**.properties
 /src/main/resources/**
+/src/test/resources/application-test-secret.yml
 *.puml
 *.xml
 
