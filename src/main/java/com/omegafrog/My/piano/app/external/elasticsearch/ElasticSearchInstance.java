@@ -25,7 +25,9 @@ import java.io.IOException;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 @Slf4j
@@ -167,5 +169,39 @@ public class ElasticSearchInstance {
         // Implementation would delete the PostIndex
         // For now, we'll simulate the operation
         log.info("Post index deleted successfully for post: {}", postId);
+    }
+
+    public Map<Long, Integer> getViewCountsBySheetPostIds(List<Long> sheetPostIds) throws IOException {
+        Map<Long, Integer> viewCountMap = new HashMap<>();
+        
+        if (sheetPostIds == null || sheetPostIds.isEmpty()) {
+            return viewCountMap;
+        }
+
+        List<FieldValue> idValues = sheetPostIds.stream()
+                .map(FieldValue::of)
+                .toList();
+
+        Query idsQuery = QueryBuilders.terms(t -> t
+                .field("id")
+                .terms(terms -> terms.value(idValues)));
+
+        SearchResponse<SheetPostIndex> response = esClient.search(s -> s
+                .index(SHEET_POST_INDEX_NAME)
+                .query(idsQuery)
+                .size(sheetPostIds.size())
+                .source(sourceConfig -> sourceConfig
+                        .filter(f -> f.includes("id", "viewCount"))), 
+                SheetPostIndex.class);
+
+        List<Hit<SheetPostIndex>> hits = response.hits().hits();
+        for (Hit<SheetPostIndex> hit : hits) {
+            SheetPostIndex sheetPostIndex = hit.source();
+            if (sheetPostIndex != null) {
+                viewCountMap.put(sheetPostIndex.getId(), sheetPostIndex.getViewCount());
+            }
+        }
+
+        return viewCountMap;
     }
 }
