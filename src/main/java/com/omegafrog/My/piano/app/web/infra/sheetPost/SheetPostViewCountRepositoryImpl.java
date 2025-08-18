@@ -8,6 +8,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 @Repository
 @RequiredArgsConstructor
 public class SheetPostViewCountRepositoryImpl implements SheetPostViewCountRepository {
@@ -20,8 +24,9 @@ public class SheetPostViewCountRepositoryImpl implements SheetPostViewCountRepos
         if (!exist(sheetPost.getId())) {
             SheetPostViewCount saved = save(SheetPostViewCount.builder()
                     .id(sheetPost.getId())
-                    .viewCount(sheetPost.getViewCount() + 1).build());
-            return saved.getViewCount();
+                    .viewCount(sheetPost.getViewCount()).build());
+            return redisTemplate.opsForHash().increment(SheetPostViewCount.KEY_NAME + ":" + sheetPost.getId(),
+                    "viewCount", 1L).intValue();
         }
         return redisTemplate.opsForHash().increment(SheetPostViewCount.KEY_NAME + ":" + sheetPost.getId(),
                 "viewCount", 1L).intValue();
@@ -43,5 +48,28 @@ public class SheetPostViewCountRepositoryImpl implements SheetPostViewCountRepos
         redisTemplate.opsForHash().put(SheetPostViewCount.KEY_NAME + ":" + viewCount.getId(),
                 "viewCount", String.valueOf(viewCount.getViewCount()));
         return viewCount;
+    }
+
+    @Override
+    public Map<Long, Integer> getViewCountsByIds(List<Long> ids) {
+        Map<Long, Integer> viewCounts = new HashMap<>();
+        
+        for (Long id : ids) {
+            String key = SheetPostViewCount.KEY_NAME + ":" + id;
+            Object viewCountObj = redisTemplate.opsForHash().get(key, "viewCount");
+            
+            if (viewCountObj != null) {
+                try {
+                    int viewCount = Integer.parseInt(viewCountObj.toString());
+                    viewCounts.put(id, viewCount);
+                } catch (NumberFormatException e) {
+                    viewCounts.put(id, 0);
+                }
+            } else {
+                viewCounts.put(id, 0);
+            }
+        }
+        
+        return viewCounts;
     }
 }

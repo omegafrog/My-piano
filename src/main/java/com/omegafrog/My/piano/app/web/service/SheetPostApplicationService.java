@@ -308,7 +308,7 @@ public class SheetPostApplicationService {
 		Page<Long> sheetPostIds = elasticSearchInstance.searchSheetPost(
 			searchSentence, instrument, difficulty, genre, pageable);
 		List<SheetPostListDto> res = sheetPostRepository.findByIds(sheetPostIds.getContent(), pageable);
-		Map<Long, Integer> viewCountsBySheetPostIds = elasticSearchInstance.getViewCountsBySheetPostIds(
+		Map<Long, Integer> viewCountsBySheetPostIds = sheetPostViewCountRepository.getViewCountsByIds(
 			sheetPostIds.getContent());
 		List<SheetPostListDto> sheetPostLists = res.stream().map(sheetPostListDto -> {
 				sheetPostListDto.updateViewCount(

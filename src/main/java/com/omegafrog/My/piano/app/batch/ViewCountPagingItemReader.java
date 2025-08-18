@@ -19,7 +19,6 @@ public class ViewCountPagingItemReader<ViewCount> extends AbstractPagingItemRead
     private final RedisTemplate<String, ViewCount> redisTemplate;
     private List<String> allKeys;
     private int totalProcessed = 0;
-    private int totalReset = 0;
 
     public ViewCountPagingItemReader(Class<ViewCount> targetType, RedisTemplate<String, ViewCount> redisTemplate) {
         this.targetType = targetType;
@@ -42,11 +41,10 @@ public class ViewCountPagingItemReader<ViewCount> extends AbstractPagingItemRead
     @Override
     protected void doClose() throws Exception {
         super.doClose();
-        log.info("ViewCountPagingItemReader closed - Type: {}, Total processed: {}, Total reset: {}", 
-                targetType.getSimpleName(), totalProcessed, totalReset);
+        log.info("ViewCountPagingItemReader closed - Type: {}, Total processed: {}", 
+                targetType.getSimpleName(), totalProcessed);
         this.allKeys.clear();
         this.totalProcessed = 0;
-        this.totalReset = 0;
     }
 
     @Override
@@ -82,10 +80,8 @@ public class ViewCountPagingItemReader<ViewCount> extends AbstractPagingItemRead
                                         Long.valueOf(key.split(":")[1]),
                                         currentViewCount
                                 ));
-                                // 읽은 후 0으로 초기화
-                                operations.opsForHash().put(key, "viewCount", "0");
+                                // Redis에는 현재 값을 유지 (0으로 초기화하지 않음)
                                 totalProcessed++;
-                                totalReset++;
                             }
                         }
                     } catch (Exception e) {
