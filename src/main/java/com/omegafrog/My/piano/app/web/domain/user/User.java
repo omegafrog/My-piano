@@ -103,7 +103,7 @@ public class User {
 	private AlarmProperties alarmProperties;
 
 	@JsonManagedReference(value = "user-securityUser")
-	@OneToOne(mappedBy = "user")
+	@OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	@Setter
 	private SecurityUser securityUser;
 

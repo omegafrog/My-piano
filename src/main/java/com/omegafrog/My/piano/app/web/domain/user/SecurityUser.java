@@ -54,7 +54,7 @@ public class SecurityUser implements UserDetails {
 
 	@JsonBackReference(value = "user-securityUser")
 	@OneToOne(cascade = {CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REMOVE})
-	@JoinColumn(name = "USER_ID")
+	@JoinColumn(name = "user_id")
 	@Getter
 	private User user;
 
