@@ -27,23 +27,23 @@ public class FileUploadEventConsumer {
 
 		try {
 			// Redis Hash 업데이트 (이벤트에서 받은 데이터로)
-			if (event.getSheetUrl() != null && !event.getSheetUrl().isEmpty()) {
-				fileUploadService.updateUploadData(
+			fileUploadService.updateUploadData(
 					event.getUploadId(),
 					event.getSheetUrl(),
-					null,
-					event.getPageNum()
-				);
-			}
-
-			if (event.getThumbnailUrl() != null && !event.getThumbnailUrl().isEmpty()) {
-				fileUploadService.updateUploadData(
-					event.getUploadId(),
-					null,
 					event.getThumbnailUrl(),
-					event.getPageNum()
-				);
-			}
+					event.getPageNum());
+			// if (event.getSheetUrl() != null && !event.getSheetUrl().isEmpty()) {
+
+			// }
+
+			// if (event.getThumbnailUrl() != null && !event.getThumbnailUrl().isEmpty()) {
+			// fileUploadService.updateUploadData(
+			// event.getUploadId(),
+			// null,
+			// event.getThumbnailUrl(),
+			// event.getPageNum()
+			// );
+			// }
 
 			// Redis Hash에서 전체 업로드 데이터 조회
 			Map<String, String> uploadData = fileUploadService.getUploadData(event.getUploadId());
@@ -65,13 +65,13 @@ public class FileUploadEventConsumer {
 				sheetPostId = Long.parseLong(sheetPostIdStr);
 			} catch (NumberFormatException e) {
 				log.warn("SheetPostId is not a number for uploadId: {}, value: {}", event.getUploadId(),
-					sheetPostIdStr);
+						sheetPostIdStr);
 				return;
 			}
 
 			// SheetPost 조회 및 업데이트
 			SheetPost sheetPost = sheetPostRepository.findById(sheetPostId)
-				.orElseThrow(() -> new RuntimeException("SheetPost not found: " + sheetPostId));
+					.orElseThrow(() -> new RuntimeException("SheetPost not found: " + sheetPostId));
 
 			Sheet sheet = sheetPost.getSheet();
 
@@ -104,16 +104,16 @@ public class FileUploadEventConsumer {
 				sheetPostRepository.save(sheetPost);
 
 				log.info(
-					"Successfully updated SheetPost URLs for uploadId: {}, sheetPostId: {}, sheetUrl: {}, thumbnailUrl: {}, pageNum: {}, originalFileName: {}",
-					event.getUploadId(), sheetPostId, sheetUrl, thumbnailUrl, pageNumStr,
-					uploadData.get("originalFileName"));
+						"Successfully async updated SheetPost URLs for uploadId: {}, sheetPostId: {}, sheetUrl: {}, thumbnailUrl: {}, pageNum: {}, originalFileName: {}",
+						event.getUploadId(), sheetPostId, sheetUrl, thumbnailUrl, pageNumStr,
+						uploadData.get("originalFileName"));
 			} else {
 				log.warn("No valid URLs found in upload data for uploadId: {}", event.getUploadId());
 			}
 
 		} catch (Exception e) {
 			log.error("Failed to process file upload completed event for uploadId: {}",
-				event.getUploadId(), e);
+					event.getUploadId(), e);
 		}
 	}
 
@@ -142,17 +142,17 @@ public class FileUploadEventConsumer {
 				sheetPostId = Long.parseLong(sheetPostIdStr);
 			} catch (NumberFormatException e) {
 				log.warn("SheetPostId is not a number for failed uploadId: {}, value: {}",
-					event.getUploadId(), sheetPostIdStr);
+						event.getUploadId(), sheetPostIdStr);
 				return;
 			}
 
 			// TODO: SheetPost 상태를 FAILED로 업데이트하거나 알림 처리
 			log.error("File upload failed for uploadId: {}, sheetPostId: {}, reason: {}, errorMessage: {}",
-				event.getUploadId(), sheetPostId, event.getFailureReason(), event.getErrorMessage());
+					event.getUploadId(), sheetPostId, event.getFailureReason(), event.getErrorMessage());
 
 		} catch (Exception e) {
 			log.error("Failed to process file upload failed event for uploadId: {}",
-				event.getUploadId(), e);
+					event.getUploadId(), e);
 		}
 	}
 }

@@ -38,7 +38,7 @@ public class EventPublisher {
     }
     
     public void publishFileUploadCompleted(FileUploadCompletedEvent event) {
-        log.info("Publishing file upload completed event: {}", event.getEventId());
+        log.info("Publishing file upload completed event: {}, uploadId:{}", event.getEventId(),event.getUploadId());
         kafkaTemplate.send("file-upload-completed-topic", event.getUploadId(), event);
     }
     

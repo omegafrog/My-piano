@@ -5,6 +5,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.ConvolveOp;
 import java.awt.image.Kernel;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -31,10 +32,11 @@ import com.omegafrog.My.piano.app.web.event.FileUploadCompletedEvent;
 import com.omegafrog.My.piano.app.web.event.FileUploadFailedEvent;
 import com.omegafrog.My.piano.app.web.exception.CreateThumbnailFailedException;
 
+import io.awspring.cloud.s3.ObjectMetadata;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class LocalFileStorageExecutor {
+public class LocalFileStorageExecutor implements UploadFileExecutor {
 
 	@Value("${local.storage.base-path}")
 	private String basePath;
@@ -43,27 +45,36 @@ public class LocalFileStorageExecutor {
 	private EventPublisher eventPublisher;
 
 	@Async("ThreadPoolTaskExecutor")
-	public void uploadSheet(File file, String filename) throws IOException {
+	public void uploadSheet(File file, String filename, ObjectMetadata metadata) {
 		log.info("upload sheet start - local storage");
-		Path targetPath = Paths.get(basePath, "sheets", filename);
-		Files.createDirectories(targetPath.getParent());
-		Files.copy(file.toPath(), targetPath, StandardCopyOption.REPLACE_EXISTING);
+		try {
+			Path targetPath = Paths.get(basePath, "sheets", filename);
+			Files.createDirectories(targetPath.getParent());
+			Files.copy(file.toPath(), targetPath, StandardCopyOption.REPLACE_EXISTING);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 		log.info("upload sheet end - local storage");
 	}
 
 	@Async("ThreadPoolTaskExecutor")
-	public void uploadThumbnail(PDDocument document, String filename) throws IOException {
-		log.info("upload thumbnail start - local storage");
-		List<File> files = generateThumbnail(document, filename);
-		Path thumbnailDir = Paths.get(basePath, "thumbnails");
-		Files.createDirectories(thumbnailDir);
+	public void uploadThumbnail(PDDocument document, String filename, ObjectMetadata metadata) {
+		try {
+			log.info("upload thumbnail start - local storage");
+			List<File> files = generateThumbnail(document, filename);
+			Path thumbnailDir = Paths.get(basePath, "thumbnails");
+			Files.createDirectories(thumbnailDir);
 
-		for (int i = 0; i < files.size(); i++) {
-			String thumbnailFilename = filename.substring(0, filename.lastIndexOf('.')) + "-" + i + ".jpg";
-			Path targetPath = thumbnailDir.resolve(thumbnailFilename);
-			Files.copy(files.get(i).toPath(), targetPath, StandardCopyOption.REPLACE_EXISTING);
+			for (int i = 0; i < files.size(); i++) {
+				String thumbnailFilename = filename.substring(0, filename.lastIndexOf('.')) + "-" + i + ".jpg";
+				Path targetPath = thumbnailDir.resolve(thumbnailFilename);
+				Files.copy(files.get(i).toPath(), targetPath, StandardCopyOption.REPLACE_EXISTING);
+			}
+			log.info("upload thumbnail end - local storage");
+		} catch (IOException e) {
+			throw new RuntimeException(e);
 		}
-		log.info("upload thumbnail end - local storage");
+
 	}
 
 	private List<File> generateThumbnail(PDDocument document, String pdfFilePath) {
@@ -80,12 +91,12 @@ public class LocalFileStorageExecutor {
 			int height = firstImg.getHeight();
 
 			// 이미지의 40%만 보이도록 자르기
-			int visibleHeight = (int)(height * 0.4);
+			int visibleHeight = (int) (height * 0.4);
 			BufferedImage visibleImage = firstImg.getSubimage(0, 0, width, visibleHeight);
 
 			// 나머지 부분에 블러 처리 적용
 			BufferedImage blurredImage = blurImage(
-				firstImg.getSubimage(0, visibleHeight, width, height - visibleHeight));
+					firstImg.getSubimage(0, visibleHeight, width, height - visibleHeight));
 
 			BufferedImage combinedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 			Graphics2D g = combinedImage.createGraphics();
@@ -138,14 +149,18 @@ public class LocalFileStorageExecutor {
 	}
 
 	@Async("ThreadPoolTaskExecutor")
-	public void uploadProfileImg(MultipartFile profileImg, String filename) throws IOException {
+	public void uploadProfileImg(MultipartFile profileImg, String filename, ObjectMetadata metadata) {
 		log.info("upload profile start - local storage");
-		Path profileDir = Paths.get(basePath, "profiles");
-		Files.createDirectories(profileDir);
-		Path targetPath = profileDir.resolve(filename);
+		try {
+			Path profileDir = Paths.get(basePath, "profiles");
+			Files.createDirectories(profileDir);
+			Path targetPath = profileDir.resolve(filename);
 
-		try (InputStream inputStream = profileImg.getInputStream()) {
-			Files.copy(inputStream, targetPath, StandardCopyOption.REPLACE_EXISTING);
+			try (InputStream inputStream = profileImg.getInputStream()) {
+				Files.copy(inputStream, targetPath, StandardCopyOption.REPLACE_EXISTING);
+			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
 		}
 		log.info("upload profile end - local storage");
 	}
@@ -167,14 +182,15 @@ public class LocalFileStorageExecutor {
 		String sheetUrl = sheetPost.getSheet().getSheetUrl();
 		if (sheetUrl == null)
 			return;
-		
-		// URL에서 파일명만 추출 (예: "http://localhost:8080/sheets/filename.pdf" -> "filename.pdf")
+
+		// URL에서 파일명만 추출 (예: "http://localhost:8080/sheets/filename.pdf" ->
+		// "filename.pdf")
 		String fileName = extractFileNameFromUrl(sheetUrl);
 		if (fileName == null) {
 			log.warn("Could not extract filename from URL: {}", sheetUrl);
 			return;
 		}
-		
+
 		// Delete PDF file
 		try {
 			Path pdfPath = Paths.get(basePath, "sheets", fileName);
@@ -196,9 +212,10 @@ public class LocalFileStorageExecutor {
 			}
 		}
 	}
-	
+
 	/**
 	 * URL에서 파일명만 추출하는 헬퍼 메서드
+	 * 
 	 * @param url 전체 URL (예: "http://localhost:8080/sheets/filename.pdf")
 	 * @return 파일명 (예: "filename.pdf") 또는 null (추출 실패 시)
 	 */
@@ -206,18 +223,18 @@ public class LocalFileStorageExecutor {
 		if (url == null || url.isEmpty()) {
 			return null;
 		}
-		
+
 		// URL이 http://로 시작하지 않는다면 이미 파일명일 가능성
 		if (!url.startsWith("http://") && !url.startsWith("https://")) {
 			return url;
 		}
-		
+
 		// URL의 마지막 "/" 이후 부분을 파일명으로 추출
 		int lastSlashIndex = url.lastIndexOf("/");
 		if (lastSlashIndex != -1 && lastSlashIndex < url.length() - 1) {
 			return url.substring(lastSlashIndex + 1);
 		}
-		
+
 		return null;
 	}
 
@@ -228,7 +245,7 @@ public class LocalFileStorageExecutor {
 			if (fileName == null) {
 				throw new RuntimeException("Failed to extract filename from URL: " + sheetUrl);
 			}
-			
+
 			// static 리소스로 접근 가능한 URL 생성
 			return new URL("http://localhost:8080/sheets/" + fileName);
 		} catch (MalformedURLException e) {
@@ -237,7 +254,7 @@ public class LocalFileStorageExecutor {
 	}
 
 	@Async("ThreadPoolTaskExecutor")
-	public void uploadSheetAsync(File file, String filename, String uploadId) {
+	public void uploadSheetAsync(File file, String filename, ObjectMetadata metadata, String uploadId) {
 		try {
 			log.info("upload sheet async start - local storage, uploadId: {}", uploadId);
 			Path targetPath = Paths.get(basePath, "sheets", filename);
@@ -250,8 +267,7 @@ public class LocalFileStorageExecutor {
 
 			// 성공 이벤트 발행
 			FileUploadCompletedEvent event = FileUploadCompletedEvent.create(
-				uploadId, fullSheetUrl, null, filename, 0
-			);
+					uploadId, fullSheetUrl, null, filename, 0);
 			eventPublisher.publishFileUploadCompleted(event);
 
 		} catch (Exception e) {
@@ -259,14 +275,13 @@ public class LocalFileStorageExecutor {
 
 			// 실패 이벤트 발행
 			FileUploadFailedEvent failedEvent = FileUploadFailedEvent.create(
-				uploadId, filename, e.getMessage(), "SHEET_UPLOAD_FAILED"
-			);
+					uploadId, filename, e.getMessage(), "SHEET_UPLOAD_FAILED");
 			eventPublisher.publishFileUploadFailed(failedEvent);
 		}
 	}
 
 	@Async("ThreadPoolTaskExecutor")
-	public void uploadThumbnailAsync(PDDocument document, String filename, String uploadId) {
+	public void uploadThumbnailAsync(PDDocument document, String filename, ObjectMetadata metadata, String uploadId) {
 		try {
 			log.info("upload thumbnail async start - local storage, uploadId: {}", uploadId);
 			List<File> files = generateThumbnail(document, filename);
@@ -290,8 +305,7 @@ public class LocalFileStorageExecutor {
 
 			// 성공 이벤트 발행 (썸네일만)
 			FileUploadCompletedEvent event = FileUploadCompletedEvent.create(
-				uploadId, null, thumbnailUrls.toString(), filename, files.size()
-			);
+					uploadId, null, thumbnailUrls.toString(), filename, files.size());
 			eventPublisher.publishFileUploadCompleted(event);
 
 		} catch (Exception e) {
@@ -299,9 +313,9 @@ public class LocalFileStorageExecutor {
 
 			// 실패 이벤트 발행
 			FileUploadFailedEvent failedEvent = FileUploadFailedEvent.create(
-				uploadId, filename, e.getMessage(), "THUMBNAIL_UPLOAD_FAILED"
-			);
+					uploadId, filename, e.getMessage(), "THUMBNAIL_UPLOAD_FAILED");
 			eventPublisher.publishFileUploadFailed(failedEvent);
 		}
 	}
+
 }

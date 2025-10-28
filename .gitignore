@@ -37,7 +37,7 @@ out/
 .vscode/
 
 /src/main/resources/application**.properties
-/src/main/resources/**
+/src/main/resources/firebase-admin.json
 /src/test/resources/application-test-secret.yml
 *.puml
 *.xml
@@ -47,3 +47,4 @@ application.pid
 *.patch
 /local-storage/**
 /.claude/**
+mypiano-*-firebase-adminsdk-*.json

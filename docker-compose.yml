@@ -51,22 +51,22 @@ services:
     networks:
       - kafka-net
 
-  redis-user:
+  redis-mypiano-user:
     image: redis:7-alpine
-    container_name: redis-user
+    container_name: redis-mysql-user
     ports:
-      - "6380:6379"
+      - "6379:6379"
     volumes:
       - redis_user_data:/data
     command: redis-server --appendonly yes
     networks:
       - redis-net
 
-  redis-cache:
+  redis-mypiano-cache:
     image: redis:7-alpine
-    container_name: redis-cache
+    container_name: redis-mysql-cache
     ports:
-      - "6381:6379"
+      - "6380:6379"
     volumes:
       - redis_cache_data:/data
     command: redis-server --appendonly yes
@@ -78,6 +78,7 @@ volumes:
   kafka_data:
   redis_user_data:
   redis_cache_data:
+
 
 networks:
   elastic:

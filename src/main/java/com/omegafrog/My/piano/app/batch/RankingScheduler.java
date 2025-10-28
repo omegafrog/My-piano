@@ -7,6 +7,7 @@ import org.springframework.batch.core.repository.JobExecutionAlreadyRunningExcep
 import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
 import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -24,12 +25,13 @@ public class RankingScheduler {
     private JobLauncher jobLauncher;
 
     @Autowired
+    @Qualifier("updateRankingJob")
     private Job UpdateRankingJob;
 
-
-    //    @Scheduled(cron = "0 0 0/1 * * ?")
+    // @Scheduled(cron = "0 0 0/1 * * ?")
     @Scheduled(cron = "0 0/1 * * * ?")
-    public void jobScheduled() throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+    public void jobScheduled() throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException,
+            JobParametersInvalidException, JobRestartException {
         log.info("scheduling start");
         Map<String, JobParameter<?>> jobParameterMap = new HashMap<>();
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");

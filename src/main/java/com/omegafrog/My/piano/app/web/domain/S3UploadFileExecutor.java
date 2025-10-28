@@ -33,18 +33,19 @@ import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
-public class S3UploadFileExecutor {
+public class S3UploadFileExecutor implements UploadFileExecutor {
 
     private final S3Template s3Template;
     private final S3Client s3Client;
     private final EventPublisher eventPublisher;
-    
+
     @Value("${spring.cloud.aws.bucket.name}")
     private String bucketName;
 
     @Value("${spring.cloud.aws.region.static}")
     private String region;
 
+    @Override
     @Async("ThreadPoolTaskExecutor")
     public void uploadSheet(File file, String filename, ObjectMetadata metadata) throws IOException {
         log.info("upload sheet start");
@@ -53,8 +54,10 @@ public class S3UploadFileExecutor {
         log.info("upload sheet end");
     }
 
+    @Override
     @Async("ThreadPoolTaskExecutor")
-    public void uploadThumbnail(PDDocument document, String filename, ObjectMetadata metadata) throws FileNotFoundException {
+    public void uploadThumbnail(PDDocument document, String filename, ObjectMetadata metadata)
+            throws FileNotFoundException {
         log.info("upload thumbnail start");
         List<File> files = generateThumbnail(document, filename);
         for (int i = 0; i < files.size(); i++) {
@@ -70,6 +73,7 @@ public class S3UploadFileExecutor {
         }
         log.info("upload thumbnail end");
     }
+
     private List<File> generateThumbnail(PDDocument document, String pdfFilePath) {
         try {
             // PDF를 이미지로 변환
@@ -88,14 +92,14 @@ public class S3UploadFileExecutor {
             BufferedImage visibleImage = firstImg.getSubimage(0, 0, width, visibleHeight);
 
             // 나머지 부분에 블러 처리 적용
-            BufferedImage blurredImage = blurImage(firstImg.getSubimage(0, visibleHeight, width, height - visibleHeight));
+            BufferedImage blurredImage = blurImage(
+                    firstImg.getSubimage(0, visibleHeight, width, height - visibleHeight));
 
             BufferedImage combinedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
             Graphics2D g = combinedImage.createGraphics();
             g.drawImage(visibleImage, 0, 0, null);
             g.drawImage(blurredImage, 0, visibleHeight, null);
             g.dispose();
-
 
             String firstThumbnailPath = pdfFilePath.substring(0, pdfFilePath.lastIndexOf('.')) + "-" + 0 + ".jpg";
             log.info("이미지 파일 생성: {}", firstThumbnailPath);
@@ -104,7 +108,6 @@ public class S3UploadFileExecutor {
             log.info("이미지 파일에 이미지 쓰기");
             ImageIO.write(combinedImage, "jpg", firstThumbnailFile);
             thumbnailsFiles.add(firstThumbnailFile);
-
 
             // 두번째 페이지부터 렌더링
             for (int i = 1; i < pages; i++) {
@@ -132,18 +135,20 @@ public class S3UploadFileExecutor {
         }
     }
 
-    private static BufferedImage blurImage(BufferedImage image){
+    private static BufferedImage blurImage(BufferedImage image) {
         float[] matrix = new float[225];
-        for(int i =0 ;i < 225; ++i)
-            matrix[i] = 1.0f/225.f;
+        for (int i = 0; i < 225; ++i)
+            matrix[i] = 1.0f / 225.f;
 
-        Kernel kernel = new Kernel(15,15, matrix);
+        Kernel kernel = new Kernel(15, 15, matrix);
         ConvolveOp op = new ConvolveOp(kernel, ConvolveOp.EDGE_NO_OP, null);
         return op.filter(image, null);
     }
 
+    @Override
     @Async("ThreadPoolTaskExecutor")
-    public void uploadProfileImg(MultipartFile profileImg, String filename, ObjectMetadata metadata) throws IOException {
+    public void uploadProfileImg(MultipartFile profileImg, String filename, ObjectMetadata metadata)
+            throws IOException {
         log.info("upload profile start");
         try {
             // 임시 파일을 만들어 저장
@@ -159,13 +164,15 @@ public class S3UploadFileExecutor {
                     .bucket(bucketName)
                     .key(filename)
                     .acl(ObjectCannedACL.PUBLIC_READ).build());
-        }catch (FileNotFoundException ex){
-            log.error("프로필 올리기 실패",ex);
+        } catch (FileNotFoundException ex) {
+            log.error("프로필 올리기 실패", ex);
         }
         log.info("upload profile end");
     }
+
+    @Override
     @Async("ThreadPoolTaskExecutor")
-    public void removeProfileImg(String url){
+    public void removeProfileImg(String url) {
         log.info("remove profile start");
         String s3Url = new StringBuilder().append("s3://").append(bucketName).append("/").append(url).toString();
 
@@ -174,29 +181,30 @@ public class S3UploadFileExecutor {
 
     }
 
+    @Override
     @Async("ThreadPoolTaskExecutor")
     public void removeSheetPost(SheetPost sheetPost) {
         String sheetUrl = sheetPost.getSheet().getSheetUrl();
-        if (sheetUrl == null) return;
-        
-        // URL에서 파일명만 추출 (예: "https://bucket.s3.region.amazonaws.com/filename.pdf" -> "filename.pdf")
+        if (sheetUrl == null)
+            return;
+
+        // URL에서 파일명만 추출 (예: "https://bucket.s3.region.amazonaws.com/filename.pdf" ->
+        // "filename.pdf")
         String fileName = extractFileNameFromUrl(sheetUrl);
         if (fileName == null) {
             log.warn("Could not extract filename from S3 URL: {}", sheetUrl);
             return;
         }
-        
+
         String pdfUrl = new StringBuilder("s3://").append(bucketName).append("/").append(fileName).toString();
         List<String> thumbnailUrls = new ArrayList<>();
         for (int i = 0; i < sheetPost.getSheet().getPageNum(); i++) {
             thumbnailUrls.add(
                     new StringBuilder("s3://").append(bucketName).append("/").append(
-                                    fileName.split("\\.")[0]
-                            ).append("-")
+                            fileName.split("\\.")[0]).append("-")
                             .append(i)
                             .append(".jpg")
-                            .toString()
-            );
+                            .toString());
         }
         log.debug("delete pdf : {}", pdfUrl);
         s3Template.deleteObject(pdfUrl);
@@ -205,9 +213,10 @@ public class S3UploadFileExecutor {
             s3Template.deleteObject(url);
         });
     }
-    
+
     /**
      * URL에서 파일명만 추출하는 헬퍼 메서드
+     * 
      * @param url 전체 URL (예: "https://bucket.s3.region.amazonaws.com/filename.pdf")
      * @return 파일명 (예: "filename.pdf") 또는 null (추출 실패 시)
      */
@@ -215,21 +224,22 @@ public class S3UploadFileExecutor {
         if (url == null || url.isEmpty()) {
             return null;
         }
-        
+
         // URL이 http://나 https://로 시작하지 않는다면 이미 파일명일 가능성
         if (!url.startsWith("http://") && !url.startsWith("https://")) {
             return url;
         }
-        
+
         // URL의 마지막 "/" 이후 부분을 파일명으로 추출
         int lastSlashIndex = url.lastIndexOf("/");
         if (lastSlashIndex != -1 && lastSlashIndex < url.length() - 1) {
             return url.substring(lastSlashIndex + 1);
         }
-        
+
         return null;
     }
 
+    @Override
     public URL createFileUrl(String sheetUrl) {
         // URL에서 파일명만 추출
         String fileName = extractFileNameFromUrl(sheetUrl);
@@ -239,6 +249,7 @@ public class S3UploadFileExecutor {
         return s3Template.createSignedGetURL(bucketName, fileName, Duration.ofHours(24));
     }
 
+    @Override
     @Async("ThreadPoolTaskExecutor")
     public void uploadSheetAsync(File file, String filename, ObjectMetadata metadata, String uploadId) {
         try {
@@ -246,33 +257,32 @@ public class S3UploadFileExecutor {
             FileInputStream inputStream = new FileInputStream(file);
             s3Template.upload(bucketName, filename, inputStream, metadata);
             log.info("upload sheet async end - S3, uploadId: {}", uploadId);
-            
+
             // S3에서 전체 URL 생성
             String fullSheetUrl = "https://" + bucketName + ".s3." + region + ".amazonaws.com/" + filename;
-            
+
             // 성공 이벤트 발행
             FileUploadCompletedEvent event = FileUploadCompletedEvent.create(
-                uploadId, fullSheetUrl, null, filename, 0
-            );
+                    uploadId, fullSheetUrl, null, filename, 0);
             eventPublisher.publishFileUploadCompleted(event);
-            
+
         } catch (Exception e) {
             log.error("Failed to upload sheet async to S3 for uploadId: {}", uploadId, e);
-            
+
             // 실패 이벤트 발행
             FileUploadFailedEvent failedEvent = FileUploadFailedEvent.create(
-                uploadId, filename, e.getMessage(), "S3_SHEET_UPLOAD_FAILED"
-            );
+                    uploadId, filename, e.getMessage(), "S3_SHEET_UPLOAD_FAILED");
             eventPublisher.publishFileUploadFailed(failedEvent);
         }
     }
 
+    @Override
     @Async("ThreadPoolTaskExecutor")
     public void uploadThumbnailAsync(PDDocument document, String filename, ObjectMetadata metadata, String uploadId) {
         try {
             log.info("upload thumbnail async start - S3, uploadId: {}", uploadId);
             List<File> files = generateThumbnail(document, filename);
-            
+
             StringBuilder thumbnailUrls = new StringBuilder();
             for (int i = 0; i < files.size(); i++) {
                 FileInputStream inputStream = new FileInputStream(files.get(i));
@@ -282,28 +292,27 @@ public class S3UploadFileExecutor {
                         .bucket(bucketName)
                         .key(key)
                         .acl(ObjectCannedACL.PUBLIC_READ).build());
-                
+
                 // S3에서 전체 URL 생성
                 String fullThumbnailUrl = "https://" + bucketName + ".s3." + region + ".amazonaws.com/" + key;
-                
-                if (i > 0) thumbnailUrls.append(",");
+
+                if (i > 0)
+                    thumbnailUrls.append(",");
                 thumbnailUrls.append(fullThumbnailUrl);
             }
             log.info("upload thumbnail async end - S3, uploadId: {}", uploadId);
-            
+
             // 성공 이벤트 발행 (썸네일만)
             FileUploadCompletedEvent event = FileUploadCompletedEvent.create(
-                uploadId, null, thumbnailUrls.toString(), filename, files.size()
-            );
+                    uploadId, null, thumbnailUrls.toString(), filename, files.size());
             eventPublisher.publishFileUploadCompleted(event);
-            
+
         } catch (Exception e) {
             log.error("Failed to upload thumbnail async to S3 for uploadId: {}", uploadId, e);
-            
+
             // 실패 이벤트 발행
             FileUploadFailedEvent failedEvent = FileUploadFailedEvent.create(
-                uploadId, filename, e.getMessage(), "S3_THUMBNAIL_UPLOAD_FAILED"
-            );
+                    uploadId, filename, e.getMessage(), "S3_THUMBNAIL_UPLOAD_FAILED");
             eventPublisher.publishFileUploadFailed(failedEvent);
         }
     }

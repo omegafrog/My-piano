@@ -50,24 +50,25 @@ public class SheetPostController {
 	@GetMapping("/{id}")
 	@Operation(summary = "악보 게시글 조회", description = "유저가 작성한 악보 게시글을 조회한다.")
 	@ApiResponses(value = {
-		@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200")
+			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200")
 	})
 	public JsonAPIResponse<SheetPostDto> getSheetPost(
-		@Valid @NotNull @PathVariable Long id) {
+			@Valid @NotNull @PathVariable Long id) {
 		SheetPostDto data = sheetPostService.getSheetPost(id);
 		return new ApiResponse<>("Get Sheet post success.", data);
 	}
 
-	// TODO : elasticsearch에서 페이지네이션하고 totalElementCount도 받아와야 함. count가 제대로 집계되지 않음.
+	// TODO : elasticsearch에서 페이지네이션하고 totalElementCount도 받아와야 함. count가 제대로 집계되지
+	// 않음.
 	@GetMapping("")
 	public JsonAPIResponse<Page<SheetPostListDto>> getSheetPosts(
-		@Nullable @RequestParam String searchSentence,
-		@Nullable @RequestParam List<String> instrument,
-		@Nullable @RequestParam List<String> difficulty,
-		@Nullable @RequestParam List<String> genre,
-		Pageable pageable) throws IOException {
+			@Nullable @RequestParam String searchSentence,
+			@Nullable @RequestParam List<String> instrument,
+			@Nullable @RequestParam List<String> difficulty,
+			@Nullable @RequestParam List<String> genre,
+			Pageable pageable) throws IOException {
 		Page<SheetPostListDto> data = sheetPostService.getSheetPosts(searchSentence, instrument, difficulty, genre,
-			pageable);
+				pageable);
 		return new ApiResponse<>("Get sheet posts success.", data);
 	}
 
@@ -91,8 +92,8 @@ public class SheetPostController {
 
 	@PostMapping()
 	public JsonAPIResponse<SheetPostDto> writeSheetPost(
-		@RequestBody @Valid @NotNull RegisterSheetPostDto dto)
-		throws IOException {
+			@RequestBody @Valid @NotNull RegisterSheetPostDto dto)
+			throws IOException {
 
 		SheetPostDto data = sheetPostService.writeSheetPost(dto);
 
@@ -101,45 +102,45 @@ public class SheetPostController {
 
 	@PutMapping("/{id}/scrap")
 	public JsonAPIResponse<Void> scrapSheetPost(
-		@Valid @NotNull @PathVariable Long id) {
+			@Valid @NotNull @PathVariable Long id) {
 		sheetPostService.scrapSheetPost(id);
 		return new ApiResponse<>("Scrap sheet post success.");
 	}
 
 	@GetMapping("/{id}/scrap")
 	public JsonAPIResponse isScrappedSheetPost(
-		@Valid @NotNull @PathVariable Long id) {
+			@Valid @NotNull @PathVariable Long id) {
 		boolean isScrapped = sheetPostService.isScrappedSheetPost(id);
 		return new ApiResponse<>("Check sheet post scrap success.", isScrapped);
 	}
 
 	@DeleteMapping("/{id}/scrap")
 	public JsonAPIResponse unScrapSheetPost(
-		@Valid @NotNull @PathVariable Long id) {
+			@Valid @NotNull @PathVariable Long id) {
 		sheetPostService.unScrapSheetPost(id);
 		return new ApiResponse<>("Unscrap sheet post success.");
 	}
 
 	@PutMapping("/{id}")
 	public JsonAPIResponse<SheetPostDto> updateSheetPost(
-		@Valid @NotNull @PathVariable Long id,
-		@RequestBody @Valid @NotNull UpdateSheetPostDto dto)
-		throws IOException {
+			@Valid @NotNull @PathVariable Long id,
+			@RequestBody @Valid @NotNull UpdateSheetPostDto dto)
+			throws IOException {
 		SheetPostDto data = sheetPostService.update(id, dto);
 		return new ApiResponse<>("Update sheet post success.", data);
 	}
 
 	@GetMapping("/{id}/sheet")
 	public JsonAPIResponse<String> getSheetFileUrl(
-		@Valid @NotNull @PathVariable Long id) {
+			@Valid @NotNull @PathVariable Long id) {
 		String url = sheetPostService.getSheetUrl(id);
 		return new ApiResponse<>("Get sheet url success", url);
 	}
 
 	@DeleteMapping("/{id}")
 	public JsonAPIResponse<Void> deleteSheetPost(
-		@Valid @NotNull @PathVariable Long id)
-		throws AccessDeniedException, PersistenceException {
+			@Valid @NotNull @PathVariable Long id)
+			throws AccessDeniedException, PersistenceException {
 		sheetPostService.delete(id);
 		return new ApiResponse<>("Delete sheet post success.");
 	}

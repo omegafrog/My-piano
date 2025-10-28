@@ -15,79 +15,47 @@ import java.net.URL;
 @Component
 public class FileStorageExecutor {
 
-    private final S3UploadFileExecutor s3UploadFileExecutor;
-    private final LocalFileStorageExecutor localFileStorageExecutor;
+    private final UploadFileExecutor uploadFileExecutor;
 
-    public FileStorageExecutor(S3UploadFileExecutor s3UploadFileExecutor, LocalFileStorageExecutor localFileStorageExecutor) {
-        this.s3UploadFileExecutor = s3UploadFileExecutor;
-        this.localFileStorageExecutor = localFileStorageExecutor;
+    public FileStorageExecutor(UploadFileExecutor s3UploadFileExecutor) {
+        this.uploadFileExecutor = s3UploadFileExecutor;
     }
 
     @Value("${spring.profiles.active:}")
     private String activeProfile;
 
     public void uploadSheet(File file, String filename, ObjectMetadata metadata) throws IOException {
-        if ("dev".equals(activeProfile)) {
-            localFileStorageExecutor.uploadSheet(file, filename);
-        } else if (s3UploadFileExecutor != null) {
-            s3UploadFileExecutor.uploadSheet(file, filename, metadata);
-        }
+        uploadFileExecutor.uploadSheet(file, filename, metadata);
     }
 
     public void uploadThumbnail(PDDocument document, String filename, ObjectMetadata metadata) throws IOException {
-        if ("dev".equals(activeProfile)) {
-            localFileStorageExecutor.uploadThumbnail(document, filename);
-        } else if (s3UploadFileExecutor != null) {
-            s3UploadFileExecutor.uploadThumbnail(document, filename, metadata);
-        }
+        uploadFileExecutor.uploadThumbnail(document, filename, metadata);
     }
 
-    public void uploadProfileImg(MultipartFile profileImg, String filename, ObjectMetadata metadata) throws IOException {
-        if ("dev".equals(activeProfile)) {
-            localFileStorageExecutor.uploadProfileImg(profileImg, filename);
-        } else if (s3UploadFileExecutor != null) {
-            s3UploadFileExecutor.uploadProfileImg(profileImg, filename, metadata);
-        }
+    public void uploadProfileImg(MultipartFile profileImg, String filename, ObjectMetadata metadata)
+            throws IOException {
+        uploadFileExecutor.uploadProfileImg(profileImg, filename, metadata);
     }
 
     public void removeProfileImg(String url) {
-        if ("dev".equals(activeProfile)) {
-            localFileStorageExecutor.removeProfileImg(url);
-        } else if (s3UploadFileExecutor != null) {
-            s3UploadFileExecutor.removeProfileImg(url);
-        }
+        uploadFileExecutor.removeProfileImg(url);
     }
 
     public void removeSheetPost(SheetPost sheetPost) {
-        if ("dev".equals(activeProfile)) {
-            localFileStorageExecutor.removeSheetPost(sheetPost);
-        } else if (s3UploadFileExecutor != null) {
-            s3UploadFileExecutor.removeSheetPost(sheetPost);
-        }
+        uploadFileExecutor.removeSheetPost(sheetPost);
     }
 
     public URL createFileUrl(String sheetUrl) {
-        if ("dev".equals(activeProfile)) {
-            return localFileStorageExecutor.createFileUrl(sheetUrl);
-        } else if (s3UploadFileExecutor != null) {
-            return s3UploadFileExecutor.createFileUrl(sheetUrl);
-        }
-        return null;
+        return uploadFileExecutor.createFileUrl(sheetUrl);
     }
 
-    public void uploadSheetAsync(File file, String filename, ObjectMetadata metadata, String uploadId) throws IOException {
-        if ("dev".equals(activeProfile)) {
-            localFileStorageExecutor.uploadSheetAsync(file, filename, uploadId);
-        } else if (s3UploadFileExecutor != null) {
-            s3UploadFileExecutor.uploadSheetAsync(file, filename, metadata, uploadId);
-        }
+    public void uploadSheetAsync(File file, String filename, ObjectMetadata metadata, String uploadId)
+            throws IOException {
+        uploadFileExecutor.uploadSheetAsync(file, filename, metadata, uploadId);
     }
 
-    public void uploadThumbnailAsync(PDDocument document, String filename, ObjectMetadata metadata, String uploadId) throws IOException {
-        if ("dev".equals(activeProfile)) {
-            localFileStorageExecutor.uploadThumbnailAsync(document, filename, uploadId);
-        } else if (s3UploadFileExecutor != null) {
-            s3UploadFileExecutor.uploadThumbnailAsync(document, filename, metadata, uploadId);
-        }
+    public void uploadThumbnailAsync(PDDocument document, String filename, ObjectMetadata metadata, String uploadId)
+            throws IOException {
+        uploadFileExecutor.uploadThumbnailAsync(document, filename, metadata, uploadId);
     }
 }

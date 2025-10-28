@@ -190,7 +190,11 @@ public class SheetPostApplicationService {
 				if (sheetUrl != null && !sheetUrl.isEmpty() &&
 					thumbnailUrl != null && !thumbnailUrl.isEmpty() &&
 					pageNumStr != null && !pageNumStr.isEmpty()) {
-
+					
+					dto.getSheet().setSheetUrl(sheetUrl);
+					dto.getSheet().setThumbnailUrl(thumbnailUrl);
+					dto.getSheet().setPageNum(Integer.parseInt(pageNumStr));
+					dto.getSheet().setOriginalFileName(originalFileName);
 					Sheet sheet = sheetPost.getSheet();
 					int pageNum = Integer.parseInt(pageNumStr);
 

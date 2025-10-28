@@ -2,13 +2,15 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/mypianotest?characterEncoding=UTF-8&serverTimezone=UTC
+    username: root
+    password: password
   jpa:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
         format_sql: false
-        generate_statistics: true
-        use_sql_comments: true
+        # generate_statistics: true
+        # use_sql_comments: true
     hibernate:
       ddl-auto: update
   cloud:
@@ -40,10 +42,11 @@ spring:
 
 logging:
   level:
-    org.springframework.web: DEBUG
-    org.springframework.http.converter.json: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql: TRACE
+    org.apache.kafka: ERROR
+#     org.springframework.web: DEBUG
+#     org.springframework.http.converter.json: DEBUG
+#     org.hibernate.SQL: DEBUG
+#     org.hibernate.type.descriptor.sql: TRACE
 
 elasticsearch:
   host: localhost
@@ -79,3 +82,6 @@ server:
   tomcat:
     threads:
       max: 200
+local:
+  storage:
+    base-path: ./static

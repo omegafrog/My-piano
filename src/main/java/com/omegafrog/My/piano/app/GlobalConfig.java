@@ -19,12 +19,12 @@ import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.utils.MapperUtil;
 import com.omegafrog.My.piano.app.utils.OrderDtoCustomSerializer;
 import com.omegafrog.My.piano.app.web.domain.S3UploadFileExecutor;
+import com.omegafrog.My.piano.app.web.domain.UploadFileExecutor;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
 import com.omegafrog.My.piano.app.web.domain.notification.PushInstance;
 import com.omegafrog.My.piano.app.web.domain.order.SellableItemFactory;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import com.omegafrog.My.piano.app.web.event.EventPublisher;
-import com.omegafrog.My.piano.app.web.service.FileUploadService;
 import com.omegafrog.My.piano.app.web.dto.order.OrderDto;
 import io.awspring.cloud.s3.InMemoryBufferingS3OutputStreamProvider;
 import io.awspring.cloud.s3.Jackson2JsonS3ObjectConverter;
@@ -37,7 +37,6 @@ import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.message.BasicHeader;
 import org.elasticsearch.client.RestClient;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -79,9 +78,9 @@ public class GlobalConfig {
     @Value("${firebase.app.admin.json}")
     private String serviceAccountPath;
 
-
     @Bean
-    public SellableItemFactory sellableItemFactory(LessonRepository lessonRepository, SheetPostRepository sheetPostRepository) {
+    public SellableItemFactory sellableItemFactory(LessonRepository lessonRepository,
+            SheetPostRepository sheetPostRepository) {
         return new SellableItemFactory(lessonRepository, sheetPostRepository);
     }
 
@@ -102,7 +101,7 @@ public class GlobalConfig {
         // Create the low-level client
         RestClient restClient = RestClient
                 .builder(HttpHost.create(serverUrl))
-                .setDefaultHeaders(new Header[]{
+                .setDefaultHeaders(new Header[] {
                         new BasicHeader("Authorization", "ApiKey " + apiKey)
                 })
                 .build();
@@ -131,8 +130,7 @@ public class GlobalConfig {
     }
 
     private CloseableHttpClient createHttpClient() {
-        return org.apache.hc.client5.http.impl.classic
-                .HttpClientBuilder.create()
+        return org.apache.hc.client5.http.impl.classic.HttpClientBuilder.create()
                 .setConnectionManager(createHttpClientConnectionManager())
                 .build();
     }
@@ -157,8 +155,8 @@ public class GlobalConfig {
     }
 
     @Bean
-    @Profile("!dev")
-    public S3UploadFileExecutor s3UploadFileExecutor(EventPublisher eventPublisher) {
+    @Profile("prod")
+    public UploadFileExecutor s3UploadFileExecutor(EventPublisher eventPublisher) {
         return new S3UploadFileExecutor(s3Template(), s3Client(), eventPublisher);
     }
 
@@ -169,8 +167,8 @@ public class GlobalConfig {
 
     @Bean
     public com.omegafrog.My.piano.app.web.domain.FileStorageExecutor fileStorageExecutor(
-            @Autowired(required = false) S3UploadFileExecutor s3UploadFileExecutor) {
-        return new com.omegafrog.My.piano.app.web.domain.FileStorageExecutor(s3UploadFileExecutor, localFileStorageExecutor());
+            UploadFileExecutor uploadFileExecutor) {
+        return new com.omegafrog.My.piano.app.web.domain.FileStorageExecutor(uploadFileExecutor);
     }
 
     @Bean
@@ -184,23 +182,21 @@ public class GlobalConfig {
     }
 
     @Bean
-    @Profile("!dev")
+    @Profile("prod")
     public S3Client s3Client() {
         return S3Client.builder()
                 .region(Region.of(region))
                 .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(
-                        accessToken, secretToken
-                )))
+                        accessToken, secretToken)))
                 .build();
     }
 
     @Bean
-    @Profile("!dev")
+    @Profile("prod")
     public S3Template s3Template() {
         return new S3Template(s3Client(), new InMemoryBufferingS3OutputStreamProvider(s3Client(), null),
                 new Jackson2JsonS3ObjectConverter(objectMapper()), S3Presigner.create());
     }
-
 
     @Bean
     public GooglePublicKeysManager googlePublicKeysManager() {

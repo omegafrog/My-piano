@@ -33,7 +33,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class RankingJobConfig {
 
-
     @Autowired
     private final EntityManagerFactory entityManagerFactory;
 
@@ -48,8 +47,7 @@ public class RankingJobConfig {
     @Autowired
     private ElasticsearchClient elasticsearchClient;
 
-
-    @Bean
+    @Bean("updateRankingJob")
     public Job UpdateRankingJob(JobRepository jobRepository) throws Exception {
         return new JobBuilder("UpdateRankingJob", jobRepository)
                 .start(updateRankingStep(jobRepository))
@@ -70,8 +68,7 @@ public class RankingJobConfig {
     public ElasticsearchItemReader<SheetPostIndex> deleteJpaPagingItemReader() {
         return new ElasticsearchItemReader<>(
                 100,
-                elasticsearchClient
-        );
+                elasticsearchClient);
     }
 
     @Bean
@@ -88,15 +85,14 @@ public class RankingJobConfig {
                 List<Long> a = chunk.getItems().stream().map(item -> item.getId())
                         .collect(Collectors.toList());
                 List<Long> list = a.stream().filter(
-                        id -> !allIds.contains(id)
-                ).toList();
-//                for (Long id : a) {
-//                    for (Long id2 : allIds) {
-//                        if (id.equals(id2)) {
-//                            a.remove(id);
-//                        }
-//                    }
-//                }
+                        id -> !allIds.contains(id)).toList();
+                // for (Long id : a) {
+                // for (Long id2 : allIds) {
+                // if (id.equals(id2)) {
+                // a.remove(id);
+                // }
+                // }
+                // }
                 sheetPostIndexRepository.deleteByIdIn(list);
             }
         };
@@ -123,13 +119,12 @@ public class RankingJobConfig {
                 .build();
     }
 
-
     @Bean
     public ItemProcessor<SheetPost, SheetPostIndex> invertToSheetPostIndex() {
         return new ItemProcessor<SheetPost, SheetPostIndex>() {
             @Override
             public SheetPostIndex process(SheetPost item) throws Exception {
-//                log.info("item:{}", item.toString());
+                // log.info("item:{}", item.toString());
                 return SheetPostIndex.of(item);
             }
         };
@@ -141,10 +136,10 @@ public class RankingJobConfig {
             @Override
             public void write(Chunk<? extends SheetPostIndex> chunk) throws Exception {
                 List<? extends SheetPostIndex> items = chunk.getItems();
-//                for (SheetPostIndex item : items) {
-//                    log.info("created_at:{}", item.getCreated_at());
-//                    sheetPostIndexRepository.save(item);
-//                }
+                // for (SheetPostIndex item : items) {
+                // log.info("created_at:{}", item.getCreated_at());
+                // sheetPostIndexRepository.save(item);
+                // }
                 sheetPostIndexRepository.saveAll(items);
             }
         };

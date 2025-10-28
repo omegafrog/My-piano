@@ -1,0 +1,89 @@
+spring:
+  profiles:
+    active: dev
+    include: secret
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/mypiano?characterEncoding=UTF-8&serverTimezone=UTC
+    username: root
+    password: password
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: false
+        generate_statistics: true
+        use_sql_comments: true
+    hibernate:
+      ddl-auto: update
+  cloud:
+    aws:
+      region:
+        static: ap-northeast-2
+      bucket:
+        name: mypianobucket
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            redirect-uri: http://localhost:8080/api/v1/oauth2/google/callback
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 25MB
+  redis:
+    user:
+      host: 127.0.0.1
+      port: 6379
+    cache:
+      host: 127.0.0.1
+      port: 6380
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+
+# logging:
+#   level:
+#     org.springframework.web: DEBUG
+#     org.springframework.http.converter.json: DEBUG
+#     org.hibernate.SQL: DEBUG
+#     org.hibernate.type.descriptor.sql: TRACE
+
+elasticsearch:
+  host: localhost
+  port: 9200
+
+async:
+  pool:
+    core: 16
+    max: 100
+  queue:
+    capacity: 20000
+
+security:
+  password:
+    expire:
+      period: 90L
+  jwt:
+    accessToken:
+      period: 6000000
+    refreshToken:
+      period: 1209600
+
+firebase:
+  app:
+    admin:
+      json: src/main/resources/firebase-admin.json
+
+payment:
+  toss:
+    api-url: https://api.tosspayments.com/v1/payments
+
+server:
+  tomcat:
+    threads:
+      max: 200
+local:
+  storage:
+    base-path: ./static

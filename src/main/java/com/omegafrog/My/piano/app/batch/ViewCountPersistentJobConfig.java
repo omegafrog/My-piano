@@ -1,6 +1,5 @@
 package com.omegafrog.My.piano.app.batch;
 
-
 import com.omegafrog.My.piano.app.web.domain.article.LikeCount;
 import com.omegafrog.My.piano.app.web.domain.article.ViewCount;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonLikeCount;
@@ -39,8 +38,7 @@ public class ViewCountPersistentJobConfig {
     private final RedisTemplate redisTemplate;
     private final static int BATCH_SIZE = 100;
 
-    @Bean
-    @Qualifier("persistCountJob")
+    @Bean("persistViewCountJob")
     public Job persistViewCountJob(JobRepository jobRepository) {
         return new JobBuilder("PersistViewCountJob", jobRepository)
                 .start(persistLessonViewCountStep(jobRepository))
@@ -105,7 +103,6 @@ public class ViewCountPersistentJobConfig {
                 .writer(lessonLikeCountWriter())
                 .build();
     }
-
 
     @Bean
     public ViewCountPagingItemReader postViewCountPagingItemReader() {

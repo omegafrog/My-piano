@@ -32,7 +32,7 @@ import lombok.Setter;
 public class SheetPost extends SellableItem {
 
 	@JsonManagedReference("sheetpost")
-	@OneToOne(cascade = {CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REMOVE})
+	@OneToOne(cascade = { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REMOVE })
 	@JoinColumn(name = "SHEET_ID")
 	private Sheet sheet;
 
@@ -62,15 +62,19 @@ public class SheetPost extends SellableItem {
 		if (dto.getSheet() != null) {
 			UpdateSheetDto sheetDto = dto.getSheet();
 			this.sheet = Sheet.builder()
-				.title(sheetDto.getTitle())
-				.genres(sheetDto.getGenres())
-				.pageNum(sheetDto.getPageNum())
-				.difficulty(sheetDto.getDifficulty())
-				.instrument(sheetDto.getInstrument())
-				.isSolo(sheetDto.getSolo())
-				.lyrics(sheetDto.getLyrics())
-				.user(author)
-				.build();
+					.title(sheetDto.getTitle())
+					.genres(sheetDto.getGenres())
+					.pageNum(sheetDto.getPageNum())
+					.difficulty(sheetDto.getDifficulty())
+					.instrument(sheetDto.getInstrument())
+					.isSolo(sheetDto.getSolo())
+					.lyrics(sheetDto.getLyrics())
+					.user(author)
+					.originalFileName(sheetDto.getOriginalFileName())
+					.sheetPost(this)
+					.sheetUrl(sheetDto.getSheetUrl())
+					.thumbnailUrl(sheetDto.getThumbnailUrl())
+					.build();
 		}
 		this.content = dto.getContent() == null ? content : dto.getContent();
 		return this;
@@ -78,39 +82,39 @@ public class SheetPost extends SellableItem {
 
 	public SheetPostDto toDto() {
 		return SheetPostDto.builder()
-			.id(id)
-			.title(title)
-			.content(content)
-			.likeCount(likeCount)
-			.viewCount(viewCount)
-			.discountRate(getDiscountRate())
-			.comments(new ArrayList<>())
-			.artist(author.getArtistInfo())
-			.createdAt(createdAt)
-			.sheet(toInfoDto())
-			.price(getPrice())
-			.disabled(disabled)
-			.build();
+				.id(id)
+				.title(title)
+				.content(content)
+				.likeCount(likeCount)
+				.viewCount(viewCount)
+				.discountRate(getDiscountRate())
+				.comments(new ArrayList<>())
+				.artist(author.getArtistInfo())
+				.createdAt(createdAt)
+				.sheet(toInfoDto())
+				.price(getPrice())
+				.disabled(disabled)
+				.build();
 
 	}
 
 	public SheetInfoDto toInfoDto() {
 		return SheetInfoDto.builder()
-			.id(id)
-			.title(sheet.getTitle())
-			.content(content)
-			.genres(sheet.getGenres())
-			.instrument(sheet.getInstrument())
-			.isSolo(sheet.isSolo())
-			.lyrics(sheet.isLyrics())
-			.difficulty(sheet.getDifficulty())
-			.sheetUrl(sheet.getSheetUrl())
-			.thumbnailUrl(sheet.getThumbnailUrl() == null ? "" : sheet.getThumbnailUrl())
-			.artist(author.getArtistInfo())
-			.pageNum(sheet.getPageNum())
-			.originalFileName(sheet.getOriginalFileName())
-			.createdAt(createdAt)
-			.build();
+				.id(id)
+				.title(sheet.getTitle())
+				.content(content)
+				.genres(sheet.getGenres())
+				.instrument(sheet.getInstrument())
+				.isSolo(sheet.isSolo())
+				.lyrics(sheet.isLyrics())
+				.difficulty(sheet.getDifficulty())
+				.sheetUrl(sheet.getSheetUrl())
+				.thumbnailUrl(sheet.getThumbnailUrl() == null ? "" : sheet.getThumbnailUrl())
+				.artist(author.getArtistInfo())
+				.pageNum(sheet.getPageNum())
+				.originalFileName(sheet.getOriginalFileName())
+				.createdAt(createdAt)
+				.build();
 	}
 
 	public void updateSheet(Sheet sheet) {
