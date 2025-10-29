@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
@@ -31,6 +32,7 @@ import com.omegafrog.My.piano.app.web.dto.sheetPost.RegisterSheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostListDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.UpdateSheetPostDto;
+import com.omegafrog.My.piano.app.web.event.SheetPostCreatedEvent;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -52,6 +54,8 @@ public class SheetPostApplicationService {
 	private final SheetPostViewCountRepository sheetPostViewCountRepository;
 	private final AuthenticationUtil authenticationUtil;
 	private final FileUploadService fileUploadService;
+	private final ApplicationEventPublisher eventPublisher;
+
 	@Autowired
 	@Qualifier("SheetPostLikeCountRepository")
 	private LikeCountRepository likeCountRepository;
@@ -139,7 +143,7 @@ public class SheetPostApplicationService {
 				}
 			}
 
-			elasticSearchInstance.invertIndexingSheetPost(saved);
+			eventPublisher.publishEvent(new SheetPostCreatedEvent(sheetPost.getId()));
 
 			log.info("SheetPost created with uploadId: {}, sheetPostId: {}", uploadId, saved.getId());
 			return saved.toDto();

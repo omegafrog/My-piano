@@ -42,18 +42,21 @@ public class ElasticSearchInstance {
 
     private final String SHEET_POST_INDEX_NAME = "sheetpost";
 
-
     @Async("ThreadPoolTaskExecutor")
     public void invertIndexingSheetPost(SheetPost sheetPost) {
         sheetPostIndexRepository.save(SheetPostIndex.of(sheetPost));
+    }
 
+    @Async("ThreadPoolTaskExecutor")
+    public void invertIndexingSheetPost(SheetPostIndex index) {
+        sheetPostIndexRepository.save(index);
     }
 
     public Page<Long> searchSheetPost(@Nullable String searchSentence,
-                                      @Nullable List<String> instruments,
-                                      @Nullable List<String> difficulties,
-                                      @Nullable List<String> genres,
-                                      Pageable pageable) throws IOException {
+            @Nullable List<String> instruments,
+            @Nullable List<String> difficulties,
+            @Nullable List<String> genres,
+            Pageable pageable) throws IOException {
         List<Query> searchOptions = new ArrayList<>();
         if (instruments != null && !instruments.isEmpty()) {
             Query instrumentFilter = getQuery("instrument.keyword", instruments);
@@ -70,10 +73,8 @@ public class ElasticSearchInstance {
         SearchResponse<SheetPostIndex> response = esClient.search(
                 s -> getRequest(searchSentence, s, searchOptions, pageable), SheetPostIndex.class);
 
-
-        long count = esClient.count(builder ->
-                        builder.index(SHEET_POST_INDEX_NAME)
-                                .query(q -> getSearchTermQueryBuilder(searchSentence, searchOptions, q)))
+        long count = esClient.count(builder -> builder.index(SHEET_POST_INDEX_NAME)
+                .query(q -> getSearchTermQueryBuilder(searchSentence, searchOptions, q)))
                 .count();
 
         List<Hit<SheetPostIndex>> hits = response.hits().hits();
@@ -90,7 +91,7 @@ public class ElasticSearchInstance {
     }
 
     private SearchRequest.Builder getRequest(@Nullable String searchSentence, SearchRequest.Builder s,
-                                             List<Query> searchOptions, Pageable pageable) {
+            List<Query> searchOptions, Pageable pageable) {
         return s.index(SHEET_POST_INDEX_NAME)
                 .from((pageable.getPageNumber()) * pageable.getPageSize())
                 .size(pageable.getPageSize())
@@ -99,7 +100,8 @@ public class ElasticSearchInstance {
                 .query(q -> getSearchTermQueryBuilder(searchSentence, searchOptions, q));
     }
 
-    private static ObjectBuilder<Query> getSearchTermQueryBuilder(@Nullable String searchSentence, List<Query> searchOptions, Query.Builder q) {
+    private static ObjectBuilder<Query> getSearchTermQueryBuilder(@Nullable String searchSentence,
+            List<Query> searchOptions, Query.Builder q) {
         if (searchSentence != null && !searchSentence.isEmpty()) {
             return q.bool(b -> b
                     .must(q2 -> q2.queryString(qs -> qs.fields("title", "content").query("*" + searchSentence + "*")))
@@ -109,7 +111,8 @@ public class ElasticSearchInstance {
         }
     }
 
-    public List<SheetPostIndex> searchPopularDateRangeSheetPost(DateRange dateRange, String limit) throws IOException, TimeoutException {
+    public List<SheetPostIndex> searchPopularDateRangeSheetPost(DateRange dateRange, String limit)
+            throws IOException, TimeoutException {
         List<Query> searchOptions = new ArrayList<>();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX");
         Query dateRangeQuery = QueryBuilders.range(r -> r
@@ -123,13 +126,12 @@ public class ElasticSearchInstance {
                         .order(SortOrder.Desc));
 
         SearchResponse<SheetPostIndex> response = esClient.search(fn -> fn
-                        .index(SHEET_POST_INDEX_NAME)
-                        .query(q -> q
-                                .bool(v -> v
-                                        .must(searchOptions)))
-                        .sort(sortOptions)
-                        .size(Integer.valueOf(limit))
-                , SheetPostIndex.class);
+                .index(SHEET_POST_INDEX_NAME)
+                .query(q -> q
+                        .bool(v -> v
+                                .must(searchOptions)))
+                .sort(sortOptions)
+                .size(Integer.valueOf(limit)), SheetPostIndex.class);
 
         if (response.timedOut())
             throw new TimeoutException("Elasticsearch response is time out.");
@@ -173,7 +175,7 @@ public class ElasticSearchInstance {
 
     public Map<Long, Integer> getViewCountsBySheetPostIds(List<Long> sheetPostIds) throws IOException {
         Map<Long, Integer> viewCountMap = new HashMap<>();
-        
+
         if (sheetPostIds == null || sheetPostIds.isEmpty()) {
             return viewCountMap;
         }
@@ -191,7 +193,7 @@ public class ElasticSearchInstance {
                 .query(idsQuery)
                 .size(sheetPostIds.size())
                 .source(sourceConfig -> sourceConfig
-                        .filter(f -> f.includes("id", "viewCount"))), 
+                        .filter(f -> f.includes("id", "viewCount"))),
                 SheetPostIndex.class);
 
         List<Hit<SheetPostIndex>> hits = response.hits().hits();
