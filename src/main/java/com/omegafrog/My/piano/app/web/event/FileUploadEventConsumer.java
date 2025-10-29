@@ -1,5 +1,6 @@
 package com.omegafrog.My.piano.app.web.event;
 
+import java.io.File;
 import java.util.Map;
 
 import org.springframework.kafka.annotation.KafkaListener;
@@ -10,6 +11,7 @@ import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import com.omegafrog.My.piano.app.web.service.FileUploadService;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -22,28 +24,28 @@ public class FileUploadEventConsumer {
 	private final SheetPostRepository sheetPostRepository;
 
 	@KafkaListener(topics = "file-upload-completed-topic", groupId = "mypiano-consumer-group")
+	@Transactional
 	public void handleFileUploadCompleted(FileUploadCompletedEvent event) {
 		log.info("Received file upload completed event: {}", event.getEventId());
 
 		try {
 			// Redis Hash 업데이트 (이벤트에서 받은 데이터로)
-			fileUploadService.updateUploadData(
-					event.getUploadId(),
-					event.getSheetUrl(),
-					event.getThumbnailUrl(),
-					event.getPageNum());
-			// if (event.getSheetUrl() != null && !event.getSheetUrl().isEmpty()) {
 
-			// }
+			if (event.getSheetUrl() != null && !event.getSheetUrl().isEmpty()) {
+				fileUploadService.updateUploadData(
+						event.getUploadId(),
+						event.getSheetUrl(),
+						null,
+						event.getPageNum());
+			}
 
-			// if (event.getThumbnailUrl() != null && !event.getThumbnailUrl().isEmpty()) {
-			// fileUploadService.updateUploadData(
-			// event.getUploadId(),
-			// null,
-			// event.getThumbnailUrl(),
-			// event.getPageNum()
-			// );
-			// }
+			if (event.getThumbnailUrl() != null && !event.getThumbnailUrl().isEmpty()) {
+				fileUploadService.updateUploadData(
+						event.getUploadId(),
+						null,
+						event.getThumbnailUrl(),
+						event.getPageNum());
+			}
 
 			// Redis Hash에서 전체 업로드 데이터 조회
 			Map<String, String> uploadData = fileUploadService.getUploadData(event.getUploadId());
@@ -99,9 +101,6 @@ public class FileUploadEventConsumer {
 				if (originalFileName != null && !originalFileName.isEmpty()) {
 					sheet.updateOriginalFileName(originalFileName);
 				}
-
-				// 저장
-				sheetPostRepository.save(sheetPost);
 
 				log.info(
 						"Successfully async updated SheetPost URLs for uploadId: {}, sheetPostId: {}, sheetUrl: {}, thumbnailUrl: {}, pageNum: {}, originalFileName: {}",

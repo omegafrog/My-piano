@@ -9,11 +9,9 @@ import com.omegafrog.My.piano.app.web.dto.user.RegisterUserDto;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import jakarta.servlet.http.Cookie;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -30,7 +28,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@ExtendWith(SpringExtension.class)
 @AutoConfigureMockMvc
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -53,6 +50,7 @@ class UserControllerTest {
 
     @BeforeEach
     void getLoginToken() throws Exception {
+        cleanup.cleanUp();
         RegisterUserDto dto = RegisterUserDto.builder()
                 .username("username")
                 .password("password")
@@ -68,36 +66,30 @@ class UserControllerTest {
         refreshToken = login.getRefreshToken();
     }
 
-
-    @AfterEach
-    void cleanUp() {
-        cleanup.cleanUp();
-    }
-
     @Test
     void getCommunityPostTest() throws Exception {
-        //given
+        // given
         PostRegisterDto postDto = PostRegisterDto.builder()
                 .title("title")
                 .content("content")
                 .build();
         String string = mockMvc.perform(post("/api/v1/community/posts")
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(postDto)))
+                .header(HttpHeaders.AUTHORIZATION, accessToken)
+                .cookie(refreshToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(postDto)))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         long postId = objectMapper.readTree(string).get("data").get("id").asLong();
 
         // when
         MvcResult mvcResult = mockMvc.perform(get("/api/v1/community/posts")
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken))
+                .header(HttpHeaders.AUTHORIZATION, accessToken)
+                .cookie(refreshToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andReturn();
-        //then
+        // then
         String result = mvcResult.getResponse().getContentAsString();
         Long id = objectMapper.readTree(result).get("data").get("postListDtos").get(0).get("id").asLong();
         Assertions.assertThat(id).isEqualTo(postId);

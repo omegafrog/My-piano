@@ -19,6 +19,7 @@ import com.omegafrog.My.piano.app.web.dto.post.PostListDto;
 import com.omegafrog.My.piano.app.web.dto.post.PostRegisterDto;
 import com.omegafrog.My.piano.app.web.dto.post.ReturnPostListDto;
 import com.omegafrog.My.piano.app.web.dto.post.UpdatePostDto;
+import com.omegafrog.My.piano.app.web.enums.PostType;
 import com.omegafrog.My.piano.app.web.event.EventPublisher;
 import com.omegafrog.My.piano.app.web.event.PostCreatedEvent;
 import com.omegafrog.My.piano.app.web.event.PostDeletedEvent;
@@ -42,26 +43,26 @@ public class PostApplicationService {
 	public PostDto writePost(PostRegisterDto post) {
 		User loggedInUser = authenticationUtil.getLoggedInUser();
 		User user = userRepository.findById(loggedInUser.getId())
-			.orElseThrow(
-				() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInUser.getId()));
+				.orElseThrow(
+						() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInUser.getId()));
 
 		Post build = Post.builder()
-			.title(post.getTitle())
-			.content(post.getContent())
-			.author(user)
-			.build();
+				.title(post.getTitle())
+				.content(post.getContent())
+				.author(user)
+				.type(PostType.COMMON)
+				.build();
 		Post saved = postRepository.save(build);
 		user.addUploadedPost(saved);
 
 		// Publish post created event
 		PostCreatedEvent event = new PostCreatedEvent(
-			saved.getId(),
-			saved.getTitle(),
-			saved.getContent(),
-			saved.getType().toString(),
-			saved.getAuthor().getId(),
-			saved.getAuthor().getName()
-		);
+				saved.getId(),
+				saved.getTitle(),
+				saved.getContent(),
+				saved.getType().toString(),
+				saved.getAuthor().getId(),
+				saved.getAuthor().getName());
 		eventPublisher.publishPostCreated(event);
 
 		return saved.toDto();
@@ -69,7 +70,7 @@ public class PostApplicationService {
 
 	public PostDto findPostById(Long id) {
 		Post founded = postRepository.findById(id)
-			.orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_POST + id));
+				.orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_POST + id));
 		int incrementedViewCount = postViewCountRepository.incrementViewCount(founded);
 		PostDto postDto = new PostDto(founded, founded.getAuthor());
 		postDto.setViewCount(incrementedViewCount);
@@ -84,13 +85,12 @@ public class PostApplicationService {
 
 			// Publish post updated event
 			PostUpdatedEvent event = new PostUpdatedEvent(
-				updatedPost.getId(),
-				updatedPost.getTitle(),
-				updatedPost.getContent(),
-				updatedPost.getType().toString(),
-				updatedPost.getAuthor().getId(),
-				updatedPost.getAuthor().getName()
-			);
+					updatedPost.getId(),
+					updatedPost.getTitle(),
+					updatedPost.getContent(),
+					updatedPost.getType().toString(),
+					updatedPost.getAuthor().getId(),
+					updatedPost.getAuthor().getName());
 			eventPublisher.publishPostUpdated(event);
 
 			return updatedPost.toDto();
@@ -113,7 +113,7 @@ public class PostApplicationService {
 
 	private Post getPostById(Long id) {
 		return postRepository.findById(id)
-			.orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_POST + id));
+				.orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_POST + id));
 	}
 
 	public void likePost(Long postId) {
@@ -127,23 +127,23 @@ public class PostApplicationService {
 		User loggedInUser = authenticationUtil.getLoggedInUser();
 		Post dislikedPost = getPostById(id);
 		User founded = userRepository.findById(loggedInUser.getId())
-			.orElseThrow(() -> new EntityNotFoundException("Cannot find User entity."));
+				.orElseThrow(() -> new EntityNotFoundException("Cannot find User entity."));
 		founded.dislikePost(dislikedPost);
 	}
 
 	public boolean isLikedPost(Long id) {
 		User loggedInUser = authenticationUtil.getLoggedInUser();
 		User founded = userRepository.findById(loggedInUser.getId())
-			.orElseThrow(() -> new EntityNotFoundException("Cannot find User entity. "));
+				.orElseThrow(() -> new EntityNotFoundException("Cannot find User entity. "));
 		return !founded.getLikedPosts().stream().filter(post -> post.getId().equals(id)).findFirst().isEmpty();
 	}
 
 	public ReturnPostListDto findPosts(Pageable pageable) {
 		Long count = postRepository.count();
 		List<PostListDto> postList = postRepository.findAll(pageable, Sort.by(Sort.Direction.DESC, "createdAt"))
-			.stream()
-			.map(PostListDto::new)
-			.toList();
+				.stream()
+				.map(PostListDto::new)
+				.toList();
 		return new ReturnPostListDto(count, postList);
 	}
 }

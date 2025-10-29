@@ -58,7 +58,7 @@ public class SheetPostApplicationService {
 
 	public SheetPostDto getSheetPost(Long id) {
 		SheetPost sheetPost = sheetPostRepository.findById(id)
-			.orElseThrow(() -> new EntityNotFoundException("Cannot find SheetPost entity : " + id));
+				.orElseThrow(() -> new EntityNotFoundException("Cannot find SheetPost entity : " + id));
 		int incrementedViewCount = sheetPostViewCountRepository.incrementViewCount(sheetPost);
 		int likeCount = likeCountRepository.findById(sheetPost.getId()).getLikeCount();
 		SheetPostDto dto = sheetPost.toDto();
@@ -92,29 +92,26 @@ public class SheetPostApplicationService {
 			// Sheet 엔티티에 원본 파일명 설정
 			if (originalFileName != null && !originalFileName.isEmpty()) {
 				sheet = Sheet.builder()
-					.title(sheet.getTitle())
-					.pageNum(sheet.getPageNum())
-					.difficulty(sheet.getDifficulty())
-					.instrument(sheet.getInstrument())
-					.genres(sheet.getGenres())
-					.isSolo(sheet.isSolo())
-					.lyrics(sheet.isLyrics())
-					.sheetUrl(sheet.getSheetUrl())
-					.thumbnailUrl(sheet.getThumbnailUrl())
-					.originalFileName(originalFileName)
-					.user(loggedInUser)
-					.build();
+						.title(sheet.getTitle())
+						.pageNum(sheet.getPageNum())
+						.difficulty(sheet.getDifficulty())
+						.instrument(sheet.getInstrument())
+						.genres(sheet.getGenres())
+						.isSolo(sheet.isSolo())
+						.lyrics(sheet.isLyrics())
+						.sheetUrl(sheet.getSheetUrl())
+						.thumbnailUrl(sheet.getThumbnailUrl())
+						.originalFileName(originalFileName)
+						.user(loggedInUser)
+						.build();
 			}
-
 			SheetPost sheetPost = SheetPost.builder()
-				.title(dto.getTitle())
-				.sheet(sheet)
-				.artist(loggedInUser)
-				.price(dto.getPrice())
-				.content(dto.getContent())
-				.build();
-
-			sheet.setSheetPost(sheetPost);
+					.title(dto.getTitle())
+					.sheet(sheet)
+					.artist(loggedInUser)
+					.price(dto.getPrice())
+					.content(dto.getContent())
+					.build();
 			SheetPost saved = sheetPostRepository.save(sheetPost);
 
 			// Redis에 uploadId:sheetPostId 매핑 저장
@@ -122,24 +119,23 @@ public class SheetPostApplicationService {
 
 			// 업로드가 이미 완료된 경우 즉시 URL 업데이트
 			if (fileUploadService.isUploadCompleted(uploadId)) {
+				log.info("파일 업로드 완료 이후 sheetPost 업데이트 중.");
 				String sheetUrl = uploadData.get("sheetUrl");
 				String thumbnailUrl = uploadData.get("thumbnailUrl");
 				String pageNumStr = uploadData.get("pageNum");
+				log.info("{},{},{}", sheetUrl, thumbnailUrl, pageNumStr);
 
 				if (sheetUrl != null && !sheetUrl.isEmpty() &&
-					thumbnailUrl != null && !thumbnailUrl.isEmpty() &&
-					pageNumStr != null && !pageNumStr.isEmpty()) {
+						thumbnailUrl != null && !thumbnailUrl.isEmpty() &&
+						pageNumStr != null && !pageNumStr.isEmpty()) {
 
 					int pageNum = Integer.parseInt(pageNumStr);
 					sheet.updateUrls(sheetUrl, thumbnailUrl);
 					sheet.updatePageNum(pageNum);
 
-					// 변경사항 저장
-					sheetPostRepository.save(saved);
-
 					log.info(
-						"Immediately updated URLs for SheetPost: uploadId={}, sheetPostId={}, sheetUrl={}, thumbnailUrl={}, pageNum={}",
-						uploadId, saved.getId(), sheetUrl, thumbnailUrl, pageNum);
+							"Immediately updated URLs for SheetPost: uploadId={}, sheetPostId={}, sheetUrl={}, thumbnailUrl={}, pageNum={}",
+							uploadId, saved.getId(), sheetUrl, thumbnailUrl, pageNum);
 				}
 			}
 
@@ -157,7 +153,7 @@ public class SheetPostApplicationService {
 	public SheetPostDto update(Long id, UpdateSheetPostDto dto) throws IOException {
 		User loggedInUser = authenticationUtil.getLoggedInUser();
 		SheetPost sheetPost = sheetPostRepository.findById(id)
-			.orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
+				.orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
 		log.debug("updateDto : {}", dto);
 
 		if (!sheetPost.getAuthor().equals(loggedInUser)) {
@@ -188,9 +184,9 @@ public class SheetPostApplicationService {
 				String originalFileName = uploadData.get("originalFileName");
 
 				if (sheetUrl != null && !sheetUrl.isEmpty() &&
-					thumbnailUrl != null && !thumbnailUrl.isEmpty() &&
-					pageNumStr != null && !pageNumStr.isEmpty()) {
-					
+						thumbnailUrl != null && !thumbnailUrl.isEmpty() &&
+						pageNumStr != null && !pageNumStr.isEmpty()) {
+
 					dto.getSheet().setSheetUrl(sheetUrl);
 					dto.getSheet().setThumbnailUrl(thumbnailUrl);
 					dto.getSheet().setPageNum(Integer.parseInt(pageNumStr));
@@ -214,9 +210,9 @@ public class SheetPostApplicationService {
 					sheetPost.updateSheet(sheet);
 
 					log.info(
-						"Immediately updated URLs for existing SheetPost: uploadId={}, sheetPostId={}, sheetUrl={}, thumbnailUrl={}, pageNum={}",
-						uploadId, sheetPost.getId(), sheetPost.getSheet().getSheetUrl(),
-						sheetPost.getSheet().getThumbnailUrl(), pageNum);
+							"Immediately updated URLs for existing SheetPost: uploadId={}, sheetPostId={}, sheetUrl={}, thumbnailUrl={}, pageNum={}",
+							uploadId, sheetPost.getId(), sheetPost.getSheet().getSheetUrl(),
+							sheetPost.getSheet().getThumbnailUrl(), pageNum);
 				}
 			}
 		}
@@ -230,9 +226,9 @@ public class SheetPostApplicationService {
 	public String getSheetUrl(Long id) {
 		User loggedInUser = authenticationUtil.getLoggedInUser();
 		SheetPost sheetPost = sheetPostRepository.findById(id)
-			.orElseThrow(() -> new EntityNotFoundException("Cannot find Sheetpost entity."));
+				.orElseThrow(() -> new EntityNotFoundException("Cannot find Sheetpost entity."));
 		User user = userRepository.findById(loggedInUser.getId())
-			.orElseThrow(() -> new EntityNotFoundException("Cannot find User entity."));
+				.orElseThrow(() -> new EntityNotFoundException("Cannot find User entity."));
 		if (!user.isPurchased(sheetPost))
 			throw new BadCredentialsException("구매하지 않은 sheet post 를 조회할 수 없습니다.");
 		URL fileUrl = uploadFileExecutor.createFileUrl(sheetPost.getSheet().getSheetUrl());
@@ -242,7 +238,7 @@ public class SheetPostApplicationService {
 	public void delete(Long id) {
 		User loggedInUser = authenticationUtil.getLoggedInUser();
 		SheetPost sheetPost = sheetPostRepository.findById(id)
-			.orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
+				.orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
 		uploadFileExecutor.removeSheetPost(sheetPost);
 		sheetPostIndexRepository.deleteById(id);
 		if (sheetPost.getAuthor().equals(loggedInUser))
@@ -254,7 +250,7 @@ public class SheetPostApplicationService {
 	public void likePost(Long id) {
 		User loggedInUser = authenticationUtil.getLoggedInUser();
 		SheetPost sheetPost = sheetPostRepository.findById(id)
-			.orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity:" + id));
+				.orElseThrow(() -> new EntityNotFoundException("Cannot find sheetPost entity:" + id));
 		loggedInUser.likeSheetPost(sheetPost);
 		likeCountRepository.incrementLikeCount(sheetPost);
 	}
@@ -262,15 +258,15 @@ public class SheetPostApplicationService {
 	public boolean isLikedSheetPost(Long id) {
 		User loggedInUser = authenticationUtil.getLoggedInUser();
 		SheetPost targetSheetPost = sheetPostRepository.findById(id)
-			.orElseThrow(() -> new EntityNotFoundException(("Cannot find SheetPost entity:" + id)));
+				.orElseThrow(() -> new EntityNotFoundException(("Cannot find SheetPost entity:" + id)));
 		return loggedInUser.getLikedSheetPosts()
-			.stream().anyMatch(likedSheetPost -> likedSheetPost.getSheetPost().equals(targetSheetPost));
+				.stream().anyMatch(likedSheetPost -> likedSheetPost.getSheetPost().equals(targetSheetPost));
 	}
 
 	public void dislikeSheetPost(Long id) {
 		User loggedInUser = authenticationUtil.getLoggedInUser();
 		SheetPost sheetPost = sheetPostRepository.findById(id)
-			.orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
+				.orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
 		boolean removed = loggedInUser.getLikedSheetPosts().removeIf(item -> item.getSheetPost().getId().equals(id));
 		if (!removed)
 			throw new EntityNotFoundException("좋아요를 누르지 않았습니다." + id);
@@ -280,46 +276,45 @@ public class SheetPostApplicationService {
 	public void scrapSheetPost(Long id) {
 		User loggedInUser = authenticationUtil.getLoggedInUser();
 		SheetPost sheetPost = sheetPostRepository.findById(id)
-			.orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity:" + id));
+				.orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity:" + id));
 		User user = userRepository.findById(loggedInUser.getId())
-			.orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
+				.orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
 		user.scrapSheetPost(sheetPost);
 	}
 
 	public boolean isScrappedSheetPost(Long id) {
 		User loggedInUser = authenticationUtil.getLoggedInUser();
 		SheetPost targetSheetPost = sheetPostRepository.findById(id)
-			.orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
+				.orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
 		User user = userRepository.findById(loggedInUser.getId())
-			.orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
+				.orElseThrow(() -> new EntityNotFoundException("Cannot find user entity : " + loggedInUser.getId()));
 		return user.getScrappedSheetPosts().stream().anyMatch(item -> item.getSheetPost().equals(targetSheetPost));
 	}
 
 	public void unScrapSheetPost(Long id) {
 		User loggedInUser = authenticationUtil.getLoggedInUser();
 		SheetPost sheetPost = sheetPostRepository.findById(id)
-			.orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
+				.orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
 
 		loggedInUser.unScrapSheetPost(sheetPost);
 	}
 
 	public Page<SheetPostListDto> getSheetPosts(
-		String searchSentence,
-		List<String> instrument,
-		List<String> difficulty,
-		List<String> genre,
-		Pageable pageable) throws IOException {
+			String searchSentence,
+			List<String> instrument,
+			List<String> difficulty,
+			List<String> genre,
+			Pageable pageable) throws IOException {
 		Page<Long> sheetPostIds = elasticSearchInstance.searchSheetPost(
-			searchSentence, instrument, difficulty, genre, pageable);
+				searchSentence, instrument, difficulty, genre, pageable);
 		List<SheetPostListDto> res = sheetPostRepository.findByIds(sheetPostIds.getContent(), pageable);
 		Map<Long, Integer> viewCountsBySheetPostIds = sheetPostViewCountRepository.getViewCountsByIds(
-			sheetPostIds.getContent());
+				sheetPostIds.getContent());
 		List<SheetPostListDto> sheetPostLists = res.stream().map(sheetPostListDto -> {
-				sheetPostListDto.updateViewCount(
+			sheetPostListDto.updateViewCount(
 					viewCountsBySheetPostIds.get(sheetPostListDto.getId()));
-				return sheetPostListDto;
-			}
-		).toList();
+			return sheetPostListDto;
+		}).toList();
 		return PageableExecutionUtils.getPage(sheetPostLists, pageable, sheetPostIds::getTotalElements);
 	}
 

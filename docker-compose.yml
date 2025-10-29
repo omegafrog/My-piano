@@ -53,7 +53,7 @@ services:
 
   redis-mypiano-user:
     image: redis:7-alpine
-    container_name: redis-mysql-user
+    container_name: redis-mypiano-user
     ports:
       - "6379:6379"
     volumes:
@@ -64,7 +64,7 @@ services:
 
   redis-mypiano-cache:
     image: redis:7-alpine
-    container_name: redis-mysql-cache
+    container_name: redis-mypiano-cache
     ports:
       - "6380:6379"
     volumes:

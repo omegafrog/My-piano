@@ -32,185 +32,186 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@ExtendWith(SpringExtension.class)
 @AutoConfigureMockMvc
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Import(TestUtilConfig.class)
 class OrderControllerTest {
 
-    @Autowired
-    MockMvc mockMvc;
-    @Autowired
-    private ObjectMapper objectMapper;
-    @Autowired
-    private TestUtil testUtil;
-    private TestUtil.TokenResponse user1Tokens;
-    private TestUtil.TokenResponse user2Tokens;
-    private TestUtil.TokenResponse buyerTokens;
-    @Autowired
-    private SecurityUserRepository securityUserRepository;
+        @Autowired
+        MockMvc mockMvc;
+        @Autowired
+        private ObjectMapper objectMapper;
+        @Autowired
+        private TestUtil testUtil;
+        private TestUtil.TokenResponse user1Tokens;
+        private TestUtil.TokenResponse user2Tokens;
+        private TestUtil.TokenResponse buyerTokens;
+        @Autowired
+        private SecurityUserRepository securityUserRepository;
 
-    @Autowired
-    private Cleanup cleanup;
+        @Autowired
+        private Cleanup cleanup;
 
-    @BeforeAll
-    void cleanBefore() {
-        cleanup.cleanUp();
-    }
+        @BeforeAll
+        void cleanBefore() {
+                cleanup.cleanUp();
+        }
 
-    @BeforeEach
-    void setUp() throws Exception {
-        RegisterUserDto user1 = TestUtil.user1;
-        testUtil.register(mockMvc, user1);
-        user1Tokens = testUtil.login(mockMvc, user1.getUsername(), user1.getPassword());
+        @BeforeEach
+        void setUp() throws Exception {
+                RegisterUserDto user1 = TestUtil.user1;
+                testUtil.register(mockMvc, user1);
+                user1Tokens = testUtil.login(mockMvc, user1.getUsername(), user1.getPassword());
 
-        RegisterUserDto buyer = TestUtil.user3;
-        testUtil.register(mockMvc, buyer);
-        buyerTokens = testUtil.login(mockMvc, buyer.getUsername(), buyer.getPassword());
+                RegisterUserDto buyer = TestUtil.user3;
+                testUtil.register(mockMvc, buyer);
+                buyerTokens = testUtil.login(mockMvc, buyer.getUsername(), buyer.getPassword());
 
-        testUtil.chargeCash(mockMvc, 20000, buyerTokens);
+                testUtil.chargeCash(mockMvc, 20000, buyerTokens);
 
-        RegisterUserDto user2 = TestUtil.user2;
-        testUtil.register(mockMvc, user2);
+                RegisterUserDto user2 = TestUtil.user2;
+                testUtil.register(mockMvc, user2);
 
-        SecurityUser securityUser = securityUserRepository.findByUsername(user2.getUsername())
-                .orElseThrow(() -> new EntityNotFoundException());
-        securityUser.changeRole(Role.CREATOR);
-        securityUserRepository.save(securityUser);
-        user2Tokens = testUtil.login(mockMvc, user2.getUsername(), user2.getPassword());
-    }
+                SecurityUser securityUser = securityUserRepository.findByUsername(user2.getUsername())
+                                .orElseThrow(() -> new EntityNotFoundException());
+                securityUser.changeRole(Role.CREATOR);
+                securityUserRepository.save(securityUser);
+                user2Tokens = testUtil.login(mockMvc, user2.getUsername(), user2.getPassword());
+        }
 
-    @AfterEach
-    void setCleanup() {
-        cleanup.cleanUp();
-    }
+        @AfterEach
+        void setCleanup() {
+                cleanup.cleanUp();
+        }
 
-    private String baseUrl = "/api/v1/order";
+        private String baseUrl = "/api/v1/order";
 
-    @Test
-    void orderSheet() throws Exception {
-        SheetPostDto savedSheetPost =
-                testUtil.writeSheetPost(mockMvc, user1Tokens, TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1));
-        OrderRegisterDto orderDto = OrderRegisterDto.builder()
-                .itemId(savedSheetPost.getId())
-                .build();
+        @Test
+        void orderSheet() throws Exception {
+                SheetPostDto savedSheetPost = testUtil.writeSheetPost(mockMvc, user1Tokens,
+                                TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1));
+                OrderRegisterDto orderDto = OrderRegisterDto.builder()
+                                .itemId(savedSheetPost.getId())
+                                .build();
 
-        String data = objectMapper.writeValueAsString(orderDto);
-        mockMvc.perform(post(baseUrl + "/sheet")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(data)
-                        .header(HttpHeaders.AUTHORIZATION, buyerTokens.getAccessToken())
-                        .cookie(buyerTokens.getRefreshToken()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("200"))
-                .andDo(print());
+                String data = objectMapper.writeValueAsString(orderDto);
+                mockMvc.perform(post(baseUrl + "/sheet")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(data)
+                                .header(HttpHeaders.AUTHORIZATION, buyerTokens.getAccessToken())
+                                .cookie(buyerTokens.getRefreshToken()))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.status").value("200"))
+                                .andDo(print());
 
-        List<SheetPostDto> purchasedSheetPosts = testUtil.getPurchasedSheetPosts(mockMvc, buyerTokens);
+                List<SheetPostDto> purchasedSheetPosts = testUtil.getPurchasedSheetPosts(mockMvc, buyerTokens);
 
-        Assertions.assertThat(purchasedSheetPosts).isNotEmpty();
-        Assertions.assertThat(purchasedSheetPosts).contains(savedSheetPost);
-    }
+                Assertions.assertThat(purchasedSheetPosts).isNotEmpty();
+                Assertions.assertThat(purchasedSheetPosts).contains(savedSheetPost);
+        }
 
+        @Test
+        void orderLesson() throws Exception {
+                SheetPostDto savedSheetPost = testUtil.writeSheetPost(mockMvc, user1Tokens,
+                                TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1));
+                LessonDto savedLesson = testUtil.writeLesson(mockMvc, user2Tokens,
+                                TestUtil.registerLessonDto(savedSheetPost.getId()));
+                OrderRegisterDto order2 = OrderRegisterDto.builder()
+                                .itemId(savedLesson.getId())
+                                .build();
 
-    @Test
-    void orderLesson() throws Exception {
-        SheetPostDto savedSheetPost = testUtil.writeSheetPost(mockMvc, user1Tokens, TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1));
-        LessonDto savedLesson = testUtil.writeLesson(mockMvc, user2Tokens, TestUtil.registerLessonDto(savedSheetPost.getId()));
-        OrderRegisterDto order2 = OrderRegisterDto.builder()
-                .itemId(savedLesson.getId())
-                .build();
+                mockMvc.perform(post(baseUrl + "/lessons")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(order2))
+                                .header(HttpHeaders.AUTHORIZATION, buyerTokens.getAccessToken())
+                                .cookie(buyerTokens.getRefreshToken()))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.status").value("200"))
+                                .andDo(print());
+                List<LessonDto> purchasedLessons = testUtil.getPurchasedLessons(mockMvc, buyerTokens);
 
-        mockMvc.perform(post(baseUrl + "/lessons")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(order2))
-                        .header(HttpHeaders.AUTHORIZATION, buyerTokens.getAccessToken())
-                        .cookie(buyerTokens.getRefreshToken()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("200"))
-                .andDo(print());
-        List<LessonDto> purchasedLessons = testUtil.getPurchasedLessons(mockMvc, buyerTokens);
+                Assertions.assertThat(purchasedLessons).isNotEmpty();
+                Assertions.assertThat(purchasedLessons).extracting("id").contains(savedLesson.getId());
+        }
 
-        Assertions.assertThat(purchasedLessons).isNotEmpty();
-        Assertions.assertThat(purchasedLessons).extracting("id").contains(savedLesson.getId());
-    }
+        @Test
+        void cancelOrderTest() throws Exception {
+                SheetPostDto savedSheetPost = testUtil.writeSheetPost(mockMvc, user1Tokens,
+                                TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1));
+                OrderRegisterDto orderDto = OrderRegisterDto.builder()
+                                .itemId(savedSheetPost.getId())
+                                .build();
+                String data = objectMapper.writeValueAsString(orderDto);
+                String response = mockMvc.perform(post(baseUrl + "/sheet")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(data)
+                                .header(HttpHeaders.AUTHORIZATION, buyerTokens.getAccessToken())
+                                .cookie(buyerTokens.getRefreshToken()))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.status").value("200"))
+                                .andDo(print())
+                                .andReturn().getResponse().getContentAsString();
+                Long id = objectMapper.readTree(response).get("data").get("id").asLong();
 
-    @Test
-    void cancelOrderTest() throws Exception {
-        SheetPostDto savedSheetPost = testUtil.writeSheetPost(mockMvc, user1Tokens, TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1));
-        OrderRegisterDto orderDto = OrderRegisterDto.builder()
-                .itemId(savedSheetPost.getId())
-                .build();
-        String data = objectMapper.writeValueAsString(orderDto);
-        String response = mockMvc.perform(post(baseUrl + "/sheet")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(data)
-                        .header(HttpHeaders.AUTHORIZATION, buyerTokens.getAccessToken())
-                        .cookie(buyerTokens.getRefreshToken()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("200"))
-                .andDo(print())
-                .andReturn().getResponse().getContentAsString();
-        Long id = objectMapper.readTree(response).get("data").get("id").asLong();
+                mockMvc.perform(delete(baseUrl + "/" + id)
+                                .header(HttpHeaders.AUTHORIZATION, buyerTokens.getAccessToken())
+                                .cookie(buyerTokens.getRefreshToken()))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.status").value("200"))
+                                .andDo(print());
 
-        mockMvc.perform(delete(baseUrl + "/" + id)
-                        .header(HttpHeaders.AUTHORIZATION, buyerTokens.getAccessToken())
-                        .cookie(buyerTokens.getRefreshToken()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("200"))
-                .andDo(print());
+                mockMvc.perform(get("/api/v1/user/purchasedSheets")
+                                .header(HttpHeaders.AUTHORIZATION, buyerTokens.getAccessToken())
+                                .cookie(buyerTokens.getRefreshToken()))
+                                .andDo(print())
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.status").value("200"))
+                                .andExpect(jsonPath("$.data").isEmpty());
 
-        mockMvc.perform(get("/api/v1/user/purchasedSheets")
-                        .header(HttpHeaders.AUTHORIZATION, buyerTokens.getAccessToken())
-                        .cookie(buyerTokens.getRefreshToken()))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("200"))
-                .andExpect(jsonPath("$.data").isEmpty());
+        }
 
-    }
+        @Test
+        void getAllOrdersTest() throws Exception {
 
-    @Test
-    void getAllOrdersTest() throws Exception {
+                SheetPostDto savedSheetPost = testUtil.writeSheetPost(mockMvc, user1Tokens,
+                                TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1));
+                OrderRegisterDto orderDto = OrderRegisterDto.builder()
+                                .itemId(savedSheetPost.getId())
+                                .build();
+                String data = objectMapper.writeValueAsString(orderDto);
+                mockMvc.perform(post(baseUrl + "/sheet")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(data)
+                                .header(HttpHeaders.AUTHORIZATION, buyerTokens.getAccessToken())
+                                .cookie(buyerTokens.getRefreshToken()))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.status").value("200"))
+                                .andDo(print());
 
-        SheetPostDto savedSheetPost = testUtil.writeSheetPost(mockMvc, user1Tokens, TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1));
-        OrderRegisterDto orderDto = OrderRegisterDto.builder()
-                .itemId(savedSheetPost.getId())
-                .build();
-        String data = objectMapper.writeValueAsString(orderDto);
-        mockMvc.perform(post(baseUrl + "/sheet")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(data)
-                        .header(HttpHeaders.AUTHORIZATION, buyerTokens.getAccessToken())
-                        .cookie(buyerTokens.getRefreshToken()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("200"))
-                .andDo(print());
+                String result = mockMvc.perform(get(baseUrl)
+                                .header(HttpHeaders.AUTHORIZATION, buyerTokens.getAccessToken())
+                                .cookie(buyerTokens.getRefreshToken()))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.status").value("200"))
+                                .andDo(print())
+                                .andReturn().getResponse().getContentAsString();
+                Assertions.assertThat(objectMapper.readTree(result).get("data")).isNotEmpty();
+        }
 
-
-        String result = mockMvc.perform(get(baseUrl)
-                        .header(HttpHeaders.AUTHORIZATION, buyerTokens.getAccessToken())
-                        .cookie(buyerTokens.getRefreshToken())
-                )
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("200"))
-                .andDo(print())
-                .andReturn().getResponse().getContentAsString();
-        Assertions.assertThat(objectMapper.readTree(result).get("data")).isNotEmpty();
-    }
-
-    @Test
-    void createOrderValidationFailTest() throws Exception {
-        SheetPostDto savedSheetPost = testUtil.writeSheetPost(mockMvc, user1Tokens, TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1));
-        OrderRegisterDto orderDto = OrderRegisterDto.builder()
-                .itemId(savedSheetPost.getId())
-                .build();
-        String data = objectMapper.writeValueAsString(orderDto);
-        mockMvc.perform(post(baseUrl + "/sheet")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(data))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.value()))
-                .andDo(print());
-    }
+        @Test
+        void createOrderValidationFailTest() throws Exception {
+                SheetPostDto savedSheetPost = testUtil.writeSheetPost(mockMvc, user1Tokens,
+                                TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1));
+                OrderRegisterDto orderDto = OrderRegisterDto.builder()
+                                .itemId(savedSheetPost.getId())
+                                .build();
+                String data = objectMapper.writeValueAsString(orderDto);
+                mockMvc.perform(post(baseUrl + "/sheet")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(data))
+                                .andExpect(status().isUnauthorized())
+                                .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.value()))
+                                .andDo(print());
+        }
 }

@@ -59,81 +59,92 @@ public class TestUtil {
 	}
 
 	public static RegisterUserDto user1 = RegisterUserDto.builder()
-		.name("user1")
-		.phoneNum("010-1111-2222")
-		.profileSrc("src")
-		.loginMethod(LoginMethod.EMAIL)
-		.email("email1@email.com")
-		.username("user1")
-		.password("password")
-		.build();
+			.name("user1")
+			.phoneNum("010-1111-2222")
+			.profileSrc("src")
+			.loginMethod(LoginMethod.EMAIL)
+			.email("email1@email.com")
+			.username("user1")
+			.password("password")
+			.build();
 	public static RegisterUserDto user2 = RegisterUserDto.builder()
-		.name("user2")
-		.phoneNum("010-1111-2222")
-		.profileSrc("src")
-		.email("email2@email.com")
-		.loginMethod(LoginMethod.EMAIL)
-		.username("user2")
-		.password("password")
-		.build();
+			.name("user2")
+			.phoneNum("010-1111-2222")
+			.profileSrc("src")
+			.email("email2@email.com")
+			.loginMethod(LoginMethod.EMAIL)
+			.username("user2")
+			.password("password")
+			.build();
 
 	public static RegisterUserDto user3 = RegisterUserDto.builder()
-		.name("user3")
-		.phoneNum("010-1111-2222")
-		.profileSrc("src")
-		.email("email3@email.com")
-		.loginMethod(LoginMethod.EMAIL)
-		.username("user3")
-		.password("password")
-		.build();
+			.name("user3")
+			.phoneNum("010-1111-2222")
+			.profileSrc("src")
+			.email("email3@email.com")
+			.loginMethod(LoginMethod.EMAIL)
+			.username("user3")
+			.password("password")
+			.build();
 
 	public static RegisterSheetPostDto registerSheetPostDto(RegisterSheetDto sheetDto) {
 		return RegisterSheetPostDto.builder()
-			.title("title")
-			.content("content")
-			.price(12000)
-			.sheetDto(sheetDto)
-			.discountRate(0d)
-			.build();
+				.title("title")
+				.content("content")
+				.price(12000)
+				.sheetDto(sheetDto)
+				.discountRate(0d)
+				.build();
 	}
 
 	public static RegisterLessonDto registerLessonDto(Long sheetId) {
 		return RegisterLessonDto.builder()
-			.title("title")
-			.sheetId(sheetId)
-			.price(2000)
-			.lessonInformation(LessonInformation.builder()
-				.instrument(Instrument.GUITAR_ACOUSTIC)
-				.lessonDescription("hoho")
-				.category(Category.ACCOMPANIMENT)
-				.artistDescription("god")
-				.policy(RefundPolicy.REFUND_IN_7DAYS)
-				.build())
-			.videoInformation(
-				VideoInformation.builder()
-					.videoUrl("url")
-					.runningTime(LocalTime.of(0, 20)).build())
-			.subTitle("subtitle")
-			.build();
+				.title("title")
+				.sheetId(sheetId)
+				.price(2000)
+				.lessonInformation(LessonInformation.builder()
+						.instrument(Instrument.GUITAR_ACOUSTIC)
+						.lessonDescription("hoho")
+						.category(Category.ACCOMPANIMENT)
+						.artistDescription("god")
+						.policy(RefundPolicy.REFUND_IN_7DAYS)
+						.build())
+				.videoInformation(
+						VideoInformation.builder()
+								.videoUrl("url")
+								.runningTime(LocalTime.of(0, 20)).build())
+				.subTitle("subtitle")
+				.build();
 	}
 
-	public SheetPostDto writeSheetPost(MockMvc mockMvc, TokenResponse tokens, RegisterSheetPostDto dto) throws
-		Exception {
-		MockMultipartFile file = new MockMultipartFile("sheetFiles", "img.pdf", "application/pdf",
-			new FileInputStream("src/test/sheet.pdf"));
-		String contentAsString = mockMvc.perform(multipart("/api/v1/sheet-post")
+	public SheetPostDto writeSheetPost(MockMvc mockMvc, TokenResponse tokens, RegisterSheetPostDto dto) throws Exception {
+
+		MockMultipartFile file = new MockMultipartFile("file", "img.pdf", "application/pdf",
+				new FileInputStream("src/test/sheet.pdf"));
+		String uploadIdString = mockMvc.perform(multipart("/api/v1/files/upload")
 				.file(file)
-				.part(new MockPart("sheetInfo", objectMapper.writeValueAsString(dto).getBytes(
-					StandardCharsets.UTF_8
-				)))
+				.contentType("application/json")
 				.header(HttpHeaders.AUTHORIZATION, tokens.getAccessToken())
 				.cookie(tokens.getRefreshToken()))
-			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
-			.andReturn().getResponse().getContentAsString();
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+				.andReturn().getResponse().getContentAsString();
+		String uploadId = objectMapper.readTree(uploadIdString).get("data").get("uploadId").asText();
+		dto.setUploadId(uploadId);
+		Thread.sleep(5000);
+
+		String contentAsString = mockMvc.perform(post("/api/v1/sheet-post").content(
+				objectMapper.writeValueAsString(dto))
+				.header(HttpHeaders.AUTHORIZATION, tokens.getAccessToken())
+				.contentType("application/json")
+				.cookie(tokens.getRefreshToken()))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+				.andDo(print())
+				.andReturn().getResponse().getContentAsString();
 
 		return objectMapper.convertValue(objectMapper.readTree(contentAsString).get("data"),
-			SheetPostDto.class);
+				SheetPostDto.class);
 	}
 
 	public LessonDto writeLesson(MockMvc mockMvc, TokenResponse tokens, RegisterLessonDto dto) throws Exception {
@@ -142,17 +153,16 @@ public class TestUtil {
 				.cookie(tokens.getRefreshToken())
 				.content(objectMapper.writeValueAsString(dto))
 				.contentType(MediaType.APPLICATION_JSON))
-			.andDo(print())
-			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
-			.andReturn().getResponse().getContentAsString();
+				.andDo(print())
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+				.andReturn().getResponse().getContentAsString();
 
 		return objectMapper.convertValue(objectMapper.readTree(contentAsString).get("data"), LessonDto.class);
 	}
 
 	public static final String sheetUrl = "hi";
-	public static RegisterSheetDto registerSheetDto1 =
-		RegisterSheetDto.builder()
+	public static RegisterSheetDto registerSheetDto1 = RegisterSheetDto.builder()
 			.title("title")
 			.instrument(Instrument.GUITAR_ACOUSTIC.ordinal())
 			.lyrics(false)
@@ -160,8 +170,7 @@ public class TestUtil {
 			.genres(new Genres(Genre.BGM, Genre.CAROL))
 			.isSolo(true)
 			.build();
-	public static RegisterSheetDto registerSheetDto2 =
-		RegisterSheetDto.builder()
+	public static RegisterSheetDto registerSheetDto2 = RegisterSheetDto.builder()
 			.title("title")
 			.instrument(Instrument.GUITAR_ACOUSTIC.ordinal())
 			.lyrics(false)
@@ -175,24 +184,23 @@ public class TestUtil {
 				.param("amount", String.valueOf(amount))
 				.header(HttpHeaders.AUTHORIZATION, tokenResponse.getAccessToken())
 				.cookie(tokenResponse.getRefreshToken()))
-			.andDo(print())
-			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
-			.andReturn();
+				.andDo(print())
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+				.andReturn();
 	}
 
 	public List<SheetPostDto> getPurchasedSheetPosts(MockMvc mockMvc, TokenResponse tokens) throws Exception {
 		String contentAsString = mockMvc.perform(get("/api/v1/user/purchasedSheets")
 				.header(HttpHeaders.AUTHORIZATION, tokens.getAccessToken())
 				.cookie(tokens.getRefreshToken()))
-			.andDo(print())
-			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
-			.andReturn().getResponse().getContentAsString();
+				.andDo(print())
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+				.andReturn().getResponse().getContentAsString();
 		List<SheetPostDto> sheetPostDtos = new ArrayList<>();
 		objectMapper.readTree(contentAsString).get("data").forEach(item -> sheetPostDtos.add(
-			objectMapper.convertValue(item, SheetPostDto.class)
-		));
+				objectMapper.convertValue(item, SheetPostDto.class)));
 		return sheetPostDtos;
 	}
 
@@ -200,51 +208,51 @@ public class TestUtil {
 		String contentAsString = mockMvc.perform(get("/api/v1/user/purchasedLessons")
 				.header(HttpHeaders.AUTHORIZATION, user1Tokens.getAccessToken())
 				.cookie(user1Tokens.getRefreshToken()))
-			.andDo(print())
-			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
-			.andReturn().getResponse().getContentAsString();
+				.andDo(print())
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+				.andReturn().getResponse().getContentAsString();
 
 		List<LessonDto> lessonDtos = new ArrayList<>();
-		objectMapper.readTree(contentAsString).get("data").forEach(item ->
-			lessonDtos.add(objectMapper.convertValue(item, LessonDto.class)));
+		objectMapper.readTree(contentAsString).get("data")
+				.forEach(item -> lessonDtos.add(objectMapper.convertValue(item, LessonDto.class)));
 		return lessonDtos;
 	}
 
 	public static Lesson lesson(SheetPost sheet, User artist) {
 		return Lesson.builder()
-			.sheetPost(sheet)
-			.title("lesson1")
-			.price(2000)
-			.lessonInformation(LessonInformation.builder()
-				.instrument(Instrument.GUITAR_ACOUSTIC)
-				.lessonDescription("hoho")
-				.category(Category.ACCOMPANIMENT)
-				.artistDescription("god")
-				.policy(RefundPolicy.REFUND_IN_7DAYS)
-				.build())
-			.lessonProvider(artist)
-			.subTitle("this is subtitle")
-			.videoInformation(
-				VideoInformation.builder()
-					.videoUrl("url")
-					.runningTime(LocalTime.of(0, 20))
-					.build())
-			.build();
+				.sheetPost(sheet)
+				.title("lesson1")
+				.price(2000)
+				.lessonInformation(LessonInformation.builder()
+						.instrument(Instrument.GUITAR_ACOUSTIC)
+						.lessonDescription("hoho")
+						.category(Category.ACCOMPANIMENT)
+						.artistDescription("god")
+						.policy(RefundPolicy.REFUND_IN_7DAYS)
+						.build())
+				.lessonProvider(artist)
+				.subTitle("this is subtitle")
+				.videoInformation(
+						VideoInformation.builder()
+								.videoUrl("url")
+								.runningTime(LocalTime.of(0, 20))
+								.build())
+				.build();
 	}
 
 	public static Sheet sheet(User artist) {
 		return Sheet.builder()
-			.title("title")
-			.sheetUrl("path1")
-			.genres(Genres.builder().genre1(Genre.BGM).build())
-			.user(artist)
-			.difficulty(Difficulty.MEDIUM)
-			.instrument(Instrument.GUITAR_ACOUSTIC)
-			.isSolo(true)
-			.lyrics(false)
-			.pageNum(3)
-			.build();
+				.title("title")
+				.sheetUrl("path1")
+				.genres(Genres.builder().genre1(Genre.BGM).build())
+				.user(artist)
+				.difficulty(Difficulty.MEDIUM)
+				.instrument(Instrument.GUITAR_ACOUSTIC)
+				.isSolo(true)
+				.lyrics(false)
+				.pageNum(3)
+				.build();
 	}
 
 	public TokenResponse login(MockMvc mockMvc, String username, String password) throws Exception {
@@ -252,13 +260,13 @@ public class TestUtil {
 		MvcResult result = mockMvc.perform(post("/api/v1/user/login")
 				.contentType(MediaType.APPLICATION_FORM_URLENCODED)
 				.content(content))
-			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
-			.andDo(print())
-			.andReturn();
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+				.andDo(print())
+				.andReturn();
 		String responseBody = result.getResponse().getContentAsString();
 		String accessToken = objectMapper.readTree(responseBody)
-			.get("data").get("access token").asText();
+				.get("data").get("access token").asText();
 		Cookie refreshToken = result.getResponse().getCookie("refreshToken");
 		return new TokenResponse(accessToken, refreshToken);
 	}
@@ -266,22 +274,22 @@ public class TestUtil {
 	public void register(MockMvc mockMvc, RegisterUserDto user1) throws Exception {
 		String s = objectMapper.writeValueAsString(user1);
 		MockMultipartFile registerInfo = new MockMultipartFile("registerInfo", "", "application/json",
-			s.getBytes());
+				s.getBytes());
 		mockMvc.perform(multipart("/api/v1/user/register")
 				.file(registerInfo)
 				.header(HttpHeaders.CONTENT_TYPE, MediaType.MULTIPART_FORM_DATA_VALUE))
-			.andExpect(status().isOk())
-			.andDo(print());
+				.andExpect(status().isOk())
+				.andDo(print());
 	}
 
 	public UserInfo getUserInfo(MockMvc mockMvc, TokenResponse tokenResponse) throws Exception {
 		String contentAsString = mockMvc.perform(get("/api/v1/user")
 				.header(HttpHeaders.AUTHORIZATION, tokenResponse.getAccessToken())
 				.cookie(tokenResponse.getRefreshToken()))
-			.andDo(print())
-			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
-			.andReturn().getResponse().getContentAsString();
+				.andDo(print())
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+				.andReturn().getResponse().getContentAsString();
 		return objectMapper.convertValue(objectMapper.readTree(contentAsString).get("data"), UserInfo.class);
 	}
 }

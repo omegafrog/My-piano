@@ -89,7 +89,7 @@ class SheetPostControllerTest {
                                 .andReturn().getResponse().getContentAsString();
                 String uploadId = objectMapper.readTree(uploadIdString).get("data").get("uploadId").asText();
                 registerDto.setUploadId(uploadId);
-                Thread.sleep(1000);
+                Thread.sleep(4000);
 
                 String contentAsString = mockMvc.perform(post("/api/v1/sheet-post").content(
                                 objectMapper.writeValueAsString(registerDto))
@@ -133,7 +133,7 @@ class SheetPostControllerTest {
                                 .andReturn().getResponse().getContentAsString();
                 String uploadId = objectMapper.readTree(uploadIdString).get("data").get("uploadId").asText();
                 registerDto.setUploadId(uploadId);
-                Thread.sleep(1000);
+                Thread.sleep(5000);
 
                 String contentAsString = mockMvc.perform(post("/api/v1/sheet-post").content(
                                 objectMapper.writeValueAsString(registerDto))
@@ -159,7 +159,7 @@ class SheetPostControllerTest {
                                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                                 .andReturn().getResponse().getContentAsString();
                 uploadId = objectMapper.readTree(uploadIdString).get("data").get("uploadId").asText();
-                Thread.sleep(2000);
+                Thread.sleep(5000);
 
                 UpdateSheetPostDto updateBuild = UpdateSheetPostDto.builder()
                                 .title("changed")
@@ -253,32 +253,13 @@ class SheetPostControllerTest {
                 TestUtil.TokenResponse userToken = testUtil.login(mockMvc, TestUtil.user2.getUsername(),
                                 TestUtil.user2.getPassword());
                 RegisterSheetPostDto registerDto = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1);
+                testUtil.writeSheetPost(mockMvc, userToken, registerDto);
                 MockMultipartFile file = new MockMultipartFile("sheetFiles", "img.pdf", "application/pdf",
                                 new FileInputStream("src/test/sheet.pdf"));
-                String contentAsString = mockMvc.perform(multipart("/api/v1/sheet-post")
-                                .file(file)
-                                .part(new MockPart("sheetInfo", objectMapper.writeValueAsString(registerDto).getBytes(
-                                                StandardCharsets.UTF_8)))
-                                .header(HttpHeaders.AUTHORIZATION, artistToken.getAccessToken())
-                                .cookie(artistToken.getRefreshToken()))
-                                .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
-                                .andReturn().getResponse().getContentAsString();
-                Long id = objectMapper.readTree(contentAsString).get("data").get("id").asLong();
+                Long id = testUtil.writeSheetPost(mockMvc, userToken, registerDto).getId();
 
                 RegisterSheetPostDto registerDto2 = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto2);
-                MockMultipartFile file2 = new MockMultipartFile("sheetFiles", "img.pdf", "application/pdf",
-                                new FileInputStream("src/test/sheet.pdf"));
-                String contentAsString2 = mockMvc.perform(multipart("/api/v1/sheet-post")
-                                .file(file2)
-                                .part(new MockPart("sheetInfo", objectMapper.writeValueAsString(registerDto2).getBytes(
-                                                StandardCharsets.UTF_8)))
-                                .header(HttpHeaders.AUTHORIZATION, artistToken.getAccessToken())
-                                .cookie(artistToken.getRefreshToken()))
-                                .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
-                                .andReturn().getResponse().getContentAsString();
-                Long id2 = objectMapper.readTree(contentAsString2).get("data").get("id").asLong();
+                Long id2 = testUtil.writeSheetPost(mockMvc, userToken, registerDto2).getId();
 
                 // when
                 String sheetposts = mockMvc.perform(get("/api/v1/sheet-post"))
@@ -304,19 +285,7 @@ class SheetPostControllerTest {
                 TestUtil.TokenResponse userToken = testUtil.login(mockMvc, TestUtil.user2.getUsername(),
                                 TestUtil.user2.getPassword());
                 RegisterSheetPostDto registerDto = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1);
-                MockMultipartFile file = new MockMultipartFile("sheetFiles", "img.pdf", "application/pdf",
-                                new FileInputStream("src/test/sheet.pdf"));
-                String contentAsString = mockMvc.perform(multipart("/api/v1/sheet-post")
-                                .file(file)
-                                .part(new MockPart("sheetInfo", objectMapper.writeValueAsString(registerDto).getBytes(
-                                                StandardCharsets.UTF_8)))
-                                .header(HttpHeaders.AUTHORIZATION, artistToken.getAccessToken())
-                                .cookie(artistToken.getRefreshToken()))
-                                .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
-                                .andReturn().getResponse().getContentAsString();
-
-                Long id = objectMapper.readTree(contentAsString).get("data").get("id").asLong();
+                Long id = testUtil.writeSheetPost(mockMvc, userToken, registerDto).getId();
 
                 RegisterCommentDto dto = RegisterCommentDto.builder()
                                 .content("content")

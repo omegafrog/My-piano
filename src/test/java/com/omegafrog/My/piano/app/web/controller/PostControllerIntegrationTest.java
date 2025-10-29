@@ -41,424 +41,422 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import(TestUtilConfig.class)
 class PostControllerIntegrationTest {
 
-    @Autowired
-    MockMvc mockMvc;
+        @Autowired
+        MockMvc mockMvc;
 
+        @Autowired
+        private ObjectMapper objectMapper;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+        private TestUtil.TokenResponse user1Token;
+        private TestUtil.TokenResponse user2Token;
 
+        @Autowired
+        private TestUtil testUtil;
 
-    private TestUtil.TokenResponse user1Token;
-    private TestUtil.TokenResponse user2Token;
+        @Autowired
+        private Cleanup cleanup;
 
-    @Autowired
-    private TestUtil testUtil;
-
-    @Autowired
-    private Cleanup cleanup;
-
-    @BeforeEach
-    void getTokens() throws Exception {
-        testUtil.register(mockMvc, TestUtil.user1);
-        user1Token = testUtil.login(mockMvc, TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
-        testUtil.register(mockMvc, TestUtil.user2);
-        user2Token = testUtil.login(mockMvc, TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
-    }
-
-    @AfterEach
-    void cleanUp() {
-        cleanup.cleanUp();
-    }
-
-    @Test
-    @DisplayName("로그인한 유저는 커뮤니티 글을 작성하고 조회할 수 있어야 한다.")
-    void writePost() throws Exception {
-        //when
-        PostRegisterDto postDto = PostRegisterDto.builder()
-                .title("title")
-                .content("content")
-                .build();
-        String string = mockMvc.perform(post("/api/v1/community/posts")
-                        .header(HttpHeaders.AUTHORIZATION, user1Token.getAccessToken())
-                        .cookie(user1Token.getRefreshToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(postDto)))
-                .andExpect(status().isOk())
-                .andDo(print())
-                .andReturn().getResponse().getContentAsString();
-        Long postId = objectMapper.readTree(string).get("data").get("id").asLong();
-
-        MvcResult mvcResult2 = mockMvc.perform(get("/api/v1/community/posts/" + postId)
-                        .header(HttpHeaders.AUTHORIZATION, user1Token.getAccessToken())
-                        .cookie(user1Token.getRefreshToken()))
-                .andExpect(status().isOk())
-                .andReturn();
-        //then
-        String contentAsString2 = mvcResult2.getResponse().getContentAsString();
-        JsonNode jsonNode = objectMapper.readTree(contentAsString2);
-        JsonNode post = jsonNode.get("data");
-        String id = post.get("id").asText();
-        String content = post.get("content").asText();
-        Assertions.assertThat(id).isEqualTo(postId.toString());
-        Assertions.assertThat(content).isEqualTo("content");
-    }
-
-    @Test
-    @DisplayName("로그인하지 않은 유저는 커뮤니티 글을 작성할 수 없다.")
-    void writePostAuthorizationTest() throws Exception {
-        PostRegisterDto postDto = PostRegisterDto.builder()
-                .title("title")
-                .content("content")
-                .build();
-        mockMvc.perform(post("/api/v1/community/posts")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(postDto)))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.value()));
-    }
-
-
-    @Test
-    @DisplayName("작성자는 자신이 작성할 커뮤니티 글을 수정할 수 있다.")
-    void updatePost() throws Exception {
-        //given
-        // write new post
-        PostRegisterDto postDto = PostRegisterDto.builder()
-                .title("title")
-                .content("content")
-                .build();
-        String string = mockMvc.perform(post("/api/v1/community/posts")
-                        .header(HttpHeaders.AUTHORIZATION, user1Token.getAccessToken())
-                        .cookie(user1Token.getRefreshToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(postDto)))
-                .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
-        Long postId = objectMapper.readTree(string).get("data").get("id").asLong();
-        System.out.println("postId = " + postId);
-
-        //when
-        UpdatePostDto updateDto = UpdatePostDto.builder()
-                .title("changed")
-                .content("changedContent")
-                .build();
-
-        MvcResult mvcResult = mockMvc.perform(post("/api/v1/community/posts/" + postId)
-                        .header(HttpHeaders.AUTHORIZATION, user1Token.getAccessToken())
-                        .cookie(user1Token.getRefreshToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updateDto)))
-                .andExpect(status().isOk())
-                .andReturn();
-        //then
-        String s = mvcResult.getResponse().getContentAsString();
-        JsonNode postDto1 = objectMapper.readTree(s).get("data");
-        Long updatedId = postDto1.get("id").asLong();
-        String content = postDto1.get("content").asText();
-        Assertions.assertThat(updatedId).isEqualTo(postId);
-        Assertions.assertThat(content).isEqualTo("changedContent");
-    }
-
-    @Test
-    @DisplayName("작성자가 아닌 유저는 커뮤니티 글을 수정할 수 없다.")
-    void updatePostAuthorizationTest() throws Exception {
-        // given
-        // write new post by user1
-        PostRegisterDto postDto = PostRegisterDto.builder()
-                .title("title")
-                .content("content")
-                .build();
-        String string = mockMvc.perform(post("/api/v1/community/posts")
-                        .header(HttpHeaders.AUTHORIZATION, user1Token.getAccessToken())
-                        .cookie(user1Token.getRefreshToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(postDto)))
-                .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
-        Long postId = objectMapper.readTree(string).get("data").get("id").asLong();
-        System.out.println("postId = " + postId);
-
-        // when
-        // update user1's post using user2's token
-        UpdatePostDto updateDto = UpdatePostDto.builder()
-                .title("changed")
-                .content("changedContent")
-                .build();
-
-        //when
-        mockMvc.perform(post("/api/v1/community/posts/" + postId)
-                        .header(HttpHeaders.AUTHORIZATION, user2Token.getAccessToken())
-                        .cookie(user2Token.getRefreshToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updateDto)))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.value()));
-    }
-
-    @Test
-    @DisplayName("post에 comment를 추가할 수 있어야 한다.")
-    void addCommentTest() throws Exception {
-        //given
-        // write new post
-        RegisterCommentDto commentDTO = RegisterCommentDto.builder()
-                .content("test comment")
-                .build();
-
-        PostRegisterDto postDto = PostRegisterDto.builder()
-                .title("title")
-                .content("content")
-                .build();
-        String string = mockMvc.perform(post("/api/v1/community/posts")
-                        .header(HttpHeaders.AUTHORIZATION, user1Token.getAccessToken())
-                        .cookie(user1Token.getRefreshToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(postDto)))
-                .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
-        Long postId = objectMapper.readTree(string).get("data").get("id").asLong();
-        System.out.println("postId = " + postId);
-        //when
-        // write new comment to post
-        String contentAsString = mockMvc.perform(post("/api/v1/community/posts/" + postId + "/comments")
-                        .header(HttpHeaders.AUTHORIZATION, user1Token.getAccessToken())
-                        .cookie(user1Token.getRefreshToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(commentDTO)))
-                .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
-        //then
-        JsonNode comments = objectMapper.readTree(contentAsString).get("data");
-
-        List<CommentDto> commentList = new ArrayList<>();
-        for (JsonNode node : comments) {
-            commentList.add(objectMapper.convertValue(node, CommentDto.class));
-        }
-        Assertions.assertThat(commentList.size()).isGreaterThan(0);
-        Assertions.assertThat(commentList.get(0).getContent()).isEqualTo(commentDTO.getContent());
-
-        String wroteCommentsString = mockMvc.perform(get("/api/v1/user/comments")
-                        .header(HttpHeaders.AUTHORIZATION, user1Token.getAccessToken())
-                        .cookie(user1Token.getRefreshToken()))
-                .andExpect(status().isOk()).andDo(print())
-                .andReturn().getResponse().getContentAsString();
-
-        Iterator<JsonNode> data = objectMapper.readTree(wroteCommentsString).get("data").elements();
-        List<CommentDto> wroteComments = new ArrayList<>();
-        while (data.hasNext())
-            wroteComments.add(objectMapper.convertValue(data.next(), CommentDto.class));
-
-
-        Assertions.assertThat(wroteComments).isNotEmpty();
-        Assertions.assertThat(wroteComments).extracting("content").contains(commentList.get(0).getContent());
-
-    }
-
-    @Test
-    @DisplayName("로그인하지 않으면 comment를 작성할 수 없다.")
-    void addCommentAuthorizationTest() throws Exception {
-        //given
-        PostRegisterDto postDto = PostRegisterDto.builder()
-                .title("title")
-                .content("content")
-                .build();
-        String string = mockMvc.perform(post("/api/v1/community/posts")
-                        .header(HttpHeaders.AUTHORIZATION, user1Token.getAccessToken())
-                        .cookie(user1Token.getRefreshToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(postDto)))
-                .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
-        Long postId = objectMapper.readTree(string).get("data").get("id").asLong();
-        System.out.println("postId = " + postId);
-        //when
-        RegisterCommentDto commentDTO = RegisterCommentDto.builder()
-                .content("test comment")
-                .build();
-
-        mockMvc.perform(post("/api/v1/community/posts/" + postId + "/comments")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(commentDTO)))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.value()));
-    }
-
-    @Test
-    @DisplayName("자신이 작성한 comment를 삭제할 수 있어야 한다.")
-    void deleteCommentTest() throws Exception {
-        //given
-        RegisterCommentDto commentDTO = RegisterCommentDto.builder()
-                .content("test comment")
-                .build();
-
-        PostRegisterDto postDto = PostRegisterDto.builder()
-                .title("title")
-                .content("content")
-                .build();
-        // post 등록
-        String string = mockMvc.perform(post("/api/v1/community/posts")
-                        .header(HttpHeaders.AUTHORIZATION, user1Token.getAccessToken())
-                        .cookie(user1Token.getRefreshToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(postDto)))
-                .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
-        Long postId = objectMapper.readTree(string).get("data").get("id").asLong();
-        System.out.println("postId = " + postId);
-        // post에 comment 등록
-        String contentAsString1 = mockMvc.perform(post("/api/v1/community/posts/" + postId + "/comments")
-                        .header(HttpHeaders.AUTHORIZATION, user1Token.getAccessToken())
-                        .cookie(user1Token.getRefreshToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(commentDTO)))
-                .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
-        JsonNode comments = objectMapper.readTree(contentAsString1).get("data");
-        CommentDto comment = objectMapper.convertValue(comments.get(0), CommentDto.class);
-        Long commentId = comment.getId();
-
-        //when
-        // 자신이 작성한 comment를 삭제함.
-        String contentAsString = mockMvc.perform(delete("/api/v1/community/posts/" + postId + "/comments/" + commentId)
-                        .header(HttpHeaders.AUTHORIZATION, user1Token.getAccessToken())
-                        .cookie(user1Token.getRefreshToken()))
-                .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
-        JsonNode jsonNode = objectMapper.readTree(contentAsString).get("data");
-        List<Comment> commentList = new ArrayList<>();
-        for (JsonNode node : jsonNode) {
-            commentList.add(objectMapper.readValue(node.toString(), Comment.class));
+        @BeforeEach
+        void getTokens() throws Exception {
+                cleanup.cleanUp();
+                testUtil.register(mockMvc, TestUtil.user1);
+                user1Token = testUtil.login(mockMvc, TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
+                testUtil.register(mockMvc, TestUtil.user2);
+                user2Token = testUtil.login(mockMvc, TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
         }
 
-        //then
-        Optional<Comment> first = commentList.stream().filter(currentComment -> currentComment.getId().equals(commentId)).findFirst();
-        Assertions.assertThat(first).isEmpty();
-    }
+        @BeforeEach
+        void cleanUp() {
+        }
 
-    @Test
-    @DisplayName("작성자가 아닌 유저는 댓글을 삭제할 수 없다.")
-    void deleteCommentAuthorizationTest() throws Exception {
-        //given
-        RegisterCommentDto commentDTO = RegisterCommentDto.builder()
-                .content("test comment")
-                .build();
+        @Test
+        @DisplayName("로그인한 유저는 커뮤니티 글을 작성하고 조회할 수 있어야 한다.")
+        void writePost() throws Exception {
+                // when
+                PostRegisterDto postDto = PostRegisterDto.builder()
+                                .title("title")
+                                .content("content")
+                                .build();
+                String string = mockMvc.perform(post("/api/v1/community/posts")
+                                .header(HttpHeaders.AUTHORIZATION, user1Token.getAccessToken())
+                                .cookie(user1Token.getRefreshToken())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(postDto)))
+                                .andExpect(status().isOk())
+                                .andDo(print())
+                                .andReturn().getResponse().getContentAsString();
+                Long postId = objectMapper.readTree(string).get("data").get("id").asLong();
 
-        PostRegisterDto postDto = PostRegisterDto.builder()
-                .title("title")
-                .content("content")
-                .build();
-        // post 등록
-        String string = mockMvc.perform(post("/api/v1/community/posts")
-                        .header(HttpHeaders.AUTHORIZATION, user1Token.getAccessToken())
-                        .cookie(user1Token.getRefreshToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(postDto)))
-                .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
-        Long postId = objectMapper.readTree(string).get("data").get("id").asLong();
-        // post에 comment 등록
-        String contentAsString1 = mockMvc.perform(post("/api/v1/community/posts/" + postId + "/comments")
-                        .header(HttpHeaders.AUTHORIZATION, user1Token.getAccessToken())
-                        .cookie(user1Token.getRefreshToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(commentDTO)))
-                .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
-        JsonNode comments = objectMapper.readTree(contentAsString1).get("data");
-        CommentDto comment = objectMapper.readValue(comments.get(0).toString(), CommentDto.class);
-        Long commentId = comment.getId();
-        //when
-        // 다른 사람이 작성한 comment를 삭제함.
-        mockMvc.perform(delete("/api/v1/community/posts/" + postId + "/comments/" + commentId)
-                        .header(HttpHeaders.AUTHORIZATION, user2Token.getAccessToken())
-                        .cookie(user2Token.getRefreshToken()))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.value()));
-    }
-
-    @Test
-    @DisplayName("커뮤니티 글에 좋아요를 누를 수 있다.")
-    void likePostTest() throws Exception {
-        //given
-        PostRegisterDto postDto = PostRegisterDto.builder()
-                .title("title")
-                .content("content")
-                .build();
-        String string = mockMvc.perform(post("/api/v1/community/posts")
-                        .header(HttpHeaders.AUTHORIZATION, user1Token.getAccessToken())
-                        .cookie(user1Token.getRefreshToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(postDto)))
-                .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
-        Long postId = objectMapper.readTree(string).get("data").get("id").asLong();
-        //when
-        mockMvc.perform(put("/api/v1/community/posts/" + postId + "/like")
-                        .header(HttpHeaders.AUTHORIZATION, user2Token.getAccessToken())
-                        .cookie(user2Token.getRefreshToken()))
-                .andExpect(status().isOk());
-
-        //then
-        String contentAsString = mockMvc.perform(get("/api/v1/community/posts/" + postId)
-                        .header(HttpHeaders.AUTHORIZATION, user2Token.getAccessToken())
-                        .cookie(user2Token.getRefreshToken()))
-                .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
-        int likeCount = objectMapper.readTree(contentAsString).get("data").get("likeCount").asInt();
-
-        Assertions.assertThat(likeCount).isGreaterThan(0);
-    }
-
-    @Test
-    @DisplayName("커뮤니티 글을 삭제할 수 있다.")
-    void deletePost() throws Exception {
-        //given
-        PostRegisterDto postDto = PostRegisterDto.builder()
-                .title("title")
-                .content("content")
-                .build();
-        String string = mockMvc.perform(post("/api/v1/community/posts")
-                        .header(HttpHeaders.AUTHORIZATION, user1Token.getAccessToken())
-                        .cookie(user1Token.getRefreshToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(postDto)))
-                .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
-        Long postId = objectMapper.readTree(string).get("data").get("id").asLong();
-        //when
-        mockMvc.perform(delete("/api/v1/community/posts/" + postId)
-                        .header(HttpHeaders.AUTHORIZATION, user1Token.getAccessToken())
-                        .cookie(user1Token.getRefreshToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(postDto)))
+                MvcResult mvcResult2 = mockMvc.perform(get("/api/v1/community/posts/" + postId)
+                                .header(HttpHeaders.AUTHORIZATION, user1Token.getAccessToken())
+                                .cookie(user1Token.getRefreshToken()))
+                                .andExpect(status().isOk())
+                                .andReturn();
                 // then
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()));
-    }
+                String contentAsString2 = mvcResult2.getResponse().getContentAsString();
+                JsonNode jsonNode = objectMapper.readTree(contentAsString2);
+                JsonNode post = jsonNode.get("data");
+                String id = post.get("id").asText();
+                String content = post.get("content").asText();
+                Assertions.assertThat(id).isEqualTo(postId.toString());
+                Assertions.assertThat(content).isEqualTo("content");
+        }
 
-    @Test
-    @DisplayName("작성자가 아닌 유저는 커뮤니티 글을 삭제할 수 없다.")
-    void deletePostAuthorizationTest() throws Exception {
-        //given
-        PostRegisterDto postDto = PostRegisterDto.builder()
-                .title("title")
-                .content("content")
-                .build();
-        String string = mockMvc.perform(post("/api/v1/community/posts")
-                        .header(HttpHeaders.AUTHORIZATION, user1Token.getAccessToken())
-                        .cookie(user1Token.getRefreshToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(postDto)))
-                .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
-        Long postId = objectMapper.readTree(string).get("data").get("id").asLong();
-        //when
-        mockMvc.perform(delete("/api/v1/community/posts/" + postId)
-                        .header(HttpHeaders.AUTHORIZATION, user2Token.getAccessToken())
-                        .cookie(user2Token.getRefreshToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(postDto)))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.value()));
-    }
+        @Test
+        @DisplayName("로그인하지 않은 유저는 커뮤니티 글을 작성할 수 없다.")
+        void writePostAuthorizationTest() throws Exception {
+                PostRegisterDto postDto = PostRegisterDto.builder()
+                                .title("title")
+                                .content("content")
+                                .build();
+                mockMvc.perform(post("/api/v1/community/posts")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(postDto)))
+                                .andExpect(status().isUnauthorized())
+                                .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.value()));
+        }
+
+        @Test
+        @DisplayName("작성자는 자신이 작성할 커뮤니티 글을 수정할 수 있다.")
+        void updatePost() throws Exception {
+                // given
+                // write new post
+                PostRegisterDto postDto = PostRegisterDto.builder()
+                                .title("title")
+                                .content("content")
+                                .build();
+                String string = mockMvc.perform(post("/api/v1/community/posts")
+                                .header(HttpHeaders.AUTHORIZATION, user1Token.getAccessToken())
+                                .cookie(user1Token.getRefreshToken())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(postDto)))
+                                .andExpect(status().isOk())
+                                .andReturn().getResponse().getContentAsString();
+                Long postId = objectMapper.readTree(string).get("data").get("id").asLong();
+                System.out.println("postId = " + postId);
+
+                // when
+                UpdatePostDto updateDto = UpdatePostDto.builder()
+                                .title("changed")
+                                .content("changedContent")
+                                .build();
+
+                MvcResult mvcResult = mockMvc.perform(post("/api/v1/community/posts/" + postId)
+                                .header(HttpHeaders.AUTHORIZATION, user1Token.getAccessToken())
+                                .cookie(user1Token.getRefreshToken())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(updateDto)))
+                                .andExpect(status().isOk())
+                                .andReturn();
+                // then
+                String s = mvcResult.getResponse().getContentAsString();
+                JsonNode postDto1 = objectMapper.readTree(s).get("data");
+                Long updatedId = postDto1.get("id").asLong();
+                String content = postDto1.get("content").asText();
+                Assertions.assertThat(updatedId).isEqualTo(postId);
+                Assertions.assertThat(content).isEqualTo("changedContent");
+        }
+
+        @Test
+        @DisplayName("작성자가 아닌 유저는 커뮤니티 글을 수정할 수 없다.")
+        void updatePostAuthorizationTest() throws Exception {
+                // given
+                // write new post by user1
+                PostRegisterDto postDto = PostRegisterDto.builder()
+                                .title("title")
+                                .content("content")
+                                .build();
+                String string = mockMvc.perform(post("/api/v1/community/posts")
+                                .header(HttpHeaders.AUTHORIZATION, user1Token.getAccessToken())
+                                .cookie(user1Token.getRefreshToken())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(postDto)))
+                                .andExpect(status().isOk())
+                                .andReturn().getResponse().getContentAsString();
+                Long postId = objectMapper.readTree(string).get("data").get("id").asLong();
+                System.out.println("postId = " + postId);
+
+                // when
+                // update user1's post using user2's token
+                UpdatePostDto updateDto = UpdatePostDto.builder()
+                                .title("changed")
+                                .content("changedContent")
+                                .build();
+
+                // when
+                mockMvc.perform(post("/api/v1/community/posts/" + postId)
+                                .header(HttpHeaders.AUTHORIZATION, user2Token.getAccessToken())
+                                .cookie(user2Token.getRefreshToken())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(updateDto)))
+                                .andExpect(status().isForbidden())
+                                .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.value()));
+        }
+
+        @Test
+        @DisplayName("post에 comment를 추가할 수 있어야 한다.")
+        void addCommentTest() throws Exception {
+                // given
+                // write new post
+                RegisterCommentDto commentDTO = RegisterCommentDto.builder()
+                                .content("test comment")
+                                .build();
+
+                PostRegisterDto postDto = PostRegisterDto.builder()
+                                .title("title")
+                                .content("content")
+                                .build();
+                String string = mockMvc.perform(post("/api/v1/community/posts")
+                                .header(HttpHeaders.AUTHORIZATION, user1Token.getAccessToken())
+                                .cookie(user1Token.getRefreshToken())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(postDto)))
+                                .andExpect(status().isOk())
+                                .andReturn().getResponse().getContentAsString();
+                Long postId = objectMapper.readTree(string).get("data").get("id").asLong();
+                System.out.println("postId = " + postId);
+                // when
+                // write new comment to post
+                String contentAsString = mockMvc.perform(post("/api/v1/community/posts/" + postId + "/comments")
+                                .header(HttpHeaders.AUTHORIZATION, user1Token.getAccessToken())
+                                .cookie(user1Token.getRefreshToken())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(commentDTO)))
+                                .andExpect(status().isOk())
+                                .andReturn().getResponse().getContentAsString();
+                // then
+                JsonNode comments = objectMapper.readTree(contentAsString).get("data");
+
+                List<CommentDto> commentList = new ArrayList<>();
+                for (JsonNode node : comments) {
+                        commentList.add(objectMapper.convertValue(node, CommentDto.class));
+                }
+                Assertions.assertThat(commentList.size()).isGreaterThan(0);
+                Assertions.assertThat(commentList.get(0).getContent()).isEqualTo(commentDTO.getContent());
+
+                String wroteCommentsString = mockMvc.perform(get("/api/v1/user/comments")
+                                .header(HttpHeaders.AUTHORIZATION, user1Token.getAccessToken())
+                                .cookie(user1Token.getRefreshToken()))
+                                .andExpect(status().isOk()).andDo(print())
+                                .andReturn().getResponse().getContentAsString();
+
+                Iterator<JsonNode> data = objectMapper.readTree(wroteCommentsString).get("data").elements();
+                List<CommentDto> wroteComments = new ArrayList<>();
+                while (data.hasNext())
+                        wroteComments.add(objectMapper.convertValue(data.next(), CommentDto.class));
+
+                Assertions.assertThat(wroteComments).isNotEmpty();
+                Assertions.assertThat(wroteComments).extracting("content").contains(commentList.get(0).getContent());
+
+        }
+
+        @Test
+        @DisplayName("로그인하지 않으면 comment를 작성할 수 없다.")
+        void addCommentAuthorizationTest() throws Exception {
+                // given
+                PostRegisterDto postDto = PostRegisterDto.builder()
+                                .title("title")
+                                .content("content")
+                                .build();
+                String string = mockMvc.perform(post("/api/v1/community/posts")
+                                .header(HttpHeaders.AUTHORIZATION, user1Token.getAccessToken())
+                                .cookie(user1Token.getRefreshToken())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(postDto)))
+                                .andExpect(status().isOk())
+                                .andReturn().getResponse().getContentAsString();
+                Long postId = objectMapper.readTree(string).get("data").get("id").asLong();
+                System.out.println("postId = " + postId);
+                // when
+                RegisterCommentDto commentDTO = RegisterCommentDto.builder()
+                                .content("test comment")
+                                .build();
+
+                mockMvc.perform(post("/api/v1/community/posts/" + postId + "/comments")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(commentDTO)))
+                                .andExpect(status().isUnauthorized())
+                                .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.value()));
+        }
+
+        @Test
+        @DisplayName("자신이 작성한 comment를 삭제할 수 있어야 한다.")
+        void deleteCommentTest() throws Exception {
+                // given
+                RegisterCommentDto commentDTO = RegisterCommentDto.builder()
+                                .content("test comment")
+                                .build();
+
+                PostRegisterDto postDto = PostRegisterDto.builder()
+                                .title("title")
+                                .content("content")
+                                .build();
+                // post 등록
+                String string = mockMvc.perform(post("/api/v1/community/posts")
+                                .header(HttpHeaders.AUTHORIZATION, user1Token.getAccessToken())
+                                .cookie(user1Token.getRefreshToken())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(postDto)))
+                                .andExpect(status().isOk())
+                                .andReturn().getResponse().getContentAsString();
+                Long postId = objectMapper.readTree(string).get("data").get("id").asLong();
+                System.out.println("postId = " + postId);
+                // post에 comment 등록
+                String contentAsString1 = mockMvc.perform(post("/api/v1/community/posts/" + postId + "/comments")
+                                .header(HttpHeaders.AUTHORIZATION, user1Token.getAccessToken())
+                                .cookie(user1Token.getRefreshToken())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(commentDTO)))
+                                .andExpect(status().isOk())
+                                .andReturn().getResponse().getContentAsString();
+                JsonNode comments = objectMapper.readTree(contentAsString1).get("data");
+                CommentDto comment = objectMapper.convertValue(comments.get(0), CommentDto.class);
+                Long commentId = comment.getId();
+
+                // when
+                // 자신이 작성한 comment를 삭제함.
+                String contentAsString = mockMvc
+                                .perform(delete("/api/v1/community/posts/" + postId + "/comments/" + commentId)
+                                                .header(HttpHeaders.AUTHORIZATION, user1Token.getAccessToken())
+                                                .cookie(user1Token.getRefreshToken()))
+                                .andExpect(status().isOk())
+                                .andReturn().getResponse().getContentAsString();
+                JsonNode jsonNode = objectMapper.readTree(contentAsString).get("data");
+                List<Comment> commentList = new ArrayList<>();
+                for (JsonNode node : jsonNode) {
+                        commentList.add(objectMapper.readValue(node.toString(), Comment.class));
+                }
+
+                // then
+                Optional<Comment> first = commentList.stream()
+                                .filter(currentComment -> currentComment.getId().equals(commentId)).findFirst();
+                Assertions.assertThat(first).isEmpty();
+        }
+
+        @Test
+        @DisplayName("작성자가 아닌 유저는 댓글을 삭제할 수 없다.")
+        void deleteCommentAuthorizationTest() throws Exception {
+                // given
+                RegisterCommentDto commentDTO = RegisterCommentDto.builder()
+                                .content("test comment")
+                                .build();
+
+                PostRegisterDto postDto = PostRegisterDto.builder()
+                                .title("title")
+                                .content("content")
+                                .build();
+                // post 등록
+                String string = mockMvc.perform(post("/api/v1/community/posts")
+                                .header(HttpHeaders.AUTHORIZATION, user1Token.getAccessToken())
+                                .cookie(user1Token.getRefreshToken())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(postDto)))
+                                .andExpect(status().isOk())
+                                .andReturn().getResponse().getContentAsString();
+                Long postId = objectMapper.readTree(string).get("data").get("id").asLong();
+                // post에 comment 등록
+                String contentAsString1 = mockMvc.perform(post("/api/v1/community/posts/" + postId + "/comments")
+                                .header(HttpHeaders.AUTHORIZATION, user1Token.getAccessToken())
+                                .cookie(user1Token.getRefreshToken())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(commentDTO)))
+                                .andExpect(status().isOk())
+                                .andReturn().getResponse().getContentAsString();
+                JsonNode comments = objectMapper.readTree(contentAsString1).get("data");
+                CommentDto comment = objectMapper.readValue(comments.get(0).toString(), CommentDto.class);
+                Long commentId = comment.getId();
+                // when
+                // 다른 사람이 작성한 comment를 삭제함.
+                mockMvc.perform(delete("/api/v1/community/posts/" + postId + "/comments/" + commentId)
+                                .header(HttpHeaders.AUTHORIZATION, user2Token.getAccessToken())
+                                .cookie(user2Token.getRefreshToken()))
+                                .andExpect(status().isForbidden())
+                                .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.value()));
+        }
+
+        @Test
+        @DisplayName("커뮤니티 글에 좋아요를 누를 수 있다.")
+        void likePostTest() throws Exception {
+                // given
+                PostRegisterDto postDto = PostRegisterDto.builder()
+                                .title("title")
+                                .content("content")
+                                .build();
+                String string = mockMvc.perform(post("/api/v1/community/posts")
+                                .header(HttpHeaders.AUTHORIZATION, user1Token.getAccessToken())
+                                .cookie(user1Token.getRefreshToken())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(postDto)))
+                                .andExpect(status().isOk())
+                                .andReturn().getResponse().getContentAsString();
+                Long postId = objectMapper.readTree(string).get("data").get("id").asLong();
+                // when
+                mockMvc.perform(put("/api/v1/community/posts/" + postId + "/like")
+                                .header(HttpHeaders.AUTHORIZATION, user2Token.getAccessToken())
+                                .cookie(user2Token.getRefreshToken()))
+                                .andExpect(status().isOk());
+
+                // then
+                String contentAsString = mockMvc.perform(get("/api/v1/community/posts/" + postId)
+                                .header(HttpHeaders.AUTHORIZATION, user2Token.getAccessToken())
+                                .cookie(user2Token.getRefreshToken()))
+                                .andExpect(status().isOk())
+                                .andReturn().getResponse().getContentAsString();
+                int likeCount = objectMapper.readTree(contentAsString).get("data").get("likeCount").asInt();
+
+                Assertions.assertThat(likeCount).isGreaterThan(0);
+        }
+
+        @Test
+        @DisplayName("커뮤니티 글을 삭제할 수 있다.")
+        void deletePost() throws Exception {
+                // given
+                PostRegisterDto postDto = PostRegisterDto.builder()
+                                .title("title")
+                                .content("content")
+                                .build();
+                String string = mockMvc.perform(post("/api/v1/community/posts")
+                                .header(HttpHeaders.AUTHORIZATION, user1Token.getAccessToken())
+                                .cookie(user1Token.getRefreshToken())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(postDto)))
+                                .andExpect(status().isOk())
+                                .andReturn().getResponse().getContentAsString();
+                Long postId = objectMapper.readTree(string).get("data").get("id").asLong();
+                // when
+                mockMvc.perform(delete("/api/v1/community/posts/" + postId)
+                                .header(HttpHeaders.AUTHORIZATION, user1Token.getAccessToken())
+                                .cookie(user1Token.getRefreshToken())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(postDto)))
+                                // then
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()));
+        }
+
+        @Test
+        @DisplayName("작성자가 아닌 유저는 커뮤니티 글을 삭제할 수 없다.")
+        void deletePostAuthorizationTest() throws Exception {
+                // given
+                PostRegisterDto postDto = PostRegisterDto.builder()
+                                .title("title")
+                                .content("content")
+                                .build();
+                String string = mockMvc.perform(post("/api/v1/community/posts")
+                                .header(HttpHeaders.AUTHORIZATION, user1Token.getAccessToken())
+                                .cookie(user1Token.getRefreshToken())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(postDto)))
+                                .andExpect(status().isOk())
+                                .andReturn().getResponse().getContentAsString();
+                Long postId = objectMapper.readTree(string).get("data").get("id").asLong();
+                // when
+                mockMvc.perform(delete("/api/v1/community/posts/" + postId)
+                                .header(HttpHeaders.AUTHORIZATION, user2Token.getAccessToken())
+                                .cookie(user2Token.getRefreshToken())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(postDto)))
+                                .andExpect(status().isForbidden())
+                                .andExpect(jsonPath("$.status").value(HttpStatus.FORBIDDEN.value()));
+        }
 }

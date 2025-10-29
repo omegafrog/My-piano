@@ -18,6 +18,7 @@ import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
 import jakarta.persistence.EntityNotFoundException;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -63,7 +64,7 @@ class LessonControllerTest {
     @Autowired
     private Cleanup cleanUp;
 
-    @AfterEach
+    @BeforeEach
     void cleanUp() {
         cleanUp.cleanUp();
     }
