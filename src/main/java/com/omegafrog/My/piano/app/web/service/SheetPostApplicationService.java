@@ -80,35 +80,24 @@ public class SheetPostApplicationService {
 			throw new IllegalArgumentException("uploadId는 필수입니다.");
 		}
 
-		// Redis Hash에서 업로드 데이터 조회
-		Map<String, String> uploadData = fileUploadService.getUploadData(uploadId);
-		if (uploadData == null) {
-			throw new IllegalArgumentException("유효하지 않은 uploadId입니다: " + uploadId);
-		}
-
 		try {
-			// Redis에서 originalFileName 조회
-			String originalFileName = uploadData.get("originalFileName");
 
 			// Sheet 엔티티 생성 (초기에는 URL이 없음, originalFileName 설정)
 			Sheet sheet = dto.getSheet().createEntity(loggedInUser, 0); // pageNum은 나중에 업데이트
 
 			// Sheet 엔티티에 원본 파일명 설정
-			if (originalFileName != null && !originalFileName.isEmpty()) {
-				sheet = Sheet.builder()
-						.title(sheet.getTitle())
-						.pageNum(sheet.getPageNum())
-						.difficulty(sheet.getDifficulty())
-						.instrument(sheet.getInstrument())
-						.genres(sheet.getGenres())
-						.isSolo(sheet.isSolo())
-						.lyrics(sheet.isLyrics())
-						.sheetUrl(sheet.getSheetUrl())
-						.thumbnailUrl(sheet.getThumbnailUrl())
-						.originalFileName(originalFileName)
-						.user(loggedInUser)
-						.build();
-			}
+			sheet = Sheet.builder()
+					.title(sheet.getTitle())
+					.pageNum(sheet.getPageNum())
+					.difficulty(sheet.getDifficulty())
+					.instrument(sheet.getInstrument())
+					.genres(sheet.getGenres())
+					.isSolo(sheet.isSolo())
+					.lyrics(sheet.isLyrics())
+					.sheetUrl(sheet.getSheetUrl())
+					.thumbnailUrl(sheet.getThumbnailUrl())
+					.user(loggedInUser)
+					.build();
 			SheetPost sheetPost = SheetPost.builder()
 					.title(dto.getTitle())
 					.sheet(sheet)
@@ -118,32 +107,7 @@ public class SheetPostApplicationService {
 					.build();
 			SheetPost saved = sheetPostRepository.save(sheetPost);
 
-			// Redis에 uploadId:sheetPostId 매핑 저장
-			fileUploadService.updateUploadMapping(uploadId, saved.getId());
-
-			// 업로드가 이미 완료된 경우 즉시 URL 업데이트
-			if (fileUploadService.isUploadCompleted(uploadId)) {
-				log.info("파일 업로드 완료 이후 sheetPost 업데이트 중.");
-				String sheetUrl = uploadData.get("sheetUrl");
-				String thumbnailUrl = uploadData.get("thumbnailUrl");
-				String pageNumStr = uploadData.get("pageNum");
-				log.info("{},{},{}", sheetUrl, thumbnailUrl, pageNumStr);
-
-				if (sheetUrl != null && !sheetUrl.isEmpty() &&
-						thumbnailUrl != null && !thumbnailUrl.isEmpty() &&
-						pageNumStr != null && !pageNumStr.isEmpty()) {
-
-					int pageNum = Integer.parseInt(pageNumStr);
-					sheet.updateUrls(sheetUrl, thumbnailUrl);
-					sheet.updatePageNum(pageNum);
-
-					log.info(
-							"Immediately updated URLs for SheetPost: uploadId={}, sheetPostId={}, sheetUrl={}, thumbnailUrl={}, pageNum={}",
-							uploadId, saved.getId(), sheetUrl, thumbnailUrl, pageNum);
-				}
-			}
-
-			eventPublisher.publishEvent(new SheetPostCreatedEvent(sheetPost.getId()));
+			eventPublisher.publishEvent(new SheetPostCreatedEvent(uploadId, sheetPost.getId()));
 
 			log.info("SheetPost created with uploadId: {}, sheetPostId: {}", uploadId, saved.getId());
 			return saved.toDto();

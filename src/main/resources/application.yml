@@ -7,13 +7,29 @@ spring:
     url: jdbc:mysql://localhost:3306/mypiano?characterEncoding=UTF-8&serverTimezone=UTC
     username: root
     password: password
+    hikari:
+      maximum-pool-size: 30      # 최대 커넥션 수
+      minimum-idle: 10           # 최소 유지 커넥션 수
+      idle-timeout: 60000        # idle 커넥션 유지 시간 (ms)
+      max-lifetime: 1800000      # 커넥션 최대 수명 (ms)
+      connection-timeout: 30000  # 커넥션 획득 타임아웃 (ms)
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.omegafrog.My.piano.app.web.event
   jpa:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
         format_sql: false
-        generate_statistics: true
-        use_sql_comments: true
+        generate_statistics: false
+        use_sql_comments: false
     hibernate:
       ddl-auto: update
   cloud:
@@ -43,7 +59,9 @@ spring:
     pathmatch:
       matching-strategy: ant_path_matcher
 
-# logging:
+logging:
+  file:
+    name: log.txt
 #   level:
 #     org.springframework.web: DEBUG
 #     org.springframework.http.converter.json: DEBUG
@@ -56,8 +74,8 @@ elasticsearch:
 
 async:
   pool:
-    core: 16
-    max: 100
+    core: 50
+    max: 200
   queue:
     capacity: 20000
 

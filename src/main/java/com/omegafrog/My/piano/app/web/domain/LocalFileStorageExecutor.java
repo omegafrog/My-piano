@@ -33,6 +33,7 @@ import com.omegafrog.My.piano.app.web.event.FileUploadFailedEvent;
 import com.omegafrog.My.piano.app.web.exception.CreateThumbnailFailedException;
 
 import io.awspring.cloud.s3.ObjectMetadata;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -138,13 +139,17 @@ public class LocalFileStorageExecutor implements UploadFileExecutor {
 		}
 	}
 
-	private static BufferedImage blurImage(BufferedImage image) {
-		float[] matrix = new float[225];
+	private float[] matrix = new float[225];
+	private ConvolveOp op = null;
+
+	@PostConstruct
+	public void init() {
 		for (int i = 0; i < 225; ++i)
 			matrix[i] = 1.0f / 225.f;
+		op = new ConvolveOp(new Kernel(15, 15, matrix), ConvolveOp.EDGE_NO_OP, null);
+	}
 
-		Kernel kernel = new Kernel(15, 15, matrix);
-		ConvolveOp op = new ConvolveOp(kernel, ConvolveOp.EDGE_NO_OP, null);
+	private BufferedImage blurImage(BufferedImage image) {
 		return op.filter(image, null);
 	}
 

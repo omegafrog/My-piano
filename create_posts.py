@@ -132,15 +132,52 @@ def create_posts_batch(session, batch_size=BATCH_SIZE):
     
     return success_count, failed_count
 
+def login(username, password):
+    """로그인하고 JWT 토큰을 받아옴"""
+    login_url = f"{BASE_URL}/api/v1/user/login"
+    try:
+        response = requests.post(
+            login_url,
+            data={'username': username, 'password': password},
+            timeout=10
+        )
+        if response.status_code == 200:
+            # 응답 본문이 JSON 형식이라고 가정하고 파싱
+            try:
+                token_data = response.json()
+                # 'data' 객체와 그 안의 'access token' 키 확인
+                if 'data' in token_data and 'access token' in token_data['data']:
+                    print("✅ Login successful!")
+                    return token_data['data']['access token']
+                else:
+                    print(f"❌ Login failed: 'access token' not in response 'data' object. Response: {response.text}")
+                    return None
+            except json.JSONDecodeError:
+                print(f"❌ Login failed: Could not parse JSON response. Response: {response.text}")
+                return None
+        else:
+            print(f"❌ Login failed with status {response.status_code}: {response.text}")
+            return None
+    except requests.exceptions.RequestException as e:
+        print(f"❌ Login request failed: {str(e)}")
+        return None
+
 def main():
     """메인 실행 함수"""
     print("🎹 My-Piano Post Creation Script")
     print(f"Target: {TOTAL_POSTS} posts")
     print(f"API Endpoint: {API_ENDPOINT}")
     print("-" * 50)
-    
-    # 세션 생성 (연결 재사용)
+
+    # 로그인
+    access_token = login("username1", "password123")
+    if not access_token:
+        print("Script aborted due to login failure.")
+        return
+
+    # 세션 생성 및 헤더 설정
     session = requests.Session()
+    session.headers.update({'Authorization': access_token})
     
     total_success = 0
     total_failed = 0

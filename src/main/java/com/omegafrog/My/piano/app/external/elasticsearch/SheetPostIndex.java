@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
+import org.springframework.data.elasticsearch.annotations.Setting;
 import org.springframework.data.elasticsearch.annotations.WriteTypeHint;
 
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
@@ -22,13 +23,14 @@ import lombok.Setter;
 @Setter
 @Builder
 @NoArgsConstructor
+// @Setting(settingPath = "nori-analyzer.json")
 @Document(indexName = "sheetpost", writeTypeHint = WriteTypeHint.FALSE)
 public class SheetPostIndex {
 
 	@Id
 	@Field(type = FieldType.Keyword)
 	private Long id;
-	@Field(type = FieldType.Text)
+	@Field(type = FieldType.Text, analyzer = "my_nori_analyzer", searchAnalyzer = "my_nori_analyzer")
 	private String name;
 	@Field(type = FieldType.Text)
 	private String title;
@@ -42,7 +44,7 @@ public class SheetPostIndex {
 	private String difficulty;
 	@Field(type = FieldType.Long)
 	private Long creator;
-	@Field(type = FieldType.Integer)
+	@Field(type = FieldType.Long)
 	private Integer viewCount;
 	@Field(type = FieldType.Text)
 	private String _class;
@@ -53,19 +55,18 @@ public class SheetPostIndex {
 
 	public static SheetPostIndex of(SheetPost sheetPost) {
 		return SheetPostIndex.builder()
-			.id(sheetPost.getId())
-			.name(sheetPost.getSheet().getTitle())
-			.title(sheetPost.getTitle())
-			.genre(sheetPost.getSheet().getGenres().genreLists().stream().map(Genre::name).toList())
-			.instrument(sheetPost.getSheet().getInstrument().name())
-			.difficulty(sheetPost.getSheet().getDifficulty().name())
-			.creator(sheetPost.getSheet().getUser().getId())
-			.created_at(sheetPost.getCreatedAt().toString())
-			.content(sheetPost.getContent())
-			.updated_at(sheetPost.getCreatedAt().toString())
-			.viewCount(sheetPost.getViewCount())
-			.build();
+				.id(sheetPost.getId())
+				.name(sheetPost.getSheet().getTitle())
+				.title(sheetPost.getTitle())
+				.genre(sheetPost.getSheet().getGenres().genreLists().stream().map(Genre::name).toList())
+				.instrument(sheetPost.getSheet().getInstrument().name())
+				.difficulty(sheetPost.getSheet().getDifficulty().name())
+				.creator(sheetPost.getSheet().getUser().getId())
+				.created_at(sheetPost.getCreatedAt().toString())
+				.content(sheetPost.getContent())
+				.updated_at(sheetPost.getCreatedAt().toString())
+				.viewCount(sheetPost.getViewCount())
+				.build();
 
 	}
-
 }

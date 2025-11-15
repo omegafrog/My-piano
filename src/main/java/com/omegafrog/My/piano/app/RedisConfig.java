@@ -1,5 +1,7 @@
 package com.omegafrog.My.piano.app;
 
+import java.time.Duration;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.EnableCaching;
@@ -66,6 +68,7 @@ public class RedisConfig {
 	public RedisCacheManager cacheManager() {
 		return RedisCacheManager.builder(cacheConnectionFactory())
 			.cacheDefaults(RedisCacheConfiguration.defaultCacheConfig()
+				.entryTtl(Duration.ofMinutes(30L)) // 30분 TTL 설정
 				.serializeValuesWith(RedisSerializationContext.SerializationPair
 					.fromSerializer(new GenericJackson2JsonRedisSerializer().configure(
 						objectMapper -> objectMapper.registerModule(

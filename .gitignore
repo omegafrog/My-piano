@@ -49,3 +49,4 @@ application.pid
 /.claude/**
 mypiano-*-firebase-adminsdk-*.json
 static/**
+log.*

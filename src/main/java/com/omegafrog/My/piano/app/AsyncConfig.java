@@ -21,14 +21,13 @@ public class AsyncConfig {
     private int queueCapacity;
 
     @Bean(name = "ThreadPoolTaskExecutor")
-    public Executor threadPoolTaskExecutor(){
+    public Executor threadPoolTaskExecutor() {
         ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
         taskExecutor.setCorePoolSize(corePoolSize);
         taskExecutor.setMaxPoolSize(maxPoolSize);
         taskExecutor.setQueueCapacity(queueCapacity);
-        taskExecutor.setThreadNamePrefix("ElasticSearchAPIExecutor:");
+        taskExecutor.setThreadNamePrefix("ThreadPoolTaskExecutor:");
         return taskExecutor;
     }
-
 
 }
