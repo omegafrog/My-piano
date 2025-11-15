@@ -2,23 +2,33 @@ package com.omegafrog.My.piano.app.external.elasticsearch;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.*;
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.FieldValueFactorModifier;
+import co.elastic.clients.elasticsearch._types.query_dsl.FunctionBoostMode;
+import co.elastic.clients.elasticsearch._types.query_dsl.FunctionScoreQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.MultiMatchQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermsQueryField;
+import co.elastic.clients.elasticsearch._types.query_dsl.TextQueryType;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.json.JsonData;
 import co.elastic.clients.util.ObjectBuilder;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
-import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.dto.dateRange.DateRange;
+
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Component;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -31,14 +41,13 @@ import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 @Slf4j
+@RequiredArgsConstructor
+@Component
 public class ElasticSearchInstance {
 
     @Autowired
-    private ElasticsearchClient esClient;
-    @Autowired
-    private SheetPostRepository sheetPostRepository;
-    @Autowired
     private SheetPostIndexRepository sheetPostIndexRepository;
+    private final ElasticsearchClient client;
 
     private final String SHEET_POST_INDEX_NAME = "sheetpost";
 
@@ -57,25 +66,60 @@ public class ElasticSearchInstance {
             @Nullable List<String> difficulties,
             @Nullable List<String> genres,
             Pageable pageable) throws IOException {
-        List<Query> searchOptions = new ArrayList<>();
-        if (instruments != null && !instruments.isEmpty()) {
-            Query instrumentFilter = getQuery("instrument.keyword", instruments);
-            searchOptions.add(instrumentFilter);
-        }
-        if (difficulties != null && !difficulties.isEmpty()) {
-            Query difficultyFilter = getQuery("difficulty.keyword", difficulties);
-            searchOptions.add(difficultyFilter);
-        }
-        if (genres != null && !genres.isEmpty()) {
-            Query genreFilter = getQuery("genre.keyword", genres);
-            searchOptions.add(genreFilter);
-        }
-        SearchResponse<SheetPostIndex> response = esClient.search(
-                s -> getRequest(searchSentence, s, searchOptions, pageable), SheetPostIndex.class);
+        // multi_match 쿼리 (title, name, content)
+        MultiMatchQuery mmQuery = MultiMatchQuery.of(q -> q
+                .query(searchSentence)
+                .fields("title^5", "name^4", "content^3")
+                .analyzer("my_nori_analyzer"));
 
-        long count = esClient.count(builder -> builder.index(SHEET_POST_INDEX_NAME)
-                .query(q -> getSearchTermQueryBuilder(searchSentence, searchOptions, q)))
-                .count();
+        // bool should
+        BoolQuery boolQuery = BoolQuery.of(b -> {
+            b.should(mmQuery._toQuery());
+
+            if (genres != null && !genres.isEmpty()) {
+                b.should(TermsQuery.of(t -> t
+                        .field("genre")
+                        .terms(TermsQueryField.of(f -> f.value(genres.stream().map(FieldValue::of).toList())))
+                        .boost(1.5f))._toQuery());
+            }
+
+            if (difficulties != null && !difficulties.isEmpty()) {
+                b.should(TermsQuery.of(t -> t
+                        .field("difficulty")
+                        .terms(TermsQueryField.of(f -> f.value(difficulties.stream().map(FieldValue::of).toList())))
+                        .boost(1.2f))._toQuery());
+            }
+
+            if (instruments != null && !instruments.isEmpty()) {
+                b.should(TermsQuery.of(t -> t
+                        .field("instrument")
+                        .terms(TermsQueryField.of(f -> f.value(instruments.stream().map(FieldValue::of).toList())))
+                        .boost(1.5f))._toQuery());
+            }
+
+            return b;
+        });
+
+        // function_score
+        FunctionScoreQuery functionScoreQuery = FunctionScoreQuery.of(f -> f
+                .query(boolQuery._toQuery())
+                .functions(fx -> fx
+                        .fieldValueFactor(fvf -> fvf
+                                .field("viewCount")
+                                .factor(1.2)
+                                .modifier(FieldValueFactorModifier.Log1p)))
+                .boostMode(FunctionBoostMode.Sum));
+
+        // 검색 요청
+        SearchRequest searchRequest = SearchRequest.of(s -> s
+                .index("sheetpost_v3")
+                .query(functionScoreQuery._toQuery())
+                .from((int) pageable.getOffset())
+                .size(pageable.getPageSize())
+                .sort(sort -> sort.field(f -> f.field("created_at").order(SortOrder.Desc))));
+
+        SearchResponse<SheetPostIndex> response = client.search(searchRequest, SheetPostIndex.class);
+        long count = response.hits().total().value();
 
         List<Hit<SheetPostIndex>> hits = response.hits().hits();
         List<Long> sheetPostIds = new ArrayList<>();
@@ -125,7 +169,7 @@ public class ElasticSearchInstance {
                         .field("viewCount")
                         .order(SortOrder.Desc));
 
-        SearchResponse<SheetPostIndex> response = esClient.search(fn -> fn
+        SearchResponse<SheetPostIndex> response = client.search(fn -> fn
                 .index(SHEET_POST_INDEX_NAME)
                 .query(q -> q
                         .bool(v -> v
@@ -188,7 +232,7 @@ public class ElasticSearchInstance {
                 .field("id")
                 .terms(terms -> terms.value(idValues)));
 
-        SearchResponse<SheetPostIndex> response = esClient.search(s -> s
+        SearchResponse<SheetPostIndex> response = client.search(s -> s
                 .index(SHEET_POST_INDEX_NAME)
                 .query(idsQuery)
                 .size(sheetPostIds.size())

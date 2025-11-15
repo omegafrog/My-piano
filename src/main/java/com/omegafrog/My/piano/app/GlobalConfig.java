@@ -145,11 +145,6 @@ public class GlobalConfig {
     }
 
     @Bean
-    public ElasticSearchInstance elasticSearchInstance() {
-        return new ElasticSearchInstance();
-    }
-
-    @Bean
     public TossPaymentInstance tossPaymentInstance(RestTemplate restTemplate, MapperUtil mapperUtil) {
         return new TossPaymentInstance(restTemplate, mapperUtil);
     }

@@ -1,0 +1,40 @@
+{
+  "query": {
+    "function_score": {
+      "query": {
+        "bool": {
+          "should": [
+            {
+              "multi_match": {
+                "analyzer": "my_nori_analyzer",
+                "fields": [
+                  "title^5",
+                  "name^4",
+                  "content^3"
+                ],
+                "query": "클래"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "functions": [
+      {
+        "field_value_factor": {
+          "field": "viewCount",
+          "factor": 1.2,
+          "modifier": "log1p"
+        }
+      }
+    ],
+    "boost_mode": "sum"
+  },
+  "sort": [
+    {
+      "created_at": {
+        "order": "desc"
+      }
+    }
+  ]
+}

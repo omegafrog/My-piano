@@ -273,6 +273,7 @@ public class SheetPostApplicationService {
 			List<String> difficulty,
 			List<String> genre,
 			Pageable pageable) throws IOException {
+
 		Page<Long> sheetPostIds = elasticSearchInstance.searchSheetPost(
 				searchSentence, instrument, difficulty, genre, pageable);
 		List<SheetPostListDto> res = sheetPostRepository.findByIds(sheetPostIds.getContent(), pageable);

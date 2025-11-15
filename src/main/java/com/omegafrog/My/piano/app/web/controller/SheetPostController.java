@@ -58,8 +58,6 @@ public class SheetPostController {
 		return new ApiResponse<>("Get Sheet post success.", data);
 	}
 
-	// TODO : elasticsearch에서 페이지네이션하고 totalElementCount도 받아와야 함. count가 제대로 집계되지
-	// 않음.
 	@GetMapping("")
 	public JsonAPIResponse<Page<SheetPostListDto>> getSheetPosts(
 			@Nullable @RequestParam String searchSentence,
