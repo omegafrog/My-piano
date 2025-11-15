@@ -33,6 +33,7 @@ import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostListDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.UpdateSheetPostDto;
 import com.omegafrog.My.piano.app.web.event.SheetPostCreatedEvent;
+import com.omegafrog.My.piano.app.web.event.SheetPostSearchedEvent;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -50,7 +51,6 @@ public class SheetPostApplicationService {
 
 	private final ElasticSearchInstance elasticSearchInstance;
 	private final FileStorageExecutor uploadFileExecutor;
-	private final MapperUtil mapperUtil;
 	private final SheetPostViewCountRepository sheetPostViewCountRepository;
 	private final AuthenticationUtil authenticationUtil;
 	private final FileUploadService fileUploadService;
@@ -284,6 +284,9 @@ public class SheetPostApplicationService {
 					viewCountsBySheetPostIds.get(sheetPostListDto.getId()));
 			return sheetPostListDto;
 		}).toList();
+		if (searchSentence != null && instrument != null && difficulty != null && genre != null) {
+			eventPublisher.publishEvent(new SheetPostSearchedEvent(searchSentence, instrument, difficulty, genre));
+		}
 		return PageableExecutionUtils.getPage(sheetPostLists, pageable, sheetPostIds::getTotalElements);
 	}
 

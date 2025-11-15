@@ -127,33 +127,6 @@ public class ElasticSearchInstance {
         return PageableExecutionUtils.getPage(sheetPostIds, pageable, () -> count);
     }
 
-    private static Query getQuery(String value, List<String> instruments) {
-        return QueryBuilders.terms(t -> t
-                .field(value)
-                .terms(terms -> terms.value(instruments.stream().map(item -> FieldValue.of(item))
-                        .filter(item -> !item.stringValue().isBlank()).toList())));
-    }
-
-    private SearchRequest.Builder getRequest(@Nullable String searchSentence, SearchRequest.Builder s,
-            List<Query> searchOptions, Pageable pageable) {
-        return s.index(SHEET_POST_INDEX_NAME)
-                .from((pageable.getPageNumber()) * pageable.getPageSize())
-                .size(pageable.getPageSize())
-                .sort(SortOptions.of(so -> so.field(FieldSort.of(f -> f.field("created_at")
-                        .order(SortOrder.Desc)))))
-                .query(q -> getSearchTermQueryBuilder(searchSentence, searchOptions, q));
-    }
-
-    private static ObjectBuilder<Query> getSearchTermQueryBuilder(@Nullable String searchSentence,
-            List<Query> searchOptions, Query.Builder q) {
-        if (searchSentence != null && !searchSentence.isEmpty()) {
-            return q.bool(b -> b
-                    .must(q2 -> q2.queryString(qs -> qs.fields("title", "content").query("*" + searchSentence + "*")))
-                    .must(searchOptions));
-        } else {
-            return q.bool(b -> b.must(searchOptions));
-        }
-    }
 
     public List<SheetPostIndex> searchPopularDateRangeSheetPost(DateRange dateRange, String limit)
             throws IOException, TimeoutException {
