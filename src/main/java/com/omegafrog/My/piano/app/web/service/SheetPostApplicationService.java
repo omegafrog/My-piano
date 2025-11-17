@@ -11,6 +11,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
+import org.springframework.data.util.Pair;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
@@ -274,8 +275,10 @@ public class SheetPostApplicationService {
 			List<String> genre,
 			Pageable pageable) throws IOException {
 
-		Page<Long> sheetPostIds = elasticSearchInstance.searchSheetPost(
+		Pair<Page<Long>, String> pairs = elasticSearchInstance.searchSheetPost(
 				searchSentence, instrument, difficulty, genre, pageable);
+		Page<Long> sheetPostIds = pairs.getFirst();
+		String rawQuery = pairs.getSecond();
 		List<SheetPostListDto> res = sheetPostRepository.findByIds(sheetPostIds.getContent(), pageable);
 		Map<Long, Integer> viewCountsBySheetPostIds = sheetPostViewCountRepository.getViewCountsByIds(
 				sheetPostIds.getContent());
@@ -284,8 +287,8 @@ public class SheetPostApplicationService {
 					viewCountsBySheetPostIds.get(sheetPostListDto.getId()));
 			return sheetPostListDto;
 		}).toList();
-		if (searchSentence != null && instrument != null && difficulty != null && genre != null) {
-			eventPublisher.publishEvent(new SheetPostSearchedEvent(searchSentence, instrument, difficulty, genre));
+		if (searchSentence != null) {
+			eventPublisher.publishEvent(new SheetPostSearchedEvent(rawQuery, searchSentence, instrument, difficulty, genre));
 		}
 		return PageableExecutionUtils.getPage(sheetPostLists, pageable, sheetPostIds::getTotalElements);
 	}

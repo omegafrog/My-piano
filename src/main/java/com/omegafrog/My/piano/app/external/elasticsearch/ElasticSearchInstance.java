@@ -15,9 +15,11 @@ import co.elastic.clients.elasticsearch._types.query_dsl.TextQueryType;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
+import co.elastic.clients.elasticsearch.indices.AnalyzeResponse;
 import co.elastic.clients.json.JsonData;
 import co.elastic.clients.util.ObjectBuilder;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
+import com.omegafrog.My.piano.app.external.elasticsearch.exception.ElasticSearchException;
 import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.dto.dateRange.DateRange;
 
@@ -27,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
+import org.springframework.data.util.Pair;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
@@ -61,7 +64,7 @@ public class ElasticSearchInstance {
         sheetPostIndexRepository.save(index);
     }
 
-    public Page<Long> searchSheetPost(@Nullable String searchSentence,
+    public Pair<Page<Long>, String> searchSheetPost(@Nullable String searchSentence,
             @Nullable List<String> instruments,
             @Nullable List<String> difficulties,
             @Nullable List<String> genres,
@@ -70,7 +73,8 @@ public class ElasticSearchInstance {
         MultiMatchQuery mmQuery = MultiMatchQuery.of(q -> q
                 .query(searchSentence)
                 .fields("title^5", "name^4", "content^3")
-                .analyzer("my_nori_analyzer"));
+                .analyzer("my_nori_analyzer")
+                .minimumShouldMatch("2<75%"));
 
         // bool should
         BoolQuery boolQuery = BoolQuery.of(b -> {
@@ -115,8 +119,7 @@ public class ElasticSearchInstance {
                 .index("sheetpost_v3")
                 .query(functionScoreQuery._toQuery())
                 .from((int) pageable.getOffset())
-                .size(pageable.getPageSize())
-                .sort(sort -> sort.field(f -> f.field("created_at").order(SortOrder.Desc))));
+                .size(pageable.getPageSize()));
 
         SearchResponse<SheetPostIndex> response = client.search(searchRequest, SheetPostIndex.class);
         long count = response.hits().total().value();
@@ -124,9 +127,10 @@ public class ElasticSearchInstance {
         List<Hit<SheetPostIndex>> hits = response.hits().hits();
         List<Long> sheetPostIds = new ArrayList<>();
         hits.forEach(hit -> sheetPostIds.add(hit.source().getId()));
-        return PageableExecutionUtils.getPage(sheetPostIds, pageable, () -> count);
-    }
 
+        return Pair.of(PageableExecutionUtils.getPage(sheetPostIds, pageable, () -> count),
+                searchRequest.query().toString());
+    }
 
     public List<SheetPostIndex> searchPopularDateRangeSheetPost(DateRange dateRange, String limit)
             throws IOException, TimeoutException {
@@ -223,4 +227,5 @@ public class ElasticSearchInstance {
 
         return viewCountMap;
     }
+
 }

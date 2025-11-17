@@ -3,13 +3,25 @@ package com.omegafrog.My.piano.app.web.event;
 import java.util.List;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.NoArgsConstructor;
 
 @Getter
-@RequiredArgsConstructor
+@NoArgsConstructor
 public class SheetPostSearchedEvent extends Event {
-  private final String searchedSentence;
-  private final List<String> instrument;
-  private final List<String> difficulty;
-  private final List<String> genres;
+  private String rawQuery;
+  private String searchedSentence;
+  private List<String> instrument;
+  private List<String> difficulty;
+  private List<String> genres;
+
+  public SheetPostSearchedEvent(String rawQuery, String searchedSentence, List<String> instrument,
+      List<String> difficulty,
+      List<String> genres) {
+    this.rawQuery = rawQuery;
+    this.searchedSentence = searchedSentence;
+    this.instrument = instrument;
+    this.difficulty = difficulty;
+    this.genres = genres;
+  }
+
 }
