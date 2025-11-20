@@ -30,5 +30,5 @@ public interface SheetPostRepository {
 
     List<SheetPostListDto> findByIds(List<Long> sheetPostIds, Pageable pageable);
 
-    Iterable<SheetPost> findAllById(List<Long> list);
+    List<SheetPost> findAllById(List<Long> list);
 }

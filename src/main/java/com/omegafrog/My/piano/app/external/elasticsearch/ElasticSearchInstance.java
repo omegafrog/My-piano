@@ -11,17 +11,15 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQueryField;
-import co.elastic.clients.elasticsearch._types.query_dsl.TextQueryType;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
-import co.elastic.clients.elasticsearch.indices.AnalyzeResponse;
 import co.elastic.clients.json.JsonData;
-import co.elastic.clients.util.ObjectBuilder;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.external.elasticsearch.exception.ElasticSearchException;
 import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.dto.dateRange.DateRange;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostListDto;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,12 +40,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
 @Component
 public class ElasticSearchInstance {
 
+    private static final Integer AUTOCOMPLETE_SIZE = 10;
     @Autowired
     private SheetPostIndexRepository sheetPostIndexRepository;
     private final ElasticsearchClient client;
@@ -68,7 +68,7 @@ public class ElasticSearchInstance {
             @Nullable List<String> instruments,
             @Nullable List<String> difficulties,
             @Nullable List<String> genres,
-            Pageable pageable) throws IOException {
+            Pageable pageable) {
         // multi_match 쿼리 (title, name, content)
         MultiMatchQuery mmQuery = MultiMatchQuery.of(q -> q
                 .query(searchSentence)
@@ -121,7 +121,13 @@ public class ElasticSearchInstance {
                 .from((int) pageable.getOffset())
                 .size(pageable.getPageSize()));
 
-        SearchResponse<SheetPostIndex> response = client.search(searchRequest, SheetPostIndex.class);
+        SearchResponse<SheetPostIndex> response = null;
+        try {
+            response = client.search(searchRequest, SheetPostIndex.class);
+        } catch (IOException e) {
+            throw new ElasticSearchException("elasticsearch query failed. query:" + searchRequest.query().toString(),
+                    e);
+        }
         long count = response.hits().total().value();
 
         List<Hit<SheetPostIndex>> hits = response.hits().hits();
@@ -226,6 +232,78 @@ public class ElasticSearchInstance {
         }
 
         return viewCountMap;
+    }
+
+    public List<SheetPostIndex> getSearchSheetPostAutoComplete(String searchSentence, List<String> instruments,
+            List<String> difficulties, List<String> genres) {
+        // 1. multi_match (title.autocomplete, content.autocomplete)
+        MultiMatchQuery mmQuery = MultiMatchQuery.of(q -> q
+                .query(searchSentence)
+                .fields("title.autocomplete^5", "content.autocomplete^3")
+                .analyzer("my_nori_analyzer")
+                .minimumShouldMatch("2<75%"));
+
+        // 2. bool must (자동완성 + 필터 조건)
+        BoolQuery boolQuery = BoolQuery.of(b -> {
+
+            // keyword 자동완성
+            b.must(mmQuery._toQuery());
+
+            // instrument 필터
+            if (instruments != null && !instruments.isEmpty()) {
+                b.must(TermsQuery.of(t -> t
+                        .field("instrument")
+                        .terms(TermsQueryField.of(f -> f.value(
+                                instruments.stream().map(FieldValue::of).collect(Collectors.toList())))))
+                        ._toQuery());
+            }
+
+            // genre 필터
+            if (genres != null && !genres.isEmpty()) {
+                b.must(TermsQuery.of(t -> t
+                        .field("genre")
+                        .terms(TermsQueryField.of(f -> f.value(
+                                genres.stream().map(FieldValue::of).collect(Collectors.toList())))))
+                        ._toQuery());
+            }
+
+            // difficulty 필터
+            if (difficulties != null && !difficulties.isEmpty()) {
+                b.must(TermsQuery.of(t -> t
+                        .field("difficulty")
+                        .terms(TermsQueryField.of(f -> f.value(
+                                difficulties.stream().map(FieldValue::of).collect(Collectors.toList())))))
+                        ._toQuery());
+            }
+
+            return b;
+        });
+
+        // 3. function_score (viewCount 반영)
+        FunctionScoreQuery functionScoreQuery = FunctionScoreQuery.of(f -> f
+                .query(boolQuery._toQuery())
+                .functions(fx -> fx
+                        .fieldValueFactor(fvf -> fvf
+                                .field("viewCount")
+                                .factor(1.2)
+                                .modifier(FieldValueFactorModifier.Log1p)))
+                .boostMode(FunctionBoostMode.Sum));
+
+        // 4. 검색 요청
+        SearchRequest searchRequest = SearchRequest.of(s -> s
+                .index("sheetpost_v3_v2")
+                .query(functionScoreQuery._toQuery())
+                .size(AUTOCOMPLETE_SIZE));
+
+        SearchResponse<SheetPostIndex> response = null;
+        try {
+            response = client.search(searchRequest, SheetPostIndex.class);
+        } catch (IOException e) {
+            throw new ElasticSearchException("sheetpostindex search failed", e);
+        }
+
+        List<Hit<SheetPostIndex>> hits = response.hits().hits();
+        return hits.stream().map(Hit::source).toList();
     }
 
 }

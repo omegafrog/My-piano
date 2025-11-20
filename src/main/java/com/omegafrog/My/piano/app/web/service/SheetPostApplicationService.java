@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.omegafrog.My.piano.app.external.elasticsearch.ElasticSearchInstance;
+import com.omegafrog.My.piano.app.external.elasticsearch.SheetPostIndex;
 import com.omegafrog.My.piano.app.external.elasticsearch.SheetPostIndexRepository;
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.utils.MapperUtil;
@@ -273,7 +274,7 @@ public class SheetPostApplicationService {
 			List<String> instrument,
 			List<String> difficulty,
 			List<String> genre,
-			Pageable pageable) throws IOException {
+			Pageable pageable) {
 
 		Pair<Page<Long>, String> pairs = elasticSearchInstance.searchSheetPost(
 				searchSentence, instrument, difficulty, genre, pageable);
@@ -291,6 +292,18 @@ public class SheetPostApplicationService {
 			eventPublisher.publishEvent(new SheetPostSearchedEvent(rawQuery, searchSentence, instrument, difficulty, genre));
 		}
 		return PageableExecutionUtils.getPage(sheetPostLists, pageable, sheetPostIds::getTotalElements);
+	}
+
+	public List<SheetPostListDto> getSheetPostAutoComplete(String searchSentence, List<String> instrument,
+			List<String> difficulty, List<String> genre) {
+		List<SheetPostIndex> result = elasticSearchInstance.getSearchSheetPostAutoComplete(searchSentence, instrument,
+				difficulty, genre);
+		return sheetPostRepository.findAllById(result.stream().map(item -> item.getId()).toList())
+				.stream()
+				.map(item -> new SheetPostListDto(item.getId(), item.getTitle(), item.getAuthor().getName(),
+						item.getAuthor().getProfileSrc(), item.getSheet().getTitle(), item.getSheet().getDifficulty(),
+						item.getSheet().getGenres(), item.getSheet().getInstrument(), item.getCreatedAt(), item.getPrice()))
+				.toList();
 	}
 
 }

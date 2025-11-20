@@ -48,6 +48,7 @@ public class CommonUserJwtTokenFilter extends OncePerRequestFilter {
                         AntPathRequestMatcher.antMatcher("/api/v1/**/register/**"),
                         AntPathRequestMatcher.antMatcher("/api/v1/user/profile/register"),
                         AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/api/v1/sheet-post"),
+                        AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/api/v1/sheet-post/autocomplete"),
                         AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/api/v1/sheet-post/{regex:\\d+}"),
                         AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/api/v1/sheet-post/{regex:\\d+}/comments"),
                         AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/api/v1/lesson/{regex:\\d+}"),
@@ -63,8 +64,7 @@ public class CommonUserJwtTokenFilter extends OncePerRequestFilter {
                         AntPathRequestMatcher.antMatcher("/healthcheck"),
                         AntPathRequestMatcher.antMatcher("/api/v1/cash/webhook"),
                         AntPathRequestMatcher.antMatcher("/swagger-ui/**"),
-                        AntPathRequestMatcher.antMatcher("/api-docs/**")
-                ));
+                        AntPathRequestMatcher.antMatcher("/api-docs/**")));
         for (AntPathRequestMatcher pathMatcher : ignoredPatterns) {
             if (pathMatcher.matches(request)) {
                 filterChain.doFilter(request, response);
@@ -75,7 +75,7 @@ public class CommonUserJwtTokenFilter extends OncePerRequestFilter {
         try {
             // token 추출
             String accessToken = tokenUtils.getAccessTokenString(request.getHeader(HttpHeaders.AUTHORIZATION));
-            //token으로부터 유저 추출
+            // token으로부터 유저 추출
             Claims claims = tokenUtils.extractClaims(accessToken);
             Long userId = Long.valueOf((String) claims.get("id"));
             Role role = Role.valueOf(String.valueOf(claims.get("role")));
@@ -98,13 +98,11 @@ public class CommonUserJwtTokenFilter extends OncePerRequestFilter {
 
     private UserDetails getUserFromAccessToken(Long userId) {
         return securityUserRepository.findById(userId).orElseThrow(
-                () -> new EntityNotFoundException("Cannot find User entity")
-        );
+                () -> new EntityNotFoundException("Cannot find User entity"));
     }
 
     private static Authentication getAuthenticationToken(UserDetails user) {
         return new UsernamePasswordAuthenticationToken(
-                user, null, user.getAuthorities()
-        );
+                user, null, user.getAuthorities());
     }
 }

@@ -152,7 +152,7 @@ public class JpaSheetPostRepositoryImpl implements SheetPostRepository {
 	}
 
 	@Override
-	public Iterable<SheetPost> findAllById(List<Long> list) {
+	public List<SheetPost> findAllById(List<Long> list) {
 		JPAQuery<SheetPost> query = factory.selectFrom(QSheetPost.sheetPost)
 			.join(QSheetPost.sheetPost.author, QUser.user).fetchJoin()
 			.join(QSheetPost.sheetPost.sheet, QSheet.sheet).fetchJoin()

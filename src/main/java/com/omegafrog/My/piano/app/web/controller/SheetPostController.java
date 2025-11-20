@@ -64,10 +64,21 @@ public class SheetPostController {
 			@Nullable @RequestParam List<String> instrument,
 			@Nullable @RequestParam List<String> difficulty,
 			@Nullable @RequestParam List<String> genre,
-			Pageable pageable) throws IOException {
+			Pageable pageable) {
 		Page<SheetPostListDto> data = sheetPostService.getSheetPosts(searchSentence, instrument, difficulty, genre,
 				pageable);
 		return new ApiResponse<>("Get sheet posts success.", data);
+	}
+
+	@GetMapping("/autocomplete")
+	public JsonAPIResponse<List<SheetPostListDto>> getSearchAutoCompleteList(
+			@Nullable @RequestParam String searchSentence,
+			@Nullable @RequestParam List<String> instrument,
+			@Nullable @RequestParam List<String> difficulty,
+			@Nullable @RequestParam List<String> genre) {
+		List<SheetPostListDto> data = sheetPostService.getSheetPostAutoComplete(searchSentence, instrument, difficulty,
+				genre);
+		return new ApiResponse<>("get sheetpost search autocomplete list success.", data);
 	}
 
 	@PutMapping("/{id}/like")
