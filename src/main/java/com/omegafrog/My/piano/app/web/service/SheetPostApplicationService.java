@@ -11,12 +11,14 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
+import org.springframework.data.util.Pair;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.omegafrog.My.piano.app.external.elasticsearch.ElasticSearchInstance;
+import com.omegafrog.My.piano.app.external.elasticsearch.SheetPostIndex;
 import com.omegafrog.My.piano.app.external.elasticsearch.SheetPostIndexRepository;
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.utils.MapperUtil;
@@ -272,10 +274,12 @@ public class SheetPostApplicationService {
 			List<String> instrument,
 			List<String> difficulty,
 			List<String> genre,
-			Pageable pageable) throws IOException {
+			Pageable pageable) {
 
-		Page<Long> sheetPostIds = elasticSearchInstance.searchSheetPost(
+		Pair<Page<Long>, String> pairs = elasticSearchInstance.searchSheetPost(
 				searchSentence, instrument, difficulty, genre, pageable);
+		Page<Long> sheetPostIds = pairs.getFirst();
+		String rawQuery = pairs.getSecond();
 		List<SheetPostListDto> res = sheetPostRepository.findByIds(sheetPostIds.getContent(), pageable);
 		Map<Long, Integer> viewCountsBySheetPostIds = sheetPostViewCountRepository.getViewCountsByIds(
 				sheetPostIds.getContent());
@@ -284,10 +288,22 @@ public class SheetPostApplicationService {
 					viewCountsBySheetPostIds.get(sheetPostListDto.getId()));
 			return sheetPostListDto;
 		}).toList();
-		if (searchSentence != null && instrument != null && difficulty != null && genre != null) {
-			eventPublisher.publishEvent(new SheetPostSearchedEvent(searchSentence, instrument, difficulty, genre));
+		if (searchSentence != null) {
+			eventPublisher.publishEvent(new SheetPostSearchedEvent(rawQuery, searchSentence, instrument, difficulty, genre));
 		}
 		return PageableExecutionUtils.getPage(sheetPostLists, pageable, sheetPostIds::getTotalElements);
+	}
+
+	public List<SheetPostListDto> getSheetPostAutoComplete(String searchSentence, List<String> instrument,
+			List<String> difficulty, List<String> genre) {
+		List<SheetPostIndex> result = elasticSearchInstance.getSearchSheetPostAutoComplete(searchSentence, instrument,
+				difficulty, genre);
+		return sheetPostRepository.findAllById(result.stream().map(item -> item.getId()).toList())
+				.stream()
+				.map(item -> new SheetPostListDto(item.getId(), item.getTitle(), item.getAuthor().getName(),
+						item.getAuthor().getProfileSrc(), item.getSheet().getTitle(), item.getSheet().getDifficulty(),
+						item.getSheet().getGenres(), item.getSheet().getInstrument(), item.getCreatedAt(), item.getPrice()))
+				.toList();
 	}
 
 }

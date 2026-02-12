@@ -1,24 +1,6 @@
 {
-  "query": {
-    "function_score": {
-      "query": {
-        "bool": {
-          "should": [
-            {
-              "multi_match": {
-                "analyzer": "my_nori_analyzer",
-                "fields": [
-                  "title^5",
-                  "name^4",
-                  "content^3"
-                ],
-                "query": "클래"
-              }
-            }
-          ]
-        }
-      }
-    },
+  "function_score": {
+    "boost_mode": "sum",
     "functions": [
       {
         "field_value_factor": {
@@ -28,13 +10,23 @@
         }
       }
     ],
-    "boost_mode": "sum"
-  },
-  "sort": [
-    {
-      "created_at": {
-        "order": "desc"
+    "query": {
+      "bool": {
+        "should": [
+          {
+            "multi_match": {
+              "analyzer": "my_nori_analyzer",
+              "fields": [
+                "title^5",
+                "name^4",
+                "content^3"
+              ],
+              "minimum_should_match": "2<75%",
+              "query": "하울의 움직이는 성"
+            }
+          }
+        ]
       }
     }
-  ]
+  }
 }

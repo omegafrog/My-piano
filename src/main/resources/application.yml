@@ -62,6 +62,8 @@ spring:
 logging:
   file:
     name: log.txt
+  level:
+    root: DEBUG
 #   level:
 #     org.springframework.web: DEBUG
 #     org.springframework.http.converter.json: DEBUG
