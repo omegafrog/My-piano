@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.net.URL;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
@@ -26,6 +25,10 @@ public interface UploadFileExecutor {
   void removeSheetPost(SheetPost sheetPost);
 
   URL createFileUrl(String sheetUrl);
+
+  String buildSheetUrl(String filename);
+
+  String buildThumbnailUrls(String filename, int pageNum);
 
   void uploadSheetAsync(File file, String filename, ObjectMetadata metadata, String uploadId);
 
