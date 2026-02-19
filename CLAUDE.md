@@ -35,14 +35,13 @@ file storage in development and AWS S3 in production.
 ### Infrastructure Commands
 
 ```bash
-# Start infrastructure services (Elasticsearch, Kafka, Kibana)
+# Start infrastructure services (Elasticsearch, Kibana, Redis)
 docker-compose up -d
 
 # Stop infrastructure services
 docker-compose down
 
 # View logs
-docker-compose logs -f kafka
 docker-compose logs -f elasticsearch
 ```
 
@@ -54,7 +53,7 @@ docker-compose logs -f elasticsearch
 - **MySQL** for primary data storage
 - **Redis** for caching (view counts, like counts, user sessions)
 - **Elasticsearch** for search functionality
-- **Kafka** for event-driven architecture
+- **DB Outbox + Polling** for asynchronous event processing
 - **AWS S3** for file storage (production) / Local filesystem (development)
 
 ### Key Architecture Patterns
@@ -66,12 +65,11 @@ docker-compose logs -f elasticsearch
 
 #### Event-Driven Architecture
 
-The application uses Kafka for asynchronous processing:
+The application uses DB outbox events with polling processors for asynchronous processing:
 
-- **Post Events**: `PostCreatedEvent`, `PostUpdatedEvent`, `PostDeletedEvent`
-- **Saga Pattern**: Compensation events for handling Elasticsearch failures
-- **Topics**: `post-created-topic`, `post-updated-topic`, `post-deleted-topic`, `elasticsearch-failed-topic`,
-  `compensation-topic`
+- **Post Events**: `POST_CREATED`, `POST_UPDATED`, `POST_DELETED`
+- **SheetPost Events**: `SHEET_POST_CREATED`
+- **Upload Events**: `FILE_UPLOAD_COMPLETED`, `FILE_UPLOAD_FAILED`
 
 #### File Storage Strategy
 
@@ -130,12 +128,11 @@ The application uses Kafka for asynchronous processing:
 - Thumbnail generation with blur effects for preview
 - Async file processing with `@Async` annotations
 
-### Kafka Configuration
+### Outbox Configuration
 
-- Bootstrap servers: `localhost:9092`
-- Consumer group: `mypiano-consumer-group`
-- Auto-create topics enabled
-- JSON serialization for events
+- Outbox processors poll events on a fixed delay
+- Default batch size and retry delay are configurable via `*-outbox.*` properties
+- Event payloads are persisted in DB and processed idempotently
 
 ## Development Guidelines
 
@@ -152,7 +149,7 @@ The application uses Kafka for asynchronous processing:
 - **Services**: Business logic in `web/service`
 - **Domain**: Entity classes and repository interfaces
 - **DTOs**: Data transfer objects in `web/dto`
-- **Events**: Kafka events and consumers in `web/event`
+- **Events**: application events and outbox processors in `web/event`, `web/service/outbox`
 - **Configuration**: Spring configurations in root `app` package
 
 ### External Integrations

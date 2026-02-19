@@ -70,7 +70,7 @@ JWT Refresh Token → Redis → 빠른 인증 처리
 
 #### 3. 실시간 인덱싱
 ```
-Kafka Event → Elasticsearch Consumer → Real-time Indexing
+DB Outbox Event → Polling Processor → Real-time Indexing
 ```
 
 **이벤트 기반 업데이트:**
@@ -132,18 +132,17 @@ public JpaPagingItemReader<ViewCount> viewCountReader() {
 
 ## 🔄 이벤트 기반 아키텍처
 
-### Kafka 메시징 시스템
+### Outbox 메시징 시스템
 
 #### 1. 이벤트 스트림 구조
 ```
-Producer (Web Layer) → Kafka Topics → Consumer (Processing Layer)
+Producer (Web Layer) → DB Outbox → Polling Processor (Processing Layer)
 ```
 
-#### 2. 주요 토픽 설계
-- **post-created-topic**: 게시물 생성 이벤트
-- **post-updated-topic**: 게시물 수정 이벤트
-- **elasticsearch-failed-topic**: 인덱싱 실패 처리
-- **compensation-topic**: 보상 트랜잭션
+#### 2. 주요 이벤트 설계
+- **POST_CREATED / POST_UPDATED / POST_DELETED**: 게시물 인덱싱 이벤트
+- **SHEET_POST_CREATED**: 악보 게시물 인덱싱 이벤트
+- **FILE_UPLOAD_COMPLETED / FILE_UPLOAD_FAILED**: 파일 업로드 후속 처리 이벤트
 
 #### 3. 보상 트랜잭션 (Saga Pattern)
 ```java
