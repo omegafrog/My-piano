@@ -54,14 +54,6 @@ spring:
       repositories:
         enabled: false
 
-logging:
-  level:
-    org.apache.kafka: ERROR
-#     org.springframework.web: DEBUG
-#     org.springframework.http.converter.json: DEBUG
-#     org.hibernate.SQL: DEBUG
-#     org.hibernate.type.descriptor.sql: TRACE
-
 elasticsearch:
   host: localhost
   port: 9200
