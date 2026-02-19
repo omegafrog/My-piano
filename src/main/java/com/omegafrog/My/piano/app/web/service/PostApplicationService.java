@@ -20,11 +20,9 @@ import com.omegafrog.My.piano.app.web.dto.post.PostRegisterDto;
 import com.omegafrog.My.piano.app.web.dto.post.ReturnPostListDto;
 import com.omegafrog.My.piano.app.web.dto.post.UpdatePostDto;
 import com.omegafrog.My.piano.app.web.enums.PostType;
-import com.omegafrog.My.piano.app.web.event.EventPublisher;
-import com.omegafrog.My.piano.app.web.event.PostCreatedEvent;
-import com.omegafrog.My.piano.app.web.event.PostDeletedEvent;
-import com.omegafrog.My.piano.app.web.event.PostUpdatedEvent;
 import com.omegafrog.My.piano.app.web.exception.message.ExceptionMessage;
+import com.omegafrog.My.piano.app.web.domain.outbox.PostOutboxEventType;
+import com.omegafrog.My.piano.app.web.service.outbox.PostOutboxService;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +36,7 @@ public class PostApplicationService {
 	private final PostRepository postRepository;
 	private final AuthenticationUtil authenticationUtil;
 	private final PostViewCountRepository postViewCountRepository;
-	private final EventPublisher eventPublisher;
+	private final PostOutboxService postOutboxService;
 
 	public PostDto writePost(PostRegisterDto post) {
 		User loggedInUser = authenticationUtil.getLoggedInUser();
@@ -54,16 +52,7 @@ public class PostApplicationService {
 				.build();
 		Post saved = postRepository.save(build);
 		user.addUploadedPost(saved);
-
-		// Publish post created event
-		PostCreatedEvent event = new PostCreatedEvent(
-				saved.getId(),
-				saved.getTitle(),
-				saved.getContent(),
-				saved.getType().toString(),
-				saved.getAuthor().getId(),
-				saved.getAuthor().getName());
-		eventPublisher.publishPostCreated(event);
+		postOutboxService.enqueue(PostOutboxEventType.POST_CREATED, saved.getId(), normalizeVersion(saved.getVersion()));
 
 		return saved.toDto();
 	}
@@ -82,16 +71,10 @@ public class PostApplicationService {
 		Post post = getPostById(id);
 		if (post.getAuthor().equals(loggedInUser)) {
 			Post updatedPost = post.update(updatePostDto);
-
-			// Publish post updated event
-			PostUpdatedEvent event = new PostUpdatedEvent(
+			postRepository.saveAndFlush(updatedPost);
+			postOutboxService.enqueue(PostOutboxEventType.POST_UPDATED,
 					updatedPost.getId(),
-					updatedPost.getTitle(),
-					updatedPost.getContent(),
-					updatedPost.getType().toString(),
-					updatedPost.getAuthor().getId(),
-					updatedPost.getAuthor().getName());
-			eventPublisher.publishPostUpdated(event);
+					normalizeVersion(updatedPost.getVersion()));
 
 			return updatedPost.toDto();
 		} else
@@ -102,13 +85,15 @@ public class PostApplicationService {
 		User loggedInUser = authenticationUtil.getLoggedInUser();
 		Post post = getPostById(id);
 		if (post.getAuthor().equals(loggedInUser)) {
+			long deletedVersion = normalizeVersion(post.getVersion()) + 1;
 			postRepository.deleteById(id);
-
-			// Publish post deleted event
-			PostDeletedEvent event = new PostDeletedEvent(id);
-			eventPublisher.publishPostDeleted(event);
+			postOutboxService.enqueue(PostOutboxEventType.POST_DELETED, id, deletedVersion);
 		} else
 			throw new AccessDeniedException("Cannot delete other user's post");
+	}
+
+	private long normalizeVersion(Long version) {
+		return version == null ? 0L : version;
 	}
 
 	private Post getPostById(Long id) {

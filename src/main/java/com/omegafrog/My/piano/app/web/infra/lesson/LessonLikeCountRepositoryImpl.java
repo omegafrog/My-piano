@@ -9,10 +9,12 @@ import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostLikeCount;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 
 @Repository
+@Profile("!test")
 @RequiredArgsConstructor
 @Qualifier("LessonLikeCountRepositoryImpl")
 public class LessonLikeCountRepositoryImpl implements LikeCountRepository {

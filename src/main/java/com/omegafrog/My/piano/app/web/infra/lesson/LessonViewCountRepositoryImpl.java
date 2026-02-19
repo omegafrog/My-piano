@@ -4,10 +4,12 @@ import com.omegafrog.My.piano.app.web.domain.lesson.Lesson;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonViewCount;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 
 @Repository
+@Profile("!test")
 @RequiredArgsConstructor
 public class LessonViewCountRepositoryImpl implements com.omegafrog.My.piano.app.web.domain.lesson.LessonViewCountRepository {
 

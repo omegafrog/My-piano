@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.Cursor;
@@ -21,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 @Repository
+@Profile("!test")
 @RequiredArgsConstructor
 @Slf4j
 public class CommonUserRefreshTokenRepositoryImpl implements RefreshTokenRepository {

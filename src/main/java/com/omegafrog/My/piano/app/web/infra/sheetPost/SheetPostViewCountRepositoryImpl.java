@@ -5,6 +5,7 @@ import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostViewCount;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostViewCountRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 @Repository
+@Profile("!test")
 @RequiredArgsConstructor
 public class SheetPostViewCountRepositoryImpl implements SheetPostViewCountRepository {
 

@@ -123,7 +123,7 @@ public class TestUtil {
 				new FileInputStream("src/test/sheet.pdf"));
 		String uploadIdString = mockMvc.perform(multipart("/api/v1/files/upload")
 				.file(file)
-				.contentType("application/json")
+				.contentType(MediaType.MULTIPART_FORM_DATA)
 				.header(HttpHeaders.AUTHORIZATION, tokens.getAccessToken())
 				.cookie(tokens.getRefreshToken()))
 				.andExpect(status().isOk())

@@ -36,6 +36,11 @@ public class JpaPostRepositoryImpl implements PostRepository {
 	}
 
 	@Override
+	public Post saveAndFlush(Post post) {
+		return postRepository.saveAndFlush(post);
+	}
+
+	@Override
 	public Optional<Post> findById(Long id) {
 		return Optional.ofNullable(factory.select(QPost.post).from(QPost.post)
 			.leftJoin(QPost.post.author, QUser.user).fetchJoin()

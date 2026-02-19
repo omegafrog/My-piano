@@ -176,7 +176,6 @@ public class ElasticSearchInstance {
     }
 
     // Post indexing methods for event-driven architecture
-    @Async("ThreadPoolTaskExecutor")
     public void savePostIndex(Post post) throws IOException {
         log.info("Creating elasticsearch index for post: {}", post.getId());
         // Implementation would create a PostIndex similar to SheetPostIndex
@@ -184,7 +183,6 @@ public class ElasticSearchInstance {
         log.info("Post index created successfully for post: {}", post.getId());
     }
 
-    @Async("ThreadPoolTaskExecutor")
     public void updatePostIndex(Post post) throws IOException {
         log.info("Updating elasticsearch index for post: {}", post.getId());
         // Implementation would update the PostIndex
@@ -192,7 +190,6 @@ public class ElasticSearchInstance {
         log.info("Post index updated successfully for post: {}", post.getId());
     }
 
-    @Async("ThreadPoolTaskExecutor")
     public void deletePostIndex(Long postId) throws IOException {
         log.info("Deleting elasticsearch index for post: {}", postId);
         // Implementation would delete the PostIndex

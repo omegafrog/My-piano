@@ -22,8 +22,11 @@ public class Cleanup {
     @PersistenceUnit
     private EntityManagerFactory entityManagerFactory;
 
-    @Autowired
+    @Autowired(required = false)
     private RedisTemplate redisTemplate;
+
+    @Autowired(required = false)
+    private List<TestResettable> resettables;
 
     public void cleanUp() {
         log.info("cleanup start");
@@ -52,13 +55,36 @@ public class Cleanup {
 
         File file = new File("static/sheets");
         File file2 = new File("static/thumbnails");
-        for (File f : file.listFiles()) {
-            f.delete();
-        }
-        for (File f : file2.listFiles()) {
-            f.delete();
+        File[] sheetFiles = file.listFiles();
+        if (sheetFiles != null) {
+            for (File f : sheetFiles) {
+                f.delete();
+            }
         }
 
-        redisTemplate.getConnectionFactory().getConnection().flushAll();
+        File[] thumbnailFiles = file2.listFiles();
+        if (thumbnailFiles != null) {
+            for (File f : thumbnailFiles) {
+                f.delete();
+            }
+        }
+
+        if (resettables != null) {
+            for (TestResettable resettable : resettables) {
+                try {
+                    resettable.reset();
+                } catch (RuntimeException e) {
+                    log.warn("failed to reset test store: {}", resettable.getClass().getName(), e);
+                }
+            }
+        }
+
+        if (redisTemplate != null) {
+            try {
+                redisTemplate.getConnectionFactory().getConnection().flushAll();
+            } catch (RuntimeException e) {
+                log.warn("redis flushAll skipped: {}", e.getMessage());
+            }
+        }
     }
 }
