@@ -81,7 +81,6 @@ class SheetPostControllerTest {
                 // 파일업로드후 1초 대기
                 String uploadIdString = mockMvc.perform(multipart("/api/v1/files/upload")
                                 .file(file)
-                                .contentType("application/json")
                                 .header(HttpHeaders.AUTHORIZATION, artistToken.getAccessToken())
                                 .cookie(artistToken.getRefreshToken()))
                                 .andExpect(status().isOk())
@@ -125,7 +124,6 @@ class SheetPostControllerTest {
                 // 파일업로드후 1초 대기
                 String uploadIdString = mockMvc.perform(multipart("/api/v1/files/upload")
                                 .file(file)
-                                .contentType("application/json")
                                 .header(HttpHeaders.AUTHORIZATION, artistToken.getAccessToken())
                                 .cookie(artistToken.getRefreshToken()))
                                 .andExpect(status().isOk())
@@ -152,7 +150,6 @@ class SheetPostControllerTest {
                                 new FileInputStream("src/test/sheet.pdf"));
                 uploadIdString = mockMvc.perform(multipart("/api/v1/files/upload")
                                 .file(file1)
-                                .contentType("application/json")
                                 .header(HttpHeaders.AUTHORIZATION, artistToken.getAccessToken())
                                 .cookie(artistToken.getRefreshToken()))
                                 .andExpect(status().isOk())

@@ -2,6 +2,7 @@ package com.omegafrog.My.piano.app.web.infra.fileUpload;
 
 import com.omegafrog.My.piano.app.web.domain.fileUpload.FileUploadJob;
 import com.omegafrog.My.piano.app.web.domain.fileUpload.FileUploadJobRepository;
+import com.omegafrog.My.piano.app.web.domain.fileUpload.FileUploadLinkStatus;
 import com.omegafrog.My.piano.app.web.domain.fileUpload.FileUploadJobStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -28,9 +29,23 @@ public class JpaFileUploadJobRepositoryImpl implements FileUploadJobRepository {
     }
 
     @Override
+    public Optional<FileUploadJob> findByUploadId(String uploadId) {
+        return jpaRepository.findByUploadId(uploadId);
+    }
+
+    @Override
     public List<FileUploadJob> findProcessableJobs(LocalDateTime now, int batchSize) {
         return jpaRepository.findByStatusInAndNextAttemptAtLessThanEqualOrderByCreatedAtAsc(
                 List.of(FileUploadJobStatus.PENDING, FileUploadJobStatus.RETRY),
+                now,
+                PageRequest.of(0, Math.max(1, batchSize)));
+    }
+
+    @Override
+    public List<FileUploadJob> findLinkableJobs(LocalDateTime now, int batchSize) {
+        return jpaRepository.findByStatusAndLinkStatusInAndLinkNextAttemptAtLessThanEqualAndSheetPostIdIsNotNullOrderByCreatedAtAsc(
+                FileUploadJobStatus.COMPLETED,
+                List.of(FileUploadLinkStatus.PENDING, FileUploadLinkStatus.RETRY),
                 now,
                 PageRequest.of(0, Math.max(1, batchSize)));
     }

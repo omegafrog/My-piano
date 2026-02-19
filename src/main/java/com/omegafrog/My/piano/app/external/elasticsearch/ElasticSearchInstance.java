@@ -29,6 +29,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.data.util.Pair;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Nullable;
@@ -45,10 +46,11 @@ import java.util.stream.Collectors;
 @Slf4j
 @RequiredArgsConstructor
 @Component
+@Profile("!test")
 public class ElasticSearchInstance {
 
     private static final Integer AUTOCOMPLETE_SIZE = 10;
-    @Autowired
+    @Autowired(required = false)
     private SheetPostIndexRepository sheetPostIndexRepository;
     private final ElasticsearchClient client;
 

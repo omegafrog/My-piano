@@ -41,9 +41,35 @@ public class FileUploadJob {
     @Column(name = "temp_file_path", nullable = false)
     private String stagedFilePath;
 
+    private Long sheetPostId;
+
+    private String sheetUrl;
+
+    @Column(length = 2000)
+    private String thumbnailUrls;
+
+    private Integer pageNum;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private FileUploadJobStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private FileUploadLinkStatus linkStatus;
+
+    @Column(nullable = false)
+    private int linkAttemptCount;
+
+    @Column(nullable = false)
+    private int linkMaxAttempts;
+
+    private LocalDateTime linkNextAttemptAt;
+
+    @Column(length = 1000)
+    private String linkLastError;
+
+    private LocalDateTime linkedAt;
 
     @Column(nullable = false)
     private int attemptCount;
@@ -76,6 +102,11 @@ public class FileUploadJob {
         this.maxAttempts = maxAttempts <= 0 ? DEFAULT_MAX_ATTEMPTS : maxAttempts;
         this.nextAttemptAt = nextAttemptAt == null ? LocalDateTime.now() : nextAttemptAt;
         this.attemptCount = 0;
+
+        this.linkStatus = FileUploadLinkStatus.PENDING;
+        this.linkAttemptCount = 0;
+        this.linkMaxAttempts = DEFAULT_MAX_ATTEMPTS;
+        this.linkNextAttemptAt = LocalDateTime.now();
     }
 
     @PrePersist
@@ -83,6 +114,13 @@ public class FileUploadJob {
         LocalDateTime now = LocalDateTime.now();
         this.createdAt = now;
         this.updatedAt = now;
+
+        if (this.linkStatus == null) {
+            this.linkStatus = FileUploadLinkStatus.PENDING;
+        }
+        if (this.linkMaxAttempts <= 0) {
+            this.linkMaxAttempts = DEFAULT_MAX_ATTEMPTS;
+        }
     }
 
     @PreUpdate
@@ -107,6 +145,77 @@ public class FileUploadJob {
         this.status = FileUploadJobStatus.COMPLETED;
         this.completedAt = now;
         this.lastError = null;
+    }
+
+    public void assignSheetPostId(Long sheetPostId) {
+        this.sheetPostId = sheetPostId;
+    }
+
+    public void updateUploadResult(String sheetUrl, String thumbnailUrls, int pageNum) {
+        this.sheetUrl = sheetUrl;
+        this.thumbnailUrls = thumbnailUrls;
+        this.pageNum = pageNum;
+    }
+
+    public boolean isUploadCompleted() {
+        return status == FileUploadJobStatus.COMPLETED;
+    }
+
+    public boolean isLinked() {
+        return linkStatus == FileUploadLinkStatus.LINKED;
+    }
+
+    public void markLinkPending(LocalDateTime now) {
+        if (isLinked()) {
+            return;
+        }
+        this.linkStatus = FileUploadLinkStatus.PENDING;
+        this.linkNextAttemptAt = now;
+        this.linkLastError = null;
+    }
+
+    public boolean canLink(LocalDateTime now) {
+        if (!isUploadCompleted()) {
+            return false;
+        }
+        if (sheetPostId == null) {
+            return false;
+        }
+        if (linkStatus == null) {
+            linkStatus = FileUploadLinkStatus.PENDING;
+        }
+        if (linkStatus != FileUploadLinkStatus.PENDING && linkStatus != FileUploadLinkStatus.RETRY) {
+            return false;
+        }
+        if (linkNextAttemptAt == null) {
+            return true;
+        }
+        return !linkNextAttemptAt.isAfter(now);
+    }
+
+    public void markLinkRunning() {
+        this.linkStatus = FileUploadLinkStatus.RUNNING;
+        this.linkAttemptCount++;
+        this.linkLastError = null;
+    }
+
+    public void markLinked(LocalDateTime now) {
+        this.linkStatus = FileUploadLinkStatus.LINKED;
+        this.linkedAt = now;
+        this.linkLastError = null;
+    }
+
+    public boolean markLinkRetryOrFailed(String errorMessage, int retryDelaySeconds, LocalDateTime now) {
+        this.linkLastError = errorMessage;
+
+        if (linkAttemptCount >= linkMaxAttempts) {
+            this.linkStatus = FileUploadLinkStatus.FAILED;
+            return false;
+        }
+
+        this.linkStatus = FileUploadLinkStatus.RETRY;
+        this.linkNextAttemptAt = now.plusSeconds(Math.max(1, retryDelaySeconds));
+        return true;
     }
 
     public boolean markRetryOrFailed(String errorMessage, int retryDelaySeconds, LocalDateTime now) {

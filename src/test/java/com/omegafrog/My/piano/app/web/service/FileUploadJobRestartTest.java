@@ -7,8 +7,8 @@ import com.omegafrog.My.piano.app.web.domain.fileUpload.FileUploadJobRepository;
 import com.omegafrog.My.piano.app.web.domain.fileUpload.FileUploadJobStatus;
 import com.omegafrog.My.piano.app.web.domain.fileUpload.StagePdfStorage;
 import com.omegafrog.My.piano.app.web.domain.fileUpload.StagedPdf;
-import com.omegafrog.My.piano.app.web.enums.FileUploadStatus;
 import com.omegafrog.My.piano.app.web.infra.fileUpload.LocalStagePdfStorage;
+import com.omegafrog.My.piano.app.web.infra.fileUpload.FileUploadRedisReadModelWriter;
 import io.awspring.cloud.s3.ObjectMetadata;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -17,6 +17,11 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mockito;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.SimpleTransactionStatus;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -33,10 +38,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-
 class FileUploadJobRestartTest {
 
     @TempDir
@@ -66,15 +67,11 @@ class FileUploadJobRestartTest {
         UploadFileExecutor uploadFileExecutor = new FailOnceUploadFileExecutor();
         FileStorageExecutor fileStorageExecutor = new FileStorageExecutor(uploadFileExecutor);
 
-        FileUploadService fileUploadService = Mockito.mock(FileUploadService.class);
-        Mockito.doNothing().when(fileUploadService).updateUploadStatus(anyString(), any(FileUploadStatus.class));
-        Mockito.doNothing().when(fileUploadService).updateUploadData(anyString(), anyString(), anyString(), anyInt());
-        Mockito.when(fileUploadService.applyUploadDataToSheetPost(anyString())).thenReturn(true);
-        Mockito.when(fileUploadService.buildSheetUrl(anyString())).thenReturn("sheetUrl");
-        Mockito.when(fileUploadService.buildThumbnailUrls(anyString(), anyInt())).thenReturn("thumb1,thumb2");
+        FileUploadRedisReadModelWriter readModelWriter = Mockito.mock(FileUploadRedisReadModelWriter.class);
+        TransactionTemplate tx = new TransactionTemplate(new NoopTransactionManager());
 
         // First run: fail mid-way (thumbnail upload fails) -> RETRY, staged file remains
-        FileUploadJobScheduler scheduler1 = new FileUploadJobScheduler(repo, fileStorageExecutor, fileUploadService, stagePdfStorage);
+        FileUploadJobScheduler scheduler1 = new FileUploadJobScheduler(repo, fileStorageExecutor, stagePdfStorage, readModelWriter, tx);
         ReflectionTestUtils.setField(scheduler1, "batchSize", 5);
         ReflectionTestUtils.setField(scheduler1, "retryDelaySeconds", 5);
 
@@ -89,7 +86,7 @@ class FileUploadJobRestartTest {
         repo.save(afterFail);
 
         // Second run (new instance): succeeds -> COMPLETED and staged file deleted
-        FileUploadJobScheduler scheduler2 = new FileUploadJobScheduler(repo, fileStorageExecutor, fileUploadService, stagePdfStorage);
+        FileUploadJobScheduler scheduler2 = new FileUploadJobScheduler(repo, fileStorageExecutor, stagePdfStorage, readModelWriter, tx);
         ReflectionTestUtils.setField(scheduler2, "batchSize", 5);
         ReflectionTestUtils.setField(scheduler2, "retryDelaySeconds", 5);
 
@@ -98,6 +95,21 @@ class FileUploadJobRestartTest {
         FileUploadJob afterSuccess = repo.findById(job.getId()).orElseThrow();
         assertThat(afterSuccess.getStatus()).isEqualTo(FileUploadJobStatus.COMPLETED);
         assertThat(new File(staged.stagePath())).doesNotExist();
+    }
+
+    private static class NoopTransactionManager implements PlatformTransactionManager {
+        @Override
+        public TransactionStatus getTransaction(TransactionDefinition definition) {
+            return new SimpleTransactionStatus();
+        }
+
+        @Override
+        public void commit(TransactionStatus status) {
+        }
+
+        @Override
+        public void rollback(TransactionStatus status) {
+        }
     }
 
     private static byte[] createMinimalPdfBytes(int pageCount) throws IOException {
@@ -143,12 +155,12 @@ class FileUploadJobRestartTest {
 
         @Override
         public String buildSheetUrl(String filename) {
-            return null;
+            return "sheetUrl";
         }
 
         @Override
         public String buildThumbnailUrls(String filename, int pageNum) {
-            return null;
+            return "thumb1,thumb2";
         }
 
         @Override
@@ -197,6 +209,16 @@ class FileUploadJobRestartTest {
                 return candidates;
             }
             return candidates.subList(0, Math.max(1, batchSize));
+        }
+
+        @Override
+        public Optional<FileUploadJob> findByUploadId(String uploadId) {
+            return store.values().stream().filter(job -> job.getUploadId().equals(uploadId)).findFirst();
+        }
+
+        @Override
+        public List<FileUploadJob> findLinkableJobs(LocalDateTime now, int batchSize) {
+            return List.of();
         }
     }
 }

@@ -14,9 +14,11 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.elasticsearch.repository.config.EnableElasticsearchRepositories;
 
 @Configuration
+@Profile("!test")
 @EnableElasticsearchRepositories
 public class ElasticSearchConfig {
     @Value("${elasticsearch.host}")

@@ -10,5 +10,9 @@ public interface FileUploadJobRepository {
 
     Optional<FileUploadJob> findById(Long id);
 
+    Optional<FileUploadJob> findByUploadId(String uploadId);
+
     List<FileUploadJob> findProcessableJobs(LocalDateTime now, int batchSize);
+
+    List<FileUploadJob> findLinkableJobs(LocalDateTime now, int batchSize);
 }
