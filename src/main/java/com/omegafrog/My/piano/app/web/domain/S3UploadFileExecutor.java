@@ -2,9 +2,9 @@ package com.omegafrog.My.piano.app.web.domain;
 
 import com.omegafrog.My.piano.app.web.exception.CreateThumbnailFailedException;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
-import com.omegafrog.My.piano.app.web.event.EventPublisher;
 import com.omegafrog.My.piano.app.web.event.FileUploadCompletedEvent;
 import com.omegafrog.My.piano.app.web.event.FileUploadFailedEvent;
+import com.omegafrog.My.piano.app.web.service.outbox.UploadOutboxService;
 import io.awspring.cloud.s3.ObjectMetadata;
 import io.awspring.cloud.s3.S3Template;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +37,7 @@ public class S3UploadFileExecutor implements UploadFileExecutor {
 
     private final S3Template s3Template;
     private final S3Client s3Client;
-    private final EventPublisher eventPublisher;
+    private final UploadOutboxService uploadOutboxService;
 
     @Value("${spring.cloud.aws.bucket.name}")
     private String bucketName;
@@ -264,7 +264,7 @@ public class S3UploadFileExecutor implements UploadFileExecutor {
             // 성공 이벤트 발행
             FileUploadCompletedEvent event = FileUploadCompletedEvent.create(
                     uploadId, fullSheetUrl, null, filename, 0);
-            eventPublisher.publishFileUploadCompleted(event);
+            uploadOutboxService.enqueueCompleted(event);
 
         } catch (Exception e) {
             log.error("Failed to upload sheet async to S3 for uploadId: {}", uploadId, e);
@@ -272,7 +272,7 @@ public class S3UploadFileExecutor implements UploadFileExecutor {
             // 실패 이벤트 발행
             FileUploadFailedEvent failedEvent = FileUploadFailedEvent.create(
                     uploadId, filename, e.getMessage(), "S3_SHEET_UPLOAD_FAILED");
-            eventPublisher.publishFileUploadFailed(failedEvent);
+            uploadOutboxService.enqueueFailed(failedEvent);
         }
     }
 
@@ -305,7 +305,7 @@ public class S3UploadFileExecutor implements UploadFileExecutor {
             // 성공 이벤트 발행 (썸네일만)
             FileUploadCompletedEvent event = FileUploadCompletedEvent.create(
                     uploadId, null, thumbnailUrls.toString(), filename, files.size());
-            eventPublisher.publishFileUploadCompleted(event);
+            uploadOutboxService.enqueueCompleted(event);
 
         } catch (Exception e) {
             log.error("Failed to upload thumbnail async to S3 for uploadId: {}", uploadId, e);
@@ -313,7 +313,7 @@ public class S3UploadFileExecutor implements UploadFileExecutor {
             // 실패 이벤트 발행
             FileUploadFailedEvent failedEvent = FileUploadFailedEvent.create(
                     uploadId, filename, e.getMessage(), "S3_THUMBNAIL_UPLOAD_FAILED");
-            eventPublisher.publishFileUploadFailed(failedEvent);
+            uploadOutboxService.enqueueFailed(failedEvent);
         }
     }
 }

@@ -2,10 +2,12 @@ package com.omegafrog.My.piano.app.web.event;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
+@Profile("!test")
 @RequiredArgsConstructor
 @Slf4j
 public class EventPublisher {
@@ -37,13 +39,4 @@ public class EventPublisher {
         kafkaTemplate.send("compensation-topic", event.getPostId().toString(), event);
     }
     
-    public void publishFileUploadCompleted(FileUploadCompletedEvent event) {
-        log.info("Publishing file upload completed event: {}, uploadId:{}", event.getEventId(),event.getUploadId());
-        kafkaTemplate.send("file-upload-completed-topic", event.getUploadId(), event);
-    }
-    
-    public void publishFileUploadFailed(FileUploadFailedEvent event) {
-        log.warn("Publishing file upload failed event: {}", event.getEventId());
-        kafkaTemplate.send("file-upload-failed-topic", event.getUploadId(), event);
-    }
 }

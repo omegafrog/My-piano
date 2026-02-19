@@ -34,8 +34,8 @@ import com.omegafrog.My.piano.app.web.dto.sheetPost.RegisterSheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostListDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.UpdateSheetPostDto;
-import com.omegafrog.My.piano.app.web.event.SheetPostCreatedEvent;
 import com.omegafrog.My.piano.app.web.event.SheetPostSearchedEvent;
+import com.omegafrog.My.piano.app.web.service.outbox.SheetPostOutboxService;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -57,6 +57,7 @@ public class SheetPostApplicationService {
 	private final AuthenticationUtil authenticationUtil;
 	private final FileUploadService fileUploadService;
 	private final ApplicationEventPublisher eventPublisher;
+	private final SheetPostOutboxService sheetPostOutboxService;
 
 	@Autowired
 	@Qualifier("SheetPostLikeCountRepository")
@@ -83,6 +84,9 @@ public class SheetPostApplicationService {
 		}
 
 		try {
+			// 업로드 메타데이터 조회 (원본 파일명 등)
+			Map<String, String> uploadData = fileUploadService.getUploadData(uploadId);
+			String originalFileName = uploadData == null ? null : uploadData.get("originalFileName");
 
 			// Sheet 엔티티 생성 (초기에는 URL이 없음, originalFileName 설정)
 			Sheet sheet = dto.getSheet().createEntity(loggedInUser, 0); // pageNum은 나중에 업데이트
@@ -98,6 +102,7 @@ public class SheetPostApplicationService {
 					.lyrics(sheet.isLyrics())
 					.sheetUrl(sheet.getSheetUrl())
 					.thumbnailUrl(sheet.getThumbnailUrl())
+					.originalFileName(originalFileName)
 					.user(loggedInUser)
 					.build();
 			SheetPost sheetPost = SheetPost.builder()
@@ -108,8 +113,8 @@ public class SheetPostApplicationService {
 					.content(dto.getContent())
 					.build();
 			SheetPost saved = sheetPostRepository.save(sheetPost);
-
-			eventPublisher.publishEvent(new SheetPostCreatedEvent(uploadId, sheetPost.getId()));
+			fileUploadService.updateUploadMapping(uploadId, saved.getId());
+			sheetPostOutboxService.enqueueCreated(saved.getId());
 
 			log.info("SheetPost created with uploadId: {}, sheetPostId: {}", uploadId, saved.getId());
 			return saved.toDto();

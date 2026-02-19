@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
 
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import com.omegafrog.My.piano.app.external.elasticsearch.SheetPostSearchIndex;
@@ -28,7 +28,8 @@ public class SheetPostSearchedEventConsumer {
 
   private final static String SHEET_POST_INDEX_NAME = "sheetpost";
 
-  @KafkaListener(topics = "sheet-post-searched-topic", groupId = "elasticsearch-consumer")
+  @Async("ThreadPoolTaskExecutor")
+  @EventListener(classes = SheetPostSearchedEvent.class)
   public void indexSearchLog(SheetPostSearchedEvent event) {
     try {
       List<String> tokens = tokenizeSearchSentence(event.getSearchedSentence());

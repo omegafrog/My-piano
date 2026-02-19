@@ -24,8 +24,8 @@ import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
 import com.omegafrog.My.piano.app.web.domain.notification.PushInstance;
 import com.omegafrog.My.piano.app.web.domain.order.SellableItemFactory;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
-import com.omegafrog.My.piano.app.web.event.EventPublisher;
 import com.omegafrog.My.piano.app.web.dto.order.OrderDto;
+import com.omegafrog.My.piano.app.web.service.outbox.UploadOutboxService;
 import io.awspring.cloud.s3.InMemoryBufferingS3OutputStreamProvider;
 import io.awspring.cloud.s3.Jackson2JsonS3ObjectConverter;
 import io.awspring.cloud.s3.S3Template;
@@ -151,8 +151,8 @@ public class GlobalConfig {
 
     @Bean
     @Profile("prod")
-    public UploadFileExecutor s3UploadFileExecutor(EventPublisher eventPublisher) {
-        return new S3UploadFileExecutor(s3Template(), s3Client(), eventPublisher);
+    public UploadFileExecutor s3UploadFileExecutor(UploadOutboxService uploadOutboxService) {
+        return new S3UploadFileExecutor(s3Template(), s3Client(), uploadOutboxService);
     }
 
     @Bean

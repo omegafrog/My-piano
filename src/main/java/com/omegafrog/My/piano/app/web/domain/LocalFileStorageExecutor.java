@@ -27,10 +27,10 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
-import com.omegafrog.My.piano.app.web.event.EventPublisher;
 import com.omegafrog.My.piano.app.web.event.FileUploadCompletedEvent;
 import com.omegafrog.My.piano.app.web.event.FileUploadFailedEvent;
 import com.omegafrog.My.piano.app.web.exception.CreateThumbnailFailedException;
+import com.omegafrog.My.piano.app.web.service.outbox.UploadOutboxService;
 
 import io.awspring.cloud.s3.ObjectMetadata;
 import jakarta.annotation.PostConstruct;
@@ -43,7 +43,7 @@ public class LocalFileStorageExecutor implements UploadFileExecutor {
 	private String basePath;
 
 	@Autowired
-	private EventPublisher eventPublisher;
+	private UploadOutboxService uploadOutboxService;
 
 	@Async("ThreadPoolTaskExecutor")
 	public void uploadSheet(File file, String filename, ObjectMetadata metadata) {
@@ -273,7 +273,7 @@ public class LocalFileStorageExecutor implements UploadFileExecutor {
 			// 성공 이벤트 발행
 			FileUploadCompletedEvent event = FileUploadCompletedEvent.create(
 					uploadId, fullSheetUrl, null, filename, 0);
-			eventPublisher.publishFileUploadCompleted(event);
+			uploadOutboxService.enqueueCompleted(event);
 
 		} catch (Exception e) {
 			log.error("Failed to upload sheet async for uploadId: {}", uploadId, e);
@@ -281,7 +281,7 @@ public class LocalFileStorageExecutor implements UploadFileExecutor {
 			// 실패 이벤트 발행
 			FileUploadFailedEvent failedEvent = FileUploadFailedEvent.create(
 					uploadId, filename, e.getMessage(), "SHEET_UPLOAD_FAILED");
-			eventPublisher.publishFileUploadFailed(failedEvent);
+			uploadOutboxService.enqueueFailed(failedEvent);
 		}
 	}
 
@@ -311,7 +311,7 @@ public class LocalFileStorageExecutor implements UploadFileExecutor {
 			// 성공 이벤트 발행 (썸네일만)
 			FileUploadCompletedEvent event = FileUploadCompletedEvent.create(
 					uploadId, null, thumbnailUrls.toString(), filename, files.size());
-			eventPublisher.publishFileUploadCompleted(event);
+			uploadOutboxService.enqueueCompleted(event);
 
 		} catch (Exception e) {
 			log.error("Failed to upload thumbnail async for uploadId: {}", uploadId, e);
@@ -319,7 +319,7 @@ public class LocalFileStorageExecutor implements UploadFileExecutor {
 			// 실패 이벤트 발행
 			FileUploadFailedEvent failedEvent = FileUploadFailedEvent.create(
 					uploadId, filename, e.getMessage(), "THUMBNAIL_UPLOAD_FAILED");
-			eventPublisher.publishFileUploadFailed(failedEvent);
+			uploadOutboxService.enqueueFailed(failedEvent);
 		}
 	}
 
