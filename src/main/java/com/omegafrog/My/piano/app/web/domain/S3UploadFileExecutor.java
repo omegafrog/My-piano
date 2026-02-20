@@ -250,6 +250,34 @@ public class S3UploadFileExecutor implements UploadFileExecutor {
     }
 
     @Override
+    public String buildSheetUrl(String filename) {
+        return "https://" + bucketName + ".s3." + region + ".amazonaws.com/" + filename;
+    }
+
+    @Override
+    public String buildThumbnailUrls(String filename, int pageNum) {
+        StringBuilder thumbnailUrls = new StringBuilder();
+        String baseFileName = filename.substring(0, filename.lastIndexOf('.'));
+
+        for (int i = 0; i < pageNum; i++) {
+            if (i > 0) {
+                thumbnailUrls.append(",");
+            }
+            thumbnailUrls.append("https://")
+                    .append(bucketName)
+                    .append(".s3.")
+                    .append(region)
+                    .append(".amazonaws.com/")
+                    .append(baseFileName)
+                    .append("-")
+                    .append(i)
+                    .append(".jpg");
+        }
+
+        return thumbnailUrls.toString();
+    }
+
+    @Override
     @Async("ThreadPoolTaskExecutor")
     public void uploadSheetAsync(File file, String filename, ObjectMetadata metadata, String uploadId) {
         try {

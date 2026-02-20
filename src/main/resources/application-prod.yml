@@ -1,0 +1,91 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://172.31.36.227:3306/mypianotest?characterEncoding=UTF-8&serverTimezone=UTC
+    username: jiwoo
+    # password moved to application-secret.yml
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+  cloud:
+    aws:
+      # credentials moved to application-secret.yml
+      region:
+        static: ap-northeast-2
+      bucket:
+        name: mypianobucket
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 25240194686-nd0b27v2dcvv9e458hhssip100630t74.apps.googleusercontent.com
+            # client-secret moved to application-secret.yml
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 25MB
+  redis:
+    user:
+      host: 172.31.38.208
+      port: 6379
+    admin:
+      host: 127.0.0.1
+      port: 6380
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  batch:
+    initialize-schema: never
+  application:
+    name: mypiano
+
+logging:
+  level:
+    root: INFO
+
+elasticsearch:
+  host: ec2-43-203-10-15.ap-northeast-2.compute.amazonaws.com
+  port: 9200
+  # apiKey moved to application-secret.yml
+
+async:
+  pool:
+    core: 3
+    max: 10
+  queue:
+    capacity: 100
+
+security:
+  password:
+    expire:
+      period: 90L
+  # passwordEncoder secret moved to application-secret.yml
+  # jwt secret moved to application-secret.yml
+  jwt:
+    accessToken:
+      period: 6000000000
+    refreshToken:
+      period: 1209600
+
+firebase:
+  app:
+    admin:
+      json: /home/ec2-user/build/config/firebase-admin.json
+
+payment:
+  toss:
+    client-key: test_ck_kYG57Eba3G6jzE0Rmam58pWDOxmA
+    # secret-key moved to application-secret.yml
+    api-url: https://api.tosspayments.com/v1/payments
+
+server:
+  tomcat:
+    threads:
+      max: 200
+  ssl:
+    enabled: true
+    key-store-type: PKCS12
+    key-store: file:cert.p12
+    # key-store-password moved to application-secret.yml

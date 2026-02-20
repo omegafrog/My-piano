@@ -258,6 +258,30 @@ public class LocalFileStorageExecutor implements UploadFileExecutor {
 		}
 	}
 
+	@Override
+	public String buildSheetUrl(String filename) {
+		return "http://localhost:8080/sheets/" + filename;
+	}
+
+	@Override
+	public String buildThumbnailUrls(String filename, int pageNum) {
+		StringBuilder thumbnailUrls = new StringBuilder();
+		String baseFileName = filename.substring(0, filename.lastIndexOf('.'));
+
+		for (int i = 0; i < pageNum; i++) {
+			if (i > 0) {
+				thumbnailUrls.append(",");
+			}
+			thumbnailUrls.append("http://localhost:8080/thumbnails/")
+					.append(baseFileName)
+					.append("-")
+					.append(i)
+					.append(".jpg");
+		}
+
+		return thumbnailUrls.toString();
+	}
+
 	@Async("ThreadPoolTaskExecutor")
 	public void uploadSheetAsync(File file, String filename, ObjectMetadata metadata, String uploadId) {
 		try {
