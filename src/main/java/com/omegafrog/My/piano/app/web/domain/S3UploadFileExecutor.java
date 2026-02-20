@@ -2,6 +2,9 @@ package com.omegafrog.My.piano.app.web.domain;
 
 import com.omegafrog.My.piano.app.web.exception.CreateThumbnailFailedException;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
+import com.omegafrog.My.piano.app.web.event.FileUploadCompletedEvent;
+import com.omegafrog.My.piano.app.web.event.FileUploadFailedEvent;
+import com.omegafrog.My.piano.app.web.service.outbox.UploadOutboxService;
 import io.awspring.cloud.s3.ObjectMetadata;
 import io.awspring.cloud.s3.S3Template;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +37,7 @@ public class S3UploadFileExecutor implements UploadFileExecutor {
 
     private final S3Template s3Template;
     private final S3Client s3Client;
+    private final UploadOutboxService uploadOutboxService;
 
     @Value("${spring.cloud.aws.bucket.name}")
     private String bucketName;
@@ -42,6 +46,7 @@ public class S3UploadFileExecutor implements UploadFileExecutor {
     private String region;
 
     @Override
+    @Async("ThreadPoolTaskExecutor")
     public void uploadSheet(File file, String filename, ObjectMetadata metadata) throws IOException {
         log.info("upload sheet start");
         FileInputStream inputStream = new FileInputStream(file);
@@ -50,6 +55,7 @@ public class S3UploadFileExecutor implements UploadFileExecutor {
     }
 
     @Override
+    @Async("ThreadPoolTaskExecutor")
     public void uploadThumbnail(PDDocument document, String filename, ObjectMetadata metadata)
             throws FileNotFoundException {
         log.info("upload thumbnail start");
@@ -272,20 +278,70 @@ public class S3UploadFileExecutor implements UploadFileExecutor {
     }
 
     @Override
+    @Async("ThreadPoolTaskExecutor")
     public void uploadSheetAsync(File file, String filename, ObjectMetadata metadata, String uploadId) {
         try {
-            uploadSheet(file, filename, metadata);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            log.info("upload sheet async start - S3, uploadId: {}", uploadId);
+            FileInputStream inputStream = new FileInputStream(file);
+            s3Template.upload(bucketName, filename, inputStream, metadata);
+            log.info("upload sheet async end - S3, uploadId: {}", uploadId);
+
+            // S3에서 전체 URL 생성
+            String fullSheetUrl = "https://" + bucketName + ".s3." + region + ".amazonaws.com/" + filename;
+
+            // 성공 이벤트 발행
+            FileUploadCompletedEvent event = FileUploadCompletedEvent.create(
+                    uploadId, fullSheetUrl, null, filename, 0);
+            uploadOutboxService.enqueueCompleted(event);
+
+        } catch (Exception e) {
+            log.error("Failed to upload sheet async to S3 for uploadId: {}", uploadId, e);
+
+            // 실패 이벤트 발행
+            FileUploadFailedEvent failedEvent = FileUploadFailedEvent.create(
+                    uploadId, filename, e.getMessage(), "S3_SHEET_UPLOAD_FAILED");
+            uploadOutboxService.enqueueFailed(failedEvent);
         }
     }
 
     @Override
+    @Async("ThreadPoolTaskExecutor")
     public void uploadThumbnailAsync(PDDocument document, String filename, ObjectMetadata metadata, String uploadId) {
         try {
-            uploadThumbnail(document, filename, metadata);
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
+            log.info("upload thumbnail async start - S3, uploadId: {}", uploadId);
+            List<File> files = generateThumbnail(document, filename);
+
+            StringBuilder thumbnailUrls = new StringBuilder();
+            for (int i = 0; i < files.size(); i++) {
+                FileInputStream inputStream = new FileInputStream(files.get(i));
+                String key = filename.substring(0, filename.lastIndexOf('.')) + "-" + i + ".jpg";
+                s3Template.upload(bucketName, key, inputStream, metadata);
+                s3Client.putObjectAcl(PutObjectAclRequest.builder()
+                        .bucket(bucketName)
+                        .key(key)
+                        .acl(ObjectCannedACL.PUBLIC_READ).build());
+
+                // S3에서 전체 URL 생성
+                String fullThumbnailUrl = "https://" + bucketName + ".s3." + region + ".amazonaws.com/" + key;
+
+                if (i > 0)
+                    thumbnailUrls.append(",");
+                thumbnailUrls.append(fullThumbnailUrl);
+            }
+            log.info("upload thumbnail async end - S3, uploadId: {}", uploadId);
+
+            // 성공 이벤트 발행 (썸네일만)
+            FileUploadCompletedEvent event = FileUploadCompletedEvent.create(
+                    uploadId, null, thumbnailUrls.toString(), filename, files.size());
+            uploadOutboxService.enqueueCompleted(event);
+
+        } catch (Exception e) {
+            log.error("Failed to upload thumbnail async to S3 for uploadId: {}", uploadId, e);
+
+            // 실패 이벤트 발행
+            FileUploadFailedEvent failedEvent = FileUploadFailedEvent.create(
+                    uploadId, filename, e.getMessage(), "S3_THUMBNAIL_UPLOAD_FAILED");
+            uploadOutboxService.enqueueFailed(failedEvent);
         }
     }
 }

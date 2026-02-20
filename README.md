@@ -41,7 +41,7 @@ My-Piano는 Spring Boot 기반의 피아노 악보 공유 플랫폼으로, 결�
 - **Backend**: Spring Boot 3.2.6, Java 17
 - **데이터베이스**: MySQL (Primary), Redis (Cache)
 - **검색 엔진**: Elasticsearch 8.15.0
-- **메시지 큐**: Apache Kafka
+- **비동기 이벤트 처리**: DB Outbox Polling
 - **파일 저장소**: AWS S3 (Production) / Local Storage (Development)
 - **보안**: Spring Security, JWT, OAuth2
 - **문서화**: Swagger/OpenAPI 3
@@ -50,7 +50,7 @@ My-Piano는 Spring Boot 기반의 피아노 악보 공유 플랫폼으로, 결�
 
 #### 이벤트 기반 아키텍처
 ```
-Post Creation → Kafka → Elasticsearch Indexing
+Post Creation → Outbox Event 저장 → Polling Processor → Elasticsearch Indexing
      ↓
 Compensation Events (실패 시 데이터 정합성 보장)
 ```
@@ -143,10 +143,9 @@ docker-compose up -d
 - 개발: `./local-storage/` 디렉토리
 - 운영: AWS S3 버킷
 
-### Kafka 설정
-- Bootstrap Servers: `localhost:9092`
-- Consumer Group: `mypiano-consumer-group`
-- 토픽 자동 생성 활성화
+### Outbox 설정
+- Post/SheetPost/FileUpload 이벤트를 DB Outbox로 저장
+- 스케줄러 Polling Processor가 인덱싱/후속 처리를 비동기로 수행
 
 ## 📝 API 문서
 

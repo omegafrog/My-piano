@@ -24,8 +24,6 @@ import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.utils.MapperUtil;
 import com.omegafrog.My.piano.app.web.domain.FileStorageExecutor;
 import com.omegafrog.My.piano.app.web.domain.article.LikeCountRepository;
-import com.omegafrog.My.piano.app.web.domain.fileUpload.FileUploadJob;
-import com.omegafrog.My.piano.app.web.domain.fileUpload.FileUploadJobRepository;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
@@ -36,8 +34,8 @@ import com.omegafrog.My.piano.app.web.dto.sheetPost.RegisterSheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostListDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.UpdateSheetPostDto;
-import com.omegafrog.My.piano.app.web.event.SheetPostCreatedEvent;
 import com.omegafrog.My.piano.app.web.event.SheetPostSearchedEvent;
+import com.omegafrog.My.piano.app.web.service.outbox.SheetPostOutboxService;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -57,9 +55,9 @@ public class SheetPostApplicationService {
 	private final FileStorageExecutor uploadFileExecutor;
 	private final SheetPostViewCountRepository sheetPostViewCountRepository;
 	private final AuthenticationUtil authenticationUtil;
-	private final FileUploadLinkService fileUploadLinkService;
-	private final FileUploadJobRepository fileUploadJobRepository;
+	private final FileUploadService fileUploadService;
 	private final ApplicationEventPublisher eventPublisher;
+	private final SheetPostOutboxService sheetPostOutboxService;
 
 	@Autowired
 	@Qualifier("SheetPostLikeCountRepository")
@@ -85,10 +83,10 @@ public class SheetPostApplicationService {
 			throw new IllegalArgumentException("uploadId는 필수입니다.");
 		}
 
-		FileUploadJob uploadJob = fileUploadJobRepository.findByUploadId(uploadId)
-				.orElseThrow(() -> new IllegalArgumentException("Invalid uploadId: " + uploadId));
-
 		try {
+			// 업로드 메타데이터 조회 (원본 파일명 등)
+			Map<String, String> uploadData = fileUploadService.getUploadData(uploadId);
+			String originalFileName = uploadData == null ? null : uploadData.get("originalFileName");
 
 			// Sheet 엔티티 생성 (초기에는 URL이 없음, originalFileName 설정)
 			Sheet sheet = dto.getSheet().createEntity(loggedInUser, 0); // pageNum은 나중에 업데이트
@@ -104,8 +102,8 @@ public class SheetPostApplicationService {
 					.lyrics(sheet.isLyrics())
 					.sheetUrl(sheet.getSheetUrl())
 					.thumbnailUrl(sheet.getThumbnailUrl())
+					.originalFileName(originalFileName)
 					.user(loggedInUser)
-					.originalFileName(uploadJob.getOriginalFileName())
 					.build();
 			SheetPost sheetPost = SheetPost.builder()
 					.title(dto.getTitle())
@@ -115,8 +113,8 @@ public class SheetPostApplicationService {
 					.content(dto.getContent())
 					.build();
 			SheetPost saved = sheetPostRepository.save(sheetPost);
-
-			eventPublisher.publishEvent(new SheetPostCreatedEvent(uploadId, sheetPost.getId()));
+			fileUploadService.updateUploadMapping(uploadId, saved.getId());
+			sheetPostOutboxService.enqueueCreated(saved.getId());
 
 			log.info("SheetPost created with uploadId: {}, sheetPostId: {}", uploadId, saved.getId());
 			return saved.toDto();
@@ -138,25 +136,64 @@ public class SheetPostApplicationService {
 		}
 
 		// uploadId가 있다면 새로운 파일이 업로드된 것으로 처리
-		String newOriginalFileName = null;
 		if (dto.getUploadId() != null && !dto.getUploadId().trim().isEmpty()) {
 			String uploadId = dto.getUploadId();
-			newOriginalFileName = fileUploadJobRepository.findByUploadId(uploadId)
-					.map(FileUploadJob::getOriginalFileName)
-					.orElseThrow(() -> new IllegalArgumentException("Invalid uploadId: " + uploadId));
+
+			// Redis Hash에서 업로드 데이터 조회
+			Map<String, String> uploadData = fileUploadService.getUploadData(uploadId);
+			if (uploadData == null) {
+				throw new IllegalArgumentException("유효하지 않은 uploadId입니다: " + uploadId);
+			}
 
 			// 기존 파일 삭제
 			uploadFileExecutor.removeSheetPost(sheetPost);
 
-			// DB에 uploadId <-> sheetPostId 매핑 저장 (link는 별도 워커가 재시도)
-			fileUploadLinkService.linkUploadToSheetPost(uploadId, sheetPost.getId());
+			// Redis에 uploadId:sheetPostId 매핑 저장 (기존 SheetPost에 새 파일 연결)
+			fileUploadService.updateUploadMapping(uploadId, sheetPost.getId());
+
+			// 업로드가 이미 완료된 경우 즉시 URL 업데이트
+			if (fileUploadService.isUploadCompleted(uploadId)) {
+				String sheetUrl = uploadData.get("sheetUrl");
+				String thumbnailUrl = uploadData.get("thumbnailUrl");
+				String pageNumStr = uploadData.get("pageNum");
+				String originalFileName = uploadData.get("originalFileName");
+
+				if (sheetUrl != null && !sheetUrl.isEmpty() &&
+						thumbnailUrl != null && !thumbnailUrl.isEmpty() &&
+						pageNumStr != null && !pageNumStr.isEmpty()) {
+
+					dto.getSheet().setSheetUrl(sheetUrl);
+					dto.getSheet().setThumbnailUrl(thumbnailUrl);
+					dto.getSheet().setPageNum(Integer.parseInt(pageNumStr));
+					dto.getSheet().setOriginalFileName(originalFileName);
+					Sheet sheet = sheetPost.getSheet();
+					int pageNum = Integer.parseInt(pageNumStr);
+
+					// Sheet URL, 썸네일, 페이지 수 업데이트
+					sheet.updateUrls(sheetUrl, thumbnailUrl);
+					sheet.updatePageNum(pageNum);
+
+					// originalFileName 업데이트
+					if (originalFileName != null && !originalFileName.isEmpty()) {
+						sheet.updateOriginalFileName(originalFileName);
+					}
+
+					// updateDto의 sheet에도 pageNum 설정 (기존 로직 호환성)
+					if (dto.getSheet() != null) {
+						dto.getSheet().setPageNum(pageNum);
+					}
+					sheetPost.updateSheet(sheet);
+
+					log.info(
+							"Immediately updated URLs for existing SheetPost: uploadId={}, sheetPostId={}, sheetUrl={}, thumbnailUrl={}, pageNum={}",
+							uploadId, sheetPost.getId(), sheetPost.getSheet().getSheetUrl(),
+							sheetPost.getSheet().getThumbnailUrl(), pageNum);
+				}
+			}
 		}
 
 		// SheetPost 업데이트 (기본 정보: title, content, price 등)
 		SheetPost updated = sheetPost.update(dto);
-		if (newOriginalFileName != null) {
-			updated.getSheet().updateOriginalFileName(newOriginalFileName);
-		}
 		elasticSearchInstance.invertIndexingSheetPost(updated);
 		return updated.toDto();
 	}

@@ -79,11 +79,12 @@ class SheetPostControllerTest {
                                 new FileInputStream("src/test/sheet.pdf"));
 
                 // 파일업로드후 1초 대기
-                String uploadIdString = mockMvc.perform(multipart("/api/v1/files/upload")
-                                .file(file)
-                                .header(HttpHeaders.AUTHORIZATION, artistToken.getAccessToken())
-                                .cookie(artistToken.getRefreshToken()))
-                                .andExpect(status().isOk())
+                 String uploadIdString = mockMvc.perform(multipart("/api/v1/files/upload")
+                                 .file(file)
+                                 .contentType(MediaType.MULTIPART_FORM_DATA)
+                                 .header(HttpHeaders.AUTHORIZATION, artistToken.getAccessToken())
+                                 .cookie(artistToken.getRefreshToken()))
+                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                                 .andReturn().getResponse().getContentAsString();
                 String uploadId = objectMapper.readTree(uploadIdString).get("data").get("uploadId").asText();
@@ -122,11 +123,12 @@ class SheetPostControllerTest {
                                 new FileInputStream("src/test/sheet.pdf"));
 
                 // 파일업로드후 1초 대기
-                String uploadIdString = mockMvc.perform(multipart("/api/v1/files/upload")
-                                .file(file)
-                                .header(HttpHeaders.AUTHORIZATION, artistToken.getAccessToken())
-                                .cookie(artistToken.getRefreshToken()))
-                                .andExpect(status().isOk())
+                 String uploadIdString = mockMvc.perform(multipart("/api/v1/files/upload")
+                                 .file(file)
+                                 .contentType(MediaType.MULTIPART_FORM_DATA)
+                                 .header(HttpHeaders.AUTHORIZATION, artistToken.getAccessToken())
+                                 .cookie(artistToken.getRefreshToken()))
+                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                                 .andReturn().getResponse().getContentAsString();
                 String uploadId = objectMapper.readTree(uploadIdString).get("data").get("uploadId").asText();
@@ -148,11 +150,12 @@ class SheetPostControllerTest {
                 // 변경용 악보 파일 업로드
                 MockMultipartFile file1 = new MockMultipartFile("file", "img2.pdf", "application/pdf",
                                 new FileInputStream("src/test/sheet.pdf"));
-                uploadIdString = mockMvc.perform(multipart("/api/v1/files/upload")
-                                .file(file1)
-                                .header(HttpHeaders.AUTHORIZATION, artistToken.getAccessToken())
-                                .cookie(artistToken.getRefreshToken()))
-                                .andExpect(status().isOk())
+                 uploadIdString = mockMvc.perform(multipart("/api/v1/files/upload")
+                                 .file(file1)
+                                 .contentType(MediaType.MULTIPART_FORM_DATA)
+                                 .header(HttpHeaders.AUTHORIZATION, artistToken.getAccessToken())
+                                 .cookie(artistToken.getRefreshToken()))
+                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                                 .andReturn().getResponse().getContentAsString();
                 uploadId = objectMapper.readTree(uploadIdString).get("data").get("uploadId").asText();

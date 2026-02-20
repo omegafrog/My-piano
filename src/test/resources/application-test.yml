@@ -4,19 +4,18 @@ spring:
       - org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchDataAutoConfiguration
       - org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchRepositoriesAutoConfiguration
       - org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchClientAutoConfiguration
-  data:
-    elasticsearch:
-      repositories:
-        enabled: false
+      - org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchRestClientAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
   datasource:
-    driver-class-name: org.h2.Driver
-    url: jdbc:h2:mem:mypianotest;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    username: sa
-    password:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3307/mypianotest?characterEncoding=UTF-8&serverTimezone=UTC
+    username: root
+    password: password
   jpa:
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.H2Dialect
+        dialect: org.hibernate.dialect.MySQLDialect
         format_sql: false
         # generate_statistics: true
         # use_sql_comments: true
@@ -41,24 +40,18 @@ spring:
   redis:
     user:
       host: 127.0.0.1
-      port: 6379
+      port: 16379
     cache:
       host: 127.0.0.1
       port: 6380
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
-  kafka:
-    listener:
-      auto-startup: false
 
-logging:
-  level:
-    org.apache.kafka: ERROR
-#     org.springframework.web: DEBUG
-#     org.springframework.http.converter.json: DEBUG
-#     org.hibernate.SQL: DEBUG
-#     org.hibernate.type.descriptor.sql: TRACE
+  data:
+    redis:
+      repositories:
+        enabled: false
 
 elasticsearch:
   host: localhost

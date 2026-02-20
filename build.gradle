@@ -4,6 +4,12 @@ plugins {
     id 'io.spring.dependency-management' version '1.0.15.RELEASE'
     id 'org.jetbrains.kotlin.jvm'
 }
+
+def mypianoBuildDir = System.getenv('MYPIANO_BUILD_DIR')
+if (mypianoBuildDir != null && !mypianoBuildDir.trim().isEmpty()) {
+    buildDir = file(mypianoBuildDir)
+}
+
 jar {
     enabled = false
 }
@@ -58,10 +64,6 @@ dependencies {
     implementation group: 'com.google.firebase', name: 'firebase-admin', version: '9.2.0'
 
     implementation 'org.springframework.boot:spring-boot-starter-batch'
-
-    // Kafka
-    implementation 'org.springframework.kafka:spring-kafka'
-    testImplementation 'org.springframework.kafka:spring-kafka-test'
 
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
     implementation 'io.jsonwebtoken:jjwt-impl:0.11.5'

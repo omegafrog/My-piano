@@ -14,10 +14,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
-
+ 
 @Configuration
-@Import({QueryDslConfig.class, RedisConfig.class})
+@Import({QueryDslConfig.class, TestCacheConfig.class, RedisConfig.class})
 @ComponentScan(basePackages = {"com.omegafrog.My.piano.app.security.infrastructure", "com.omegafrog.My.piano.app.web.infra"})
 @EnableJpaRepositories(excludeFilters = @ComponentScan.Filter(
         type = FilterType.ASSIGNABLE_TYPE,
@@ -35,7 +34,6 @@ import org.springframework.data.redis.repository.configuration.EnableRedisReposi
                 RedisSubscriptionRepository.class
         }
 ))
-@EnableRedisRepositories
 public class DataJpaTestConfig {
 //    @Bean
 //    public ObjectMapper objectMapper() {

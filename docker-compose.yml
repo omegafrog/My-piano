@@ -1,14 +1,26 @@
 version: '3.8'
 services:
-  kafka-ui:
-    container_name: kafka-ui
-    image: provectuslabs/kafka-ui:latest
-    ports:
-      - 9090:8080
+  mysql-mypiano:
+    image: mysql:8.0
+    container_name: mysql-mypiano
     environment:
-      DYNAMIC_CONFIG_ENABLED: 'true'
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=mypianotest
+      - TZ=UTC
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-ppassword"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
     networks:
-      - kafka-net
+      - db-net
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
@@ -36,38 +48,11 @@ services:
     networks:
       - elastic
 
-  kafka:
-    image: confluentinc/cp-kafka:latest
-    container_name: kafka
-    hostname: kafka
-    ports:
-      - "9092:9092"
-      - "29092:29092"
-    environment:
-      KAFKA_NODE_ID: 1
-      KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
-      KAFKA_LISTENERS: INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: true
-      KAFKA_LOG_DIRS: /var/lib/kafka/data
-      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
-    volumes:
-      - kafka_data:/var/lib/kafka/data
-    networks:
-      - kafka-net
-
   redis-mypiano-user:
     image: redis:7-alpine
     container_name: redis-mypiano-user
     ports:
-      - "6379:6379"
+      - "16379:6379"
     volumes:
       - redis_user_data:/data
     command: redis-server --appendonly yes
@@ -86,8 +71,8 @@ services:
       - redis-net
 
 volumes:
+  mysql_data:
   elasticsearch_data:
-  kafka_data:
   redis_user_data:
   redis_cache_data:
 
@@ -95,7 +80,7 @@ volumes:
 networks:
   elastic:
     driver: bridge
-  kafka-net:
-    driver: bridge
   redis-net:
+    driver: bridge
+  db-net:
     driver: bridge

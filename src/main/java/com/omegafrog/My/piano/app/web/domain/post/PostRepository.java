@@ -14,6 +14,8 @@ public interface PostRepository  {
 
     Post save(Post post);
 
+    Post saveAndFlush(Post post);
+
     Optional<Post> findById(Long id);
 
     void deleteById(Long id);

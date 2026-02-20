@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
 import com.omegafrog.My.piano.app.security.filter.JwtTokenFilter;
 import com.omegafrog.My.piano.app.security.handler.*;
-import com.omegafrog.My.piano.app.security.infrastructure.redis.CommonUserRefreshTokenRepositoryImpl;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
 import com.omegafrog.My.piano.app.security.provider.AdminAuthenticationProvider;
@@ -49,10 +48,8 @@ public class SecurityConfig {
         @Autowired(required = false)
         private S3Client s3Client;
 
-        @Bean
-        public RefreshTokenRepository refreshTokenRepository() {
-                return new CommonUserRefreshTokenRepositoryImpl();
-        }
+        @Autowired
+        private RefreshTokenRepository refreshTokenRepository;
 
         @Bean
         public TokenUtils tokenUtils() {
@@ -61,7 +58,7 @@ public class SecurityConfig {
 
         @Bean
         public JwtTokenFilter jwtFilter() {
-                return new JwtTokenFilter(tokenUtils(), securityUserRepository, refreshTokenRepository());
+                return new JwtTokenFilter(tokenUtils(), securityUserRepository, refreshTokenRepository);
         }
 
         @Autowired
@@ -88,7 +85,7 @@ public class SecurityConfig {
         public CommonUserService commonUserService() {
                 return new CommonUserService(passwordEncoder(),
                                 securityUserRepository,
-                                refreshTokenRepository(),
+                                refreshTokenRepository,
                                 googlePublicKeysManager,
                                 authenticationUtil,
                                 s3Client);
@@ -112,7 +109,7 @@ public class SecurityConfig {
                 return new AdminUserService(
                                 passwordEncoder(),
                                 userRepository,
-                                refreshTokenRepository(),
+                                refreshTokenRepository,
                                 securityUserRepository,
                                 postRepository,
                                 mapperUtil,
@@ -133,7 +130,7 @@ public class SecurityConfig {
 
         @Bean
         public CommonUserLogoutHandler commonUserLogoutHandler() {
-                return new CommonUserLogoutHandler(objectMapper, refreshTokenRepository());
+                return new CommonUserLogoutHandler(objectMapper, refreshTokenRepository);
         }
 
         @Bean
@@ -182,7 +179,7 @@ public class SecurityConfig {
                                 .formLogin((formLogin) -> formLogin.usernameParameter("username")
                                                 .passwordParameter("password")
                                                 .successHandler(new AdminLoginSuccessHandler(objectMapper,
-                                                                refreshTokenRepository(), tokenUtils()))
+                                                                refreshTokenRepository, tokenUtils()))
                                                 .failureHandler(new CommonUserLoginFailureHandler(objectMapper))
                                                 .loginProcessingUrl("/api/v1/admin/login"))
                                 .logout((logout) -> logout.logoutUrl("/api/v1/admin/logout")
@@ -246,7 +243,7 @@ public class SecurityConfig {
                                                 .usernameParameter("username")
                                                 .passwordParameter("password")
                                                 .successHandler(new CommonUserLoginSuccessHandler(objectMapper,
-                                                                refreshTokenRepository(), tokenUtils()))
+                                                                refreshTokenRepository, tokenUtils()))
                                                 .failureHandler(new CommonUserLoginFailureHandler(objectMapper)))
                                 .logout(logout -> logout
                                                 .logoutUrl("/api/v1/user/logout").permitAll()

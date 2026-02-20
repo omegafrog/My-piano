@@ -5,11 +5,13 @@ import com.omegafrog.My.piano.app.web.domain.post.Post;
 import com.omegafrog.My.piano.app.web.domain.post.PostViewCount;
 import com.omegafrog.My.piano.app.web.domain.post.PostViewCountRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 
 @RequiredArgsConstructor
 @Repository
+@Profile("!test")
 public class PostViewCountRepositoryImpl implements PostViewCountRepository {
     private final RedisTemplate<String, PostViewCount> redisTemplate;
     private final RedisPostViewCountRepository repository;
