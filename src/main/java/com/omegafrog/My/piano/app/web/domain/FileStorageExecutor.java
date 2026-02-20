@@ -49,6 +49,14 @@ public class FileStorageExecutor {
         return uploadFileExecutor.createFileUrl(sheetUrl);
     }
 
+    public String buildSheetUrl(String filename) {
+        return uploadFileExecutor.buildSheetUrl(filename);
+    }
+
+    public String buildThumbnailUrls(String filename, int pageNum) {
+        return uploadFileExecutor.buildThumbnailUrls(filename, pageNum);
+    }
+
     public void uploadSheetAsync(File file, String filename, ObjectMetadata metadata, String uploadId)
             throws IOException {
         uploadFileExecutor.uploadSheetAsync(file, filename, metadata, uploadId);

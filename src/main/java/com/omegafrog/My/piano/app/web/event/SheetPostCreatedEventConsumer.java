@@ -1,9 +1,9 @@
 package com.omegafrog.My.piano.app.web.event;
 
-import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
+import org.springframework.context.event.EventListener;
 
 import com.omegafrog.My.piano.app.external.elasticsearch.ElasticSearchInstance;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
@@ -25,8 +25,8 @@ public class SheetPostCreatedEventConsumer {
 
   @Retryable(value = {
       ElasticsearchException.class }, maxAttempts = 5, backoff = @Backoff(delay = 2000, multiplier = 2))
-  @KafkaListener(topics = "sheet-post-created-topic", groupId = "elasticsearch-consumer")
-  public void createInvertIndex(SheetPostCreatedEvent event) {
+  @EventListener
+  public void createInvertIndex(SheetPostCreatedAfterCommitEvent event) {
     try {
       SheetPost sheetPost = sheetPostRepository.findById(event.getSheetPostId())
           .orElseThrow(() -> new EntityNotFoundException());

@@ -14,5 +14,4 @@ public class TestUtilConfig {
     public TestUtil testUtil() {
         return new TestUtil();
     }
-
 }

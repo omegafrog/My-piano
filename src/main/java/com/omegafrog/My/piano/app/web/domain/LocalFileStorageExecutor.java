@@ -21,15 +21,11 @@ import javax.imageio.ImageIO;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.PDFRenderer;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
-import com.omegafrog.My.piano.app.web.event.EventPublisher;
-import com.omegafrog.My.piano.app.web.event.FileUploadCompletedEvent;
-import com.omegafrog.My.piano.app.web.event.FileUploadFailedEvent;
 import com.omegafrog.My.piano.app.web.exception.CreateThumbnailFailedException;
 
 import io.awspring.cloud.s3.ObjectMetadata;
@@ -42,10 +38,7 @@ public class LocalFileStorageExecutor implements UploadFileExecutor {
 	@Value("${local.storage.base-path}")
 	private String basePath;
 
-	@Autowired
-	private EventPublisher eventPublisher;
-
-	@Async("ThreadPoolTaskExecutor")
+	@Override
 	public void uploadSheet(File file, String filename, ObjectMetadata metadata) {
 		log.info("upload sheet start - local storage");
 		try {
@@ -58,7 +51,7 @@ public class LocalFileStorageExecutor implements UploadFileExecutor {
 		log.info("upload sheet end - local storage");
 	}
 
-	@Async("ThreadPoolTaskExecutor")
+	@Override
 	public void uploadThumbnail(PDDocument document, String filename, ObjectMetadata metadata) {
 		try {
 			log.info("upload thumbnail start - local storage");
@@ -76,6 +69,30 @@ public class LocalFileStorageExecutor implements UploadFileExecutor {
 			throw new RuntimeException(e);
 		}
 
+	}
+
+	@Override
+	public String buildSheetUrl(String filename) {
+		return "http://localhost:8080/sheets/" + filename;
+	}
+
+	@Override
+	public String buildThumbnailUrls(String filename, int pageNum) {
+		StringBuilder thumbnailUrls = new StringBuilder();
+		String baseFileName = filename.substring(0, filename.lastIndexOf('.'));
+
+		for (int i = 0; i < pageNum; i++) {
+			if (i > 0) {
+				thumbnailUrls.append(",");
+			}
+			thumbnailUrls.append("http://localhost:8080/thumbnails/")
+				.append(baseFileName)
+				.append("-")
+				.append(i)
+				.append(".jpg");
+		}
+
+		return thumbnailUrls.toString();
 	}
 
 	private List<File> generateThumbnail(PDDocument document, String pdfFilePath) {
@@ -258,69 +275,14 @@ public class LocalFileStorageExecutor implements UploadFileExecutor {
 		}
 	}
 
-	@Async("ThreadPoolTaskExecutor")
+	@Override
 	public void uploadSheetAsync(File file, String filename, ObjectMetadata metadata, String uploadId) {
-		try {
-			log.info("upload sheet async start - local storage, uploadId: {}", uploadId);
-			Path targetPath = Paths.get(basePath, "sheets", filename);
-			Files.createDirectories(targetPath.getParent());
-			Files.copy(file.toPath(), targetPath, StandardCopyOption.REPLACE_EXISTING);
-			log.info("upload sheet async end - local storage, uploadId: {}", uploadId);
-
-			// 전체 URL 생성 (프로토콜과 도메인 포함)
-			String fullSheetUrl = "http://localhost:8080/sheets/" + filename;
-
-			// 성공 이벤트 발행
-			FileUploadCompletedEvent event = FileUploadCompletedEvent.create(
-					uploadId, fullSheetUrl, null, filename, 0);
-			eventPublisher.publishFileUploadCompleted(event);
-
-		} catch (Exception e) {
-			log.error("Failed to upload sheet async for uploadId: {}", uploadId, e);
-
-			// 실패 이벤트 발행
-			FileUploadFailedEvent failedEvent = FileUploadFailedEvent.create(
-					uploadId, filename, e.getMessage(), "SHEET_UPLOAD_FAILED");
-			eventPublisher.publishFileUploadFailed(failedEvent);
-		}
+		uploadSheet(file, filename, metadata);
 	}
 
-	@Async("ThreadPoolTaskExecutor")
+	@Override
 	public void uploadThumbnailAsync(PDDocument document, String filename, ObjectMetadata metadata, String uploadId) {
-		try {
-			log.info("upload thumbnail async start - local storage, uploadId: {}", uploadId);
-			List<File> files = generateThumbnail(document, filename);
-			Path thumbnailDir = Paths.get(basePath, "thumbnails");
-			Files.createDirectories(thumbnailDir);
-
-			StringBuilder thumbnailUrls = new StringBuilder();
-			for (int i = 0; i < files.size(); i++) {
-				String thumbnailFilename = filename.substring(0, filename.lastIndexOf('.')) + "-" + i + ".jpg";
-				Path targetPath = thumbnailDir.resolve(thumbnailFilename);
-				Files.copy(files.get(i).toPath(), targetPath, StandardCopyOption.REPLACE_EXISTING);
-
-				// 전체 URL 생성 (프로토콜과 도메인 포함)
-				String fullThumbnailUrl = "http://localhost:8080/thumbnails/" + thumbnailFilename;
-
-				if (i > 0)
-					thumbnailUrls.append(",");
-				thumbnailUrls.append(fullThumbnailUrl);
-			}
-			log.info("upload thumbnail async end - local storage, uploadId: {}", uploadId);
-
-			// 성공 이벤트 발행 (썸네일만)
-			FileUploadCompletedEvent event = FileUploadCompletedEvent.create(
-					uploadId, null, thumbnailUrls.toString(), filename, files.size());
-			eventPublisher.publishFileUploadCompleted(event);
-
-		} catch (Exception e) {
-			log.error("Failed to upload thumbnail async for uploadId: {}", uploadId, e);
-
-			// 실패 이벤트 발행
-			FileUploadFailedEvent failedEvent = FileUploadFailedEvent.create(
-					uploadId, filename, e.getMessage(), "THUMBNAIL_UPLOAD_FAILED");
-			eventPublisher.publishFileUploadFailed(failedEvent);
-		}
+		uploadThumbnail(document, filename, metadata);
 	}
 
 }
