@@ -43,14 +43,12 @@ public class RedisConfig {
 		return new LettuceConnectionFactory(cacheHost, cachePort);
 	}
 
-	@Qualifier("CommonUserRedisTemplate")
-	@Bean
-	public RedisTemplate<?, ?> redisTemplate() {
-		RedisTemplate<?, ?> redisTemplate = new RedisTemplate<>();
+	@Bean(name = "CommonUserRedisTemplate")
+	public RedisTemplate<String, String> commonUserRedisTemplate() {
+		RedisTemplate<String, String> redisTemplate = new RedisTemplate<>();
 		redisTemplate.setConnectionFactory(commonUserRedisConnectionFactory());
 		redisTemplate.setKeySerializer(new StringRedisSerializer());
 		redisTemplate.setValueSerializer(new StringRedisSerializer());
-
 		redisTemplate.setHashKeySerializer(new StringRedisSerializer());
 		redisTemplate.setHashValueSerializer(new StringRedisSerializer());
 		return redisTemplate;

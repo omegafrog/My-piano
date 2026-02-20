@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
  
 @Configuration
-@Import({QueryDslConfig.class, TestCacheConfig.class})
+@Import({QueryDslConfig.class, TestCacheConfig.class, RedisConfig.class})
 @ComponentScan(basePackages = {"com.omegafrog.My.piano.app.security.infrastructure", "com.omegafrog.My.piano.app.web.infra"})
 @EnableJpaRepositories(excludeFilters = @ComponentScan.Filter(
         type = FilterType.ASSIGNABLE_TYPE,

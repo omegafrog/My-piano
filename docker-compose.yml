@@ -1,5 +1,27 @@
 version: '3.8'
 services:
+  mysql-mypiano:
+    image: mysql:8.0
+    container_name: mysql-mypiano
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=mypianotest
+      - TZ=UTC
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-ppassword"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    networks:
+      - db-net
+
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
     container_name: elasticsearch
@@ -30,7 +52,7 @@ services:
     image: redis:7-alpine
     container_name: redis-mypiano-user
     ports:
-      - "6379:6379"
+      - "16379:6379"
     volumes:
       - redis_user_data:/data
     command: redis-server --appendonly yes
@@ -49,6 +71,7 @@ services:
       - redis-net
 
 volumes:
+  mysql_data:
   elasticsearch_data:
   redis_user_data:
   redis_cache_data:
@@ -58,4 +81,6 @@ networks:
   elastic:
     driver: bridge
   redis-net:
+    driver: bridge
+  db-net:
     driver: bridge
