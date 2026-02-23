@@ -49,6 +49,14 @@ My-Piano is a Spring Boot (Java 17) backend for piano sheet sharing + community,
 - **Prod config source**: deployment script uses `-Dspring.config.location=.../application-prod.properties` (externalized config), not the tracked YAMLs.
 - **Java LSP**: not configured in this environment; prefer `grep`/`ast-grep` for navigation.
 
+## PR 작성 요령
+- PR 제목/본문은 한국어로 작성한다.
+- PR 본문에는 최소 `변경 배경`, `주요 변경사항`, `테스트/검증 결과`, `영향 범위 및 리스크`를 포함한다.
+- `주요 변경사항`은 파일 단위 또는 기능 단위로 구체적으로 작성하고, 누락 없이 모든 변경을 기록한다.
+- 테스트 명령(`./gradlew build`, `./gradlew test --tests ...` 등)과 성공/실패 원인을 명시한다.
+- 기존 실패가 있으면 신규 이슈와 구분해서 적고, 재현 조건과 후속 조치를 함께 적는다.
+- 보안/인증/권한 변경이 있으면 동작 변화(예: 200/401/403)를 시나리오로 요약한다.
+
 ## ANTI-PATTERNS (THIS PROJECT)
 - Do not commit real secrets/credentials. `.gitignore` already excludes `src/main/resources/firebase-admin.json` and `src/main/resources/application**.properties`.
 - Do not rely on `build/`, `bin/`, `local-storage/`, `.gradle/` contents in code reviews; they are generated/runtime artifacts.

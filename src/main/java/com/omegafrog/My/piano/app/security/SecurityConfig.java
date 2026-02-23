@@ -8,6 +8,7 @@ import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
 import com.omegafrog.My.piano.app.security.provider.AdminAuthenticationProvider;
 import com.omegafrog.My.piano.app.security.provider.CommonUserAuthenticationProvider;
+import com.omegafrog.My.piano.app.security.provider.JwtAuthenticationProvider;
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.utils.MapperUtil;
 import com.omegafrog.My.piano.app.web.domain.lesson.LessonRepository;
@@ -29,6 +30,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
@@ -58,7 +61,8 @@ public class SecurityConfig {
 
         @Bean
         public JwtTokenFilter jwtFilter() {
-                return new JwtTokenFilter(tokenUtils(), securityUserRepository, refreshTokenRepository);
+                return new JwtTokenFilter(tokenUtils(), securityUserRepository, refreshTokenRepository,
+                                jwtAuthenticationManager());
         }
 
         @Autowired
@@ -141,6 +145,16 @@ public class SecurityConfig {
         @Bean
         public AdminAuthenticationProvider adminAuthenticationProvider() {
                 return new AdminAuthenticationProvider(adminUserService(), passwordEncoder());
+        }
+
+        @Bean
+        public JwtAuthenticationProvider jwtAuthenticationProvider() {
+                return new JwtAuthenticationProvider(tokenUtils(), securityUserRepository, refreshTokenRepository);
+        }
+
+        @Bean
+        public AuthenticationManager jwtAuthenticationManager() {
+                return new ProviderManager(jwtAuthenticationProvider());
         }
 
         @Bean
