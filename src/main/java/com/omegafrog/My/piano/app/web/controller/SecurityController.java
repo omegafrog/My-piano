@@ -5,8 +5,6 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.omegafrog.My.piano.app.security.exception.DuplicatePropertyException;
-import com.omegafrog.My.piano.app.security.jwt.TokenInfo;
-import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.utils.MapperUtil;
 import com.omegafrog.My.piano.app.web.domain.user.SecurityUser;
@@ -18,7 +16,6 @@ import com.omegafrog.My.piano.app.web.response.success.ApiResponse;
 import com.omegafrog.My.piano.app.web.response.success.JsonAPIResponse;
 import com.omegafrog.My.piano.app.web.service.admin.CommonUserService;
 import io.awspring.cloud.s3.S3Exception;
-import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -29,7 +26,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.CredentialsExpiredException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -46,7 +47,6 @@ import java.security.GeneralSecurityException;
 @Slf4j
 public class SecurityController {
 
-    private final TokenUtils tokenUtils;
     private final CommonUserService commonUserService;
     private final MapperUtil mapperUtil;
     private final AuthenticationUtil authenticationUtil;
@@ -68,18 +68,8 @@ public class SecurityController {
     }
 
     @GetMapping("/revalidate")
-    public JsonAPIResponse revalidateToken(HttpServletRequest request, HttpServletResponse response) {
-        String accessToken = tokenUtils.getAccessTokenString(request.getHeader(HttpHeaders.AUTHORIZATION));
-
-        try {
-            tokenUtils.extractClaims(accessToken);
-        } catch (ExpiredJwtException e) {
-            TokenInfo tokenInfo = commonUserService.getTokenInfo(e);
-            String accessTokenString = tokenInfo.getGrantType() + " " + tokenInfo.getAccessToken();
-            tokenUtils.setRefreshToken(response, tokenInfo);
-            return new ApiResponse<>("Token revalidating success.", accessTokenString);
-        }
-        return new APIBadRequestResponse("Token is not expired yet.");
+    public JsonAPIResponse revalidateToken() {
+        return new APIBadRequestResponse("Session auth does not support token revalidation.");
     }
 
 
@@ -108,14 +98,11 @@ public class SecurityController {
             @Valid @NotNull @RequestParam("code") String code) throws IOException {
         String idToken = getGoogleIdToken(code);
         try {
-            validateEnabled(commonUserService.findGoogleUser(idToken));
-
-            TokenInfo tokenInfo = commonUserService.loginGoogleUser(idToken);
-            tokenUtils.setRefreshToken(response, tokenInfo);
-            String param = tokenInfo.getGrantType() + "%20" + tokenInfo.getAccessToken();
+            SecurityUser securityUser = commonUserService.findGoogleUser(idToken);
+            validateEnabled(securityUser);
+            setAuthenticatedSession(request, securityUser);
             HttpHeaders headers = new HttpHeaders();
-            headers.setLocation(URI.create("http://localhost:3000" + GOOGLE_LOGIN_URI
-                    + "?access-token=" + param));
+            headers.setLocation(URI.create("http://localhost:3000" + GOOGLE_LOGIN_URI));
             return new APIRedirectResponse<>("Google OAuth login success",
                     headers);
         } catch (UsernameNotFoundException e) {
@@ -135,6 +122,18 @@ public class SecurityController {
                 .execute();
         String idToken = executed.getIdToken();
         return idToken;
+    }
+
+    private void setAuthenticatedSession(HttpServletRequest request, SecurityUser securityUser) {
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                securityUser,
+                null,
+                securityUser.getAuthorities());
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(authentication);
+        SecurityContextHolder.setContext(context);
+        request.getSession(true)
+                .setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context);
     }
 
     private static void validateEnabled(SecurityUser user) throws AccountExpiredException, AccountLockedException {

@@ -1,6 +1,6 @@
 package com.omegafrog.My.piano.app.utils;
 
-import com.omegafrog.My.piano.app.web.domain.user.SecurityUserRepository;
+import com.omegafrog.My.piano.app.web.domain.user.SecurityUser;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,8 +14,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 @Component
 public class AuthenticationUtil {
-    private final SecurityUserRepository securityUserRepository;
-
     public User getLoggedInUser() throws AccessDeniedException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
@@ -26,9 +24,10 @@ public class AuthenticationUtil {
             throw new AccessDeniedException("authentication is null");
         }
 
-        Long securityUserId = (Long) authentication.getPrincipal();
-        return securityUserRepository.findById(securityUserId)
-                .orElseThrow(() -> new AccessDeniedException("user not found"))
-                .getUser();
+        Object principal = authentication.getPrincipal();
+        if (!(principal instanceof SecurityUser securityUser)) {
+            throw new AccessDeniedException("unexpected principal type");
+        }
+        return securityUser.getUser();
     }
 }

@@ -2,7 +2,6 @@ package com.omegafrog.My.piano.app.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
-import com.omegafrog.My.piano.app.security.filter.JwtTokenFilter;
 import com.omegafrog.My.piano.app.security.handler.*;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
@@ -33,7 +32,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -54,11 +52,6 @@ public class SecurityConfig {
         @Bean
         public TokenUtils tokenUtils() {
                 return new TokenUtils();
-        }
-
-        @Bean
-        public JwtTokenFilter jwtFilter() {
-                return new JwtTokenFilter(tokenUtils(), securityUserRepository, refreshTokenRepository);
         }
 
         @Autowired
@@ -130,7 +123,7 @@ public class SecurityConfig {
 
         @Bean
         public CommonUserLogoutHandler commonUserLogoutHandler() {
-                return new CommonUserLogoutHandler(objectMapper, refreshTokenRepository);
+                return new CommonUserLogoutHandler();
         }
 
         @Bean
@@ -153,9 +146,8 @@ public class SecurityConfig {
                                                                 .permitAll()
                                                                 .anyRequest()
                                                                 .hasAnyRole(Role.USER.value, Role.CREATOR.value))
-                                .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
-                                .sessionManagement((sessionManagement) -> sessionManagement
-                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                                                .sessionManagement((sessionManagement) -> sessionManagement
+                                                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                                 .exceptionHandling((exceptionadvisor) -> exceptionadvisor
                                                 .authenticationEntryPoint(unAuthorizedEntryPoint())
                                                 .accessDeniedHandler(commonUserAccessDeniedHandler()))
@@ -178,15 +170,13 @@ public class SecurityConfig {
                                                                 .hasAnyRole(Role.ADMIN.value, Role.SUPER_ADMIN.value))
                                 .formLogin((formLogin) -> formLogin.usernameParameter("username")
                                                 .passwordParameter("password")
-                                                .successHandler(new AdminLoginSuccessHandler(objectMapper,
-                                                                refreshTokenRepository, tokenUtils()))
+                                                .successHandler(new AdminLoginSuccessHandler(objectMapper))
                                                 .failureHandler(new CommonUserLoginFailureHandler(objectMapper))
                                                 .loginProcessingUrl("/api/v1/admin/login"))
                                 .logout((logout) -> logout.logoutUrl("/api/v1/admin/logout")
                                                 .addLogoutHandler(commonUserLogoutHandler()))
-                                .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
-                                .sessionManagement((sessionManagement) -> sessionManagement
-                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                                                .sessionManagement((sessionManagement) -> sessionManagement
+                                                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                                 .exceptionHandling((exceptionadvisor) -> exceptionadvisor
                                                 .authenticationEntryPoint(unAuthorizedEntryPoint())
                                                 .accessDeniedHandler(commonUserAccessDeniedHandler()))
@@ -214,9 +204,8 @@ public class SecurityConfig {
                                 .authorizeHttpRequests(authz -> authz
                                                 .requestMatchers("/api/v1/cash/webhook").permitAll()
                                                 .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value))
-                                .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
-                                .sessionManagement(session -> session
-                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                                                .sessionManagement(session -> session
+                                                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                                 .exceptionHandling(ex -> ex
                                                 .authenticationEntryPoint(unAuthorizedEntryPoint())
                                                 .accessDeniedHandler(commonUserAccessDeniedHandler()))
@@ -242,16 +231,14 @@ public class SecurityConfig {
                                                 .loginProcessingUrl("/api/v1/user/login")
                                                 .usernameParameter("username")
                                                 .passwordParameter("password")
-                                                .successHandler(new CommonUserLoginSuccessHandler(objectMapper,
-                                                                refreshTokenRepository, tokenUtils()))
+                                                .successHandler(new CommonUserLoginSuccessHandler(objectMapper))
                                                 .failureHandler(new CommonUserLoginFailureHandler(objectMapper)))
                                 .logout(logout -> logout
                                                 .logoutUrl("/api/v1/user/logout").permitAll()
                                                 .logoutSuccessHandler(logoutHandler())
                                                 .addLogoutHandler(commonUserLogoutHandler()))
-                                .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
-                                .sessionManagement(session -> session
-                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                                                .sessionManagement(session -> session
+                                                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                                 .exceptionHandling(ex -> ex
                                                 .authenticationEntryPoint(unAuthorizedEntryPoint())
                                                 .accessDeniedHandler(commonUserAccessDeniedHandler()))
@@ -275,9 +262,8 @@ public class SecurityConfig {
                                                                 "/api/v1/community/posts/{id:[0-9]+}")
                                                 .permitAll()
                                                 .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value))
-                                .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
-                                .sessionManagement(session -> session
-                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                                                .sessionManagement(session -> session
+                                                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                                 .exceptionHandling(ex -> ex
                                                 .authenticationEntryPoint(unAuthorizedEntryPoint())
                                                 .accessDeniedHandler(commonUserAccessDeniedHandler()))
@@ -300,9 +286,8 @@ public class SecurityConfig {
                                                 .hasAnyRole(Role.CREATOR.value, Role.USER.value)
                                                 .anyRequest().hasRole(Role.CREATOR.value))
                                 .sessionManagement(session -> session
-                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                                .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
-                                .exceptionHandling(ex -> ex
+                                                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                                                                .exceptionHandling(ex -> ex
                                                 .authenticationEntryPoint(unAuthorizedEntryPoint())
                                                 .accessDeniedHandler(commonUserAccessDeniedHandler()))
                                 .csrf(AbstractHttpConfigurer::disable)
@@ -321,9 +306,8 @@ public class SecurityConfig {
                                                                                 "/api/v1/cart/{mainResource:sheet|lessons}")
                                                                 .hasAnyRole(Role.USER.value, Role.CREATOR.value)
                                                                 .anyRequest().permitAll())
-                                .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
-                                .sessionManagement((sessionManagement) -> sessionManagement
-                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                                                .sessionManagement((sessionManagement) -> sessionManagement
+                                                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                                 .exceptionHandling((exceptionadvisor) -> exceptionadvisor
                                                 .authenticationEntryPoint(unAuthorizedEntryPoint())
                                                 .accessDeniedHandler(commonUserAccessDeniedHandler()))
@@ -342,9 +326,8 @@ public class SecurityConfig {
                                                                 "/api/v1/order/{id:[0-9]+}")
                                                 .permitAll()
                                                 .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value))
-                                .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
-                                .sessionManagement(session -> session
-                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                                                .sessionManagement(session -> session
+                                                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                                 .exceptionHandling(ex -> ex
                                                 .authenticationEntryPoint(unAuthorizedEntryPoint())
                                                 .accessDeniedHandler(commonUserAccessDeniedHandler()))
@@ -364,9 +347,8 @@ public class SecurityConfig {
                                                 .permitAll()
                                                 .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value))
                                 .sessionManagement(session -> session
-                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                                .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
-                                .exceptionHandling(ex -> ex
+                                                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                                                                .exceptionHandling(ex -> ex
                                                 .authenticationEntryPoint(unAuthorizedEntryPoint())
                                                 .accessDeniedHandler(commonUserAccessDeniedHandler()))
                                 .csrf(AbstractHttpConfigurer::disable)
@@ -383,9 +365,8 @@ public class SecurityConfig {
                                                 .requestMatchers("/api/v1/cart").permitAll()
                                                 .anyRequest().hasAnyRole(Role.USER.value, Role.CREATOR.value))
                                 .sessionManagement(session -> session
-                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                                .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
-                                .exceptionHandling(ex -> ex
+                                                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                                                                .exceptionHandling(ex -> ex
                                                 .authenticationEntryPoint(unAuthorizedEntryPoint())
                                                 .accessDeniedHandler(commonUserAccessDeniedHandler()))
                                 .csrf(AbstractHttpConfigurer::disable)
@@ -403,9 +384,8 @@ public class SecurityConfig {
                                                 .hasRole(Role.USER.value)
                                                 .anyRequest().permitAll())
                                 .sessionManagement(session -> session
-                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                                .addFilterBefore(jwtFilter(), AuthorizationFilter.class)
-                                .exceptionHandling(ex -> ex
+                                                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                                                                .exceptionHandling(ex -> ex
                                                 .authenticationEntryPoint(unAuthorizedEntryPoint())
                                                 .accessDeniedHandler(commonUserAccessDeniedHandler()))
                                 .csrf(AbstractHttpConfigurer::disable)
