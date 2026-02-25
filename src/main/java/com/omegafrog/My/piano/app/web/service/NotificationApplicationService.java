@@ -21,7 +21,7 @@ public class NotificationApplicationService {
 
     @Autowired
     private SubscriptionRepository repository;
-    @Autowired
+    @Autowired(required = false)
     private PushInstance pushInstance;
     private final AuthenticationUtil authenticationUtil;
 
@@ -45,6 +45,10 @@ public class NotificationApplicationService {
      * @throws FirebaseMessagingException
      */
     public String sendMessageTo(String topic, String body, Long userId) throws FirebaseMessagingException {
+        if (pushInstance == null) {
+            return "push-disabled";
+        }
+
         Subscription subscription = repository.findByUserId(userId)
                 .orElseThrow(() -> new RedisCommandExecutionException("This user is not subscribed yet"));
         String token = subscription.getToken();

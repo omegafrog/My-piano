@@ -8,6 +8,7 @@ import com.omegafrog.My.piano.app.security.exception.DuplicatePropertyException;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.service.admin.CommonUserService;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,8 +23,10 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -32,6 +35,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
+import static org.hamcrest.Matchers.notNullValue;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -41,186 +46,179 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import(TestUtilConfig.class)
 class SecurityControllerTest {
 
-    @Autowired
-    MockMvc mockMvc;
-    @Autowired
-    private ObjectMapper objectMapper;
+  @Autowired
+  MockMvc mockMvc;
+  @Autowired
+  private ObjectMapper objectMapper;
 
-    @Autowired
-    private CommonUserService commonUserService;
-    @Autowired
-    private Cleanup cleanup;
+  @Autowired
+  private CommonUserService commonUserService;
+  @Autowired
+  private Cleanup cleanup;
 
-    @Autowired
-    private UserRepository userRepository;
+  @Autowired
+  private UserRepository userRepository;
 
-    @Autowired
-    private TestUtil testUtil;
+  @Autowired
+  private TestUtil testUtil;
 
+  @BeforeEach
+  void cleanUp() {
+    cleanup.cleanUp();
+  }
 
-    @BeforeEach
-    void cleanUp() {
-        cleanup.cleanUp();
-    }
+  @Test
+  @DisplayName("/user/register로 유저 회원가입을 할 수 있어야 한다.")
+  void registerUserTest() throws Exception {
+    String s = objectMapper.writeValueAsString(TestUtil.user1);
+    MockMultipartFile registerInfo = new MockMultipartFile("registerInfo", "", "application/json",
+        s.getBytes());
+    mockMvc.perform(multipart("/api/v1/user/register")
+        .file(registerInfo)
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.MULTIPART_FORM_DATA_VALUE))
+        .andExpect(status().isOk())
+        .andDo(print());
+  }
 
+  @Test
+  @DisplayName("중복된 username으로 회원가입시 회원가입에 실패해야 한다.")
+  void usernameExistTest() throws Exception {
+    String s = objectMapper.writeValueAsString(TestUtil.user1);
+    MockMultipartFile registerInfo = new MockMultipartFile("registerInfo", "", "application/json",
+        s.getBytes());
+    mockMvc.perform(multipart("/api/v1/user/register")
+        .file(registerInfo)
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.MULTIPART_FORM_DATA_VALUE))
+        .andExpect(status().isOk())
+        .andDo(print());
 
-    @Test
-    @DisplayName("/user/register로 유저 회원가입을 할 수 있어야 한다.")
-    void registerUserTest() throws Exception {
-        String s = objectMapper.writeValueAsString(TestUtil.user1);
-        MockMultipartFile registerInfo = new MockMultipartFile("registerInfo", "", "application/json",
-                s.getBytes());
-        mockMvc.perform(multipart("/api/v1/user/register")
-                        .file(registerInfo)
-                        .header(HttpHeaders.CONTENT_TYPE, MediaType.MULTIPART_FORM_DATA_VALUE))
-                .andExpect(status().isOk())
-                .andDo(print());
-    }
+    mockMvc.perform(multipart("/api/v1/user/register")
+        .file(registerInfo)
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.MULTIPART_FORM_DATA_VALUE))
+        .andExpect(status().is4xxClientError())
+        .andDo(print());
+  }
 
+  @Test
+  @DisplayName("유저는 자신을 인증하고  세션 id를 발급받아야 한다. ")
+  void loginTest() throws Exception {
+    String s = objectMapper.writeValueAsString(TestUtil.user1);
+    MockMultipartFile registerInfo = new MockMultipartFile("registerInfo", "", "application/json",
+        s.getBytes());
+    mockMvc.perform(multipart("/api/v1/user/register")
+        .file(registerInfo)
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.MULTIPART_FORM_DATA_VALUE))
+        .andExpect(status().isOk())
+        .andDo(print());
+    mockMvc.perform(post("/api/v1/user/login")
+        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+        .content("username=" + TestUtil.user1.getUsername() + "&password=" + TestUtil.user1.getPassword()))
+        .andExpect(request().sessionAttribute(
+            HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, notNullValue()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("200"))
+        .andDo(print());
+  }
 
-    @Test
-    @DisplayName("중복된 username으로 회원가입시 회원가입에 실패해야 한다.")
-    void usernameExistTest() throws Exception {
-        String s = objectMapper.writeValueAsString(TestUtil.user1);
-        MockMultipartFile registerInfo = new MockMultipartFile("registerInfo", "", "application/json",
-                s.getBytes());
-        mockMvc.perform(multipart("/api/v1/user/register")
-                        .file(registerInfo)
-                        .header(HttpHeaders.CONTENT_TYPE, MediaType.MULTIPART_FORM_DATA_VALUE))
-                .andExpect(status().isOk())
-                .andDo(print());
+  @Test
+  @DisplayName("유저가 로그인에 실패할 경우 올바른 에러를 리턴해야 한다.")
+  void loginFailedTest() throws Exception {
+    String s = objectMapper.writeValueAsString(TestUtil.user1);
+    MockMultipartFile registerInfo = new MockMultipartFile("registerInfo", "", "application/json",
+        s.getBytes());
+    mockMvc.perform(multipart("/api/v1/user/register")
+        .file(registerInfo)
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.MULTIPART_FORM_DATA_VALUE))
+        .andExpect(status().isOk())
+        .andDo(print());
+    mockMvc.perform(post("/api/v1/user/login")
+        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+        .content("username=username1&password=password"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("400"))
+        .andDo(print());
+  }
 
-        mockMvc.perform(multipart("/api/v1/user/register")
-                        .file(registerInfo)
-                        .header(HttpHeaders.CONTENT_TYPE, MediaType.MULTIPART_FORM_DATA_VALUE))
-                .andExpect(status().is4xxClientError())
-                .andDo(print());
-    }
+  @Test
+  @DisplayName("유저는 로그아웃 할 수 있어야 한다.")
+  void logoutTest() throws Exception {
+    String s = objectMapper.writeValueAsString(TestUtil.user1);
+    MockMultipartFile registerInfo = new MockMultipartFile("registerInfo", "", "application/json",
+        s.getBytes());
+    mockMvc.perform(multipart("/api/v1/user/register")
+        .file(registerInfo)
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.MULTIPART_FORM_DATA_VALUE))
+        .andExpect(status().isOk())
+        .andDo(print());
+    MvcResult mvcResult = mockMvc.perform(post("/api/v1/user/login")
+        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+        .content("username=" + TestUtil.user1.getUsername() + "&password=" + TestUtil.user1.getPassword()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("200"))
+        .andDo(print())
+        .andReturn();
+    MockHttpSession session = (MockHttpSession) mvcResult.getRequest().getSession(false);
 
-    @Test
-    @DisplayName("유저는 자신을 인증하고  토큰을 발급받아야 한다.")
-    void loginTest() throws Exception {
-        String s = objectMapper.writeValueAsString(TestUtil.user1);
-        MockMultipartFile registerInfo = new MockMultipartFile("registerInfo", "", "application/json",
-                s.getBytes());
-        mockMvc.perform(multipart("/api/v1/user/register")
-                        .file(registerInfo)
-                        .header(HttpHeaders.CONTENT_TYPE, MediaType.MULTIPART_FORM_DATA_VALUE))
-                .andExpect(status().isOk())
-                .andDo(print());
-        mockMvc.perform(post("/api/v1/user/login")
-                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                        .content("username=" + TestUtil.user1.getUsername() + "&password=" + TestUtil.user1.getPassword()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("200"))
-                .andDo(print());
-    }
+    MvcResult logoutResult = mockMvc.perform(get("/api/v1/user/logout")
+        .session(session))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("200"))
+        .andDo(print())
+        .andReturn();
 
-    @Test
-    @DisplayName("유저가 로그인에 실패할 경우 올바른 에러를 리턴해야 한다.")
-    void loginFailedTest() throws Exception {
-        String s = objectMapper.writeValueAsString(TestUtil.user1);
-        MockMultipartFile registerInfo = new MockMultipartFile("registerInfo", "", "application/json",
-                s.getBytes());
-        mockMvc.perform(multipart("/api/v1/user/register")
-                        .file(registerInfo)
-                        .header(HttpHeaders.CONTENT_TYPE, MediaType.MULTIPART_FORM_DATA_VALUE))
-                .andExpect(status().isOk())
-                .andDo(print());
-        mockMvc.perform(post("/api/v1/user/login")
-                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                        .content("username=username1&password=password"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("400"))
-                .andDo(print());
-    }
+    mockMvc.perform(get("/api/v1/user/purchasedSheets")
+        .session(session))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.value()))
+        .andDo(print());
+  }
 
-    // TODO : 로그아웃하려면 블랙리스트를 만들어야 하는데 이거는 추가로 repository를 넣어야 해서 힘들듯?
-    @Test
-    @DisplayName("유저는 로그아웃 할 수 있어야 한다.")
-    void logoutTest() throws Exception {
-        String s = objectMapper.writeValueAsString(TestUtil.user1);
-        MockMultipartFile registerInfo = new MockMultipartFile("registerInfo", "", "application/json",
-                s.getBytes());
-        mockMvc.perform(multipart("/api/v1/user/register")
-                        .file(registerInfo)
-                        .header(HttpHeaders.CONTENT_TYPE, MediaType.MULTIPART_FORM_DATA_VALUE))
-                .andExpect(status().isOk())
-                .andDo(print());
-        MvcResult mvcResult = mockMvc.perform(post("/api/v1/user/login")
-                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                        .content("username=" + TestUtil.user1.getUsername() + "&password=" + TestUtil.user1.getPassword()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("200"))
-                .andDo(print())
-                .andReturn();
-        Cookie refreshToken = mvcResult.getResponse().getCookie("refreshToken");
-        String s2 = mvcResult.getResponse().getContentAsString();
-        String accessToken = objectMapper.readTree(s2).get("data").get("access token").asText();
+  @Test
+  @DisplayName("인증되지 않은 사용자는 entryPoint로 가야 한다.")
+  void entryPointTest() throws Exception {
+    mockMvc.perform(get("/api/v1/user/someMethod"))
+        .andExpect(status().isUnauthorized())
+        .andDo(print());
 
-        MvcResult logoutResult = mockMvc.perform(get("/api/v1/user/logout")
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("200"))
-                .andDo(print())
-                .andReturn();
+  }
 
-        mockMvc.perform(get("/api/v1/user/purchasedSheets")
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.value()))
-                .andDo(print());
-    }
+  @Test
+  @DisplayName("로그인한 사용자는 회원탈퇴할 수 있어야 한다.")
+  void signOutTest() throws Exception, DuplicatePropertyException {
+    String s = objectMapper.writeValueAsString(TestUtil.user1);
 
-    @Test
-    @DisplayName("인증되지 않은 사용자는 entryPoint로 가야 한다.")
-    void entryPointTest() throws Exception {
-        mockMvc.perform(get("/api/v1/user/someMethod"))
-                .andExpect(status().isUnauthorized())
-                .andDo(print());
+    testUtil.register(mockMvc, TestUtil.user1);
 
-    }
+    MvcResult mvcResult = mockMvc.perform(post("/api/v1/user/login")
+        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+        .content("username=" + TestUtil.user1.getUsername() + "&password=" + TestUtil.user1.getPassword()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("200"))
+        .andExpect(request().sessionAttribute(
+            HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, notNullValue()))
+        .andDo(print())
+        .andReturn();
+    MockHttpSession session = (MockHttpSession) mvcResult.getRequest().getSession(false);
 
-    @Test
-    @DisplayName("로그인한 사용자는 회원탈퇴할 수 있어야 한다.")
-    void signOutTest() throws Exception, DuplicatePropertyException {
-        String s = objectMapper.writeValueAsString(TestUtil.user1);
+    MvcResult mvcResult2 = mockMvc.perform(get("/api/v1/user/signOut")
+        .session(session))
+        .andExpect(jsonPath("$.status").value("200"))
+        .andDo(print())
+        .andReturn();
 
-        testUtil.register(mockMvc, TestUtil.user1);
+    // sercurityUser가 삭제되었는지 확인
+    Assertions.assertThatThrownBy(() -> commonUserService.loadUserByUsername(TestUtil.user1.getUsername()))
+        .isInstanceOf(UsernameNotFoundException.class);
 
-        MvcResult mvcResult = mockMvc.perform(post("/api/v1/user/login")
-                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                        .content("username=" + TestUtil.user1.getUsername() + "&password=" + TestUtil.user1.getPassword()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("200"))
-                .andDo(print())
-                .andReturn();
-        Cookie refreshToken = mvcResult.getResponse().getCookie("refreshToken");
-        String s2 = mvcResult.getResponse().getContentAsString();
-        String accessToken = objectMapper.readTree(s2).get("data").get("access token").asText();
+    // SercurityUser가 가지고 있는 User 객체 또한 전이되어 삭제되었는지 확인
+    Assertions.assertThat(userRepository.count()).isEqualTo(0);
 
-        MvcResult mvcResult2 = mockMvc.perform(get("/api/v1/user/signOut")
-                        .header(HttpHeaders.AUTHORIZATION, accessToken)
-                        .cookie(refreshToken))
-                .andExpect(jsonPath("$.status").value("200"))
-                .andDo(print())
-                .andReturn();
-
-        // sercurityUser가 삭제되었는지 확인
-        Assertions.assertThatThrownBy(() -> commonUserService.loadUserByUsername(TestUtil.user1.getUsername()))
-                .isInstanceOf(UsernameNotFoundException.class);
-
-        // SercurityUser가 가지고 있는 User 객체 또한 전이되어 삭제되었는지 확인
-        Assertions.assertThat(userRepository.count()).isEqualTo(0);
-
-        // 회원탈퇴이후 로그인 실패하는지 확인
-        mockMvc.perform(post("/api/v1/user/login")
-                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                        .content("username=username&password=password"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("400"))
-                .andDo(print());
-    }
+    // 회원탈퇴이후 로그인 실패하는지 확인
+    mockMvc.perform(post("/api/v1/user/login")
+        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+        .content("username=username&password=password"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("400"))
+        .andDo(print());
+  }
 }

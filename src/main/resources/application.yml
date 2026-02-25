@@ -4,7 +4,7 @@ spring:
     include: secret
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/mypiano?characterEncoding=UTF-8&serverTimezone=UTC
+    url: jdbc:mysql://localhost:3307/mypiano?characterEncoding=UTF-8&serverTimezone=UTC
     username: root
     password: password
     hikari:
@@ -21,7 +21,7 @@ spring:
         generate_statistics: false
         use_sql_comments: false
     hibernate:
-      ddl-auto: update
+      ddl-auto: create 
   cloud:
     aws:
       region:
