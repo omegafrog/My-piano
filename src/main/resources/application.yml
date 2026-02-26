@@ -49,16 +49,6 @@ spring:
     pathmatch:
       matching-strategy: ant_path_matcher
 
-logging:
-  file:
-    name: log.txt
-  level:
-    root: DEBUG
-#   level:
-#     org.springframework.web: DEBUG
-#     org.springframework.http.converter.json: DEBUG
-#     org.hibernate.SQL: DEBUG
-#     org.hibernate.type.descriptor.sql: TRACE
 
 elasticsearch:
   host: localhost

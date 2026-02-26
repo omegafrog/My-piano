@@ -19,6 +19,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -34,65 +35,63 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import(TestUtilConfig.class)
 class UserControllerTest {
 
-    @Autowired
-    MockMvc mockMvc;
+  @Autowired
+  MockMvc mockMvc;
 
-    @Autowired
-    TestUtil testUtil;
+  @Autowired
+  TestUtil testUtil;
 
-    @Autowired
-    private Cleanup cleanup;
-    String accessToken;
-    Cookie refreshToken;
+  @Autowired
+  private Cleanup cleanup;
+  String accessToken;
+  Cookie refreshToken;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+  @Autowired
+  private ObjectMapper objectMapper;
 
-    @BeforeEach
-    void getLoginToken() throws Exception {
-        cleanup.cleanUp();
-        RegisterUserDto dto = RegisterUserDto.builder()
-                .username("username")
-                .password("password")
-                .name("user")
-                .email("email@email.com")
-                .profileSrc("src")
-                .loginMethod(LoginMethod.EMAIL)
-                .phoneNum("010-1111-2222")
-                .build();
-        testUtil.register(mockMvc, dto);
-        TestUtil.TokenResponse login = testUtil.login(mockMvc, "username", "password");
-        accessToken = login.getAccessToken();
-        refreshToken = login.getRefreshToken();
-    }
+  @BeforeEach
+  void getLoginToken() throws Exception {
+    cleanup.cleanUp();
+    RegisterUserDto dto = RegisterUserDto.builder()
+        .username("username")
+        .password("password")
+        .name("user")
+        .email("email@email.com")
+        .profileSrc("src")
+        .loginMethod(LoginMethod.EMAIL)
+        .phoneNum("010-1111-2222")
+        .build();
+    testUtil.register(mockMvc, dto);
+    MockHttpSession login = testUtil.login(mockMvc, "username", "password");
+  }
 
-    @Test
-    void getCommunityPostTest() throws Exception {
-        // given
-        PostRegisterDto postDto = PostRegisterDto.builder()
-                .title("title")
-                .content("content")
-                .build();
-        String string = mockMvc.perform(post("/api/v1/community/posts")
-                .header(HttpHeaders.AUTHORIZATION, accessToken)
-                .cookie(refreshToken)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(postDto)))
-                .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
-        long postId = objectMapper.readTree(string).get("data").get("id").asLong();
+  @Test
+  void getCommunityPostTest() throws Exception {
+    // given
+    PostRegisterDto postDto = PostRegisterDto.builder()
+        .title("title")
+        .content("content")
+        .build();
+    String string = mockMvc.perform(post("/api/v1/community/posts")
+        .header(HttpHeaders.AUTHORIZATION, accessToken)
+        .cookie(refreshToken)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(postDto)))
+        .andExpect(status().isOk())
+        .andReturn().getResponse().getContentAsString();
+    long postId = objectMapper.readTree(string).get("data").get("id").asLong();
 
-        // when
-        MvcResult mvcResult = mockMvc.perform(get("/api/v1/community/posts")
-                .header(HttpHeaders.AUTHORIZATION, accessToken)
-                .cookie(refreshToken))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
-                .andReturn();
-        // then
-        String result = mvcResult.getResponse().getContentAsString();
-        Long id = objectMapper.readTree(result).get("data").get("postListDtos").get(0).get("id").asLong();
-        Assertions.assertThat(id).isEqualTo(postId);
-    }
+    // when
+    MvcResult mvcResult = mockMvc.perform(get("/api/v1/community/posts")
+        .header(HttpHeaders.AUTHORIZATION, accessToken)
+        .cookie(refreshToken))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+        .andReturn();
+    // then
+    String result = mvcResult.getResponse().getContentAsString();
+    Long id = objectMapper.readTree(result).get("data").get("postListDtos").get(0).get("id").asLong();
+    Assertions.assertThat(id).isEqualTo(postId);
+  }
 
 }

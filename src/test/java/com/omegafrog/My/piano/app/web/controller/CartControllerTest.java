@@ -24,6 +24,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpSession;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -33,240 +35,220 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@ExtendWith(SpringExtension.class)
 @SpringBootTest
 @AutoConfigureMockMvc
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Import(TestUtilConfig.class)
+@ActiveProfiles("test")
 class CartControllerTest {
 
-    @Autowired
-    private ObjectMapper objectMapper;
+  @Autowired
+  private ObjectMapper objectMapper;
 
-    @Autowired
-    private Cleanup cleanup;
+  @Autowired
+  private Cleanup cleanup;
 
-    private TestUtil.TokenResponse sellerToken;
-    private TestUtil.TokenResponse buyerToken;
+  private MockHttpSession sellerSession;
+  private MockHttpSession buyerSession;
 
-    @Autowired
-    private SecurityUserRepository securityUserRepository;
-    @Autowired
-    private TestUtil testUtil;
-    @Autowired
-    private MockMvc mockMvc;
+  @Autowired
+  private SecurityUserRepository securityUserRepository;
+  @Autowired
+  private TestUtil testUtil;
+  @Autowired
+  private MockMvc mockMvc;
 
+  @BeforeEach
+  public void cleanUp() {
+    cleanup.cleanUp();
+  }
 
-    @BeforeEach
-    public void cleanUp() {
-        cleanup.cleanUp();
-    }
+  @Test
+  void saveToCartTest() throws Exception {
+    // given
+    // register seller
+    testUtil.register(mockMvc, TestUtil.user1);
+    SecurityUser securityUser = securityUserRepository.findByUsername(TestUtil.user1.getUsername())
+        .orElseThrow(() -> new EntityNotFoundException());
+    securityUser.changeRole(Role.CREATOR);
+    securityUserRepository.save(securityUser);
+    sellerSession = testUtil.login(mockMvc, TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
 
+    // register buyer
+    testUtil.register(mockMvc, TestUtil.user2);
+    buyerSession = testUtil.login(mockMvc, TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
 
-    @Test
-    void saveToCartTest() throws Exception {
-        // given
-        // register seller
-        testUtil.register(mockMvc, TestUtil.user1);
-        SecurityUser securityUser = securityUserRepository.findByUsername(TestUtil.user1.getUsername())
-                .orElseThrow(() -> new EntityNotFoundException());
-        securityUser.changeRole(Role.CREATOR);
-        securityUserRepository.save(securityUser);
-        sellerToken =
-                testUtil.login(mockMvc, TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
+    SheetPostDto savedSheetPostDto = testUtil.writeSheetPost(mockMvc, sellerSession,
+        TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1));
+    LessonDto savedLessonDto = testUtil.writeLesson(mockMvc, sellerSession,
+        TestUtil.registerLessonDto(savedSheetPostDto.getSheet().getId()));
 
-        // register buyer
-        testUtil.register(mockMvc, TestUtil.user2);
-        buyerToken =
-                testUtil.login(mockMvc, TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
+    OrderRegisterDto build1 = OrderRegisterDto.builder()
+        .itemId(savedSheetPostDto.getId())
+        .build();
+    OrderRegisterDto build2 = OrderRegisterDto.builder()
+        .itemId(savedLessonDto.getId())
+        .build();
+    // when
+    MvcResult mvcResult = mockMvc.perform(post("/api/v1/cart/sheet")
+        .session(buyerSession)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(build1)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+        .andReturn();
 
-        SheetPostDto savedSheetPostDto
-                = testUtil.writeSheetPost(mockMvc, sellerToken, TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1));
-        LessonDto savedLessonDto
-                = testUtil.writeLesson(mockMvc, sellerToken, TestUtil.registerLessonDto(savedSheetPostDto.getSheet().getId()));
+    // then
+    String content = mvcResult.getResponse().getContentAsString();
+    String title = objectMapper.readTree(content).get("data").get(0).get("item").get("title").asText();
+    Assertions.assertThat(title).isEqualTo(savedSheetPostDto.getTitle());
 
-        OrderRegisterDto build1 = OrderRegisterDto.builder()
-                .itemId(savedSheetPostDto.getId())
-                .build();
-        OrderRegisterDto build2 = OrderRegisterDto.builder()
-                .itemId(savedLessonDto.getId())
-                .build();
-        //when
-        MvcResult mvcResult = mockMvc.perform(post("/api/v1/cart/sheet")
-                        .header(HttpHeaders.AUTHORIZATION, buyerToken.getAccessToken())
-                        .cookie(buyerToken.getRefreshToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(build1)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
-                .andReturn();
+    MvcResult mvcResult2 = mockMvc.perform(post("/api/v1/cart/lessons")
+        .session(buyerSession)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(build2)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+        .andReturn();
+    String contentAsString = mvcResult2.getResponse().getContentAsString();
+    String title2 = objectMapper.readTree(contentAsString).get("data").get(0).get("item").get("title").asText();
+    Assertions.assertThat(title2).isEqualTo(savedLessonDto.getTitle());
+  }
 
-        //then
-        String content = mvcResult.getResponse().getContentAsString();
-        String title = objectMapper.readTree(content).get("data").get(0).get("item").get("title").asText();
-        Assertions.assertThat(title).isEqualTo(savedSheetPostDto.getTitle());
+  @Test
+  void deleteFromCartTest() throws Exception {
+    // given
+    testUtil.register(mockMvc, TestUtil.user1);
+    SecurityUser securityUser = securityUserRepository.findByUsername(TestUtil.user1.getUsername())
+        .orElseThrow(() -> new EntityNotFoundException());
+    securityUser.changeRole(Role.CREATOR);
+    securityUserRepository.save(securityUser);
+    sellerSession = testUtil.login(mockMvc, TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
 
-        MvcResult mvcResult2 = mockMvc.perform(post("/api/v1/cart/lessons")
-                        .header(HttpHeaders.AUTHORIZATION, buyerToken.getAccessToken())
-                        .cookie(buyerToken.getRefreshToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(build2)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
-                .andReturn();
-        String contentAsString = mvcResult2.getResponse().getContentAsString();
-        String title2 = objectMapper.readTree(contentAsString).get("data").get(0).get("item").get("title").asText();
-        Assertions.assertThat(title2).isEqualTo(savedLessonDto.getTitle());
-    }
+    // register buyer
+    testUtil.register(mockMvc, TestUtil.user2);
+    buyerSession = testUtil.login(mockMvc, TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
 
-    @Test
-    void deleteFromCartTest() throws Exception {
-        //given
-        testUtil.register(mockMvc, TestUtil.user1);
-        SecurityUser securityUser = securityUserRepository.findByUsername(TestUtil.user1.getUsername())
-                .orElseThrow(() -> new EntityNotFoundException());
-        securityUser.changeRole(Role.CREATOR);
-        securityUserRepository.save(securityUser);
-        sellerToken =
-                testUtil.login(mockMvc, TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
+    SheetPostDto savedSheetPostDto = testUtil.writeSheetPost(mockMvc, sellerSession,
+        TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1));
+    OrderRegisterDto build1 = OrderRegisterDto.builder()
+        .itemId(savedSheetPostDto.getId())
+        .build();
+    // when
+    MvcResult mvcResult = mockMvc.perform(post("/api/v1/cart/sheet")
+        .session(buyerSession)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(build1)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+        .andReturn();
+    String content = mvcResult.getResponse().getContentAsString();
+    Long id = objectMapper.readTree(content).get("data").get(0).get("item").get("id").asLong();
 
-        // register buyer
-        testUtil.register(mockMvc, TestUtil.user2);
-        buyerToken =
-                testUtil.login(mockMvc, TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
+    mockMvc.perform(delete("/api/v1/cart/" + id)
+        .session(buyerSession))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+        .andReturn();
 
-        SheetPostDto savedSheetPostDto
-                = testUtil.writeSheetPost(mockMvc, sellerToken, TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1));
-        OrderRegisterDto build1 = OrderRegisterDto.builder()
-                .itemId(savedSheetPostDto.getId())
-                .build();
-        //when
-        MvcResult mvcResult = mockMvc.perform(post("/api/v1/cart/sheet")
-                        .header(HttpHeaders.AUTHORIZATION, buyerToken.getAccessToken())
-                        .cookie(buyerToken.getRefreshToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(build1)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
-                .andReturn();
-        String content = mvcResult.getResponse().getContentAsString();
-        Long id = objectMapper.readTree(content).get("data").get(0).get("item").get("id").asLong();
+    // then
+    mockMvc.perform(get("/api/v1/cart")
+        .session(buyerSession))
+        .andDo(print())
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+        .andExpect(jsonPath("$.data").isEmpty());
+  }
 
-        mockMvc.perform(delete("/api/v1/cart/" + id)
-                        .header(HttpHeaders.AUTHORIZATION, buyerToken.getAccessToken())
-                        .cookie(buyerToken.getRefreshToken()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
-                .andReturn();
+  @Test
+  void getAllContentFromCartTest() throws Exception {
+    // given
+    testUtil.register(mockMvc, TestUtil.user1);
+    SecurityUser securityUser = securityUserRepository.findByUsername(TestUtil.user1.getUsername())
+        .orElseThrow(() -> new EntityNotFoundException());
+    securityUser.changeRole(Role.CREATOR);
+    securityUserRepository.save(securityUser);
+    sellerSession = testUtil.login(mockMvc, TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
 
-        //then
-        mockMvc.perform(get("/api/v1/cart")
-                        .header(HttpHeaders.AUTHORIZATION, buyerToken.getAccessToken())
-                        .cookie(buyerToken.getRefreshToken()))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
-                .andExpect(jsonPath("$.data").isEmpty());
-    }
+    // register buyer
+    testUtil.register(mockMvc, TestUtil.user2);
+    buyerSession = testUtil.login(mockMvc, TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
 
-    @Test
-    void getAllContentFromCartTest() throws Exception {
-        //given
-        testUtil.register(mockMvc, TestUtil.user1);
-        SecurityUser securityUser = securityUserRepository.findByUsername(TestUtil.user1.getUsername())
-                .orElseThrow(() -> new EntityNotFoundException());
-        securityUser.changeRole(Role.CREATOR);
-        securityUserRepository.save(securityUser);
-        sellerToken =
-                testUtil.login(mockMvc, TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
+    SheetPostDto savedSheetPostDto = testUtil.writeSheetPost(mockMvc, sellerSession,
+        TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1));
+    OrderRegisterDto build1 = OrderRegisterDto.builder()
+        .itemId(savedSheetPostDto.getId())
+        .build();
 
-        // register buyer
-        testUtil.register(mockMvc, TestUtil.user2);
-        buyerToken =
-                testUtil.login(mockMvc, TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
+    // when
+    mockMvc.perform(post("/api/v1/cart/sheet")
+        .session(buyerSession)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(build1)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+        .andReturn();
 
-        SheetPostDto savedSheetPostDto
-                = testUtil.writeSheetPost(mockMvc, sellerToken, TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1));
-        OrderRegisterDto build1 = OrderRegisterDto.builder()
-                .itemId(savedSheetPostDto.getId())
-                .build();
+    MvcResult mvcResult = mockMvc.perform(get("/api/v1/cart")
+        .session(buyerSession))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+        .andDo(print())
+        .andReturn();
 
-        //when
-        mockMvc.perform(post("/api/v1/cart/sheet")
-                        .header(HttpHeaders.AUTHORIZATION, buyerToken.getAccessToken())
-                        .cookie(buyerToken.getRefreshToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(build1)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
-                .andReturn();
+    String content = mvcResult.getResponse().getContentAsString();
+    Assertions.assertThat(objectMapper.readTree(content).get("data").get(0).get("item").get("id").asLong())
+        .isEqualTo(savedSheetPostDto.getId());
+  }
 
-        MvcResult mvcResult = mockMvc.perform(get("/api/v1/cart")
-                        .header(HttpHeaders.AUTHORIZATION, buyerToken.getAccessToken())
-                        .cookie(buyerToken.getRefreshToken()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
-                .andDo(print())
-                .andReturn();
+  @Test
+  void payAllInCartTest() throws Exception {
+    // given
+    testUtil.register(mockMvc, TestUtil.user1);
+    SecurityUser securityUser = securityUserRepository.findByUsername(TestUtil.user1.getUsername())
+        .orElseThrow(() -> new EntityNotFoundException());
+    securityUser.changeRole(Role.CREATOR);
+    securityUserRepository.save(securityUser);
+    sellerSession = testUtil.login(mockMvc, TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
 
-        String content = mvcResult.getResponse().getContentAsString();
-        Assertions.assertThat(objectMapper.readTree(content).get("data").get(0).get("item").get("id").asLong())
-                .isEqualTo(savedSheetPostDto.getId());
-    }
+    // register buyer
+    testUtil.register(mockMvc, TestUtil.user2);
+    buyerSession = testUtil.login(mockMvc, TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
 
-    @Test
-    void payAllInCartTest() throws Exception {
-        //given
-        testUtil.register(mockMvc, TestUtil.user1);
-        SecurityUser securityUser = securityUserRepository.findByUsername(TestUtil.user1.getUsername())
-                .orElseThrow(() -> new EntityNotFoundException());
-        securityUser.changeRole(Role.CREATOR);
-        securityUserRepository.save(securityUser);
-        sellerToken =
-                testUtil.login(mockMvc, TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
+    testUtil.chargeCash(mockMvc, 20000, buyerSession);
+    SheetPostDto savedSheetPostDto = testUtil.writeSheetPost(mockMvc, sellerSession,
+        TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1));
+    LessonDto savedLessonDto = testUtil.writeLesson(mockMvc, sellerSession,
+        TestUtil.registerLessonDto(savedSheetPostDto.getSheet().getId()));
+    OrderRegisterDto build1 = OrderRegisterDto.builder()
+        .itemId(savedSheetPostDto.getId())
+        .build();
+    OrderRegisterDto build2 = OrderRegisterDto.builder()
+        .itemId(savedLessonDto.getId())
+        .build();
+    mockMvc.perform(post("/api/v1/cart/sheet")
+        .session(buyerSession)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(build1)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+        .andReturn();
+    mockMvc.perform(post("/api/v1/cart/lessons")
+        .session(buyerSession)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(build2)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+        .andReturn();
 
-        // register buyer
-        testUtil.register(mockMvc, TestUtil.user2);
-        buyerToken =
-                testUtil.login(mockMvc, TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
+    mockMvc.perform(patch("/api/v1/cart?orderId=" + build1.getItemId() + "," + build2.getItemId())
+        .session(buyerSession))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()));
 
-        testUtil.chargeCash(mockMvc, 20000, buyerToken);
-        SheetPostDto savedSheetPostDto
-                = testUtil.writeSheetPost(mockMvc, sellerToken, TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1));
-        LessonDto savedLessonDto
-                = testUtil.writeLesson(mockMvc, sellerToken, TestUtil.registerLessonDto(savedSheetPostDto.getSheet().getId()));
-        OrderRegisterDto build1 = OrderRegisterDto.builder()
-                .itemId(savedSheetPostDto.getId())
-                .build();
-        OrderRegisterDto build2 = OrderRegisterDto.builder()
-                .itemId(savedLessonDto.getId())
-                .build();
-        mockMvc.perform(post("/api/v1/cart/sheet")
-                        .header(HttpHeaders.AUTHORIZATION, buyerToken.getAccessToken())
-                        .cookie(buyerToken.getRefreshToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(build1)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
-                .andReturn();
-        mockMvc.perform(post("/api/v1/cart/lessons")
-                        .header(HttpHeaders.AUTHORIZATION, buyerToken.getAccessToken())
-                        .cookie(buyerToken.getRefreshToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(build2)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
-                .andReturn();
+    UserInfo userInfo = testUtil.getUserInfo(mockMvc, buyerSession);
 
-        mockMvc.perform(patch("/api/v1/cart?orderId=" + build1.getItemId() + "," + build2.getItemId())
-                        .header(HttpHeaders.AUTHORIZATION, buyerToken.getAccessToken())
-                        .cookie(buyerToken.getRefreshToken()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()));
-
-        UserInfo userInfo = testUtil.getUserInfo(mockMvc, buyerToken);
-
-        Assertions.assertThat(userInfo.getCash())
-                .isLessThan(20000);
-    }
+    Assertions.assertThat(userInfo.getCash())
+        .isLessThan(20000);
+  }
 }
