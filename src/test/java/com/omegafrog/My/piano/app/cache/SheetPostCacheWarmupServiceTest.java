@@ -14,6 +14,7 @@ import com.omegafrog.My.piano.app.web.enums.Difficulty;
 import com.omegafrog.My.piano.app.web.enums.Instrument;
 import com.omegafrog.My.piano.app.web.service.FileUploadService;
 import com.omegafrog.My.piano.app.web.service.SheetPostApplicationService;
+import com.omegafrog.My.piano.app.web.service.cache.SheetPostCacheCoordinator;
 import com.omegafrog.My.piano.app.web.service.cache.SheetPostListCacheKey;
 import com.omegafrog.My.piano.app.web.service.cache.SheetPostListCachePayload;
 import com.omegafrog.My.piano.app.web.service.outbox.SheetPostOutboxService;
@@ -79,6 +80,7 @@ class SheetPostCacheWarmupServiceTest {
 
     private ConcurrentMapCacheManager cacheManager;
     private SingleFlightCoordinator singleFlightCoordinator;
+    private SheetPostCacheCoordinator sheetPostCacheCoordinator;
     private SheetPostApplicationService service;
 
     @BeforeEach
@@ -86,6 +88,7 @@ class SheetPostCacheWarmupServiceTest {
         cacheManager = new ConcurrentMapCacheManager("sheetpostList", "sheetpostDetail");
         singleFlightCoordinator = new SingleFlightCoordinator();
         when(executorProvider.getIfAvailable()).thenReturn(Executors.newFixedThreadPool(2));
+        sheetPostCacheCoordinator = new SheetPostCacheCoordinator(cacheManager, singleFlightCoordinator, executorProvider);
 
         service = new SheetPostApplicationService(
                 sheetPostIndexRepository,
@@ -98,9 +101,7 @@ class SheetPostCacheWarmupServiceTest {
                 fileUploadService,
                 eventPublisher,
                 sheetPostOutboxService,
-                cacheManager,
-                singleFlightCoordinator,
-                executorProvider
+                sheetPostCacheCoordinator
         );
     }
 

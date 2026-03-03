@@ -22,12 +22,12 @@ public class SheetPostCacheWarmupJobConfig {
     @Bean("sheetPostCacheWarmupJob")
     public Job sheetPostCacheWarmupJob(JobRepository jobRepository) {
         return new JobBuilder("SheetPostCacheWarmupJob", jobRepository)
-                .start(sheetPostCacheWarmupStep(jobRepository))
+                .start(sheetPostCacheWarmupTaskletStep(jobRepository))
                 .build();
     }
 
     @Bean
-    public Step sheetPostCacheWarmupStep(JobRepository jobRepository) {
+    public Step sheetPostCacheWarmupTaskletStep(JobRepository jobRepository) {
         return new StepBuilder("sheetPostCacheWarmupStep", jobRepository)
                 .tasklet((contribution, chunkContext) -> {
                     sheetPostApplicationService.warmupSheetPostCaches();

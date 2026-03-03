@@ -1,6 +1,5 @@
 package com.omegafrog.My.piano.app.security.provider;
 
-import com.omegafrog.My.piano.app.security.exception.JwtExpiredButRefreshableException;
 import com.omegafrog.My.piano.app.security.jwt.JwtAuthenticationToken;
 import com.omegafrog.My.piano.app.security.jwt.RefreshToken;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
@@ -19,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.core.Authentication;
 
 import java.time.LocalDateTime;
@@ -94,7 +94,7 @@ class JwtAuthenticationProviderTest {
     }
 
     @Test
-    @DisplayName("만료된 token이지만 refresh token이 살아있으면 재발급 가능 예외를 던진다")
+    @DisplayName("만료된 token이지만 refresh token이 살아있으면 만료 예외를 던진다")
     void authenticateWithExpiredButRefreshableToken() {
         Claims claims = claims("1", Role.USER);
         ExpiredJwtException expiredJwtException = new ExpiredJwtException(Jwts.header(), claims, "expired");
@@ -118,7 +118,7 @@ class JwtAuthenticationProviderTest {
 
         assertThatThrownBy(() -> jwtAuthenticationProvider
                 .authenticate(JwtAuthenticationToken.unauthenticated("expired-token")))
-                .isInstanceOf(JwtExpiredButRefreshableException.class)
+                .isInstanceOf(CredentialsExpiredException.class)
                 .hasMessageContaining("expired");
     }
 

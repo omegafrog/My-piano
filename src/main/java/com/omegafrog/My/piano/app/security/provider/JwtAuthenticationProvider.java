@@ -1,6 +1,5 @@
 package com.omegafrog.My.piano.app.security.provider;
 
-import com.omegafrog.My.piano.app.security.exception.JwtExpiredButRefreshableException;
 import com.omegafrog.My.piano.app.security.jwt.JwtAuthenticationToken;
 import com.omegafrog.My.piano.app.security.jwt.RefreshToken;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
@@ -46,7 +45,7 @@ public class JwtAuthenticationProvider implements AuthenticationProvider {
             TokenInfo tokenInfo = tokenUtils.wrap(accessToken, refreshToken);
             return JwtAuthenticationToken.authenticated(user.getAuthorities(), tokenInfo, securityUserId);
         } catch (ExpiredJwtException e) {
-            handleExpiredToken(e);
+            validateExpiredTokenClaims(e);
             throw new CredentialsExpiredException("Access token is expired.", e);
         } catch (SignatureException e) {
             throw new AuthenticationServiceException("Signature is invalid", e);
@@ -70,12 +69,11 @@ public class JwtAuthenticationProvider implements AuthenticationProvider {
                 .orElseThrow(() -> new AuthenticationServiceException("Already logged out user."));
     }
 
-    private void handleExpiredToken(ExpiredJwtException e) {
+    private void validateExpiredTokenClaims(ExpiredJwtException e) {
         Claims claims = e.getClaims();
         Long securityUserId = Long.valueOf((String) claims.get("id"));
         Role securityUserRole = Role.valueOf((String) claims.get("role"));
         findUser(securityUserId);
         findRefreshToken(securityUserId, securityUserRole);
-        throw new JwtExpiredButRefreshableException("Access token is expired.", e);
     }
 }
