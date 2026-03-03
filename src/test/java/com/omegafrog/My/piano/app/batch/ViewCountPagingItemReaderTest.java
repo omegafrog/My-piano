@@ -6,27 +6,22 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.redis.core.*;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import javax.cache.CacheManager;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 @ExtendWith(MockitoExtension.class)
 class ViewCountPagingItemReaderTest {
 
     @Mock
-    private RedisTemplate<String, SheetPostViewCount> redisTemplate;
+    private CacheManager cacheManager;
 
     private ViewCountPagingItemReader<SheetPostViewCount> reader;
 
     @BeforeEach
     void setUp() {
-        reader = new ViewCountPagingItemReader<>(SheetPostViewCount.class, redisTemplate);
+        reader = new ViewCountPagingItemReader<SheetPostViewCount>(SheetPostViewCount.class, cacheManager);
         reader.setPageSize(10);
     }
 
@@ -34,7 +29,7 @@ class ViewCountPagingItemReaderTest {
     void shouldCreateReaderWithCorrectType() {
         // Given & When
         ViewCountPagingItemReader<SheetPostViewCount> reader = 
-            new ViewCountPagingItemReader<>(SheetPostViewCount.class, redisTemplate);
+            new ViewCountPagingItemReader<SheetPostViewCount>(SheetPostViewCount.class, cacheManager);
 
         // Then
         assertThat(reader).isNotNull();
@@ -50,13 +45,9 @@ class ViewCountPagingItemReaderTest {
     }
 
     @Test
-    void shouldHandleNullRedisTemplate() {
+    void shouldAllowNullCacheManagerAtConstruction() {
         // Given & When & Then
-        try {
-            new ViewCountPagingItemReader<>(SheetPostViewCount.class, null);
-        } catch (Exception e) {
-            // NullPointerException이 발생할 수 있음
-            assertThat(e).isInstanceOf(NullPointerException.class);
-        }
+        assertThatCode(() -> new ViewCountPagingItemReader<SheetPostViewCount>(SheetPostViewCount.class, null))
+                .doesNotThrowAnyException();
     }
 }

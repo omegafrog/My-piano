@@ -59,14 +59,16 @@ public class OrderService {
 
   public void deleteOrder(Long orderId) {
     User loggedInUser = authenticationUtil.getLoggedInUser();
+    User user = userRepository.findById(loggedInUser.getId())
+        .orElseThrow(() -> new EntityNotFoundException(USER_ENTITY_NOT_FOUNT_ERROR_MSG + loggedInUser.getId()));
     Order order = orderRepository.findById(orderId)
         .orElseThrow(() -> new EntityNotFoundException("Cannot find Order entity. id : " + orderId));
-    if (!order.getBuyer().equals(loggedInUser))
+    if (!order.getBuyer().equals(user))
       throw new AccessDeniedException("Cannot delete other user's order.");
     if (order.getItem() instanceof SheetPost)
-      loggedInUser.deletePurchasedSheetPost(order);
+      user.deletePurchasedSheetPost(order);
     else if (order.getItem() instanceof Lesson)
-      loggedInUser.deletePurchasedLesson(order);
+      user.deletePurchasedLesson(order);
     orderRepository.deleteById(orderId);
   }
 

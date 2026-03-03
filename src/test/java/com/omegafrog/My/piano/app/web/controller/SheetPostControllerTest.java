@@ -135,6 +135,7 @@ class SheetPostControllerTest {
 
     String contentAsString = mockMvc.perform(post("/api/v1/sheet-post").content(
         objectMapper.writeValueAsString(registerDto))
+        .contentType(MediaType.APPLICATION_JSON)
         .session(artistSession))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))

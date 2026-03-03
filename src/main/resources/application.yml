@@ -45,6 +45,10 @@ spring:
     cache:
       host: 127.0.0.1
       port: 6380
+  cache:
+    type: jcache
+    jcache:
+      config: classpath:ehcache.xml
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
@@ -87,3 +91,9 @@ server:
 local:
   storage:
     base-path: ./static
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,caches

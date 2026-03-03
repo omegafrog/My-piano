@@ -41,10 +41,9 @@ public class LikeCountItemWriter<T extends Article> implements ItemWriter<LikeCo
         
         String tableName = getTableName();
         
-        // 진짜 bulk update: 단일 CASE WHEN 쿼리
         StringBuilder sql = new StringBuilder();
         sql.append("UPDATE ").append(tableName)
-           .append(" SET like_count = like_count + CASE ");
+           .append(" SET like_count = CASE ");
         
         for (Long id : likeCountMap.keySet()) {
             sql.append("WHEN id = ").append(id).append(" THEN ").append(likeCountMap.get(id)).append(" ");

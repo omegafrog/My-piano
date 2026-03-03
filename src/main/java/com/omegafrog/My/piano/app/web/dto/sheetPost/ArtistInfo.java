@@ -2,6 +2,8 @@ package com.omegafrog.My.piano.app.web.dto.sheetPost;
 
 import lombok.*;
 
+import java.io.Serializable;
+
 
 @Data
 @Setter
@@ -9,7 +11,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ArtistInfo {
+public class ArtistInfo implements Serializable {
     private Long id;
     private String name;
     private String username;

@@ -424,6 +424,7 @@ class PostControllerIntegrationTest {
         .build();
     String string = mockMvc.perform(post("/api/v1/community/posts")
         .session(user1Session)
+        .contentType(MediaType.APPLICATION_JSON)
         .content(objectMapper.writeValueAsString(postDto)))
         .andExpect(status().isOk())
         .andReturn().getResponse().getContentAsString();

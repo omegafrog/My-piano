@@ -45,6 +45,7 @@ class UserControllerTest {
   private Cleanup cleanup;
   String accessToken;
   Cookie refreshToken;
+  MockHttpSession session;
 
   @Autowired
   private ObjectMapper objectMapper;
@@ -62,7 +63,7 @@ class UserControllerTest {
         .phoneNum("010-1111-2222")
         .build();
     testUtil.register(mockMvc, dto);
-    MockHttpSession login = testUtil.login(mockMvc, "username", "password");
+    session = testUtil.login(mockMvc, "username", "password");
   }
 
   @Test
@@ -73,8 +74,7 @@ class UserControllerTest {
         .content("content")
         .build();
     String string = mockMvc.perform(post("/api/v1/community/posts")
-        .header(HttpHeaders.AUTHORIZATION, accessToken)
-        .cookie(refreshToken)
+        .session(session)
         .contentType(MediaType.APPLICATION_JSON)
         .content(objectMapper.writeValueAsString(postDto)))
         .andExpect(status().isOk())
@@ -83,8 +83,7 @@ class UserControllerTest {
 
     // when
     MvcResult mvcResult = mockMvc.perform(get("/api/v1/community/posts")
-        .header(HttpHeaders.AUTHORIZATION, accessToken)
-        .cookie(refreshToken))
+        .session(session))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
         .andReturn();

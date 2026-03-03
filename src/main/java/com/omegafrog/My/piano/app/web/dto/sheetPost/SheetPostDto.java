@@ -7,12 +7,14 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
+import java.io.Serializable;
+
 @Data
 @Setter
 @Getter
 @NoArgsConstructor
 @SuperBuilder
-public class SheetPostDto extends SellableItemDto {
+public class SheetPostDto extends SellableItemDto implements Serializable {
     private String title;
     private String content;
     private Double discountRate = 0d;

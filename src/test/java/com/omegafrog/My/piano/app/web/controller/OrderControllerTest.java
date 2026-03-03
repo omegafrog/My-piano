@@ -124,7 +124,7 @@ class OrderControllerTest {
     mockMvc.perform(post(baseUrl + "/lessons")
         .contentType(MediaType.APPLICATION_JSON)
         .content(objectMapper.writeValueAsString(order2))
-        .session(user1session))
+        .session(buyersession))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value("200"))
         .andDo(print());
@@ -145,7 +145,7 @@ class OrderControllerTest {
     String response = mockMvc.perform(post(baseUrl + "/sheet")
         .contentType(MediaType.APPLICATION_JSON)
         .content(data)
-        .session(user1session))
+        .session(buyersession))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value("200"))
         .andDo(print())
@@ -153,7 +153,7 @@ class OrderControllerTest {
     Long id = objectMapper.readTree(response).get("data").get("id").asLong();
 
     mockMvc.perform(delete(baseUrl + "/" + id)
-        .session(user1session))
+        .session(buyersession))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value("200"))
         .andDo(print());

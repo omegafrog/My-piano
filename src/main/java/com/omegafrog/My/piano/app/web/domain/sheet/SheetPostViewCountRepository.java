@@ -5,7 +5,11 @@ import java.util.Map;
 
 public interface SheetPostViewCountRepository{
 
-    int incrementViewCount(SheetPost sheetPost);
+    default int incrementViewCount(SheetPost sheetPost) {
+        return incrementViewCount(sheetPost.getId(), sheetPost.getViewCount());
+    }
+
+    int incrementViewCount(Long sheetPostId, int initialViewCount);
     SheetPostViewCount findById(Long id);
     boolean exist(Long id);
 

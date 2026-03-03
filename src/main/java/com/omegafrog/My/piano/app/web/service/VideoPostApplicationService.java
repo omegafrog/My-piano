@@ -4,6 +4,7 @@ import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPost;
 import com.omegafrog.My.piano.app.web.domain.post.VideoPostRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
+import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.post.UpdateVideoPostDto;
 import com.omegafrog.My.piano.app.web.dto.videoPost.VideoPostDto;
 import com.omegafrog.My.piano.app.web.dto.videoPost.VideoPostRegisterDto;
@@ -24,9 +25,16 @@ import java.util.List;
 public class VideoPostApplicationService {
     private final VideoPostRepository videoPostRepository;
     private final AuthenticationUtil authenticationUtil;
+    private final UserRepository userRepository;
+
+    private User getManagedLoggedInUser() {
+        User loggedInUser = authenticationUtil.getLoggedInUser();
+        return userRepository.findById(loggedInUser.getId())
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER));
+    }
 
     public VideoPostDto writePost(VideoPostRegisterDto post) {
-        User user = authenticationUtil.getLoggedInUser();
+        User user = getManagedLoggedInUser();
         VideoPost build = VideoPost.builder()
                 .title(post.getTitle())
                 .content(post.getContent())
@@ -43,7 +51,7 @@ public class VideoPostApplicationService {
     }
 
     public VideoPostDto updatePost(Long id, UpdateVideoPostDto post) {
-        User user = authenticationUtil.getLoggedInUser();
+        User user = getManagedLoggedInUser();
         VideoPost videoPost = videoPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_VIDEO_POST));
 
@@ -55,7 +63,7 @@ public class VideoPostApplicationService {
     }
 
     public void deletePost(Long id) {
-        User user = authenticationUtil.getLoggedInUser();
+        User user = getManagedLoggedInUser();
         VideoPost videoPost = videoPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_VIDEO_POST));
         if (isOthers(user, videoPost))
@@ -69,14 +77,14 @@ public class VideoPostApplicationService {
     }
 
     public void likePost(Long id) {
-        User user = authenticationUtil.getLoggedInUser();
+        User user = getManagedLoggedInUser();
         VideoPost videoPost = videoPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_VIDEO_POST));
         user.likeVideoPost(videoPost);
     }
 
     public void dislikePost(Long id) {
-        User user = authenticationUtil.getLoggedInUser();
+        User user = getManagedLoggedInUser();
         VideoPost videoPost = videoPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_VIDEO_POST));
         user.dislikeVideoPost(videoPost);
@@ -87,4 +95,3 @@ public class VideoPostApplicationService {
     }
 
 }
-
