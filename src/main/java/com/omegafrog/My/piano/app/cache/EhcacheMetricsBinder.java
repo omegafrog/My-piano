@@ -61,12 +61,12 @@ public class EhcacheMetricsBinder {
     @Scheduled(fixedDelayString = "${cache.metrics.refresh-ms:30000}")
     public void refreshEntryCounts() {
         for (String cacheName : cacheCapacities.keySet()) {
-            Cache<Object, Object> cache = cacheManager.getCache(cacheName, Object.class, Object.class);
+            Cache<?, ?> cache = cacheManager.getCache(cacheName);
             if (cache == null) {
                 continue;
             }
             long count = 0L;
-            for (Cache.Entry<Object, Object> ignored : cache) {
+            for (Cache.Entry<?, ?> ignored : cache) {
                 count++;
             }
             entryCountByCache.computeIfAbsent(cacheName, key -> new AtomicLong(0L)).set(count);
