@@ -4,11 +4,6 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
@@ -42,7 +37,6 @@ public class JpaSheetPostRepositoryImpl implements SheetPostRepository {
 	private SimpleJpaSheetPostRepository jpaRepository;
 
 	private final JPAQueryFactory factory;
-	private final CacheManager cacheManager;
 
 	@PersistenceContext
 	private EntityManager entityManager;
@@ -52,7 +46,6 @@ public class JpaSheetPostRepositoryImpl implements SheetPostRepository {
 		return jpaRepository.save(sheetPost);
 	}
 
-	@CachePut("sheetpost")
 	public SheetPost update(SheetPost sheetPost) {
 		return jpaRepository.save(sheetPost);
 	}
@@ -104,7 +97,6 @@ public class JpaSheetPostRepositoryImpl implements SheetPostRepository {
 	}
 
 	@Override
-	@Cacheable(cacheNames = "sheetpost", key = "#sheetPostIds")
 	public List<SheetPostListDto> findByIds(List<Long> sheetPostIds, Pageable pageable) {
 		QSheetPost sheetPost = QSheetPost.sheetPost;
 		QUser user = QUser.user;
@@ -136,12 +128,10 @@ public class JpaSheetPostRepositoryImpl implements SheetPostRepository {
 	}
 
 	@Override
-	@CacheEvict(cacheNames = "sheetpost")
 	public void deleteById(Long id) {
 		jpaRepository.deleteById(id);
 	}
 
-	@CacheEvict(cacheNames = "sheetpost", allEntries = true)
 	public void deleteAll() {
 		jpaRepository.deleteAll();
 	}
@@ -162,8 +152,4 @@ public class JpaSheetPostRepositoryImpl implements SheetPostRepository {
 		return query.fetch();
 	}
 
-	private Optional<SheetPost> getCachedSheetPost(Cache cache, Long id) {
-		Cache.ValueWrapper valueWrapper = cache.get(id);
-		return valueWrapper != null ? Optional.ofNullable((SheetPost)valueWrapper.get()) : Optional.empty();
-	}
 }

@@ -1,6 +1,7 @@
 package com.omegafrog.My.piano.app.web.domain.sheet;
 
 import java.util.ArrayList;
+import java.io.Serializable;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -17,7 +18,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Genres {
+public class Genres implements Serializable {
 	private Genre genre1;
 	private Genre genre2;
 

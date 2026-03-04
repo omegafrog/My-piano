@@ -13,11 +13,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.io.Serializable;
+
 @Data
 @Setter
 @Getter
 @NoArgsConstructor
-public class SheetInfoDto {
+public class SheetInfoDto implements Serializable {
 	private Long id;
 	private String title;
 	private String content;

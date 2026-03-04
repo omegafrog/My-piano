@@ -14,7 +14,6 @@ import com.omegafrog.My.piano.app.web.dto.user.RegisterUserDto;
 import com.omegafrog.My.piano.app.web.dto.videoPost.VideoPostDto;
 import com.omegafrog.My.piano.app.web.dto.videoPost.VideoPostRegisterDto;
 import com.omegafrog.My.piano.app.web.service.admin.CommonUserService;
-import jakarta.servlet.http.Cookie;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,10 +24,10 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,10 +53,8 @@ class VideoPostControllerTest {
         @Autowired
         private CommonUserService commonUserService;
 
-        String user1AccessToken;
-        Cookie user1RefreshToken;
-        String user2user1AccessToken;
-        Cookie user2user1RefreshToken;
+        MockHttpSession user1Session;
+        MockHttpSession user2Session;
 
         @Autowired
         private VideoPostRepository videoPostRepository;
@@ -70,28 +67,19 @@ class VideoPostControllerTest {
                 register(TestUtil.user1);
                 register(TestUtil.user2);
 
-                MvcResult user1Result = login(TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
-
-                user1AccessToken = objectMapper.readTree(user1Result.getResponse().getContentAsString())
-                                .get("data").get("access token").asText();
-                user1RefreshToken = user1Result.getResponse().getCookie("refreshToken");
-
-                MvcResult user2Result = login(TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
-
-                user2user1AccessToken = objectMapper.readTree(user2Result.getResponse().getContentAsString())
-                                .get("data").get("access token").asText();
-                user2user1RefreshToken = user2Result.getResponse().getCookie("refreshToken");
+                user1Session = login(TestUtil.user1.getUsername(), TestUtil.user1.getPassword());
+                user2Session = login(TestUtil.user2.getUsername(), TestUtil.user2.getPassword());
         }
 
-        private MvcResult login(String username, String password) throws Exception {
+        private MockHttpSession login(String username, String password) throws Exception {
                 String content = "username=" + username + "&password=" + password;
-                return mockMvc.perform(post("/api/v1/user/login")
+                return (MockHttpSession) mockMvc.perform(post("/api/v1/user/login")
                                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                                 .content(content))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                                 .andDo(print())
-                                .andReturn();
+                                .andReturn().getRequest().getSession(false);
         }
 
         private void register(RegisterUserDto user1) throws Exception {
@@ -114,8 +102,7 @@ class VideoPostControllerTest {
                                 .videoUrl("url")
                                 .build();
                 String videoPost1 = mockMvc.perform(post("/api/v1/video-post")
-                                .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
-                                .cookie(user1RefreshToken)
+                                .session(user1Session)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(dto)))
                                 .andExpect(status().isOk())
@@ -127,8 +114,7 @@ class VideoPostControllerTest {
                 Assertions.assertThat(title.equals("title"));
 
                 String responseBody = mockMvc.perform(get("/api/v1/user/uploaded-video-posts")
-                                .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
-                                .cookie(user1RefreshToken))
+                                .session(user1Session))
                                 .andReturn().getResponse().getContentAsString();
 
                 JsonNode node = objectMapper.readTree(responseBody).get("data").get("content");
@@ -145,12 +131,9 @@ class VideoPostControllerTest {
                                 .videoUrl("url")
                                 .build();
                 mockMvc.perform(post("/api/v1/video-post")
-                                .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
-                                .cookie(user1RefreshToken)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(dto)))
-                                .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()));
+                                .andExpect(status().isForbidden());
         }
 
         @Test
@@ -166,8 +149,7 @@ class VideoPostControllerTest {
                 String contentAsString = mockMvc.perform(post("/api/v1/video-post")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(dto))
-                                .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
-                                .cookie(user1RefreshToken))
+                                .session(user1Session))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                                 .andReturn().getResponse().getContentAsString();
@@ -183,8 +165,7 @@ class VideoPostControllerTest {
                                 .videoUrl("changedUrl")
                                 .build();
                 String changedVideoPost = mockMvc.perform(post("/api/v1/video-post/" + id)
-                                .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
-                                .cookie(user1RefreshToken)
+                                .session(user1Session)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(updateVideoDto)))
                                 .andExpect(status().isOk())
@@ -212,8 +193,7 @@ class VideoPostControllerTest {
                 String contentAsString = mockMvc.perform(post("/api/v1/video-post")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(dto))
-                                .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
-                                .cookie(user1RefreshToken))
+                                .session(user1Session))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                                 .andReturn().getResponse().getContentAsString();
@@ -222,8 +202,7 @@ class VideoPostControllerTest {
                 // when
                 // video post update
                 mockMvc.perform(post("/api/v1/video-post/" + id)
-                                .header(HttpHeaders.AUTHORIZATION, user2user1AccessToken)
-                                .cookie(user2user1RefreshToken)
+                                .session(user2Session)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(dto)))
                                 .andExpect(status().isForbidden());
@@ -242,8 +221,7 @@ class VideoPostControllerTest {
                 String contentAsString = mockMvc.perform(post("/api/v1/video-post")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(dto))
-                                .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
-                                .cookie(user1RefreshToken))
+                                .session(user1Session))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                                 .andReturn().getResponse().getContentAsString();
@@ -251,14 +229,12 @@ class VideoPostControllerTest {
                 long id = objectMapper.readTree(contentAsString).get("data").get("id").asLong();
                 // when
                 mockMvc.perform(delete("/api/v1/video-post/" + id)
-                                .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
-                                .cookie(user1RefreshToken))
+                                .session(user1Session))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()));
 
                 String responseBody = mockMvc.perform(get("/api/v1/user/uploaded-video-posts")
-                                .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
-                                .cookie(user1RefreshToken))
+                                .session(user1Session))
                                 .andReturn().getResponse().getContentAsString();
 
                 JsonNode node = objectMapper.readTree(responseBody)
@@ -283,8 +259,7 @@ class VideoPostControllerTest {
                 String contentAsString = mockMvc.perform(post("/api/v1/video-post")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(dto))
-                                .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
-                                .cookie(user1RefreshToken))
+                                .session(user1Session))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                                 .andReturn().getResponse().getContentAsString();
@@ -297,8 +272,7 @@ class VideoPostControllerTest {
                                 .videoUrl("url")
                                 .build();
                 String contentAsString2 = mockMvc.perform(post("/api/v1/video-post")
-                                .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
-                                .cookie(user1RefreshToken)
+                                .session(user1Session)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(dto2)))
                                 .andExpect(status().isOk())
@@ -332,8 +306,7 @@ class VideoPostControllerTest {
                                 .videoUrl("url")
                                 .build();
                 String contentAsString = mockMvc.perform(post("/api/v1/video-post")
-                                .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
-                                .cookie(user1RefreshToken)
+                                .session(user1Session)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(dto)))
                                 .andExpect(status().isOk())
@@ -350,8 +323,7 @@ class VideoPostControllerTest {
                 String comments1 = mockMvc.perform(post("/api/v1/video-post/" + id + "/comments")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(content))
-                                .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
-                                .cookie(user1RefreshToken))
+                                .session(user1Session))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                                 .andReturn().getResponse().getContentAsString();
@@ -364,8 +336,7 @@ class VideoPostControllerTest {
                 Assertions.assertThat(commentDtos.get(0).getContent()).isEqualTo("content");
 
                 String bodyString = mockMvc.perform(get("/api/v1/user/comments")
-                                .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
-                                .cookie(user1RefreshToken))
+                                .session(user1Session))
                                 .andDo(print())
                                 .andReturn().getResponse().getContentAsString();
                 JsonNode wroteComments = objectMapper.readTree(bodyString).get("data");
@@ -386,8 +357,7 @@ class VideoPostControllerTest {
                 String contentAsString = mockMvc.perform(post("/api/v1/video-post")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(dto))
-                                .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
-                                .cookie(user1RefreshToken))
+                                .session(user1Session))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                                 .andReturn().getResponse().getContentAsString();
@@ -417,8 +387,7 @@ class VideoPostControllerTest {
                                 .videoUrl("url")
                                 .build();
                 String comments1 = mockMvc.perform(post("/api/v1/video-post")
-                                .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
-                                .cookie(user1RefreshToken)
+                                .session(user1Session)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(dto)))
                                 .andExpect(status().isOk())
@@ -428,8 +397,7 @@ class VideoPostControllerTest {
 
                 // write comment in this video post
                 String s2 = mockMvc.perform(post("/api/v1/video-post/" + id + "/comments")
-                                .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
-                                .cookie(user1RefreshToken)
+                                .session(user1Session)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(
                                                 RegisterCommentDto.builder().content("hi").build())))
@@ -444,8 +412,7 @@ class VideoPostControllerTest {
 
                 // when
                 mockMvc.perform(delete("/api/v1/video-post/" + id + "/comments/" + commentDtos.get(0).getId())
-                                .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
-                                .cookie(user1RefreshToken))
+                                .session(user1Session))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()));
                 String comments = mockMvc.perform(get("/api/v1/video-post/" + id + "/comments"))
@@ -468,8 +435,7 @@ class VideoPostControllerTest {
                                 .videoUrl("url")
                                 .build();
                 String comments1 = mockMvc.perform(post("/api/v1/video-post")
-                                .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
-                                .cookie(user1RefreshToken)
+                                .session(user1Session)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(dto)))
                                 .andExpect(status().isOk())
@@ -486,15 +452,13 @@ class VideoPostControllerTest {
                                 .build();
 
                 mockMvc.perform(post("/api/v1/video-post/" + id + "/comments")
-                                .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
-                                .cookie(user1RefreshToken)
+                                .session(user1Session)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(content)))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()));
                 mockMvc.perform(post("/api/v1/video-post/" + id + "/comments")
-                                .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
-                                .cookie(user1RefreshToken)
+                                .session(user1Session)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(content2)))
                                 .andExpect(status().isOk())
@@ -503,8 +467,7 @@ class VideoPostControllerTest {
                 // when
                 // get videoPost's comments
                 String comments = mockMvc.perform(get("/api/v1/video-post/" + id + "/comments")
-                                .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
-                                .cookie(user1RefreshToken))
+                                .session(user1Session))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                                 .andReturn().getResponse().getContentAsString();
@@ -517,8 +480,7 @@ class VideoPostControllerTest {
 
                 // 작성한 유저가 2개의 댓글을 가지고 있는지
                 String bodyString = mockMvc.perform(get("/api/v1/user/comments")
-                                .header(HttpHeaders.AUTHORIZATION, user1AccessToken)
-                                .cookie(user1RefreshToken))
+                                .session(user1Session))
                                 .andDo(print())
                                 .andReturn().getResponse().getContentAsString();
                 JsonNode wroteComments = objectMapper.readTree(bodyString).get("data");

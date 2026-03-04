@@ -9,63 +9,75 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 
-import java.util.Objects;
+import javax.cache.Cache;
+import javax.cache.CacheManager;
+import javax.cache.processor.EntryProcessor;
+import javax.cache.processor.MutableEntry;
 
 @Repository
 @Profile("!test")
 @Qualifier("SheetPostLikeCountRepository")
 @RequiredArgsConstructor
 public class SheetPostLikeCountRepositoryImpl implements LikeCountRepository {
-    private final RedisTemplate<String, SheetPostLikeCount> redisTemplate;
+    private static final String CACHE_NAME = "sheetPostLikeCounts";
+    private final CacheManager cacheManager;
     private final JpaSheetPostRepositoryImpl sheetPostRepository;
+
+    private Cache<Long, Integer> cache() {
+        return cacheManager.getCache(CACHE_NAME, Long.class, Integer.class);
+    }
 
     @Override
     public LikeCount save(LikeCount sheetPostLikeCount) {
-        redisTemplate.opsForHash().put(SheetPostLikeCount.KEY_NAME + ":" + sheetPostLikeCount.getId(),
-                "likeCount", String.valueOf(sheetPostLikeCount.getLikeCount()));
+        cache().put(sheetPostLikeCount.getId(), sheetPostLikeCount.getLikeCount());
         return sheetPostLikeCount;
     }
 
     @Override
     public SheetPostLikeCount findById(Long id) {
-        // redis에 존재하지 않으면 db에서 가져와 저장
-        if (!exist(id)) {
-            SheetPost sheetPost = sheetPostRepository.findById(id)
-                    .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post."));
-            return (SheetPostLikeCount) save(new SheetPostLikeCount(id, sheetPost.getLikeCount()));
+        Integer cached = cache().get(id);
+        if (cached != null) {
+            return new SheetPostLikeCount(id, cached);
         }
-        // redis에 존재할 경우 가져와서 반환
-        return new SheetPostLikeCount(id,
-                Integer.parseInt((String) Objects.requireNonNull(
-                        redisTemplate.opsForHash().get(SheetPostLikeCount.KEY_NAME + ":" + id,
-                                "likeCount"))));
+
+        SheetPost sheetPost = sheetPostRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post."));
+        int current = sheetPost.getLikeCount();
+        cache().put(id, current);
+        return new SheetPostLikeCount(id, current);
     }
 
 
     @Override
     public int incrementLikeCount(Article sheetPost) {
-        if (!exist(sheetPost.getId())) {
-            SheetPostLikeCount saved = (SheetPostLikeCount) save(SheetPostLikeCount.builder()
-                    .id(sheetPost.getId())
-                    .likeCount(sheetPost.getLikeCount() + 1).build());
-            return saved.getLikeCount();
-        }
-        return redisTemplate.opsForHash().increment(SheetPostLikeCount.KEY_NAME + ":" + sheetPost.getId(),
-                "likeCount", 1L).intValue();
+        Integer updated = cache().invoke(sheetPost.getId(), (EntryProcessor<Long, Integer, Integer>)
+                (MutableEntry<Long, Integer> entry, Object... arguments) -> {
+                    int initial = (Integer) arguments[0];
+                    int current = entry.exists() ? entry.getValue() : initial;
+                    int next = current + 1;
+                    entry.setValue(next);
+                    return next;
+                }, sheetPost.getLikeCount());
+        return updated == null ? sheetPost.getLikeCount() + 1 : updated;
     }
 
     @Override
     public boolean exist(Long id) {
-        return redisTemplate.opsForHash().hasKey(SheetPostLikeCount.KEY_NAME + ":" + id, "likeCount");
+        return cache().containsKey(id);
     }
 
     @Override
     public int decrementLikeCount(Article sheetPost) {
-        redisTemplate.opsForHash().increment(SheetPostLikeCount.KEY_NAME + ":" + sheetPost.getId(),
-                "likeCount", -1L);
-        return sheetPost.getLikeCount() - 1;
+        Integer updated = cache().invoke(sheetPost.getId(), (EntryProcessor<Long, Integer, Integer>)
+                (MutableEntry<Long, Integer> entry, Object... arguments) -> {
+                    int initial = (Integer) arguments[0];
+                    int current = entry.exists() ? entry.getValue() : initial;
+                    int next = Math.max(0, current - 1);
+                    entry.setValue(next);
+                    return next;
+                }, sheetPost.getLikeCount());
+        return updated == null ? Math.max(0, sheetPost.getLikeCount() - 1) : updated;
     }
 }

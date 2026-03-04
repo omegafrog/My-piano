@@ -85,8 +85,8 @@ public class GlobalConfig {
     }
 
     @Bean
+    @Profile("prod")
     public PushInstance pushInstance() throws IOException {
-        System.out.println("serviceAccountPath = " + serviceAccountPath);
         return new PushInstance(serviceAccountPath);
     }
 

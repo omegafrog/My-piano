@@ -25,6 +25,11 @@ public class InMemorySheetPostViewCountRepositoryImpl implements SheetPostViewCo
     }
 
     @Override
+    public int incrementViewCount(Long sheetPostId, int initialViewCount) {
+        return counts.merge(sheetPostId, initialViewCount + 1, (prev, init) -> prev + 1);
+    }
+
+    @Override
     public SheetPostViewCount findById(Long id) {
         Integer count = counts.get(id);
         if (count == null) {

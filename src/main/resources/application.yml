@@ -4,7 +4,7 @@ spring:
     include: secret
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/mypiano?characterEncoding=UTF-8&serverTimezone=UTC
+    url: jdbc:mysql://localhost:3307/mypiano?characterEncoding=UTF-8&serverTimezone=UTC
     username: root
     password: password
     hikari:
@@ -21,7 +21,7 @@ spring:
         generate_statistics: false
         use_sql_comments: false
     hibernate:
-      ddl-auto: update
+      ddl-auto: create 
   cloud:
     aws:
       region:
@@ -45,20 +45,14 @@ spring:
     cache:
       host: 127.0.0.1
       port: 6380
+  cache:
+    type: jcache
+    jcache:
+      config: classpath:ehcache.xml
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
 
-logging:
-  file:
-    name: log.txt
-  level:
-    root: DEBUG
-#   level:
-#     org.springframework.web: DEBUG
-#     org.springframework.http.converter.json: DEBUG
-#     org.hibernate.SQL: DEBUG
-#     org.hibernate.type.descriptor.sql: TRACE
 
 elasticsearch:
   host: localhost
@@ -97,3 +91,9 @@ server:
 local:
   storage:
     base-path: ./static
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,caches

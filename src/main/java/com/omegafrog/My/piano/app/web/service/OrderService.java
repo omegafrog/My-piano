@@ -33,92 +33,98 @@ import java.util.Optional;
 @Transactional
 @Slf4j
 public class OrderService {
-    private final UserRepository userRepository;
-    private final CouponRepository couponRepository;
-    private final OrderRepository orderRepository;
-    private final SellableItemFactory sellableItemFactory;
-    private final AuthenticationUtil authenticationUtil;
-    private final String USER_ENTITY_NOT_FOUNT_ERROR_MSG = "Cannot find User entity : ";
+  private final UserRepository userRepository;
+  private final CouponRepository couponRepository;
+  private final OrderRepository orderRepository;
+  private final SellableItemFactory sellableItemFactory;
+  private final AuthenticationUtil authenticationUtil;
+  private final String USER_ENTITY_NOT_FOUNT_ERROR_MSG = "Cannot find User entity : ";
 
-    public OrderDto makePayment(OrderDto orderDto) throws PersistenceException {
-        Order order = orderRepository.findById(orderDto.getId())
-                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_ORDER + orderDto.getId()));
-        User buyer = userRepository.findById(orderDto.getBuyer().getId())
-                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER +
-                        orderDto.getBuyer().getId()));
-        User seller = userRepository.findById(orderDto.getSeller().getId())
-                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER +
-                        orderDto.getSeller().getId()));
+  public OrderDto makePayment(OrderDto orderDto) throws PersistenceException {
+    Order order = orderRepository.findById(orderDto.getId())
+        .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_ORDER + orderDto.getId()));
+    User buyer = userRepository.findById(orderDto.getBuyer().getId())
+        .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER +
+            orderDto.getBuyer().getId()));
+    User seller = userRepository.findById(orderDto.getSeller().getId())
+        .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER +
+            orderDto.getSeller().getId()));
 
-        buyer.pay(order);
-        seller.receiveCash(orderDto.getTotalPrice());
-        orderDto.setBuyer(buyer.getUserInfo());
-        orderDto.setSeller(seller.getUserInfo());
-        return orderDto;
+    buyer.pay(order);
+    seller.receiveCash(orderDto.getTotalPrice());
+    orderDto.setBuyer(buyer.getUserInfo());
+    orderDto.setSeller(seller.getUserInfo());
+    return orderDto;
+  }
+
+  public void deleteOrder(Long orderId) {
+    User loggedInUser = authenticationUtil.getLoggedInUser();
+    User user = userRepository.findById(loggedInUser.getId())
+        .orElseThrow(() -> new EntityNotFoundException(USER_ENTITY_NOT_FOUNT_ERROR_MSG + loggedInUser.getId()));
+    Order order = orderRepository.findById(orderId)
+        .orElseThrow(() -> new EntityNotFoundException("Cannot find Order entity. id : " + orderId));
+    if (!order.getBuyer().equals(user))
+      throw new AccessDeniedException("Cannot delete other user's order.");
+    if (order.getItem() instanceof SheetPost)
+      user.deletePurchasedSheetPost(order);
+    else if (order.getItem() instanceof Lesson)
+      user.deletePurchasedLesson(order);
+    orderRepository.deleteById(orderId);
+  }
+
+  public List<OrderDto> getAllOrders() {
+    User loggedInUser = authenticationUtil.getLoggedInUser();
+    List<Order> byBuyerId = orderRepository.findByBuyer_id(loggedInUser.getId());
+    return byBuyerId.stream().map(Order::toDto).toList();
+  }
+
+  public OrderDto makeOrder(String mainResourceName, OrderRegisterDto dto) {
+    Long userId = authenticationUtil.getLoggedInUser().getId();
+    User buyer = userRepository.findById(userId)
+        .orElseThrow(() -> new EntityNotFoundException());
+
+    SellableItem item = sellableItemFactory.createDetailedItem(mainResourceName, dto.getItemId());
+
+    if (buyer.getCart().itemIsInCart(item.getId()))
+      throw new DuplicateItemException(item.getId());
+
+    if (buyer.equals(item.getAuthor()))
+      throw new SamePartyException("구매자와 판매자가 같을 수 없습니다.");
+
+    if (buyer.isPurchased(item))
+      throw new AlreadyPurchasedItemException(item.getId());
+
+    Order order = buildOrder(dto, buyer, item);
+    Optional<User> byId1 = userRepository.findById(buyer.getId());
+    Optional<User> byId2 = userRepository.findById(item.getAuthor().getId());
+    log.info("byId1{}", byId1.toString());
+    log.info("byId2{}", byId2.toString());
+    order.calculateTotalPrice();
+    return orderRepository.save(order).toDto();
+  }
+
+  private Order buildOrder(OrderRegisterDto dto, User buyer, SellableItem item) {
+    Order.OrderBuilder orderBuilder = Order.builder()
+        .item(item)
+        .buyer(buyer)
+        .seller(item.getAuthor())
+        .initialPrice(item.getPrice());
+
+    if (dto.getCouponId() != null) {
+      Coupon coupon = couponRepository.findById(dto.getCouponId())
+          .orElseThrow(() -> new EntityNotFoundException("Cannot find Coupon entity : "
+              + dto.getCouponId()));
+      coupon.validate(buyer);
+      orderBuilder = orderBuilder.coupon(coupon);
     }
+    return orderBuilder.build();
+  }
 
-    public void deleteOrder(Long orderId) {
-        User loggedInUser = authenticationUtil.getLoggedInUser();
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find Order entity. id : " + orderId));
-        if (!order.getBuyer().equals(loggedInUser))
-            throw new AccessDeniedException("Cannot delete other user's order.");
-        if (order.getItem() instanceof SheetPost)
-            loggedInUser.deletePurchasedSheetPost(order);
-        else if (order.getItem() instanceof Lesson)
-            loggedInUser.deletePurchasedLesson(order);
-        orderRepository.deleteById(orderId);
-    }
-
-    public List<OrderDto> getAllOrders() {
-        User loggedInUser = authenticationUtil.getLoggedInUser();
-        List<Order> byBuyerId = orderRepository.findByBuyer_id(loggedInUser.getId());
-        return byBuyerId.stream().map(Order::toDto).toList();
-    }
-
-    public OrderDto makeOrder(String mainResourceName, OrderRegisterDto dto) {
-        User buyer = authenticationUtil.getLoggedInUser();
-
-        SellableItem item = sellableItemFactory.createDetailedItem(mainResourceName, dto.getItemId());
-
-        if (buyer.getCart().itemIsInCart(item.getId()))
-            throw new DuplicateItemException(item.getId());
-
-        if (buyer.equals(item.getAuthor()))
-            throw new SamePartyException("구매자와 판매자가 같을 수 없습니다.");
-
-        if (buyer.isPurchased(item)) throw new AlreadyPurchasedItemException(item.getId());
-
-        Order order = buildOrder(dto, buyer, item);
-        Optional<User> byId1 = userRepository.findById(buyer.getId());
-        Optional<User> byId2 = userRepository.findById(item.getAuthor().getId());
-        log.info("byId1{}", byId1.toString());
-        log.info("byId2{}", byId2.toString());
-        order.calculateTotalPrice();
-        return orderRepository.save(order).toDto();
-    }
-
-    private Order buildOrder(OrderRegisterDto dto, User buyer, SellableItem item) {
-        Order.OrderBuilder orderBuilder = Order.builder()
-                .item(item)
-                .buyer(buyer)
-                .seller(item.getAuthor())
-                .initialPrice(item.getPrice());
-
-        if (dto.getCouponId() != null) {
-            Coupon coupon = couponRepository.findById(dto.getCouponId())
-                    .orElseThrow(() -> new EntityNotFoundException("Cannot find Coupon entity : "
-                            + dto.getCouponId()));
-            coupon.validate(buyer);
-            orderBuilder = orderBuilder.coupon(coupon);
-        }
-        return orderBuilder.build();
-    }
-
-    public boolean isOrderedItem(String mainResource, Long id) {
-        User loggedInUser = authenticationUtil.getLoggedInUser();
-        SellableItem item = sellableItemFactory.createDetailedItem(mainResource, id);
-        User user = userRepository.findById(loggedInUser.getId()).orElseThrow(() -> new EntityNotFoundException("Cannot find User entity : " + loggedInUser.getId()));
-        return user.isPurchased(item);
-    }
+  public boolean isOrderedItem(String mainResource, Long id) {
+    User loggedInUser = authenticationUtil.getLoggedInUser();
+    SellableItem item = sellableItemFactory.createDetailedItem(mainResource, id);
+    User user = userRepository.findById(loggedInUser.getId())
+        .orElseThrow(() -> new EntityNotFoundException("Cannot find User entity : " + loggedInUser.getId()));
+    return user.isPurchased(item);
+  }
 }

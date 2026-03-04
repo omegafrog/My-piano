@@ -1,14 +1,20 @@
 package com.omegafrog.My.piano.app.web.service;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.cache.Cache;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.data.util.Pair;
@@ -31,10 +37,16 @@ import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostViewCountRepository;
 import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.RegisterSheetPostDto;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.ArtistInfo;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetInfoDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostListDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.UpdateSheetPostDto;
 import com.omegafrog.My.piano.app.web.event.SheetPostSearchedEvent;
+import com.omegafrog.My.piano.app.web.service.cache.SheetPostDetailCachePayload;
+import com.omegafrog.My.piano.app.web.service.cache.SheetPostCacheCoordinator;
+import com.omegafrog.My.piano.app.web.service.cache.SheetPostListCacheKey;
+import com.omegafrog.My.piano.app.web.service.cache.SheetPostListCachePayload;
 import com.omegafrog.My.piano.app.web.service.outbox.SheetPostOutboxService;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -58,19 +70,20 @@ public class SheetPostApplicationService {
 	private final FileUploadService fileUploadService;
 	private final ApplicationEventPublisher eventPublisher;
 	private final SheetPostOutboxService sheetPostOutboxService;
+	private final SheetPostCacheCoordinator sheetPostCacheCoordinator;
 
 	@Autowired
 	@Qualifier("SheetPostLikeCountRepository")
 	private LikeCountRepository likeCountRepository;
 
 	public SheetPostDto getSheetPost(Long id) {
-		SheetPost sheetPost = sheetPostRepository.findById(id)
-				.orElseThrow(() -> new EntityNotFoundException("Cannot find SheetPost entity : " + id));
-		int incrementedViewCount = sheetPostViewCountRepository.incrementViewCount(sheetPost);
-		int likeCount = likeCountRepository.findById(sheetPost.getId()).getLikeCount();
-		SheetPostDto dto = sheetPost.toDto();
+		SheetPostDetailCachePayload payload = getSheetPostDetailWithSWR(id);
+		SheetPostDto dto = copySheetPostDto(payload.baseDto());
+		int incrementedViewCount = sheetPostViewCountRepository.incrementViewCount(id, payload.initialViewCount());
+		int likeCount = likeCountRepository.findById(id).getLikeCount();
 		dto.setLikeCount(likeCount);
 		dto.setViewCount(incrementedViewCount);
+		dto.setLikePost(false);
 		return dto;
 	}
 
@@ -115,6 +128,7 @@ public class SheetPostApplicationService {
 			SheetPost saved = sheetPostRepository.save(sheetPost);
 			fileUploadService.updateUploadMapping(uploadId, saved.getId());
 			sheetPostOutboxService.enqueueCreated(saved.getId());
+			sheetPostCacheCoordinator.evictSheetPostListCache();
 
 			log.info("SheetPost created with uploadId: {}, sheetPostId: {}", uploadId, saved.getId());
 			return saved.toDto();
@@ -195,6 +209,8 @@ public class SheetPostApplicationService {
 		// SheetPost 업데이트 (기본 정보: title, content, price 등)
 		SheetPost updated = sheetPost.update(dto);
 		elasticSearchInstance.invertIndexingSheetPost(updated);
+		sheetPostCacheCoordinator.evictSheetPostListCache();
+		sheetPostCacheCoordinator.evictSheetPostDetailCache(id);
 		return updated.toDto();
 	}
 
@@ -220,6 +236,8 @@ public class SheetPostApplicationService {
 			sheetPostRepository.deleteById(sheetPost.getId());
 		else
 			throw new AccessDeniedException("Cannot delete other user's sheet post entity : " + id);
+		sheetPostCacheCoordinator.evictSheetPostListCache();
+		sheetPostCacheCoordinator.evictSheetPostDetailCache(id);
 	}
 
 	public void likePost(Long id) {
@@ -280,23 +298,94 @@ public class SheetPostApplicationService {
 			List<String> difficulty,
 			List<String> genre,
 			Pageable pageable) {
+		SheetPostListCacheKey cacheKey = SheetPostListCacheKey.of(
+				searchSentence,
+				instrument,
+				difficulty,
+				genre,
+				pageable);
 
-		Pair<Page<Long>, String> pairs = elasticSearchInstance.searchSheetPost(
-				searchSentence, instrument, difficulty, genre, pageable);
-		Page<Long> sheetPostIds = pairs.getFirst();
-		String rawQuery = pairs.getSecond();
-		List<SheetPostListDto> res = sheetPostRepository.findByIds(sheetPostIds.getContent(), pageable);
-		Map<Long, Integer> viewCountsBySheetPostIds = sheetPostViewCountRepository.getViewCountsByIds(
-				sheetPostIds.getContent());
-		List<SheetPostListDto> sheetPostLists = res.stream().map(sheetPostListDto -> {
-			sheetPostListDto.updateViewCount(
-					viewCountsBySheetPostIds.get(sheetPostListDto.getId()));
-			return sheetPostListDto;
-		}).toList();
-		if (searchSentence != null) {
-			eventPublisher.publishEvent(new SheetPostSearchedEvent(rawQuery, searchSentence, instrument, difficulty, genre));
+		SheetPostListCachePayload payload;
+		if (cacheKey.cacheable()) {
+			payload = getSheetPostListWithSWR(cacheKey, searchSentence, instrument, difficulty, genre, pageable);
+		} else {
+			payload = loadSheetPostListPayload(searchSentence, instrument, difficulty, genre, pageable);
 		}
-		return PageableExecutionUtils.getPage(sheetPostLists, pageable, sheetPostIds::getTotalElements);
+
+		List<SheetPostListDto> sheetPostLists = copySheetPostListDtos(payload.items());
+		Map<Long, Integer> viewCountsBySheetPostIds = sheetPostViewCountRepository.getViewCountsByIds(
+				sheetPostLists.stream().map(SheetPostListDto::getId).toList());
+		for (SheetPostListDto sheetPostListDto : sheetPostLists) {
+			sheetPostListDto.updateViewCount(viewCountsBySheetPostIds.getOrDefault(sheetPostListDto.getId(), 0));
+		}
+
+		if (searchSentence != null) {
+			eventPublisher.publishEvent(new SheetPostSearchedEvent(
+					payload.rawQuery(),
+					searchSentence,
+					instrument,
+					difficulty,
+					genre));
+		}
+
+		return PageableExecutionUtils.getPage(sheetPostLists, pageable, payload::totalElements);
+	}
+
+	@Transactional(readOnly = true)
+	public void warmupSheetPostCaches() {
+		Cache listCache = sheetPostCacheCoordinator.getRequiredCache(SheetPostCacheCoordinator.SHEET_POST_LIST_CACHE);
+		Cache detailCache = sheetPostCacheCoordinator.getRequiredCache(SheetPostCacheCoordinator.SHEET_POST_DETAIL_CACHE);
+		Set<Long> detailIdsToWarmup = new LinkedHashSet<>();
+
+		for (int page = 0; page <= SheetPostCacheCoordinator.WARMUP_MAX_LIST_PAGE; page++) {
+			Pageable pageable = PageRequest.of(page, SheetPostCacheCoordinator.WARMUP_LIST_PAGE_SIZE);
+			SheetPostListCacheKey cacheKey = SheetPostListCacheKey.of(null, null, null, null, pageable);
+			if (!cacheKey.cacheable()) {
+				continue;
+			}
+			String cacheEntryKey = cacheKey.asStringKey();
+			try {
+				SheetPostListCachePayload loaded = loadSheetPostListPayload(null, null, null, null, pageable);
+				listCache.put(cacheEntryKey,
+						sheetPostCacheCoordinator.buildSwrValue(
+								loaded,
+								SheetPostCacheCoordinator.LIST_SOFT_TTL_MIN_MS,
+								SheetPostCacheCoordinator.LIST_SOFT_TTL_MAX_MS,
+								SheetPostCacheCoordinator.LIST_HARD_TTL_MS));
+				for (SheetPostListDto item : loaded.items()) {
+					if (item.getId() == null) {
+						continue;
+					}
+					detailIdsToWarmup.add(item.getId());
+					if (detailIdsToWarmup.size() >= SheetPostCacheCoordinator.WARMUP_MAX_DETAIL_IDS) {
+						break;
+					}
+				}
+			} catch (Exception e) {
+				log.warn("sheetpost list warm-up failed for key={}", cacheEntryKey, e);
+			}
+			if (detailIdsToWarmup.size() >= SheetPostCacheCoordinator.WARMUP_MAX_DETAIL_IDS) {
+				break;
+			}
+		}
+
+		for (Long id : detailIdsToWarmup) {
+			try {
+				SheetPostDetailCachePayload loaded = loadSheetPostDetailPayload(id);
+				detailCache.put(id,
+						sheetPostCacheCoordinator.buildSwrValue(
+								loaded,
+								SheetPostCacheCoordinator.DETAIL_SOFT_TTL_MIN_MS,
+								SheetPostCacheCoordinator.DETAIL_SOFT_TTL_MAX_MS,
+								SheetPostCacheCoordinator.DETAIL_HARD_TTL_MS));
+			} catch (Exception e) {
+				log.warn("sheetpost detail warm-up failed for id={}", id, e);
+			}
+		}
+
+		log.info("sheetpost cache warm-up completed. listPages={}, warmedDetails={}",
+				SheetPostCacheCoordinator.WARMUP_MAX_LIST_PAGE + 1,
+				detailIdsToWarmup.size());
 	}
 
 	public List<SheetPostListDto> getSheetPostAutoComplete(String searchSentence, List<String> instrument,
@@ -309,6 +398,145 @@ public class SheetPostApplicationService {
 						item.getAuthor().getProfileSrc(), item.getSheet().getTitle(), item.getSheet().getDifficulty(),
 						item.getSheet().getGenres(), item.getSheet().getInstrument(), item.getCreatedAt(), item.getPrice()))
 				.toList();
+	}
+
+	private SheetPostListCachePayload getSheetPostListWithSWR(
+			SheetPostListCacheKey cacheKey,
+			String searchSentence,
+			List<String> instrument,
+			List<String> difficulty,
+			List<String> genre,
+			Pageable pageable
+	) {
+		String cacheEntryKey = cacheKey.asStringKey();
+		Cache cache = sheetPostCacheCoordinator.getRequiredCache(SheetPostCacheCoordinator.SHEET_POST_LIST_CACHE);
+		return sheetPostCacheCoordinator.getWithSWR(
+				cache,
+				cacheEntryKey,
+				() -> loadSheetPostListPayload(searchSentence, instrument, difficulty, genre, pageable),
+				SheetPostCacheCoordinator.LIST_SOFT_TTL_MIN_MS,
+				SheetPostCacheCoordinator.LIST_SOFT_TTL_MAX_MS,
+				SheetPostCacheCoordinator.LIST_HARD_TTL_MS
+		);
+	}
+
+	private SheetPostDetailCachePayload getSheetPostDetailWithSWR(Long id) {
+		Cache cache = sheetPostCacheCoordinator.getRequiredCache(SheetPostCacheCoordinator.SHEET_POST_DETAIL_CACHE);
+		return sheetPostCacheCoordinator.getWithSWR(
+				cache,
+				id,
+				() -> loadSheetPostDetailPayload(id),
+				SheetPostCacheCoordinator.DETAIL_SOFT_TTL_MIN_MS,
+				SheetPostCacheCoordinator.DETAIL_SOFT_TTL_MAX_MS,
+				SheetPostCacheCoordinator.DETAIL_HARD_TTL_MS
+		);
+	}
+
+	private SheetPostListCachePayload loadSheetPostListPayload(
+			String searchSentence,
+			List<String> instrument,
+			List<String> difficulty,
+			List<String> genre,
+			Pageable pageable
+	) {
+		Pair<Page<Long>, String> pairs = elasticSearchInstance.searchSheetPost(
+				searchSentence,
+				instrument,
+				difficulty,
+				genre,
+				pageable);
+		Page<Long> sheetPostIds = pairs.getFirst();
+		String rawQuery = pairs.getSecond();
+		List<SheetPostListDto> rows = sheetPostIds.getContent().isEmpty()
+				? List.of()
+				: sheetPostRepository.findByIds(sheetPostIds.getContent(), pageable);
+		return new SheetPostListCachePayload(
+				copySheetPostListDtos(rows),
+				sheetPostIds.getTotalElements(),
+				rawQuery
+		);
+	}
+
+	private SheetPostDetailCachePayload loadSheetPostDetailPayload(Long id) {
+		SheetPost sheetPost = sheetPostRepository.findById(id)
+				.orElseThrow(() -> new EntityNotFoundException("Cannot find SheetPost entity : " + id));
+		SheetPostDto baseDto = sheetPost.toDto();
+		baseDto.setLikeCount(0);
+		baseDto.setViewCount(0);
+		baseDto.setLikePost(false);
+		return new SheetPostDetailCachePayload(baseDto, sheetPost.getViewCount());
+	}
+
+	private List<SheetPostListDto> copySheetPostListDtos(List<SheetPostListDto> source) {
+		List<SheetPostListDto> copied = new ArrayList<>(source.size());
+		for (SheetPostListDto dto : source) {
+			SheetPostListDto copy = new SheetPostListDto(
+					dto.getId(),
+					dto.getTitle(),
+					dto.getArtistName(),
+					dto.getArtistProfile(),
+					dto.getSheetTitle(),
+					dto.getDifficulty(),
+					dto.getGenres(),
+					dto.getInstrument(),
+					dto.getCreatedAt(),
+					dto.getPrice());
+			copy.updateViewCount(dto.getViewCount());
+			copied.add(copy);
+		}
+		return copied;
+	}
+
+	private SheetPostDto copySheetPostDto(SheetPostDto source) {
+		ArtistInfo artist = source.getArtist() == null
+				? null
+				: ArtistInfo.builder()
+				.id(source.getArtist().getId())
+				.name(source.getArtist().getName())
+				.username(source.getArtist().getUsername())
+				.email(source.getArtist().getEmail())
+				.profileSrc(source.getArtist().getProfileSrc())
+				.build();
+
+		SheetInfoDto sheet = source.getSheet() == null
+				? null
+				: SheetInfoDto.builder()
+				.id(source.getSheet().getId())
+				.title(source.getSheet().getTitle())
+				.content(source.getSheet().getContent())
+				.createdAt(source.getSheet().getCreatedAt())
+				.artist(source.getSheet().getArtist())
+				.genres(source.getSheet().getGenres())
+				.pageNum(source.getSheet().getPageNum())
+				.difficulty(source.getSheet().getDifficulty())
+				.instrument(source.getSheet().getInstrument())
+				.isSolo(source.getSheet().isSolo())
+				.lyrics(source.getSheet().isLyrics())
+				.sheetUrl(source.getSheet().getSheetUrl())
+				.originalFileName(source.getSheet().getOriginalFileName())
+				.thumbnailUrl(source.getSheet().getThumbnailUrl())
+				.build();
+
+		List<com.omegafrog.My.piano.app.web.dto.comment.CommentDto> comments =
+				source.getComments() == null ? List.of() : new ArrayList<>(source.getComments());
+
+		SheetPostDto copied = SheetPostDto.builder()
+				.id(source.getId())
+				.title(source.getTitle())
+				.content(source.getContent())
+				.discountRate(source.getDiscountRate())
+				.artist(artist)
+				.sheet(sheet)
+				.likePost(source.isLikePost())
+				.price(source.getPrice())
+				.viewCount(source.getViewCount())
+				.likeCount(source.getLikeCount())
+				.createdAt(source.getCreatedAt())
+				.comments(comments)
+				.disabled(source.getDisabled())
+				.build();
+		copied.setLikePost(source.isLikePost());
+		return copied;
 	}
 
 }

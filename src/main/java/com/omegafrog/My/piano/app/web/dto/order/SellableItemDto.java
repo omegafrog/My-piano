@@ -4,6 +4,7 @@ import com.omegafrog.My.piano.app.web.dto.comment.CommentDto;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -12,7 +13,7 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @SuperBuilder
-public class SellableItemDto {
+public class SellableItemDto implements Serializable {
     protected Long id;
     protected String title;
     protected int price;

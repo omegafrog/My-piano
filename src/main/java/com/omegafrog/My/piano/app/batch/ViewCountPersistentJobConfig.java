@@ -40,8 +40,9 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
+
+import javax.cache.CacheManager;
 
 @Configuration
 @Profile("!test")
@@ -51,7 +52,7 @@ public class ViewCountPersistentJobConfig {
 
     private final JPAQueryFactory factory;
     private final PlatformTransactionManager transactionManager;
-    private final RedisTemplate redisTemplate;
+    private final CacheManager cacheManager;
     private final static int BATCH_SIZE = 100;
 
     @Autowired
@@ -135,42 +136,42 @@ public class ViewCountPersistentJobConfig {
 
     @Bean
     public ViewCountPagingItemReader postViewCountPagingItemReader() {
-        ViewCountPagingItemReader itemReader = new ViewCountPagingItemReader(PostViewCount.class, redisTemplate);
+        ViewCountPagingItemReader itemReader = new ViewCountPagingItemReader(PostViewCount.class, cacheManager);
         itemReader.setPageSize(BATCH_SIZE);
         return itemReader;
     }
 
     @Bean
     public ViewCountPagingItemReader lessonViewCountPagingItemReader() {
-        ViewCountPagingItemReader itemReader = new ViewCountPagingItemReader(LessonViewCount.class, redisTemplate);
+        ViewCountPagingItemReader itemReader = new ViewCountPagingItemReader(LessonViewCount.class, cacheManager);
         itemReader.setPageSize(BATCH_SIZE);
         return itemReader;
     }
 
     @Bean
     public ViewCountPagingItemReader sheetPostViewCountPagingItemReader() {
-        ViewCountPagingItemReader itemReader = new ViewCountPagingItemReader(SheetPostViewCount.class, redisTemplate);
+        ViewCountPagingItemReader itemReader = new ViewCountPagingItemReader(SheetPostViewCount.class, cacheManager);
         itemReader.setPageSize(BATCH_SIZE);
         return itemReader;
     }
 
     @Bean
     public LikeCountPagingItemReader postLikeCountPagingItemReader() {
-        LikeCountPagingItemReader itemReader = new LikeCountPagingItemReader(PostLikeCount.class, redisTemplate);
+        LikeCountPagingItemReader itemReader = new LikeCountPagingItemReader(PostLikeCount.class, cacheManager);
         itemReader.setPageSize(BATCH_SIZE);
         return itemReader;
     }
 
     @Bean
     public LikeCountPagingItemReader lessonLikeCountPagingItemReader() {
-        LikeCountPagingItemReader itemReader = new LikeCountPagingItemReader(LessonLikeCount.class, redisTemplate);
+        LikeCountPagingItemReader itemReader = new LikeCountPagingItemReader(LessonLikeCount.class, cacheManager);
         itemReader.setPageSize(BATCH_SIZE);
         return itemReader;
     }
 
     @Bean
     public LikeCountPagingItemReader sheetPostLikeCountPagingItemReader() {
-        LikeCountPagingItemReader itemReader = new LikeCountPagingItemReader(SheetPostLikeCount.class, redisTemplate);
+        LikeCountPagingItemReader itemReader = new LikeCountPagingItemReader(SheetPostLikeCount.class, cacheManager);
         itemReader.setPageSize(BATCH_SIZE);
         return itemReader;
     }

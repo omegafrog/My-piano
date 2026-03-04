@@ -92,7 +92,9 @@ public class UserApplicationService {
 
     public List<SheetPostDto> getPurchasedSheets() {
         User loggedInUser = authenticationUtil.getLoggedInUser();
-        return loggedInUser.getPurchasedSheets().stream().map(item -> item.getSheetPost().toDto()).toList();
+        User user = userRepository.findById(loggedInUser.getId())
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInUser.getId()));
+        return user.getPurchasedSheets().stream().map(item -> item.getSheetPost().toDto()).toList();
 
     }
 
@@ -142,7 +144,9 @@ public class UserApplicationService {
 
     public List<LessonDto> getPurchasedLessons() {
         User loggedInUser = authenticationUtil.getLoggedInUser();
-        return loggedInUser.getPurchasedLessons().stream().map(purchasedLesson -> purchasedLesson.getLesson().toDto()).toList();
+        User user = userRepository.findById(loggedInUser.getId())
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInUser.getId()));
+        return user.getPurchasedLessons().stream().map(purchasedLesson -> purchasedLesson.getLesson().toDto()).toList();
     }
 
 
@@ -197,11 +201,13 @@ public class UserApplicationService {
 
     public Page<VideoPostDto> uploadedVideoPost(Pageable pageable) {
         User loggedInUser = authenticationUtil.getLoggedInUser();
+        User user = userRepository.findById(loggedInUser.getId())
+                .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER + loggedInUser.getId()));
 
         Long offset = pageable.getOffset();
         int pageNumber = pageable.getPageNumber();
-        int totalSize = loggedInUser.getUploadedVideoPosts().size();
-        List<VideoPost> videoPosts = loggedInUser.getUploadedVideoPosts().subList(Math.toIntExact(offset),
+        int totalSize = user.getUploadedVideoPosts().size();
+        List<VideoPost> videoPosts = user.getUploadedVideoPosts().subList(Math.toIntExact(offset),
                 Math.min(totalSize, (pageNumber + 1) * pageable.getPageSize()));
         return PageableExecutionUtils.getPage(videoPosts.stream().map(VideoPost::toDto).toList(), pageable, () ->
                 totalSize);

@@ -45,7 +45,11 @@ public class Cleanup {
                 table = "person";
             if (table.equals("order"))
                 table = "orders";
-            entityManager.createNativeQuery("TRUNCATE TABLE " + table).executeUpdate();
+            try {
+                entityManager.createNativeQuery("TRUNCATE TABLE " + table).executeUpdate();
+            } catch (RuntimeException e) {
+                log.warn("truncate skipped for table {}: {}", table, e.getMessage());
+            }
         }
         // entityManager.createNativeQuery("SET REFERENTIAL_INTEGRITY
         // TRUE;").executeUpdate();

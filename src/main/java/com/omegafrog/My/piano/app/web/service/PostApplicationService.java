@@ -102,7 +102,9 @@ public class PostApplicationService {
 	}
 
 	public void likePost(Long postId) {
-		User user = authenticationUtil.getLoggedInUser();
+		User loggedInUser = authenticationUtil.getLoggedInUser();
+		User user = userRepository.findById(loggedInUser.getId())
+				.orElseThrow(() -> new EntityNotFoundException("Cannot find User entity."));
 		Post post = getPostById(postId);
 		post.increaseLikedCount();
 		user.likePost(post);

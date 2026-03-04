@@ -50,3 +50,5 @@ application.pid
 mypiano-*-firebase-adminsdk-*.json
 static/**
 log.*
+.serena
+.sisyphus
