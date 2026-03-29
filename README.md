@@ -136,8 +136,12 @@ docker-compose up -d
 ## 🔧 주요 설정
 
 ### 데이터베이스 설정
-- 개발: MySQL `mypianodev` 데이터베이스
+- 개발: MySQL `mypiano` 데이터베이스 (`localhost:3307`)
 - JPA Auto-DDL 활성화 (개발 환경)
+
+### Redis 설정
+- 유저 Redis: `localhost:6379`
+- 캐시 Redis: `localhost:6380`
 
 ### 파일 저장소 설정
 - 개발: `./local-storage/` 디렉토리
