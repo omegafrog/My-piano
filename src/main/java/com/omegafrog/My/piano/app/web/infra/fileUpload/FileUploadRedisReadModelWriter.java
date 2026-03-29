@@ -2,7 +2,7 @@ package com.omegafrog.My.piano.app.web.infra.fileUpload;
 
 import com.omegafrog.My.piano.app.web.domain.fileUpload.FileUploadJob;
 import com.omegafrog.My.piano.app.web.domain.fileUpload.FileUploadJobStatus;
-import com.omegafrog.My.piano.app.web.enums.FileUploadStatus;
+import com.omegafrog.My.piano.app.web.domain.outbox.UploadOutboxEventStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -55,21 +55,21 @@ public class FileUploadRedisReadModelWriter {
         }
     }
 
-    private static FileUploadStatus toApiStatus(FileUploadJob job) {
+    private static UploadOutboxEventStatus toApiStatus(FileUploadJob job) {
         FileUploadJobStatus status = job.getStatus();
         if (status == FileUploadJobStatus.PENDING || status == FileUploadJobStatus.RETRY) {
-            return FileUploadStatus.PENDING;
+            return UploadOutboxEventStatus.PENDING;
         }
         if (status == FileUploadJobStatus.RUNNING) {
-            return FileUploadStatus.UPLOADING;
+            return UploadOutboxEventStatus.UPLOADING;
         }
         if (status == FileUploadJobStatus.FAILED) {
-            return FileUploadStatus.FAILED;
+            return UploadOutboxEventStatus.FAILED;
         }
         if (status == FileUploadJobStatus.COMPLETED) {
-            return job.isLinked() ? FileUploadStatus.LINKED : FileUploadStatus.COMPLETED;
+            return job.isLinked() ? UploadOutboxEventStatus.LINKED : UploadOutboxEventStatus.COMPLETED;
         }
-        return FileUploadStatus.PENDING;
+        return UploadOutboxEventStatus.PENDING;
     }
 
     private static String redisKey(String uploadId) {

@@ -70,15 +70,15 @@ public class UploadOutboxProcessor {
         LocalDateTime now = now();
 
         try {
-            if (event.getEventType() == UploadOutboxEventType.FILE_UPLOAD_COMPLETED) {
-                fileUploadService.applyUploadCompleted(
+            switch (event.getEventType()) {
+                case FILE_UPLOAD_STARTED -> log.debug("Upload started event observed. uploadId={}", event.getUploadId());
+                case FILE_UPLOAD_COMPLETED -> fileUploadService.applyUploadCompleted(
                         event.getUploadId(),
                         event.getSheetUrl(),
                         event.getThumbnailUrl(),
                         event.getOriginalFileName(),
                         event.getPageNum());
-            } else {
-                fileUploadService.applyUploadFailed(
+                case FILE_UPLOAD_FAILED -> fileUploadService.applyUploadFailed(
                         event.getUploadId(),
                         event.getOriginalFileName(),
                         event.getErrorMessage(),

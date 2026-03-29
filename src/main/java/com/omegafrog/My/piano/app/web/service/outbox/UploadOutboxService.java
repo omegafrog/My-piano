@@ -12,7 +12,8 @@ import com.omegafrog.My.piano.app.web.domain.outbox.UploadOutboxEvent;
 import com.omegafrog.My.piano.app.web.domain.outbox.UploadOutboxEventRepository;
 import com.omegafrog.My.piano.app.web.event.FileUploadCompletedEvent;
 import com.omegafrog.My.piano.app.web.event.FileUploadFailedEvent;
-import com.omegafrog.My.piano.app.web.enums.FileUploadStatus;
+import com.omegafrog.My.piano.app.web.event.FileUploadStartedEvent;
+import com.omegafrog.My.piano.app.web.domain.outbox.UploadOutboxEventStatus;
 import com.omegafrog.My.piano.app.web.service.FileUploadStatusStore;
 
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,22 @@ public class UploadOutboxService {
 
     private final UploadOutboxEventRepository uploadOutboxEventRepository;
     private final FileUploadStatusStore statusStore;
+
+    @Transactional
+    public void enqueueStarted(FileUploadStartedEvent event) {
+        Map<String, String> updates = new HashMap<>();
+        updates.put("status", UploadOutboxEventStatus.UPLOADING.name());
+        if (event.getOriginalFileName() != null && !event.getOriginalFileName().isBlank()) {
+            updates.put("originalFileName", event.getOriginalFileName());
+        }
+        statusStore.putAll(event.getUploadId(), updates, Duration.ofHours(1));
+
+        UploadOutboxEvent outboxEvent = UploadOutboxEvent.started(
+                event.getEventId(),
+                event.getUploadId(),
+                event.getOriginalFileName());
+        uploadOutboxEventRepository.save(outboxEvent);
+    }
 
     @Transactional
     public void enqueueCompleted(FileUploadCompletedEvent event) {
@@ -36,7 +53,7 @@ public class UploadOutboxService {
         if (event.getPageNum() > 0) {
             updates.put("pageNum", String.valueOf(event.getPageNum()));
         }
-        updates.put("status", FileUploadStatus.COMPLETED.name());
+        updates.put("status", UploadOutboxEventStatus.COMPLETED.name());
         updates.put("completedAt", LocalDateTime.now().toString());
         statusStore.putAll(event.getUploadId(), updates, Duration.ofHours(1));
 
@@ -52,7 +69,7 @@ public class UploadOutboxService {
 
     @Transactional
     public void enqueueFailed(FileUploadFailedEvent event) {
-        statusStore.put(event.getUploadId(), "status", FileUploadStatus.FAILED.name());
+        statusStore.put(event.getUploadId(), "status", UploadOutboxEventStatus.FAILED.name());
 
         UploadOutboxEvent outboxEvent = UploadOutboxEvent.failed(
                 event.getEventId(),

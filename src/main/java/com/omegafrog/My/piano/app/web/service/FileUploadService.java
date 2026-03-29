@@ -4,11 +4,13 @@ import com.omegafrog.My.piano.app.web.domain.FileStorageExecutor;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
+import com.omegafrog.My.piano.app.web.domain.outbox.UploadOutboxEventStatus;
 import com.omegafrog.My.piano.app.web.domain.upload.UploadJob;
 import com.omegafrog.My.piano.app.web.domain.upload.UploadJobRepository;
 import com.omegafrog.My.piano.app.web.dto.fileUpload.FileUploadResponse;
-import com.omegafrog.My.piano.app.web.enums.FileUploadStatus;
+import com.omegafrog.My.piano.app.web.event.FileUploadStartedEvent;
 import com.omegafrog.My.piano.app.web.exception.WrongFileExtensionException;
+import com.omegafrog.My.piano.app.web.service.outbox.UploadOutboxService;
 import io.awspring.cloud.s3.ObjectMetadata;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +43,8 @@ public class FileUploadService {
 
     private final SheetPostRepository sheetPostRepository;
 
+    private final UploadOutboxService uploadOutboxService;
+
     public FileUploadResponse uploadFile(MultipartFile file) throws IOException {
         String uploadId = UUID.randomUUID().toString();
         String originalFilename = file.getOriginalFilename();
@@ -58,7 +62,7 @@ public class FileUploadService {
 
             // Redis Hash에 초기 상태 저장 (TTL 1시간)
             Map<String, String> uploadHash = new HashMap<>();
-            uploadHash.put("status", FileUploadStatus.UPLOADING.name());
+            uploadHash.put("status", UploadOutboxEventStatus.UPLOADING.name());
             uploadHash.put("sheetPostId", "");
             uploadHash.put("sheetUrl", "");
             uploadHash.put("thumbnailUrl", "");
@@ -72,6 +76,8 @@ public class FileUploadService {
 
             uploadJobRepository.save(UploadJob.create(uploadId, originalFilename, uuidFilename, LocalDateTime.now()));
 
+            uploadOutboxService.enqueueStarted(FileUploadStartedEvent.create(uploadId, originalFilename));
+
             // 임시 파일 생성 및 PDF 문서 로드
             SheetPostTempFile tempFile = createTempFile(file);
 
@@ -82,7 +88,7 @@ public class FileUploadService {
 
             return FileUploadResponse.builder()
                     .uploadId(uploadId)
-                    .status(FileUploadStatus.UPLOADING)
+                    .status(UploadOutboxEventStatus.UPLOADING)
                     .message("파일 업로드가 시작되었습니다.")
                     .originalFileName(originalFilename)
                     .build();
@@ -91,11 +97,11 @@ public class FileUploadService {
             log.error("Failed to start file upload for uploadId: {}", uploadId, e);
 
             // Redis Hash에서 실패 상태로 업데이트
-            statusStore.put(uploadId, "status", FileUploadStatus.FAILED.name());
+            statusStore.put(uploadId, "status", UploadOutboxEventStatus.FAILED.name());
 
             return FileUploadResponse.builder()
                     .uploadId(uploadId)
-                    .status(FileUploadStatus.FAILED)
+                    .status(UploadOutboxEventStatus.FAILED)
                     .message("파일 업로드 시작에 실패했습니다: " + e.getMessage())
                     .originalFileName(originalFilename)
                     .build();
@@ -126,7 +132,7 @@ public class FileUploadService {
         return (value != null && !value.isEmpty()) ? value : null;
     }
 
-    public FileUploadStatus getUploadStatus(String uploadId) {
+    public UploadOutboxEventStatus getUploadStatus(String uploadId) {
         String status = statusStore.get(uploadId, "status");
 
         if (status == null || status.isEmpty()) {
@@ -136,7 +142,7 @@ public class FileUploadService {
         }
 
         try {
-            return FileUploadStatus.valueOf(status);
+            return UploadOutboxEventStatus.valueOf(status);
         } catch (IllegalArgumentException e) {
             return null;
         }
@@ -183,7 +189,7 @@ public class FileUploadService {
         if (originalFileName != null && !originalFileName.isBlank()) {
             statusStore.put(uploadId, "originalFileName", originalFileName);
         }
-        statusStore.put(uploadId, "status", FileUploadStatus.FAILED.name());
+        statusStore.put(uploadId, "status", UploadOutboxEventStatus.FAILED.name());
         statusStore.put(uploadId, "completedAt", "");
 
         log.warn("Applied upload failed data. uploadId: {}, reason: {}", uploadId, failureReason);
@@ -204,13 +210,13 @@ public class FileUploadService {
 
     public boolean isUploadCompleted(String uploadId) {
         String status = statusStore.get(uploadId, "status");
-        if (FileUploadStatus.COMPLETED.name().equals(status)) {
+        if (UploadOutboxEventStatus.COMPLETED.name().equals(status)) {
             return true;
         }
 
         return uploadJobRepository.findByUploadId(uploadId)
                 .map(UploadJob::getStatus)
-                .map(FileUploadStatus.COMPLETED::equals)
+                .map(UploadOutboxEventStatus.COMPLETED::equals)
                 .orElse(false);
     }
 
