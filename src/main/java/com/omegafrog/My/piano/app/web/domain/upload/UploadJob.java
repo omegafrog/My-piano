@@ -2,7 +2,7 @@ package com.omegafrog.My.piano.app.web.domain.upload;
 
 import java.time.LocalDateTime;
 
-import com.omegafrog.My.piano.app.web.enums.FileUploadStatus;
+import com.omegafrog.My.piano.app.web.domain.outbox.UploadOutboxEventStatus;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -44,7 +44,7 @@ public class UploadJob {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private FileUploadStatus status;
+    private UploadOutboxEventStatus status;
 
     @Column(length = 500)
     private String errorMessage;
@@ -64,7 +64,7 @@ public class UploadJob {
         this.originalFileName = originalFileName;
         this.uuidFileName = uuidFileName;
         this.pageNum = 0;
-        this.status = FileUploadStatus.UPLOADING;
+        this.status = UploadOutboxEventStatus.UPLOADING;
         this.createdAt = now;
         this.updatedAt = now;
     }
@@ -98,7 +98,7 @@ public class UploadJob {
                 && !originalFileName.isBlank()) {
             this.originalFileName = originalFileName;
         }
-        this.status = FileUploadStatus.COMPLETED;
+        this.status = UploadOutboxEventStatus.COMPLETED;
         this.completedAt = now;
         this.updatedAt = now;
         this.errorMessage = null;
@@ -106,7 +106,7 @@ public class UploadJob {
     }
 
     public void markFailed(String errorMessage, String failureReason, LocalDateTime now) {
-        this.status = FileUploadStatus.FAILED;
+        this.status = UploadOutboxEventStatus.FAILED;
         this.errorMessage = errorMessage;
         this.failureReason = failureReason;
         this.updatedAt = now;

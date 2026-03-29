@@ -82,7 +82,8 @@ public class UploadOutboxEvent {
             String originalFileName,
             int pageNum,
             String errorMessage,
-            String failureReason) {
+            String failureReason,
+            UploadOutboxEventStatus status) {
         this.eventId = eventId;
         this.uploadId = uploadId;
         this.eventType = eventType;
@@ -92,10 +93,27 @@ public class UploadOutboxEvent {
         this.pageNum = pageNum;
         this.errorMessage = errorMessage;
         this.failureReason = failureReason;
-        this.status = UploadOutboxEventStatus.PENDING;
+        this.status = status;
         this.retryCount = 0;
         this.createdAt = LocalDateTime.now();
         this.nextAttemptAt = this.createdAt;
+    }
+
+    public static UploadOutboxEvent started(
+            String eventId,
+            String uploadId,
+            String originalFileName) {
+        return new UploadOutboxEvent(
+                eventId,
+                uploadId,
+                UploadOutboxEventType.FILE_UPLOAD_STARTED,
+                null,
+                null,
+                originalFileName,
+                0,
+                null,
+                null,
+                UploadOutboxEventStatus.UPLOADING);
     }
 
     public static UploadOutboxEvent completed(
@@ -114,7 +132,8 @@ public class UploadOutboxEvent {
                 originalFileName,
                 pageNum,
                 null,
-                null);
+                null,
+                UploadOutboxEventStatus.PENDING);
     }
 
     public static UploadOutboxEvent failed(
@@ -132,7 +151,8 @@ public class UploadOutboxEvent {
                 originalFileName,
                 0,
                 errorMessage,
-                failureReason);
+                failureReason,
+                UploadOutboxEventStatus.PENDING);
     }
 
     public void markCompleted(LocalDateTime now) {

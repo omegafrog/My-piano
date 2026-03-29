@@ -33,7 +33,10 @@ public class Cleanup {
         EntityManager entityManager = entityManagerFactory.createEntityManager();
         EntityTransaction transaction = entityManager.getTransaction();
         transaction.begin();
-        entityManager.createNativeQuery("SET FOREIGN_KEY_CHECKS = 0").executeUpdate();
+        try {
+            entityManager.createNativeQuery("SET FOREIGN_KEY_CHECKS = 0").executeUpdate();
+        } catch (RuntimeException ignored) {
+        }
         // entityManager.createNativeQuery("SET REFERENTIAL_INTEGRITY
         // FALSE;").executeUpdate();
         List<String> collect = entityManager.getMetamodel().getEntities().stream()
@@ -53,7 +56,10 @@ public class Cleanup {
         }
         // entityManager.createNativeQuery("SET REFERENTIAL_INTEGRITY
         // TRUE;").executeUpdate();
-        entityManager.createNativeQuery("SET FOREIGN_KEY_CHECKS = 1").executeUpdate();
+        try {
+            entityManager.createNativeQuery("SET FOREIGN_KEY_CHECKS = 1").executeUpdate();
+        } catch (RuntimeException ignored) {
+        }
         transaction.commit();
         entityManager.close();
 

@@ -1,6 +1,7 @@
 package com.omegafrog.My.piano.app.web.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -24,6 +25,7 @@ public class StagePdfFileReaper {
     private final Duration ttl;
     private final Clock clock;
 
+    @Autowired
     public StagePdfFileReaper(
             @Value("${file-upload.stage.base-path:./static/stage}") String stageBasePath,
             @Value("${file-upload.stage.ttl-hours:24}") long ttlHours
