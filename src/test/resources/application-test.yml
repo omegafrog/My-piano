@@ -14,7 +14,7 @@ spring:
       - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3307/mypianotest?characterEncoding=UTF-8&serverTimezone=UTC
+    url: jdbc:mysql://localhost:3307/mypiano?characterEncoding=UTF-8&serverTimezone=UTC
     username: root
     password: password
   jpa:
@@ -45,7 +45,7 @@ spring:
   redis:
     user:
       host: 127.0.0.1
-      port: 16379
+      port: 6379
     cache:
       host: 127.0.0.1
       port: 6380
