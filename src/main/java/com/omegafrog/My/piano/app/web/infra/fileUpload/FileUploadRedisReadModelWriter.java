@@ -1,8 +1,6 @@
 package com.omegafrog.My.piano.app.web.infra.fileUpload;
 
-import com.omegafrog.My.piano.app.web.domain.fileUpload.FileUploadJob;
-import com.omegafrog.My.piano.app.web.domain.fileUpload.FileUploadJobStatus;
-import com.omegafrog.My.piano.app.web.domain.outbox.UploadOutboxEventStatus;
+import com.omegafrog.My.piano.app.web.domain.fileUpload.FileUploadProcess;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -25,11 +23,11 @@ public class FileUploadRedisReadModelWriter {
     @Value("${file-upload.redis.ttl-hours:24}")
     private long ttlHours;
 
-    public void upsert(FileUploadJob job) {
+    public void upsert(FileUploadProcess job) {
         String redisKey = redisKey(job.getUploadId());
 
         Map<String, String> hash = new HashMap<>();
-        hash.put("status", toApiStatus(job).name());
+        hash.put("status", job.getStatus().name());
         hash.put("sheetPostId", job.getSheetPostId() == null ? "" : job.getSheetPostId().toString());
         hash.put("sheetUrl", job.getSheetUrl() == null ? "" : job.getSheetUrl());
         hash.put("thumbnailUrl", job.getThumbnailUrls() == null ? "" : job.getThumbnailUrls());
@@ -53,23 +51,6 @@ public class FileUploadRedisReadModelWriter {
         } catch (Exception e) {
             log.warn("Failed to delete file upload read model from Redis. uploadId: {}", uploadId, e);
         }
-    }
-
-    private static UploadOutboxEventStatus toApiStatus(FileUploadJob job) {
-        FileUploadJobStatus status = job.getStatus();
-        if (status == FileUploadJobStatus.PENDING || status == FileUploadJobStatus.RETRY) {
-            return UploadOutboxEventStatus.PENDING;
-        }
-        if (status == FileUploadJobStatus.RUNNING) {
-            return UploadOutboxEventStatus.UPLOADING;
-        }
-        if (status == FileUploadJobStatus.FAILED) {
-            return UploadOutboxEventStatus.FAILED;
-        }
-        if (status == FileUploadJobStatus.COMPLETED) {
-            return job.isLinked() ? UploadOutboxEventStatus.LINKED : UploadOutboxEventStatus.COMPLETED;
-        }
-        return UploadOutboxEventStatus.PENDING;
     }
 
     private static String redisKey(String uploadId) {

@@ -1,6 +1,6 @@
 package com.omegafrog.My.piano.app.web.dto.fileUpload;
 
-import com.omegafrog.My.piano.app.web.domain.outbox.UploadOutboxEventStatus;
+import com.omegafrog.My.piano.app.web.domain.fileUpload.FileUploadProcessStatus;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class FileUploadResponse {
     private String uploadId;
-    private UploadOutboxEventStatus status;
+    private FileUploadProcessStatus status;
     private String message;
     private String originalFileName;
 }

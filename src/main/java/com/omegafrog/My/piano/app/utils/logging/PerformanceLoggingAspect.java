@@ -17,7 +17,6 @@ public class PerformanceLoggingAspect {
 
     @Pointcut("execution(* com.omegafrog.My.piano.app.web.controller.FileUploadController.uploadFile(..)) || " +
               "execution(* com.omegafrog.My.piano.app.web.controller.SheetPostController.writeSheetPost(..)) || " +
-              "execution(* com.omegafrog.My.piano.app.web.service.FileUploadService.createTempFile(..)) || " +
               "execution(* com.omegafrog.My.piano.app.web.domain.LocalFileStorageExecutor.generateThumbnail(..)) || " +
               "execution(* com.omegafrog.My.piano.app.web.domain.S3UploadFileExecutor.generateThumbnail(..)) || " +
               "execution(* com.omegafrog.My.piano.app.web.domain.LocalFileStorageExecutor.uploadSheetAsync(..)) || " +
