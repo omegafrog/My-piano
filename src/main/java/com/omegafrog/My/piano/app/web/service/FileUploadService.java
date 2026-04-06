@@ -171,7 +171,8 @@ public class FileUploadService {
         result.put("thumbnailUrl", uploadJob.getThumbnailUrls() == null ? "" : uploadJob.getThumbnailUrls());
         result.put("originalFileName", uploadJob.getOriginalFileName() == null ? "" : uploadJob.getOriginalFileName());
         result.put("uuidFileName", uploadJob.getUuidFileName() == null ? "" : uploadJob.getUuidFileName());
-        result.put("pageNum", uploadJob.getPageNum() > 0 ? String.valueOf(uploadJob.getPageNum()) : "");
+        Integer pageNum = uploadJob.getPageNum();
+        result.put("pageNum", pageNum != null && pageNum > 0 ? String.valueOf(pageNum) : "");
         result.put("createdAt", uploadJob.getCreatedAt() == null ? "" : uploadJob.getCreatedAt().toString());
         result.put("completedAt", uploadJob.getCompletedAt() == null ? "" : uploadJob.getCompletedAt().toString());
         return result;
