@@ -165,8 +165,8 @@ public class SheetPostApplicationService {
 			// Redis에 uploadId:sheetPostId 매핑 저장 (기존 SheetPost에 새 파일 연결)
 			fileUploadService.updateUploadMapping(uploadId, sheetPost.getId());
 
-			// 업로드가 이미 완료된 경우 즉시 URL 업데이트
-			if (fileUploadService.isUploadCompleted(uploadId)) {
+			// 업로드와 링크가 모두 완료된 경우에만 URL을 반영한다.
+			if (fileUploadService.isUploadCompleted(uploadId) && fileUploadService.isUploadLinked(uploadId)) {
 				String sheetUrl = uploadData.get("sheetUrl");
 				String thumbnailUrl = uploadData.get("thumbnailUrl");
 				String pageNumStr = uploadData.get("pageNum");
