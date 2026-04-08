@@ -148,6 +148,40 @@ class SheetPostSWRSingleFlightServiceTest {
     }
 
     @Test
+    @DisplayName("cache hit is significantly faster than cache miss")
+    void cacheHitShouldBeFasterThanMiss() {
+        AtomicInteger searchCalls = new AtomicInteger();
+        when(elasticSearchInstance.searchSheetPost(any(), any(), any(), any(), any(Pageable.class)))
+                .thenAnswer(invocation -> {
+                    searchCalls.incrementAndGet();
+                    Thread.sleep(200);
+                    Pageable pageable = invocation.getArgument(4);
+                    Page<Long> ids = new PageImpl<>(List.of(1L), pageable, 1);
+                    return Pair.of(ids, "raw");
+                });
+
+        when(sheetPostRepository.findByIds(anyList(), any(Pageable.class)))
+                .thenReturn(List.of(dto(1L, "speed")));
+
+        Pageable pageable = PageRequest.of(0, 20);
+
+        long missStart = System.nanoTime();
+        service.getSheetPosts(null, null, null, null, pageable);
+        long missDurationMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - missStart);
+
+        long hitStart = System.nanoTime();
+        service.getSheetPosts(null, null, null, null, pageable);
+        long hitDurationMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - hitStart);
+
+        assertEquals(1, searchCalls.get());
+        assertTrue(missDurationMs >= 150, "cache miss should include the loader delay");
+        assertTrue(hitDurationMs < 50, "cache hit should return quickly");
+        assertTrue(missDurationMs >= hitDurationMs * 4L,
+                "cache hit should be at least 4x faster than cache miss; miss=" + missDurationMs
+                        + "ms, hit=" + hitDurationMs + "ms");
+    }
+
+    @Test
     @DisplayName("stale-window returns stale and refreshes once with jittered TTL")
     void staleWindowShouldReturnStaleAndRefreshOnce() throws Exception {
         Cache listCache = cacheManager.getCache("sheetpostList");

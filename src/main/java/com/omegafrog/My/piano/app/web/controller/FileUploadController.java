@@ -1,7 +1,7 @@
 package com.omegafrog.My.piano.app.web.controller;
 
 import com.omegafrog.My.piano.app.web.dto.fileUpload.FileUploadResponse;
-import com.omegafrog.My.piano.app.web.enums.FileUploadStatus;
+import com.omegafrog.My.piano.app.web.domain.fileUpload.FileUploadProcessStatus;
 import com.omegafrog.My.piano.app.web.response.success.ApiResponse;
 import com.omegafrog.My.piano.app.web.response.success.JsonAPIResponse;
 import com.omegafrog.My.piano.app.web.service.FileUploadService;
@@ -41,7 +41,7 @@ public class FileUploadController {
 
         FileUploadResponse response = fileUploadService.uploadFile(file);
 
-        if (response.getStatus() == FileUploadStatus.FAILED) {
+        if (response.getStatus() == FileUploadProcessStatus.FAILED) {
             return new ApiResponse<>("파일 업로드 시작에 실패했습니다.", response);
         }
 
@@ -54,12 +54,12 @@ public class FileUploadController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상태 조회 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "업로드 ID를 찾을 수 없음")
     })
-    public JsonAPIResponse<FileUploadStatus> getUploadStatus(
+    public JsonAPIResponse<FileUploadProcessStatus> getUploadStatus(
             @Valid @NotNull @PathVariable String uploadId) {
 
         log.info("Upload status request for uploadId: {}", uploadId);
 
-        FileUploadStatus status = fileUploadService.getUploadStatus(uploadId);
+        FileUploadProcessStatus status = fileUploadService.getUploadStatus(uploadId);
 
         if (status == null) {
             return new ApiResponse<>("업로드 ID를 찾을 수 없습니다.", null);

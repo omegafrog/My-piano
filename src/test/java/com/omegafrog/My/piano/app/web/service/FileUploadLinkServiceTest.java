@@ -1,8 +1,8 @@
 package com.omegafrog.My.piano.app.web.service;
 
-import com.omegafrog.My.piano.app.web.domain.fileUpload.FileUploadJob;
-import com.omegafrog.My.piano.app.web.domain.fileUpload.FileUploadJobRepository;
-import com.omegafrog.My.piano.app.web.domain.fileUpload.FileUploadJobStatus;
+import com.omegafrog.My.piano.app.web.domain.fileUpload.FileUploadProcess;
+import com.omegafrog.My.piano.app.web.domain.fileUpload.FileUploadProcessRepository;
+import com.omegafrog.My.piano.app.web.domain.fileUpload.FileUploadProcessStatus;
 import com.omegafrog.My.piano.app.web.domain.fileUpload.FileUploadLinkStatus;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
@@ -36,12 +36,12 @@ class FileUploadLinkServiceTest {
 
         FileUploadLinkService service = new FileUploadLinkService(repo, sheetPostRepository, readModelWriter);
 
-        FileUploadJob job = FileUploadJob.builder()
+        FileUploadProcess job = FileUploadProcess.builder()
                 .uploadId("u1")
                 .originalFileName("score.pdf")
                 .uuidFileName("uuid.pdf")
                 .stagedFilePath("/tmp/stage.pdf")
-                .status(FileUploadJobStatus.COMPLETED)
+                .status(FileUploadProcessStatus.COMPLETED)
                 .maxAttempts(3)
                 .nextAttemptAt(LocalDateTime.now())
                 .build();
@@ -53,16 +53,16 @@ class FileUploadLinkServiceTest {
 
         service.processLinkJob(job.getId(), 1);
 
-        FileUploadJob saved = repo.findById(job.getId()).orElseThrow();
+        FileUploadProcess saved = repo.findById(job.getId()).orElseThrow();
         assertThat(saved.getLinkStatus()).isEqualTo(FileUploadLinkStatus.LINKED);
     }
 
-    private static class InMemoryRepo implements FileUploadJobRepository {
+    private static class InMemoryRepo implements FileUploadProcessRepository {
         private long seq = 0;
-        private final Map<Long, FileUploadJob> store = new HashMap<>();
+        private final Map<Long, FileUploadProcess> store = new HashMap<>();
 
         @Override
-        public FileUploadJob save(FileUploadJob job) {
+        public FileUploadProcess save(FileUploadProcess job) {
             if (job.getId() == null) {
                 ReflectionTestUtils.setField(job, "id", ++seq);
                 ReflectionTestUtils.setField(job, "createdAt", LocalDateTime.now());
@@ -73,23 +73,28 @@ class FileUploadLinkServiceTest {
         }
 
         @Override
-        public Optional<FileUploadJob> findById(Long id) {
+        public Optional<FileUploadProcess> findById(Long id) {
             return Optional.ofNullable(store.get(id));
         }
 
         @Override
-        public Optional<FileUploadJob> findByUploadId(String uploadId) {
+        public Optional<FileUploadProcess> findByUploadId(String uploadId) {
             return store.values().stream().filter(j -> j.getUploadId().equals(uploadId)).findFirst();
         }
 
         @Override
-        public List<FileUploadJob> findProcessableJobs(LocalDateTime now, int batchSize) {
-            return List.of();
+        public Optional<FileUploadProcess> findByUuidFileName(String uuidFileName) {
+            return store.values().stream().filter(j -> j.getUuidFileName().equals(uuidFileName)).findFirst();
         }
 
         @Override
-        public List<FileUploadJob> findLinkableJobs(LocalDateTime now, int batchSize) {
-            return List.of();
+        public List<FileUploadProcess> findProcessableJobs(LocalDateTime now, int batchSize) {
+            return store.values().stream().filter(job -> job.canStart(now)).toList();
+        }
+
+        @Override
+        public List<FileUploadProcess> findLinkableJobs(LocalDateTime now, int batchSize) {
+            return store.values().stream().filter(job -> job.canLink(now)).toList();
         }
     }
 }

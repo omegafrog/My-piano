@@ -1,7 +1,7 @@
 package com.omegafrog.My.piano.app.web.service;
 
-import com.omegafrog.My.piano.app.web.domain.fileUpload.FileUploadJob;
-import com.omegafrog.My.piano.app.web.domain.fileUpload.FileUploadJobRepository;
+import com.omegafrog.My.piano.app.web.domain.fileUpload.FileUploadProcess;
+import com.omegafrog.My.piano.app.web.domain.fileUpload.FileUploadProcessRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,9 +14,9 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class FileUploadLinkJobScheduler {
+public class FileUploadLinkScheduler {
 
-    private final FileUploadJobRepository fileUploadJobRepository;
+    private final FileUploadProcessRepository fileUploadProcessRepository;
     private final FileUploadLinkService fileUploadLinkService;
 
     @Value("${file-upload.link.batch-size:5}")
@@ -27,8 +27,8 @@ public class FileUploadLinkJobScheduler {
 
     @Scheduled(fixedDelayString = "${file-upload.link.poll-delay-ms:1000}")
     public void processLinkableJobs() {
-        List<FileUploadJob> jobs = fileUploadJobRepository.findLinkableJobs(LocalDateTime.now(), batchSize);
-        for (FileUploadJob job : jobs) {
+        List<FileUploadProcess> jobs = fileUploadProcessRepository.findLinkableJobs(LocalDateTime.now(), batchSize);
+        for (FileUploadProcess job : jobs) {
             fileUploadLinkService.processLinkJob(job.getId(), retryDelaySeconds);
         }
     }

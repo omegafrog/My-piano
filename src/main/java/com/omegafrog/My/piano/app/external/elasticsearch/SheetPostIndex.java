@@ -23,7 +23,7 @@ import lombok.Setter;
 @Setter
 @Builder
 @NoArgsConstructor
-// @Setting(settingPath = "nori-analyzer.json")
+@Setting(settingPath = "nori-analyzer.json")
 @Document(indexName = "sheetpost", writeTypeHint = WriteTypeHint.FALSE)
 public class SheetPostIndex {
 

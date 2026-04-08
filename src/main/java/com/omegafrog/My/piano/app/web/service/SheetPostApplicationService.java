@@ -164,34 +164,34 @@ public class SheetPostApplicationService {
 
 			// Redis에 uploadId:sheetPostId 매핑 저장 (기존 SheetPost에 새 파일 연결)
 			fileUploadService.updateUploadMapping(uploadId, sheetPost.getId());
+			Sheet sheet = sheetPost.getSheet();
 
-			// 업로드가 이미 완료된 경우 즉시 URL 업데이트
-			if (fileUploadService.isUploadCompleted(uploadId)) {
+			// 업로드와 링크가 모두 완료된 경우에만 URL을 반영한다.
+			String originalFileName = uploadData.get("originalFileName");
+			if (originalFileName != null && !originalFileName.isEmpty()) {
+				dto.getSheet().setOriginalFileName(originalFileName);
+				sheet.updateOriginalFileName(originalFileName);
+			}
+
+			if (fileUploadService.isUploadCompleted(uploadId) && fileUploadService.isUploadLinked(uploadId)) {
 				String sheetUrl = uploadData.get("sheetUrl");
 				String thumbnailUrl = uploadData.get("thumbnailUrl");
 				String pageNumStr = uploadData.get("pageNum");
-				String originalFileName = uploadData.get("originalFileName");
 
-				if (sheetUrl != null && !sheetUrl.isEmpty() &&
-						thumbnailUrl != null && !thumbnailUrl.isEmpty() &&
-						pageNumStr != null && !pageNumStr.isEmpty()) {
+					if (sheetUrl != null && !sheetUrl.isEmpty() &&
+							thumbnailUrl != null && !thumbnailUrl.isEmpty() &&
+							pageNumStr != null && !pageNumStr.isEmpty()) {
 
-					dto.getSheet().setSheetUrl(sheetUrl);
-					dto.getSheet().setThumbnailUrl(thumbnailUrl);
-					dto.getSheet().setPageNum(Integer.parseInt(pageNumStr));
-					dto.getSheet().setOriginalFileName(originalFileName);
-					Sheet sheet = sheetPost.getSheet();
-					int pageNum = Integer.parseInt(pageNumStr);
+						dto.getSheet().setSheetUrl(sheetUrl);
+						dto.getSheet().setThumbnailUrl(thumbnailUrl);
+						dto.getSheet().setPageNum(Integer.parseInt(pageNumStr));
+						int pageNum = Integer.parseInt(pageNumStr);
 
 					// Sheet URL, 썸네일, 페이지 수 업데이트
 					sheet.updateUrls(sheetUrl, thumbnailUrl);
 					sheet.updatePageNum(pageNum);
 
 					// originalFileName 업데이트
-					if (originalFileName != null && !originalFileName.isEmpty()) {
-						sheet.updateOriginalFileName(originalFileName);
-					}
-
 					// updateDto의 sheet에도 pageNum 설정 (기존 로직 호환성)
 					if (dto.getSheet() != null) {
 						dto.getSheet().setPageNum(pageNum);

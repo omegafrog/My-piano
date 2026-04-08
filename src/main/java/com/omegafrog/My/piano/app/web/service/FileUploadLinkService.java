@@ -1,7 +1,7 @@
 package com.omegafrog.My.piano.app.web.service;
 
-import com.omegafrog.My.piano.app.web.domain.fileUpload.FileUploadJob;
-import com.omegafrog.My.piano.app.web.domain.fileUpload.FileUploadJobRepository;
+import com.omegafrog.My.piano.app.web.domain.fileUpload.FileUploadProcess;
+import com.omegafrog.My.piano.app.web.domain.fileUpload.FileUploadProcessRepository;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPostRepository;
 import com.omegafrog.My.piano.app.web.infra.fileUpload.FileUploadRedisReadModelWriter;
@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDateTime;
 
@@ -18,14 +20,15 @@ import java.time.LocalDateTime;
 public class FileUploadLinkService {
 
     private static final int DEFAULT_RETRY_DELAY_SECONDS = 5;
+    private static final int DEFAULT_LINK_LEASE_SECONDS = 300;
 
-    private final FileUploadJobRepository fileUploadJobRepository;
+    private final FileUploadProcessRepository fileUploadProcessRepository;
     private final SheetPostRepository sheetPostRepository;
     private final FileUploadRedisReadModelWriter readModelWriter;
 
     @Transactional
     public void linkUploadToSheetPost(String uploadId, Long sheetPostId) {
-        FileUploadJob job = fileUploadJobRepository.findByUploadId(uploadId)
+        FileUploadProcess job = fileUploadProcessRepository.findByUploadId(uploadId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid uploadId: " + uploadId));
 
         job.assignSheetPostId(sheetPostId);
@@ -35,8 +38,8 @@ public class FileUploadLinkService {
             job.markLinkPending(LocalDateTime.now());
         }
 
-        fileUploadJobRepository.save(job);
-        readModelWriter.upsert(job);
+        fileUploadProcessRepository.save(job);
+        afterCommit(() -> readModelWriter.upsert(job));
 
         // 업로드가 이미 완료된 상태라면 즉시 링크를 시도한다.
         if (job.isUploadCompleted()) {
@@ -46,7 +49,7 @@ public class FileUploadLinkService {
 
     @Transactional
     public void processLinkJob(Long jobId, int retryDelaySeconds) {
-        FileUploadJob job = fileUploadJobRepository.findById(jobId).orElse(null);
+        FileUploadProcess job = fileUploadProcessRepository.findById(jobId).orElse(null);
         if (job == null) {
             return;
         }
@@ -56,9 +59,9 @@ public class FileUploadLinkService {
             return;
         }
 
-        job.markLinkRunning();
-        fileUploadJobRepository.save(job);
-        readModelWriter.upsert(job);
+        job.markLinkRunning(now, DEFAULT_LINK_LEASE_SECONDS);
+        fileUploadProcessRepository.save(job);
+        afterCommit(() -> readModelWriter.upsert(job));
 
         try {
             if (job.getSheetUrl() == null || job.getSheetUrl().isEmpty()) {
@@ -81,16 +84,30 @@ public class FileUploadLinkService {
             sheetPostRepository.save(sheetPost);
 
             job.markLinked(now);
-            fileUploadJobRepository.save(job);
-            readModelWriter.upsert(job);
+            fileUploadProcessRepository.save(job);
+            afterCommit(() -> readModelWriter.upsert(job));
         } catch (Exception e) {
             boolean willRetry = job.markLinkRetryOrFailed(e.getMessage(), retryDelaySeconds, now);
-            fileUploadJobRepository.save(job);
-            readModelWriter.upsert(job);
+            fileUploadProcessRepository.save(job);
+            afterCommit(() -> readModelWriter.upsert(job));
             if (!willRetry) {
                 log.error("Link job failed permanently. uploadId: {}, sheetPostId: {}", job.getUploadId(),
                         job.getSheetPostId(), e);
             }
         }
+    }
+
+    private static void afterCommit(Runnable runnable) {
+        if (!TransactionSynchronizationManager.isActualTransactionActive()) {
+            runnable.run();
+            return;
+        }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                runnable.run();
+            }
+        });
     }
 }

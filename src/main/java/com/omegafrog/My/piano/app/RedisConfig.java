@@ -24,7 +24,7 @@ public class RedisConfig {
 	@Value("${spring.redis.cache.port}")
 	private int cachePort;
 
-	@Bean
+	@Bean(name = {"commonUserRedisConnectionFactory", "redisConnectionFactory"})
 	public RedisConnectionFactory commonUserRedisConnectionFactory() {
 		return new LettuceConnectionFactory(host, port);
 	}
@@ -34,7 +34,7 @@ public class RedisConfig {
 		return new LettuceConnectionFactory(cacheHost, cachePort);
 	}
 
-	@Bean(name = "CommonUserRedisTemplate")
+	@Bean(name = {"CommonUserRedisTemplate", "redisTemplate"})
 	public RedisTemplate<String, String> commonUserRedisTemplate() {
 		RedisTemplate<String, String> redisTemplate = new RedisTemplate<>();
 		redisTemplate.setConnectionFactory(commonUserRedisConnectionFactory());

@@ -2,9 +2,9 @@ package com.omegafrog.My.piano.app.web.service;
 
 import com.omegafrog.My.piano.app.web.domain.FileStorageExecutor;
 import com.omegafrog.My.piano.app.web.domain.UploadFileExecutor;
-import com.omegafrog.My.piano.app.web.domain.fileUpload.FileUploadJob;
-import com.omegafrog.My.piano.app.web.domain.fileUpload.FileUploadJobRepository;
-import com.omegafrog.My.piano.app.web.domain.fileUpload.FileUploadJobStatus;
+import com.omegafrog.My.piano.app.web.domain.fileUpload.FileUploadProcess;
+import com.omegafrog.My.piano.app.web.domain.fileUpload.FileUploadProcessRepository;
+import com.omegafrog.My.piano.app.web.domain.fileUpload.FileUploadProcessStatus;
 import com.omegafrog.My.piano.app.web.domain.fileUpload.StagePdfStorage;
 import com.omegafrog.My.piano.app.web.domain.fileUpload.StagedPdf;
 import com.omegafrog.My.piano.app.web.infra.fileUpload.LocalStagePdfStorage;
@@ -38,7 +38,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
-class FileUploadJobRestartTest {
+class FileUploadProcessRestartTest {
 
     @TempDir
     java.nio.file.Path tempDir;
@@ -52,13 +52,13 @@ class FileUploadJobRestartTest {
         MockMultipartFile file = new MockMultipartFile("file", "score.pdf", "application/pdf", pdfBytes);
         StagedPdf staged = stagePdfStorage.stage(file, uploadId);
 
-        InMemoryFileUploadJobRepository repo = new InMemoryFileUploadJobRepository();
-        FileUploadJob job = FileUploadJob.builder()
+        InMemoryFileUploadProcessRepository repo = new InMemoryFileUploadProcessRepository();
+        FileUploadProcess job = FileUploadProcess.builder()
                 .uploadId(uploadId)
                 .originalFileName("score.pdf")
                 .uuidFileName("uuid-score.pdf")
                 .stagedFilePath(staged.stagePath())
-                .status(FileUploadJobStatus.PENDING)
+                .status(FileUploadProcessStatus.PENDING)
                 .nextAttemptAt(LocalDateTime.now().minusSeconds(1))
                 .maxAttempts(3)
                 .build();
@@ -69,16 +69,23 @@ class FileUploadJobRestartTest {
 
         FileUploadRedisReadModelWriter readModelWriter = Mockito.mock(FileUploadRedisReadModelWriter.class);
         TransactionTemplate tx = new TransactionTemplate(new NoopTransactionManager());
+        FileUploadProcessAcquisitionService acquisitionService = new FileUploadProcessAcquisitionService(repo, readModelWriter, tx);
 
         // First run: fail mid-way (thumbnail upload fails) -> RETRY, staged file remains
-        FileUploadJobScheduler scheduler1 = new FileUploadJobScheduler(repo, fileStorageExecutor, stagePdfStorage, readModelWriter, tx);
+        FileUploadProcessScheduler scheduler1 = new FileUploadProcessScheduler(
+                acquisitionService,
+                repo,
+                fileStorageExecutor,
+                stagePdfStorage,
+                readModelWriter,
+                tx);
         ReflectionTestUtils.setField(scheduler1, "batchSize", 5);
         ReflectionTestUtils.setField(scheduler1, "retryDelaySeconds", 5);
 
         scheduler1.processPendingJobs();
 
-        FileUploadJob afterFail = repo.findById(job.getId()).orElseThrow();
-        assertThat(afterFail.getStatus()).isEqualTo(FileUploadJobStatus.RETRY);
+        FileUploadProcess afterFail = repo.findById(job.getId()).orElseThrow();
+        assertThat(afterFail.getStatus()).isEqualTo(FileUploadProcessStatus.RETRY);
         assertThat(new File(staged.stagePath())).exists();
 
         // Simulate time passing / restart: make job eligible again
@@ -86,14 +93,65 @@ class FileUploadJobRestartTest {
         repo.save(afterFail);
 
         // Second run (new instance): succeeds -> COMPLETED and staged file deleted
-        FileUploadJobScheduler scheduler2 = new FileUploadJobScheduler(repo, fileStorageExecutor, stagePdfStorage, readModelWriter, tx);
+        FileUploadProcessScheduler scheduler2 = new FileUploadProcessScheduler(
+                acquisitionService,
+                repo,
+                fileStorageExecutor,
+                stagePdfStorage,
+                readModelWriter,
+                tx);
         ReflectionTestUtils.setField(scheduler2, "batchSize", 5);
         ReflectionTestUtils.setField(scheduler2, "retryDelaySeconds", 5);
 
         scheduler2.processPendingJobs();
 
-        FileUploadJob afterSuccess = repo.findById(job.getId()).orElseThrow();
-        assertThat(afterSuccess.getStatus()).isEqualTo(FileUploadJobStatus.COMPLETED);
+        FileUploadProcess afterSuccess = repo.findById(job.getId()).orElseThrow();
+        assertThat(afterSuccess.getStatus()).isEqualTo(FileUploadProcessStatus.COMPLETED);
+        assertThat(new File(staged.stagePath())).doesNotExist();
+    }
+
+    @Test
+    void runningUploadJobCanBeReclaimedAfterLeaseExpires() throws Exception {
+        String uploadId = "upload-restart-lease-1";
+        byte[] pdfBytes = createMinimalPdfBytes(1);
+
+        StagePdfStorage stagePdfStorage = new LocalStagePdfStorage(tempDir.toString());
+        MockMultipartFile file = new MockMultipartFile("file", "score.pdf", "application/pdf", pdfBytes);
+        StagedPdf staged = stagePdfStorage.stage(file, uploadId);
+
+        InMemoryFileUploadProcessRepository repo = new InMemoryFileUploadProcessRepository();
+        FileUploadProcess job = FileUploadProcess.builder()
+                .uploadId(uploadId)
+                .originalFileName("score.pdf")
+                .uuidFileName("uuid-score.pdf")
+                .stagedFilePath(staged.stagePath())
+                .status(FileUploadProcessStatus.RUNNING)
+                .nextAttemptAt(LocalDateTime.now().minusSeconds(1))
+                .maxAttempts(3)
+                .build();
+        ReflectionTestUtils.setField(job, "runningLeaseUntil", LocalDateTime.now().minusSeconds(1));
+        job = repo.save(job);
+
+        UploadFileExecutor uploadFileExecutor = new SuccessfulUploadFileExecutor();
+        FileStorageExecutor fileStorageExecutor = new FileStorageExecutor(uploadFileExecutor);
+
+        FileUploadRedisReadModelWriter readModelWriter = Mockito.mock(FileUploadRedisReadModelWriter.class);
+        TransactionTemplate tx = new TransactionTemplate(new NoopTransactionManager());
+
+        FileUploadProcessScheduler scheduler = new FileUploadProcessScheduler(
+                new FileUploadProcessAcquisitionService(repo, readModelWriter, tx),
+                repo,
+                fileStorageExecutor,
+                stagePdfStorage,
+                readModelWriter,
+                tx);
+        ReflectionTestUtils.setField(scheduler, "batchSize", 5);
+        ReflectionTestUtils.setField(scheduler, "retryDelaySeconds", 5);
+
+        scheduler.processPendingJobs();
+
+        FileUploadProcess afterSuccess = repo.findById(job.getId()).orElseThrow();
+        assertThat(afterSuccess.getStatus()).isEqualTo(FileUploadProcessStatus.COMPLETED);
         assertThat(new File(staged.stagePath())).doesNotExist();
     }
 
@@ -172,12 +230,12 @@ class FileUploadJobRestartTest {
         }
     }
 
-    private static class InMemoryFileUploadJobRepository implements FileUploadJobRepository {
+    private static class InMemoryFileUploadProcessRepository implements FileUploadProcessRepository {
         private final AtomicLong idSeq = new AtomicLong(0);
-        private final Map<Long, FileUploadJob> store = new HashMap<>();
+        private final Map<Long, FileUploadProcess> store = new HashMap<>();
 
         @Override
-        public FileUploadJob save(FileUploadJob job) {
+        public FileUploadProcess save(FileUploadProcess job) {
             if (job.getId() == null) {
                 Long id = idSeq.incrementAndGet();
                 ReflectionTestUtils.setField(job, "id", id);
@@ -191,20 +249,19 @@ class FileUploadJobRestartTest {
         }
 
         @Override
-        public Optional<FileUploadJob> findById(Long id) {
+        public Optional<FileUploadProcess> findById(Long id) {
             return Optional.ofNullable(store.get(id));
         }
 
         @Override
-        public List<FileUploadJob> findProcessableJobs(LocalDateTime now, int batchSize) {
-            List<FileUploadJob> candidates = new ArrayList<>();
-            for (FileUploadJob job : store.values()) {
-                if ((job.getStatus() == FileUploadJobStatus.PENDING || job.getStatus() == FileUploadJobStatus.RETRY)
-                        && !job.getNextAttemptAt().isAfter(now)) {
+        public List<FileUploadProcess> findProcessableJobs(LocalDateTime now, int batchSize) {
+            List<FileUploadProcess> candidates = new ArrayList<>();
+            for (FileUploadProcess job : store.values()) {
+                if (job.canStart(now)) {
                     candidates.add(job);
                 }
             }
-            candidates.sort(Comparator.comparing(FileUploadJob::getId));
+            candidates.sort(Comparator.comparing(FileUploadProcess::getId));
             if (candidates.size() <= batchSize) {
                 return candidates;
             }
@@ -212,13 +269,73 @@ class FileUploadJobRestartTest {
         }
 
         @Override
-        public Optional<FileUploadJob> findByUploadId(String uploadId) {
+        public Optional<FileUploadProcess> findByUploadId(String uploadId) {
             return store.values().stream().filter(job -> job.getUploadId().equals(uploadId)).findFirst();
         }
 
         @Override
-        public List<FileUploadJob> findLinkableJobs(LocalDateTime now, int batchSize) {
-            return List.of();
+        public Optional<FileUploadProcess> findByUuidFileName(String uuidFileName) {
+            return store.values().stream().filter(job -> job.getUuidFileName().equals(uuidFileName)).findFirst();
+        }
+
+        @Override
+        public List<FileUploadProcess> findLinkableJobs(LocalDateTime now, int batchSize) {
+            List<FileUploadProcess> candidates = new ArrayList<>();
+            for (FileUploadProcess job : store.values()) {
+                if (job.canLink(now)) {
+                    candidates.add(job);
+                }
+            }
+            candidates.sort(Comparator.comparing(FileUploadProcess::getId));
+            if (candidates.size() <= batchSize) {
+                return candidates;
+            }
+            return candidates.subList(0, Math.max(1, batchSize));
+        }
+    }
+
+    private static class SuccessfulUploadFileExecutor implements UploadFileExecutor {
+        @Override
+        public void uploadSheet(File file, String filename, ObjectMetadata metadata) {
+        }
+
+        @Override
+        public void uploadThumbnail(PDDocument document, String filename, ObjectMetadata metadata) {
+        }
+
+        @Override
+        public void uploadProfileImg(org.springframework.web.multipart.MultipartFile profileImg, String filename, ObjectMetadata metadata) {
+        }
+
+        @Override
+        public void removeProfileImg(String url) {
+        }
+
+        @Override
+        public void removeSheetPost(com.omegafrog.My.piano.app.web.domain.sheet.SheetPost sheetPost) {
+        }
+
+        @Override
+        public URL createFileUrl(String sheetUrl) {
+            return null;
+        }
+
+        @Override
+        public String buildSheetUrl(String filename) {
+            return "sheetUrl";
+        }
+
+        @Override
+        public String buildThumbnailUrls(String filename, int pageNum) {
+            return "thumb1,thumb2";
+        }
+
+        @Override
+        public void uploadSheetAsync(File file, String filename, ObjectMetadata metadata, String uploadId) {
+        }
+
+        @Override
+        public void uploadThumbnailAsync(PDDocument document, String filename, ObjectMetadata metadata, String uploadId) {
         }
     }
 }

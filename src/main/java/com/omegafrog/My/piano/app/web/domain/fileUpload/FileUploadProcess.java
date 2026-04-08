@@ -21,7 +21,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter(AccessLevel.PRIVATE)
 @NoArgsConstructor
-public class FileUploadJob {
+public class FileUploadProcess {
 
     private static final int DEFAULT_MAX_ATTEMPTS = 3;
 
@@ -52,7 +52,7 @@ public class FileUploadJob {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private FileUploadJobStatus status;
+    private FileUploadProcessStatus status;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -80,6 +80,8 @@ public class FileUploadJob {
     @Column(nullable = false)
     private LocalDateTime nextAttemptAt;
 
+    private LocalDateTime runningLeaseUntil;
+
     @Column(length = 1000)
     private String lastError;
 
@@ -92,8 +94,8 @@ public class FileUploadJob {
     private LocalDateTime completedAt;
 
     @Builder
-    public FileUploadJob(String uploadId, String originalFileName, String uuidFileName, String stagedFilePath,
-            FileUploadJobStatus status, int maxAttempts, LocalDateTime nextAttemptAt) {
+    public FileUploadProcess(String uploadId, String originalFileName, String uuidFileName, String stagedFilePath,
+            FileUploadProcessStatus status, int maxAttempts, LocalDateTime nextAttemptAt) {
         this.uploadId = uploadId;
         this.originalFileName = originalFileName;
         this.uuidFileName = uuidFileName;
@@ -129,21 +131,27 @@ public class FileUploadJob {
     }
 
     public boolean canStart(LocalDateTime now) {
-        if (status != FileUploadJobStatus.PENDING && status != FileUploadJobStatus.RETRY) {
+        if (status == FileUploadProcessStatus.RUNNING) {
+            return runningLeaseUntil != null && !runningLeaseUntil.isAfter(now);
+        }
+        if (status != FileUploadProcessStatus.PENDING && status != FileUploadProcessStatus.RETRY) {
             return false;
         }
+
         return !nextAttemptAt.isAfter(now);
     }
 
-    public void markRunning() {
-        this.status = FileUploadJobStatus.RUNNING;
+    public void markRunning(LocalDateTime now, int leaseSeconds) {
+        this.status = FileUploadProcessStatus.RUNNING;
+        this.runningLeaseUntil = now.plusSeconds(Math.max(1, leaseSeconds));
         this.lastError = null;
         this.attemptCount++;
     }
 
     public void markCompleted(LocalDateTime now) {
-        this.status = FileUploadJobStatus.COMPLETED;
+        this.status = FileUploadProcessStatus.COMPLETED;
         this.completedAt = now;
+        this.runningLeaseUntil = null;
         this.lastError = null;
     }
 
@@ -158,7 +166,7 @@ public class FileUploadJob {
     }
 
     public boolean isUploadCompleted() {
-        return status == FileUploadJobStatus.COMPLETED;
+        return status == FileUploadProcessStatus.COMPLETED;
     }
 
     public boolean isLinked() {
@@ -181,6 +189,9 @@ public class FileUploadJob {
         if (sheetPostId == null) {
             return false;
         }
+        if (linkStatus == FileUploadLinkStatus.RUNNING) {
+            return linkNextAttemptAt != null && !linkNextAttemptAt.isAfter(now);
+        }
         if (linkStatus == null) {
             linkStatus = FileUploadLinkStatus.PENDING;
         }
@@ -193,9 +204,10 @@ public class FileUploadJob {
         return !linkNextAttemptAt.isAfter(now);
     }
 
-    public void markLinkRunning() {
+    public void markLinkRunning(LocalDateTime now, int leaseSeconds) {
         this.linkStatus = FileUploadLinkStatus.RUNNING;
         this.linkAttemptCount++;
+        this.linkNextAttemptAt = now.plusSeconds(Math.max(1, leaseSeconds));
         this.linkLastError = null;
     }
 
@@ -222,13 +234,15 @@ public class FileUploadJob {
         this.lastError = errorMessage;
 
         if (attemptCount >= maxAttempts) {
-            this.status = FileUploadJobStatus.FAILED;
+            this.status = FileUploadProcessStatus.FAILED;
             this.completedAt = now;
+            this.runningLeaseUntil = null;
             return false;
         }
 
-        this.status = FileUploadJobStatus.RETRY;
+        this.status = FileUploadProcessStatus.RETRY;
         this.nextAttemptAt = now.plusSeconds(Math.max(1, retryDelaySeconds));
+        this.runningLeaseUntil = null;
         return true;
     }
 }
