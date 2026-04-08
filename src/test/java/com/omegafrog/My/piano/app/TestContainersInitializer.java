@@ -9,8 +9,10 @@ import org.testcontainers.containers.Network;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.lifecycle.Startable;
 import org.testcontainers.lifecycle.Startables;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -22,9 +24,9 @@ public class TestContainersInitializer implements ApplicationContextInitializer<
     private static final DockerImageName ELASTICSEARCH_IMAGE = DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:8.15.0");
     private static final DockerImageName KIBANA_IMAGE = DockerImageName.parse("docker.elastic.co/kibana/kibana:8.15.0");
 
-    private static final boolean ENABLE_ELASTICSEARCH = flag("mypiano.tc.elasticsearch.enabled", "MYPIANO_TC_ELASTICSEARCH_ENABLED", true);
+    private static final boolean ENABLE_ELASTICSEARCH = flag("mypiano.tc.elasticsearch.enabled", "MYPIANO_TC_ELASTICSEARCH_ENABLED", false);
     private static final boolean ENABLE_KIBANA = flag("mypiano.tc.kibana.enabled", "MYPIANO_TC_KIBANA_ENABLED", false);
-    private static final boolean CONTAINERS_REQUIRED = flag("mypiano.tc.required", "MYPIANO_TC_REQUIRED", false);
+    private static final boolean CONTAINERS_REQUIRED = flag("mypiano.tc.required", "MYPIANO_TC_REQUIRED", true);
 
     private static final Network SEARCH_NETWORK = Network.newNetwork();
 
@@ -41,7 +43,9 @@ public class TestContainersInitializer implements ApplicationContextInitializer<
             .withNetworkAliases("elasticsearch-test")
             .withEnv("discovery.type", "single-node")
             .withEnv("xpack.security.enabled", "false")
-            .withEnv("ES_JAVA_OPTS", "-Xms512m -Xmx512m");
+            .withEnv("ES_JAVA_OPTS", "-Xms512m -Xmx512m")
+            .waitingFor(Wait.forListeningPort())
+            .withStartupTimeout(Duration.ofMinutes(5));
 
     private static final GenericContainer<?> KIBANA = new GenericContainer<>(KIBANA_IMAGE)
             .dependsOn(ELASTICSEARCH)
@@ -58,8 +62,7 @@ public class TestContainersInitializer implements ApplicationContextInitializer<
         ensureStarted();
 
         if (!containersAvailable) {
-            applyFallbackDatabase(applicationContext);
-            return;
+            throw new IllegalStateException("Docker is required for Testcontainers but could not be started. Check the Docker host configuration.");
         }
 
         List<String> properties = new ArrayList<>();
@@ -127,13 +130,4 @@ public class TestContainersInitializer implements ApplicationContextInitializer<
         return defaultValue;
     }
 
-    private static void applyFallbackDatabase(ConfigurableApplicationContext applicationContext) {
-        TestPropertyValues.of(
-                "spring.datasource.url=jdbc:h2:mem:mypiano;MODE=MySQL;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false",
-                "spring.datasource.username=sa",
-                "spring.datasource.password=",
-                "spring.datasource.driver-class-name=org.h2.Driver",
-                "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect"
-        ).applyTo(applicationContext);
-    }
 }
