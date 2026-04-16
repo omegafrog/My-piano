@@ -34,7 +34,7 @@ public class RedisConfig {
 		return new LettuceConnectionFactory(cacheHost, cachePort);
 	}
 
-	@Bean(name = "CommonUserRedisTemplate")
+	@Bean(name = {"redisTemplate", "CommonUserRedisTemplate"})
 	public RedisTemplate<String, String> commonUserRedisTemplate() {
 		RedisTemplate<String, String> redisTemplate = new RedisTemplate<>();
 		redisTemplate.setConnectionFactory(commonUserRedisConnectionFactory());

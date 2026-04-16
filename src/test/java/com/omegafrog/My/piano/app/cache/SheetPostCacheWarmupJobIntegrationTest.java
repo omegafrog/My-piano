@@ -15,7 +15,6 @@ import com.omegafrog.My.piano.app.Cleanup;
 import com.omegafrog.My.piano.app.TestUtilConfig;
 import com.omegafrog.My.piano.app.external.elasticsearch.ElasticSearchInstance;
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
-import com.omegafrog.My.piano.app.web.domain.comment.Comment;
 import com.omegafrog.My.piano.app.web.domain.sheet.Genres;
 import com.omegafrog.My.piano.app.web.domain.sheet.Sheet;
 import com.omegafrog.My.piano.app.web.domain.sheet.SheetPost;
@@ -146,12 +145,6 @@ class SheetPostCacheWarmupJobIntegrationTest {
                 1000
         ));
         sheet.setSheetPost(sheetPost);
-        Comment comment = Comment.builder()
-                .author(user)
-                .content("warmup-comment")
-                .build();
-        sheetPost.addComment(comment);
-        sheetPostRepository.save(sheetPost);
         sheetPostRepository.flush();
 
         Mockito.when(elasticSearchInstance.searchSheetPost(

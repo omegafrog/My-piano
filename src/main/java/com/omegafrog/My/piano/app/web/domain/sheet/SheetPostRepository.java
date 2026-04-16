@@ -21,6 +21,11 @@ public interface SheetPostRepository {
 
     Page<SheetPostDto> findAll(Pageable pageable, SearchSheetPostFilter filter);
 
+    Page<SheetPostListDto> searchSheetPosts(String searchSentence,
+                                            List<String> instrument,
+                                            List<String> difficulty,
+                                            List<String> genre,
+                                            Pageable pageable);
 
     void deleteById(Long id);
 

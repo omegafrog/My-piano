@@ -49,6 +49,13 @@ My-Piano is a Spring Boot (Java 17) backend for piano sheet sharing + community,
 - **Prod config source**: deployment script uses `-Dspring.config.location=.../application-prod.properties` (externalized config), not the tracked YAMLs.
 - **Java LSP**: not configured in this environment; prefer `grep`/`ast-grep` for navigation.
 
+## HARVESTER / ORCHESTRATION GUARDRAILS
+- `use-case-harvester`는 요구사항 수집 전용이다. 구현, 리팩터링, 테스트 수정, 실행 검증을 절대 수행하지 않는다.
+- `use-case-harvester`가 수정할 수 있는 파일은 `docs/use-case-harvests/<domain>/<task>/use-case-harvest.md`, `docs/work-units/<domain>/<task>/index.md`, 그리고 필요한 경우 `.codex/stack-profile.yaml`만이다.
+- `orchestrate-plan` 플로우에서는 사용자 명시 승인 전까지 `oracle` 이하 단계로 진행하지 않는다.
+- 코드와 테스트(`src/**`, `build.gradle`, `settings.gradle`, 스크립트)는 `executor` 단계만 수정할 수 있다.
+- 계획/설계/검증 문서(`docs/**`, `.codex/**` 메타 문서)는 `oracle`, `doc_writer`, `doc_verify`, `execute_writer`, `closer`만 수정할 수 있다.
+
 ## PR 작성 요령
 - PR 제목/본문은 한국어로 작성한다.
 - PR 본문에는 최소 `변경 배경`, `주요 변경사항`, `테스트/검증 결과`, `영향 범위 및 리스크`를 포함한다.

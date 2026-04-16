@@ -1,0 +1,31 @@
+# 캐시 적용 전후 성능 향상 정량 비교 테스트
+
+- task: `cache-performance-quantification-20260416-0933`
+- domain: `cache`
+- harvest: `docs/use-case-harvests/cache/cache-performance-quantification-20260416-0933/use-case-harvest.md`
+- planning docs
+  - `docs/product-specs/cache/cache-performance-quantification-20260416-0933/domain-boundary.md`
+  - `docs/product-specs/cache/cache-performance-quantification-20260416-0933/use-cases.md`
+  - `docs/design-docs/cache/cache-performance-quantification-20260416-0933/event-storming.md`
+  - `docs/design-docs/cache/cache-performance-quantification-20260416-0933/aggregate-design.md`
+  - `docs/design-docs/cache/cache-performance-quantification-20260416-0933/bounded-context.md`
+  - `docs/design-docs/cache/cache-performance-quantification-20260416-0933/detailed-design.md`
+  - `docs/exec-plans/active/cache/cache-performance-quantification-20260416-0933/plan.md`
+  - `docs/verification-reports/cache/cache-performance-quantification-20260416-0933/doc-verify-before-execute.md`
+  - `docs/exec-plans/active/cache/cache-performance-quantification-20260416-0933/implementation-log.md`
+  - `docs/verification-reports/cache/cache-performance-quantification-20260416-0933/test-gate.md`
+  - `docs/verification-reports/cache/cache-performance-quantification-20260416-0933/doc-verify-after-execute.md`
+  - `docs/verification-reports/cache/cache-performance-quantification-20260416-0933/closure.md`
+- scope
+  - 캐시 성능 향상 정량 비교 기준 정의
+  - 기존 특성화 테스트 및 수동 벤치마크 자산 재사용 여부 판단
+  - 전/후 비교 테스트 작성/보강과 실행 범위 정리
+  - build/test gate 전 Docker 기반 테스트 인프라 자동 기동 경로 추가
+- status: stopped-after-test-gate
+- current-findings
+  - 저장소에는 이미 `SheetPostCachePerformanceCharacterizationTest`와 `scripts/search-benchmark.js`가 존재한다.
+  - 이번 실행에서는 before/after 기준을 `cache disabled(NoOpCacheManager)` 대 `cache enabled + warm hit`로 고정한다.
+  - `SheetPostCachePerformanceCharacterizationTest`를 확장했고, 최신 rerun 기준 uncached median `182.128ms`, warm-cache median `0.528ms`, 개선 배수 `344.82x`, backend search call `6`을 기록했다.
+  - `build.gradle`의 `test` task 앞에 `ensureTestInfra`를 연결하고 `scripts/ensure-test-infra.sh`로 MySQL/Redis/Elasticsearch 컨테이너를 자동 기동하도록 추가했다.
+  - 스크립트는 `mypiano`, `mypianotest` 두 MySQL 데이터베이스를 보장해 infra 미기동/DB 부재 원인을 줄였다.
+  - `build.gradle`의 상대경로 실행 수정 후 rerun에서도 repository-wide `timeout 300s ./gradlew --no-daemon build --console=plain`는 `> Task :test` 이후 300초 안에 종료되지 않아 test gate `BLOCKED`를 재확인했다.

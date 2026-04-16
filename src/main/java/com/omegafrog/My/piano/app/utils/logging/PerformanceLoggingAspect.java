@@ -16,6 +16,8 @@ public class PerformanceLoggingAspect {
     private static final Logger log = LoggerFactory.getLogger(PerformanceLoggingAspect.class);
 
     @Pointcut("execution(* com.omegafrog.My.piano.app.web.controller.FileUploadController.uploadFile(..)) || " +
+              "execution(* com.omegafrog.My.piano.app.web.controller.SheetPostController.getSheetPosts(..)) || " +
+              "execution(* com.omegafrog.My.piano.app.web.controller.SheetPostController.getSearchAutoCompleteList(..)) || " +
               "execution(* com.omegafrog.My.piano.app.web.controller.SheetPostController.writeSheetPost(..)) || " +
               "execution(* com.omegafrog.My.piano.app.web.service.FileUploadService.createTempFile(..)) || " +
               "execution(* com.omegafrog.My.piano.app.web.domain.LocalFileStorageExecutor.generateThumbnail(..)) || " +

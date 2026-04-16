@@ -96,4 +96,17 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+    dependsOn 'ensureTestInfra'
+}
+
+tasks.register('ensureTestInfra') {
+    group = 'verification'
+    description = 'Starts required docker services before test/build gate runs.'
+
+    doLast {
+        exec {
+            workingDir project.rootDir
+            commandLine 'bash', './scripts/ensure-test-infra.sh'
+        }
+    }
 }

@@ -1,0 +1,14 @@
+version: 1
+
+stages:
+  - name: build
+    command_ref: testing.commands.build
+    required: true
+  - name: unit-and-integration
+    command_ref: testing.commands.unit_integration
+    required: true
+
+policy:
+  on_fail: return_to_executor
+  on_blocked: return_to_executor
+  pass_condition: all_required_passed

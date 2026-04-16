@@ -1,0 +1,35 @@
+# build 회귀 실패 테스트와 bootRun 미검증 경로 정리
+
+- task: `build-regression-fixes-20260415-1820`
+- domain: `test`
+- harvest: `docs/use-case-harvests/test/build-regression-fixes-20260415-1820/use-case-harvest.md`
+- planning docs
+  - `docs/product-specs/test/build-regression-fixes-20260415-1820/domain-boundary.md`
+  - `docs/product-specs/test/build-regression-fixes-20260415-1820/use-cases.md`
+  - `docs/design-docs/test/build-regression-fixes-20260415-1820/event-storming.md`
+  - `docs/design-docs/test/build-regression-fixes-20260415-1820/aggregate-design.md`
+  - `docs/design-docs/test/build-regression-fixes-20260415-1820/bounded-context.md`
+  - `docs/design-docs/test/build-regression-fixes-20260415-1820/detailed-design.md`
+  - `docs/exec-plans/active/test/build-regression-fixes-20260415-1820/plan.md`
+  - `docs/verification-reports/test/build-regression-fixes-20260415-1820/doc-verify-before-execute.md`
+  - `docs/exec-plans/active/test/build-regression-fixes-20260415-1820/implementation-log.md`
+  - `docs/verification-reports/test/build-regression-fixes-20260415-1820/test-gate.md`
+  - `docs/verification-reports/test/build-regression-fixes-20260415-1820/doc-verify-after-execute.md`
+  - `docs/verification-reports/test/build-regression-fixes-20260415-1820/closure.md`
+- scope
+  - 실패 테스트 세 군 재현 및 원인 분리
+  - 회귀 수정 후 build 재검증
+  - 가능 시 bootRun 기동 검증
+- status: validated
+- current-findings
+  - build 실패 보고 대상은 `SheetPostCacheWarmupJobIntegrationTest`, `SecurityControllerTest`, `CommonUserServiceTest`다.
+  - 최근 batch startup 변경이 관련 테스트 및 런타임 기동 경로에 영향을 줬을 가능성이 있다.
+  - `SecurityControllerTest`, `CommonUserServiceTest`는 `test` 프로필 미지정으로 dev 설정과 startup 러너 영향을 받던 회귀였다.
+  - `SheetPostCacheWarmupJobIntegrationTest`는 warm-up 경로 회귀와 fixture 저장 방식 문제를 함께 가지고 있었다.
+  - `SheetPostCacheWarmupServiceTest`는 warm-up DB 경로 전환에 맞춰 테스트 더블 구성이 필요했다.
+  - `./gradlew build --no-daemon --console=plain` 성공을 확인했다.
+  - `./gradlew bootRun --no-daemon --console=plain`로 실제 기동 후 `Started MyPianoApplication` 로그와 startup batch 실행 로그를 확인했다.
+- execution decisions
+  - 기존 사용자 변경은 보존한다.
+  - 원인 확정 전까지는 실패 테스트를 개별 재현해서 공통/개별 회귀를 분리한다.
+  - cache warm-up은 startup 시 Elasticsearch 의존 대신 DB 기반 목록 조회로 prewarm 하도록 유지한다.

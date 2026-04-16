@@ -1,0 +1,35 @@
+[agents]
+max_threads = 4
+max_depth = 2
+
+[agents.use_case_harvester]
+description = "Collect use cases, classify work, and judge readiness"
+config_file = "agents/use_case_harvester.toml"
+
+[agents.oracle]
+description = "Design confirmed use cases and produce an execution plan"
+config_file = "agents/oracle.toml"
+
+[agents.doc_writer]
+description = "Write canonical workflow documents"
+config_file = "agents/doc_writer.toml"
+
+[agents.doc_verify]
+description = "Verify documentation structure and traceability"
+config_file = "agents/doc_verify.toml"
+
+[agents.executor]
+description = "Implement plan.md changes and record execution results"
+config_file = "agents/executor.toml"
+
+[agents.test_gate]
+description = "Run repository-specific tests and judge PASS/FAIL/BLOCKED"
+config_file = "agents/test_gate.toml"
+
+[agents.execute_writer]
+description = "Sync docs after code changes"
+config_file = "agents/execute_writer.toml"
+
+[agents.closer]
+description = "Finalize the work unit after verification passes"
+config_file = "agents/closer.toml"

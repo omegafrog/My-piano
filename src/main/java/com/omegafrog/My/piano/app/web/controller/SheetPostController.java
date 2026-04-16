@@ -23,6 +23,7 @@ import com.omegafrog.My.piano.app.web.dto.sheetPost.RegisterSheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostListDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.UpdateSheetPostDto;
+import com.omegafrog.My.piano.app.web.enums.SheetPostSearchBackend;
 import com.omegafrog.My.piano.app.web.response.success.ApiResponse;
 import com.omegafrog.My.piano.app.web.response.success.JsonAPIResponse;
 import com.omegafrog.My.piano.app.web.service.SheetPostApplicationService;
@@ -64,9 +65,10 @@ public class SheetPostController {
 			@Nullable @RequestParam List<String> instrument,
 			@Nullable @RequestParam List<String> difficulty,
 			@Nullable @RequestParam List<String> genre,
+			@RequestParam(defaultValue = "es") String searchBackend,
 			Pageable pageable) {
 		Page<SheetPostListDto> data = sheetPostService.getSheetPosts(searchSentence, instrument, difficulty, genre,
-				pageable);
+				SheetPostSearchBackend.from(searchBackend), pageable);
 		return new ApiResponse<>("Get sheet posts success.", data);
 	}
 

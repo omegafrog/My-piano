@@ -42,6 +42,7 @@ import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetInfoDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostListDto;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.UpdateSheetPostDto;
+import com.omegafrog.My.piano.app.web.enums.SheetPostSearchBackend;
 import com.omegafrog.My.piano.app.web.event.SheetPostSearchedEvent;
 import com.omegafrog.My.piano.app.web.service.cache.SheetPostDetailCachePayload;
 import com.omegafrog.My.piano.app.web.service.cache.SheetPostCacheCoordinator;
@@ -298,6 +299,16 @@ public class SheetPostApplicationService {
 			List<String> difficulty,
 			List<String> genre,
 			Pageable pageable) {
+		return getSheetPosts(searchSentence, instrument, difficulty, genre, SheetPostSearchBackend.ES, pageable);
+	}
+
+	public Page<SheetPostListDto> getSheetPosts(
+			String searchSentence,
+			List<String> instrument,
+			List<String> difficulty,
+			List<String> genre,
+			SheetPostSearchBackend searchBackend,
+			Pageable pageable) {
 		SheetPostListCacheKey cacheKey = SheetPostListCacheKey.of(
 				searchSentence,
 				instrument,
@@ -306,10 +317,12 @@ public class SheetPostApplicationService {
 				pageable);
 
 		SheetPostListCachePayload payload;
-		if (cacheKey.cacheable()) {
+		if (searchBackend == SheetPostSearchBackend.DB) {
+			payload = loadSheetPostListPayloadDb(searchSentence, instrument, difficulty, genre, pageable);
+		} else if (cacheKey.cacheable()) {
 			payload = getSheetPostListWithSWR(cacheKey, searchSentence, instrument, difficulty, genre, pageable);
 		} else {
-			payload = loadSheetPostListPayload(searchSentence, instrument, difficulty, genre, pageable);
+			payload = loadSheetPostListPayloadEs(searchSentence, instrument, difficulty, genre, pageable);
 		}
 
 		List<SheetPostListDto> sheetPostLists = copySheetPostListDtos(payload.items());
@@ -345,7 +358,7 @@ public class SheetPostApplicationService {
 			}
 			String cacheEntryKey = cacheKey.asStringKey();
 			try {
-				SheetPostListCachePayload loaded = loadSheetPostListPayload(null, null, null, null, pageable);
+				SheetPostListCachePayload loaded = loadSheetPostListPayloadDb(null, null, null, null, pageable);
 				listCache.put(cacheEntryKey,
 						sheetPostCacheCoordinator.buildSwrValue(
 								loaded,
@@ -413,7 +426,7 @@ public class SheetPostApplicationService {
 		return sheetPostCacheCoordinator.getWithSWR(
 				cache,
 				cacheEntryKey,
-				() -> loadSheetPostListPayload(searchSentence, instrument, difficulty, genre, pageable),
+				() -> loadSheetPostListPayloadEs(searchSentence, instrument, difficulty, genre, pageable),
 				SheetPostCacheCoordinator.LIST_SOFT_TTL_MIN_MS,
 				SheetPostCacheCoordinator.LIST_SOFT_TTL_MAX_MS,
 				SheetPostCacheCoordinator.LIST_HARD_TTL_MS
@@ -432,7 +445,7 @@ public class SheetPostApplicationService {
 		);
 	}
 
-	private SheetPostListCachePayload loadSheetPostListPayload(
+	private SheetPostListCachePayload loadSheetPostListPayloadEs(
 			String searchSentence,
 			List<String> instrument,
 			List<String> difficulty,
@@ -440,11 +453,11 @@ public class SheetPostApplicationService {
 			Pageable pageable
 	) {
 		Pair<Page<Long>, String> pairs = elasticSearchInstance.searchSheetPost(
-				searchSentence,
-				instrument,
-				difficulty,
-				genre,
-				pageable);
+					searchSentence,
+					instrument,
+					difficulty,
+					genre,
+					pageable);
 		Page<Long> sheetPostIds = pairs.getFirst();
 		String rawQuery = pairs.getSecond();
 		List<SheetPostListDto> rows = sheetPostIds.getContent().isEmpty()
@@ -453,6 +466,36 @@ public class SheetPostApplicationService {
 		return new SheetPostListCachePayload(
 				copySheetPostListDtos(rows),
 				sheetPostIds.getTotalElements(),
+				rawQuery
+		);
+	}
+
+	private SheetPostListCachePayload loadSheetPostListPayloadDb(
+			String searchSentence,
+			List<String> instrument,
+			List<String> difficulty,
+			List<String> genre,
+			Pageable pageable
+	) {
+		Page<SheetPostListDto> page = sheetPostRepository.searchSheetPosts(
+				searchSentence,
+				instrument,
+				difficulty,
+				genre,
+				pageable);
+
+		String rawQuery = String.format(
+				"db-search[sentence=%s,instrument=%s,difficulty=%s,genre=%s,page=%d,size=%d]",
+				searchSentence,
+				instrument,
+				difficulty,
+				genre,
+				pageable.getPageNumber(),
+				pageable.getPageSize());
+
+		return new SheetPostListCachePayload(
+				copySheetPostListDtos(page.getContent()),
+				page.getTotalElements(),
 				rawQuery
 		);
 	}

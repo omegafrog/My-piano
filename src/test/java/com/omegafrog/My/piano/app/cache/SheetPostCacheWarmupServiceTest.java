@@ -31,8 +31,8 @@ import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.util.Pair;
 
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
@@ -111,19 +111,12 @@ class SheetPostCacheWarmupServiceTest {
         AtomicReference<String> listTitle = new AtomicReference<>("title-v1");
         AtomicReference<String> detailTitle = new AtomicReference<>("detail-v1");
 
-        when(elasticSearchInstance.searchSheetPost(any(), any(), any(), any(), any(Pageable.class)))
+        when(sheetPostRepository.searchSheetPosts(any(), any(), any(), any(), any(Pageable.class)))
                 .thenAnswer(invocation -> {
                     Pageable pageable = invocation.getArgument(4);
-                    Page<Long> ids = new PageImpl<>(List.of((long) pageable.getPageNumber() + 1L), pageable, 3);
-                    return Pair.of(ids, "raw");
-                });
-
-        when(sheetPostRepository.findByIds(anyList(), any(Pageable.class)))
-                .thenAnswer(invocation -> {
-                    @SuppressWarnings("unchecked")
-                    List<Long> ids = invocation.getArgument(0);
-                    return ids.stream()
-                            .map(id -> new SheetPostListDto(
+                    long id = (long) pageable.getPageNumber() + 1L;
+                    List<SheetPostListDto> rows = List.of(
+                            new SheetPostListDto(
                                     id,
                                     listTitle.get(),
                                     "artist",
@@ -134,8 +127,8 @@ class SheetPostCacheWarmupServiceTest {
                                     Instrument.GUITAR_ACOUSTIC,
                                     LocalDateTime.now(),
                                     1000
-                            ))
-                            .toList();
+                            ));
+                    return new PageImpl<>(rows, PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()), 3);
                 });
 
         when(sheetPostRepository.findById(any(Long.class)))

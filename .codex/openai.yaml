@@ -1,0 +1,10 @@
+interface:
+  display_name: "Orchestrate Plan"
+  short_description: "Run harvest, design, docs, execution, and verification"
+  default_prompt: >
+    Use $orchestrate-plan to route this request through
+    use_case_harvester, oracle, doc_writer, doc_verify, executor,
+    test_gate, execute_writer, doc_verify, and closer.
+
+    Do not start oracle or any downstream step until the harvest document
+    is ready and the user explicitly approved proceeding.

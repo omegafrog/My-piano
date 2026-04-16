@@ -1,0 +1,35 @@
+# startup runner로 다중 Spring Batch job 명시 실행 전환
+
+- task: `startup-batch-runner-20260415-1727`
+- domain: `batch`
+- harvest: `docs/use-case-harvests/batch/startup-batch-runner-20260415-1727/use-case-harvest.md`
+- planning docs
+  - `docs/product-specs/batch/startup-batch-runner-20260415-1727/domain-boundary.md`
+  - `docs/product-specs/batch/startup-batch-runner-20260415-1727/use-cases.md`
+  - `docs/design-docs/batch/startup-batch-runner-20260415-1727/event-storming.md`
+  - `docs/design-docs/batch/startup-batch-runner-20260415-1727/aggregate-design.md`
+  - `docs/design-docs/batch/startup-batch-runner-20260415-1727/bounded-context.md`
+  - `docs/design-docs/batch/startup-batch-runner-20260415-1727/detailed-design.md`
+  - `docs/exec-plans/active/batch/startup-batch-runner-20260415-1727/plan.md`
+  - `docs/verification-reports/batch/startup-batch-runner-20260415-1727/doc-verify-before-execute.md`
+  - `docs/exec-plans/active/batch/startup-batch-runner-20260415-1727/implementation-log.md`
+  - `docs/verification-reports/batch/startup-batch-runner-20260415-1727/test-gate.md`
+  - `docs/verification-reports/batch/startup-batch-runner-20260415-1727/doc-verify-after-execute.md`
+  - `docs/verification-reports/batch/startup-batch-runner-20260415-1727/closure.md`
+- scope
+  - 기본 batch auto-launch 비활성화
+  - startup runner에서 두 job 명시 실행
+  - runner 실패 격리와 최소 회귀 검증 포인트 정리
+- status: stopped-after-test-gate
+- current-findings
+  - 기본 `bootRun` 충돌의 원인은 여러 `Job` bean이 있을 때 Boot auto-launch가 job name을 요구하는 구조다.
+  - 사용자 결정은 "두 job 모두 필요하지만 큰 동기화는 필요 없다"는 방향이다.
+  - 따라서 custom startup runner에서 두 job을 각각 launch하는 구조가 현재 요구에 가장 맞다.
+  - 기존 `@Scheduled` batch 실행은 별도로 유지될 가능성이 높다.
+  - startup runner 구현과 focused regression test(`BatchStartupJobRunnerTest`)는 완료됐다.
+  - repository-wide `./gradlew build --console=plain`는 `SheetPostCacheWarmupJobIntegrationTest`, 여러 `SecurityControllerTest`, 여러 `CommonUserServiceTest` 실패로 test gate에서 `FAIL` 판정을 받았다.
+  - `./gradlew bootRun` 런타임 검증은 아직 수행되지 않았다.
+- execution decisions
+  - startup warmup 1회 실행은 non-test 기본 정책으로 허용한다.
+  - startup runner 실패는 로그로 남기고 기동은 계속한다.
+  - `spring.batch.job.enabled=false` 적용 후 다른 startup 경로가 Boot 기본 auto-launch에 의존하지 않는다.

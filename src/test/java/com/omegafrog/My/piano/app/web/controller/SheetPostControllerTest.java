@@ -269,6 +269,23 @@ class SheetPostControllerTest {
   }
 
   @Test
+  void findAllWithDbSearchBackendTest() throws Exception {
+    testUtil.register(mockMvc, TestUtil.user1);
+    MockHttpSession session = testUtil.login(mockMvc, TestUtil.user1.getUsername(),
+        TestUtil.user1.getPassword());
+    RegisterSheetPostDto registerDto = TestUtil.registerSheetPostDto(TestUtil.registerSheetDto1);
+    testUtil.writeSheetPost(mockMvc, session, registerDto);
+
+    mockMvc.perform(get("/api/v1/sheet-post")
+        .param("searchSentence", "title")
+        .param("searchBackend", "db")
+        .session(session))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+        .andExpect(jsonPath("$.data.content[0].title").value("title"));
+  }
+
+  @Test
   @DisplayName("로그인한 유저는 댓글을 입력할 수 있다.")
   void commentTest() throws Exception {
     // given

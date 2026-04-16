@@ -1,0 +1,89 @@
+version: 1
+
+identity:
+  profile_name: default
+  status: active
+  last_updated: 2026-04-15
+  decided_by: bootstrap-orchestrate-plan
+
+stack:
+  language: Java
+  framework: Spring Boot
+  runtime: Java 17
+  build_tool: Gradle
+  package_manager: Gradle
+
+testing:
+  strategy: targeted-regression-with-build-gate
+  unit_test_framework: JUnit 5
+  integration_test_framework: Spring Boot Test + MockMvc + DataJpaTest
+  e2e_framework: none
+  commands:
+    build: ./gradlew build
+    unit_integration: ./gradlew test
+    e2e: none
+  required_stages:
+    - build
+    - unit-and-integration
+
+observability:
+  logging:
+    enabled: true
+    style: application logs with aspect-based performance tracing
+    facade: SLF4J
+    implementation: Logback
+    required_fields: []
+  metrics:
+    enabled: true
+    library: Micrometer + Spring Boot Actuator
+    exporter: in-process MeterRegistry / Actuator endpoints
+    required_metrics: []
+    common_tags: []
+
+api:
+  style: REST JSON over HTTP
+  error_handling: RestControllerAdvice + typed API response DTOs
+  dto_style: request/response DTOs under app/web/dto
+
+documentation:
+  code_comment_style: minimal comments, prefer self-explanatory service/domain naming
+  public_api_comments_required: false
+
+architecture:
+  pattern: layered Spring Boot monolith with domain/service/infra split and async outbox/event processing
+  dependency_rules:
+    - Controllers expose /api/v1/** endpoints and delegate to service/application-service classes.
+    - Domain packages own entities and repository interfaces; infra packages implement persistence adapters.
+    - Async workflows should prefer existing outbox processors and EventPublisher/Kafka consumers over ad-hoc topic wiring.
+    - File storage stays profile-aware: local filesystem in dev/test, S3-backed executors in prod.
+
+mocking:
+  policy: mock-external-systems-only
+
+resolution_policy:
+  source_of_truth_priority:
+    - .codex/stack-profile.yaml
+    - .codex/test-gate.yaml
+    - .codex/repository-settings.md
+    - existing_repository_convention
+  allow_repo_auto_detection: true
+  allow_existing_repo_convention_when_unspecified: true
+
+required_fields_for_oracle:
+  - stack.language
+  - stack.framework
+  - stack.runtime
+  - stack.build_tool
+  - testing.commands.unit_integration
+  - api.style
+
+required_fields_for_executor:
+  - stack.language
+  - stack.framework
+  - stack.runtime
+  - stack.build_tool
+  - testing.strategy
+  - testing.commands.unit_integration
+
+required_fields_for_test_gate:
+  - testing.commands.unit_integration
