@@ -41,6 +41,7 @@ out/
 /src/test/resources/application-test-secret.yml
 *.puml
 *.xml
+!/src/main/resources/logback-spring.xml
 
 
 application.pid

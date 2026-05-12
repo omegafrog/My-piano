@@ -89,3 +89,12 @@ server:
     key-store-type: PKCS12
     key-store: file:cert.p12
     # key-store-password moved to application-secret.yml
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,caches,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name:mypiano}

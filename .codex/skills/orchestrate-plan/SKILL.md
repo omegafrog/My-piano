@@ -2,8 +2,8 @@
 name: orchestrate-plan
 description: >
   run the workflow in this order:
-  use_case_harvester -> oracle -> doc_writer -> doc_verify ->
-  executor -> test_gate -> execute_writer -> doc_verify -> closer
+  use_case_harvester -> oracle -> doc_writer -> executor -> closer,
+  with verification and sync steps triggered by hooks
 ---
 
 # Orchestrate Plan
@@ -15,19 +15,24 @@ Source of truth priority:
 2. `.codex/stack-profile.yaml`
 3. `.codex/test-gate.yaml`
 4. `.codex/repository-settings.md`
-5. related docs
-6. the current codebase
+5. `.codex/hooks.yaml`
+6. related docs
+7. the current codebase
 
-Workflow order:
+Primary workflow order:
 1. use_case_harvester
 2. oracle
 3. doc_writer
-4. doc_verify
-5. executor
-6. test_gate
-7. execute_writer
-8. doc_verify
-9. closer
+4. executor
+5. closer
+
+Hook-driven stages:
+- after doc_writer -> doc_verify before execute
+- after executor -> test_gate
+- after passing test_gate -> execute_writer
+- after execute_writer -> doc_verify after execute
+- before closer -> closer preflight
+- on docs change -> doc_path lint
 
 Do not start oracle or any downstream step until one of these is true:
 

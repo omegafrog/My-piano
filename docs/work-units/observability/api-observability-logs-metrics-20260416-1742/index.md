@@ -1,0 +1,40 @@
+# 컨트롤러 기준 전체 API 디버그 로그 및 메트릭 수집
+
+- task: `api-observability-logs-metrics-20260416-1742`
+- domain: `observability`
+- harvest: `docs/use-case-harvests/observability/api-observability-logs-metrics-20260416-1742/use-case-harvest.md`
+- planning docs
+  - `docs/product-specs/observability/api-observability-logs-metrics-20260416-1742/domain-boundary.md`
+  - `docs/product-specs/observability/api-observability-logs-metrics-20260416-1742/use-cases.md`
+  - `docs/design-docs/observability/api-observability-logs-metrics-20260416-1742/event-storming.md`
+  - `docs/design-docs/observability/api-observability-logs-metrics-20260416-1742/aggregate-design.md`
+  - `docs/design-docs/observability/api-observability-logs-metrics-20260416-1742/bounded-context.md`
+  - `docs/design-docs/observability/api-observability-logs-metrics-20260416-1742/detailed-design.md`
+  - `docs/exec-plans/completed/observability/api-observability-logs-metrics-20260416-1742/plan.md`
+  - `docs/verification-reports/observability/api-observability-logs-metrics-20260416-1742/doc-verify-before-execute.md`
+  - `docs/exec-plans/completed/observability/api-observability-logs-metrics-20260416-1742/implementation-log.md`
+  - `docs/verification-reports/observability/api-observability-logs-metrics-20260416-1742/test-gate.md`
+  - `docs/verification-reports/observability/api-observability-logs-metrics-20260416-1742/doc-verify-after-execute.md`
+  - `docs/verification-reports/observability/api-observability-logs-metrics-20260416-1742/closure.md`
+- scope
+  - 전체 REST 컨트롤러 API 요청/응답 로그 수집 설계
+  - 예외/에러 발생 시 재현 가능한 구조화 로그와 correlation context 설계
+  - Micrometer/Actuator 기반 API 메트릭 수집 설계
+  - Loki/Prometheus REST API 기반 태그/생성일 조회 방식 설계
+  - 로그 수집 스택 추천과 Prometheus 메트릭 스택 확정
+  - 민감정보 마스킹, body size 제한, label cardinality 정책 정리
+- status: completed
+- current-findings
+  - Executor가 Spring MVC `/api/**` 요청을 대상으로 하는 공통 request/response structured logging filter를 구현했다.
+  - `ApiBodySummary`가 summary-only body logging, sensitive value masking, 4096-byte capture limit, truncation marker, content-type allowlist, multipart/file exclusion을 담당한다.
+  - `ApiExceptionLogger`와 `ExceptionAdvisor` 연동으로 handled exception은 correlation context와 stack trace를 포함해 한 번 기록된다.
+  - Logback JSON stdout config가 추가됐고, 권장 수집 경로는 `SLF4J/Logback JSON -> Grafana Alloy -> Loki`로 유지된다.
+  - `.gitignore`에 `/src/main/resources/logback-spring.xml` 예외를 추가해 repository-wide `*.xml` ignore rule에도 Logback JSON config가 정상 추적되도록 보정했다.
+  - `micrometer-registry-prometheus`, actuator `prometheus` exposure, `application=mypiano` common metrics tag가 추가됐다.
+  - 조회 API는 애플리케이션에 새로 만들지 않았고 Loki `/loki/api/v1/query_range`와 Prometheus `/api/v1/query_range`를 사용하는 운영 경계를 유지한다.
+  - Targeted executor evidence: `./gradlew compileJava` PASS, `./gradlew test --tests 'com.omegafrog.My.piano.app.utils.logging.*'` PASS.
+  - Final test gate evidence: `timeout 1200s ./gradlew --no-daemon build --stacktrace --console=plain` PASS (`BUILD SUCCESSFUL in 16m 6s`), `timeout 1200s ./gradlew --no-daemon test --stacktrace --console=plain` PASS (`BUILD SUCCESSFUL in 26s`, `:test UP-TO-DATE` after build).
+  - Earlier BLOCKED gate는 짧은 대기 시간과 sandbox Gradle socket/IP 제한 때문이며 구현 테스트 실패가 아니다.
+  - Post-execution doc verification passed after the `.gitignore` traceability fix for `src/main/resources/logback-spring.xml`.
+  - Closer moved execution docs from active to completed and set closure verdict to `COMPLETED`.
+  - 실제 Loki/Prometheus backend REST query 실행은 collector/backend 접근이 repository 밖에 있어 운영 후속 검증으로 남았다.

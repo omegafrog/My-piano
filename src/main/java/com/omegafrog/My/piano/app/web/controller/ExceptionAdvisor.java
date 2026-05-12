@@ -1,6 +1,7 @@
 package com.omegafrog.My.piano.app.web.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.omegafrog.My.piano.app.utils.logging.ApiExceptionLogger;
 import com.omegafrog.My.piano.app.security.exception.DuplicatePropertyException;
 import com.omegafrog.My.piano.app.web.exception.payment.PaymentException;
 import com.omegafrog.My.piano.app.web.response.APIBadRequestResponse;
@@ -9,8 +10,8 @@ import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceException;
 import jakarta.validation.ConstraintViolationException;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
@@ -21,8 +22,13 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.List;
 
 @RestControllerAdvice
-@Slf4j
 public class ExceptionAdvisor {
+
+    private final ApiExceptionLogger apiExceptionLogger;
+
+    public ExceptionAdvisor(ApiExceptionLogger apiExceptionLogger) {
+        this.apiExceptionLogger = apiExceptionLogger;
+    }
 
     /**
      * validation exception을 처리하는 handler
@@ -32,6 +38,7 @@ public class ExceptionAdvisor {
      */
     @ExceptionHandler(BindException.class)
     public Object controllerViolationProcessing(BindException ex) {
+        apiExceptionLogger.logHandledException(ex, HttpStatus.BAD_REQUEST);
         BindingResult bindingResult = ex.getBindingResult();
         StringBuilder builder = new StringBuilder();
         List<ObjectError> allErrors = bindingResult.getAllErrors();
@@ -52,7 +59,7 @@ public class ExceptionAdvisor {
 
     @ExceptionHandler(value = {JsonProcessingException.class, PersistenceException.class})
     public Object internalServerError(Throwable ex) {
-        log.error(ex.getLocalizedMessage());
+        apiExceptionLogger.logHandledException(ex, HttpStatus.INTERNAL_SERVER_ERROR);
 //        return new APIInternalServerResponse("예상하지 못한 에러입니다.");
         return new APIInternalServerResponse(ex.getMessage());
     }
@@ -68,13 +75,13 @@ public class ExceptionAdvisor {
             EntityExistsException.class, PaymentException.class,
             DuplicatePropertyException.class})
     public Object clientRequestError(RuntimeException ex) {
-        log.error(ex.getLocalizedMessage());
+        apiExceptionLogger.logHandledException(ex, HttpStatus.BAD_REQUEST);
         return new APIBadRequestResponse(ex.getMessage());
     }
 
     @ExceptionHandler({ConstraintViolationException.class })
     public Object JDBCBindingViolationExceptionHandler(ConstraintViolationException ex) {
-        log.error(ex.getMessage(), ex);
+        apiExceptionLogger.logHandledException(ex, HttpStatus.BAD_REQUEST);
         StringBuilder builder = new StringBuilder();
         ex.getConstraintViolations().forEach(
                 violation-> builder.append(violation.getMessage()).append("\n")
@@ -83,7 +90,7 @@ public class ExceptionAdvisor {
     }
     @ExceptionHandler(DataIntegrityViolationException.class)
     public Object JDBCBindingViolationExceptionHandler(DataIntegrityViolationException ex) {
-        log.error(ex.getMessage(), ex);
+        apiExceptionLogger.logHandledException(ex, HttpStatus.BAD_REQUEST);
         return new APIBadRequestResponse(ex.getCause().getCause().getMessage());
     }
 }

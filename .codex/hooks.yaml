@@ -1,0 +1,72 @@
+version: 1
+
+hooks:
+  - name: doc-verify-before-execute
+    when:
+      event: after_agent
+      agent: doc_writer
+    if:
+      any_changed:
+        - "docs/product-specs/**"
+        - "docs/design-docs/**"
+        - "docs/exec-plans/active/**/plan.md"
+        - "docs/work-units/**/index.md"
+    run:
+      - ".codex/hooks/doc-verify-before.sh"
+
+  - name: test-gate-after-executor
+    when:
+      event: after_agent
+      agent: executor
+    if:
+      any_changed:
+        - "src/**"
+        - "build.gradle"
+        - "build.gradle.kts"
+        - "settings.gradle"
+        - "settings.gradle.kts"
+        - "gradle.properties"
+        - "docs/exec-plans/active/**/plan.md"
+    run:
+      - ".codex/hooks/test-gate.sh"
+
+  - name: execute-writer-after-test-pass
+    when:
+      event: after_agent
+      agent: test_gate
+    if:
+      report_field_equals:
+        file_glob: "docs/verification-reports/**/test-gate.md"
+        field: "test_gate_verdict"
+        value: "PASS"
+    run:
+      - ".codex/hooks/execute-writer.sh"
+
+  - name: doc-verify-after-execute
+    when:
+      event: after_agent
+      agent: execute_writer
+    if:
+      any_changed:
+        - "docs/design-docs/**"
+        - "docs/exec-plans/active/**/implementation-log.md"
+        - "docs/exec-plans/active/**/plan.md"
+        - "docs/work-units/**/index.md"
+    run:
+      - ".codex/hooks/doc-verify-after.sh"
+
+  - name: closer-preflight
+    when:
+      event: before_agent
+      agent: closer
+    run:
+      - ".codex/hooks/closer-preflight.sh"
+
+  - name: doc-path-lint
+    when:
+      event: on_files_changed
+    if:
+      any_changed:
+        - "docs/**/*.md"
+    run:
+      - ".codex/hooks/doc-path-lint.sh"

@@ -1,6 +1,7 @@
 [agents]
 max_threads = 4
 max_depth = 2
+hooks_file = ".codex/hooks.yaml"
 
 [agents.use_case_harvester]
 description = "Collect use cases, classify work, and judge readiness"
