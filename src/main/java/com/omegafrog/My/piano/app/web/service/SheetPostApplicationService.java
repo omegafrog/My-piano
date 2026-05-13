@@ -309,6 +309,12 @@ public class SheetPostApplicationService {
 			List<String> genre,
 			SheetPostSearchBackend searchBackend,
 			Pageable pageable) {
+		searchSentence = SheetPostSearchRequestGuard.normalizeSearchSentence(searchSentence);
+		instrument = SheetPostSearchRequestGuard.normalizeFilterValues(instrument);
+		difficulty = SheetPostSearchRequestGuard.normalizeFilterValues(difficulty);
+		genre = SheetPostSearchRequestGuard.normalizeFilterValues(genre);
+		SheetPostSearchRequestGuard.validateListRequest(searchSentence, instrument, difficulty, genre, pageable);
+
 		SheetPostListCacheKey cacheKey = SheetPostListCacheKey.of(
 				searchSentence,
 				instrument,
@@ -403,6 +409,15 @@ public class SheetPostApplicationService {
 
 	public List<SheetPostListDto> getSheetPostAutoComplete(String searchSentence, List<String> instrument,
 			List<String> difficulty, List<String> genre) {
+		searchSentence = SheetPostSearchRequestGuard.normalizeSearchSentence(searchSentence);
+		instrument = SheetPostSearchRequestGuard.normalizeFilterValues(instrument);
+		difficulty = SheetPostSearchRequestGuard.normalizeFilterValues(difficulty);
+		genre = SheetPostSearchRequestGuard.normalizeFilterValues(genre);
+		SheetPostSearchRequestGuard.validateAutocompleteRequest(searchSentence, instrument, difficulty, genre);
+		if (!SheetPostSearchRequestGuard.isAutocompleteQueryAllowed(searchSentence)) {
+			return List.of();
+		}
+
 		List<SheetPostIndex> result = elasticSearchInstance.getSearchSheetPostAutoComplete(searchSentence, instrument,
 				difficulty, genre);
 		return sheetPostRepository.findAllById(result.stream().map(item -> item.getId()).toList())

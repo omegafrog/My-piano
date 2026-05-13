@@ -69,36 +69,36 @@ public class ElasticSearchInstance {
             @Nullable List<String> difficulties,
             @Nullable List<String> genres,
             Pageable pageable) {
-        // multi_match 쿼리 (title, name, content)
-        MultiMatchQuery mmQuery = MultiMatchQuery.of(q -> q
-                .query(searchSentence)
-                .fields("title^5", "name^4", "content^3")
-                .analyzer("my_nori_analyzer")
-                .minimumShouldMatch("2<75%"));
-
-        // bool should
         BoolQuery boolQuery = BoolQuery.of(b -> {
-            b.should(mmQuery._toQuery());
+            if (searchSentence == null || searchSentence.isBlank()) {
+                b.must(QueryBuilders.matchAll().build()._toQuery());
+            } else {
+                b.must(MultiMatchQuery.of(q -> q
+                        .query(searchSentence)
+                        .fields("title^5", "name^4", "content^3")
+                        .analyzer("my_nori_analyzer")
+                        .minimumShouldMatch("2<75%"))._toQuery());
+            }
 
             if (genres != null && !genres.isEmpty()) {
-                b.should(TermsQuery.of(t -> t
+                b.filter(TermsQuery.of(t -> t
                         .field("genre")
-                        .terms(TermsQueryField.of(f -> f.value(genres.stream().map(FieldValue::of).toList())))
-                        .boost(1.5f))._toQuery());
+                        .terms(TermsQueryField.of(f -> f.value(genres.stream().map(FieldValue::of).toList()))))
+                        ._toQuery());
             }
 
             if (difficulties != null && !difficulties.isEmpty()) {
-                b.should(TermsQuery.of(t -> t
+                b.filter(TermsQuery.of(t -> t
                         .field("difficulty")
-                        .terms(TermsQueryField.of(f -> f.value(difficulties.stream().map(FieldValue::of).toList())))
-                        .boost(1.2f))._toQuery());
+                        .terms(TermsQueryField.of(f -> f.value(difficulties.stream().map(FieldValue::of).toList()))))
+                        ._toQuery());
             }
 
             if (instruments != null && !instruments.isEmpty()) {
-                b.should(TermsQuery.of(t -> t
+                b.filter(TermsQuery.of(t -> t
                         .field("instrument")
-                        .terms(TermsQueryField.of(f -> f.value(instruments.stream().map(FieldValue::of).toList())))
-                        .boost(1.5f))._toQuery());
+                        .terms(TermsQueryField.of(f -> f.value(instruments.stream().map(FieldValue::of).toList()))))
+                        ._toQuery());
             }
 
             return b;
@@ -246,27 +246,24 @@ public class ElasticSearchInstance {
             // keyword 자동완성
             b.must(mmQuery._toQuery());
 
-            // instrument 필터
             if (instruments != null && !instruments.isEmpty()) {
-                b.must(TermsQuery.of(t -> t
+                b.filter(TermsQuery.of(t -> t
                         .field("instrument")
                         .terms(TermsQueryField.of(f -> f.value(
                                 instruments.stream().map(FieldValue::of).collect(Collectors.toList())))))
                         ._toQuery());
             }
 
-            // genre 필터
             if (genres != null && !genres.isEmpty()) {
-                b.must(TermsQuery.of(t -> t
+                b.filter(TermsQuery.of(t -> t
                         .field("genre")
                         .terms(TermsQueryField.of(f -> f.value(
                                 genres.stream().map(FieldValue::of).collect(Collectors.toList())))))
                         ._toQuery());
             }
 
-            // difficulty 필터
             if (difficulties != null && !difficulties.isEmpty()) {
-                b.must(TermsQuery.of(t -> t
+                b.filter(TermsQuery.of(t -> t
                         .field("difficulty")
                         .terms(TermsQueryField.of(f -> f.value(
                                 difficulties.stream().map(FieldValue::of).collect(Collectors.toList())))))
