@@ -82,7 +82,7 @@ public class SheetPostOutboxProcessor {
                 SheetPost sheetPost = sheetPostRepository.findById(event.getSheetPostId())
                         .orElseThrow(() -> new EntityNotFoundException(
                                 "Cannot find sheet post. id=" + event.getSheetPostId()));
-                elasticSearchInstance.invertIndexingSheetPost(sheetPost);
+                elasticSearchInstance.saveSheetPostIndex(sheetPost);
             }
             event.markCompleted(now);
         } catch (Exception e) {
