@@ -1,6 +1,8 @@
 package com.omegafrog.My.piano.app.security.filter;
 
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
+import com.omegafrog.My.piano.app.security.jwt.RefreshToken;
+import com.omegafrog.My.piano.app.security.jwt.TokenInfo;
 import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
 import com.omegafrog.My.piano.app.web.domain.user.SecurityUserRepository;
 import com.omegafrog.My.piano.app.web.domain.user.authorities.Role;
@@ -12,7 +14,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -28,15 +29,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 public class CommonUserJwtTokenFilter extends OncePerRequestFilter {
 
     private final SecurityUserRepository securityUserRepository;
     private final RefreshTokenRepository refreshTokenRepository;
-
-    @Autowired
-    private TokenUtils tokenUtils;
+    private final TokenUtils tokenUtils;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -74,20 +74,29 @@ public class CommonUserJwtTokenFilter extends OncePerRequestFilter {
 
         try {
             // token 추출
-            String accessToken = tokenUtils.getAccessTokenString(request.getHeader(HttpHeaders.AUTHORIZATION));
+            String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+            if (authHeader == null || authHeader.isBlank()) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+            String accessToken = tokenUtils.getAccessTokenString(authHeader);
             // token으로부터 유저 추출
             Claims claims = tokenUtils.extractClaims(accessToken);
             Long userId = Long.valueOf((String) claims.get("id"));
             Role role = Role.valueOf(String.valueOf(claims.get("role")));
 
             // refresh token repository에 해당 유저의 refresh token이 없다면 로그아웃한 것.
-            if (refreshTokenRepository.findByRoleAndUserId(userId, role).isEmpty()) {
+            Optional<RefreshToken> refreshToken = refreshTokenRepository.findByRoleAndUserId(userId, role);
+            if (refreshToken.isEmpty()) {
                 throw new BadCredentialsException("Already logged out user.");
             }
             // token validation 진행
             UserDetails user = getUserFromAccessToken(userId);
             Authentication usernameToken = getAuthenticationToken(user);
             SecurityContextHolder.getContext().setAuthentication(usernameToken);
+            TokenInfo tokenInfo = tokenUtils.refreshAccessToken(String.valueOf(userId), role, refreshToken.get());
+            response.setHeader(HttpHeaders.AUTHORIZATION, tokenInfo.getGrantType() + " " + tokenInfo.getAccessToken());
+            response.setHeader(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.AUTHORIZATION);
         } catch (ExpiredJwtException e) {
             // 만료되었을 때
             e.printStackTrace();

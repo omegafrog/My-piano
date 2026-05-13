@@ -42,7 +42,7 @@ public class JwtAuthenticationProvider implements AuthenticationProvider {
 
             SecurityUser user = findUser(securityUserId);
             RefreshToken refreshToken = findRefreshToken(securityUserId, securityUserRole);
-            TokenInfo tokenInfo = tokenUtils.wrap(accessToken, refreshToken);
+            TokenInfo tokenInfo = tokenUtils.refreshAccessToken(String.valueOf(securityUserId), securityUserRole, refreshToken);
             return JwtAuthenticationToken.authenticated(user.getAuthorities(), tokenInfo, securityUserId);
         } catch (ExpiredJwtException e) {
             validateExpiredTokenClaims(e);
