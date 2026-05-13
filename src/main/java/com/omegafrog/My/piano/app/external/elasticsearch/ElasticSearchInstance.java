@@ -56,11 +56,19 @@ public class ElasticSearchInstance {
 
     @Async("ThreadPoolTaskExecutor")
     public void invertIndexingSheetPost(SheetPost sheetPost) {
+        saveSheetPostIndex(sheetPost);
+    }
+
+    public void saveSheetPostIndex(SheetPost sheetPost) {
         sheetPostIndexRepository.save(SheetPostIndex.of(sheetPost));
     }
 
     @Async("ThreadPoolTaskExecutor")
     public void invertIndexingSheetPost(SheetPostIndex index) {
+        saveSheetPostIndex(index);
+    }
+
+    public void saveSheetPostIndex(SheetPostIndex index) {
         sheetPostIndexRepository.save(index);
     }
 
