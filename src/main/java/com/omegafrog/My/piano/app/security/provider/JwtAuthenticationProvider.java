@@ -43,7 +43,9 @@ public class JwtAuthenticationProvider implements AuthenticationProvider {
             SecurityUser user = findUser(securityUserId);
             RefreshToken refreshToken = findRefreshToken(securityUserId, securityUserRole);
             TokenInfo tokenInfo = tokenUtils.wrap(accessToken, refreshToken);
-            return JwtAuthenticationToken.authenticated(user.getAuthorities(), tokenInfo, securityUserId);
+            JwtAuthenticationToken authenticated = JwtAuthenticationToken.authenticated(user.getAuthorities(), tokenInfo, securityUserId);
+            authenticated.setDetails(user.getUser());
+            return authenticated;
         } catch (ExpiredJwtException e) {
             validateExpiredTokenClaims(e);
             throw new CredentialsExpiredException("Access token is expired.", e);

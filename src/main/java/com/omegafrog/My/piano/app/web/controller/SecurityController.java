@@ -138,6 +138,7 @@ public class SecurityController {
         securityUser,
         null,
         securityUser.getAuthorities());
+    authentication.setDetails(securityUser.getUser());
     SecurityContext context = SecurityContextHolder.createEmptyContext();
     context.setAuthentication(authentication);
     SecurityContextHolder.setContext(context);

@@ -2,6 +2,7 @@ package com.omegafrog.My.piano.app.security.filter;
 
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
+import com.omegafrog.My.piano.app.web.domain.user.SecurityUser;
 import com.omegafrog.My.piano.app.web.domain.user.SecurityUserRepository;
 import com.omegafrog.My.piano.app.web.domain.user.authorities.Role;
 import io.jsonwebtoken.Claims;
@@ -20,7 +21,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -85,7 +85,7 @@ public class CommonUserJwtTokenFilter extends OncePerRequestFilter {
                 throw new BadCredentialsException("Already logged out user.");
             }
             // token validation 진행
-            UserDetails user = getUserFromAccessToken(userId);
+            SecurityUser user = getUserFromAccessToken(userId);
             Authentication usernameToken = getAuthenticationToken(user);
             SecurityContextHolder.getContext().setAuthentication(usernameToken);
         } catch (ExpiredJwtException e) {
@@ -96,13 +96,15 @@ public class CommonUserJwtTokenFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private UserDetails getUserFromAccessToken(Long userId) {
+    private SecurityUser getUserFromAccessToken(Long userId) {
         return securityUserRepository.findById(userId).orElseThrow(
                 () -> new EntityNotFoundException("Cannot find User entity"));
     }
 
-    private static Authentication getAuthenticationToken(UserDetails user) {
-        return new UsernamePasswordAuthenticationToken(
+    private static Authentication getAuthenticationToken(SecurityUser user) {
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                 user, null, user.getAuthorities());
+        authentication.setDetails(user.getUser());
+        return authentication;
     }
 }

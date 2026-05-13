@@ -4,9 +4,12 @@ import com.omegafrog.My.piano.app.security.jwt.JwtAuthenticationToken;
 import com.omegafrog.My.piano.app.security.jwt.RefreshToken;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
+import com.omegafrog.My.piano.app.web.domain.cart.Cart;
 import com.omegafrog.My.piano.app.web.domain.user.SecurityUser;
 import com.omegafrog.My.piano.app.web.domain.user.SecurityUserRepository;
+import com.omegafrog.My.piano.app.web.domain.user.User;
 import com.omegafrog.My.piano.app.web.domain.user.authorities.Role;
+import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -47,10 +50,12 @@ class JwtAuthenticationProviderTest {
     @DisplayName("유효한 access token이면 authenticated JWT Authentication을 반환한다")
     void authenticateWithValidToken() {
         Claims claims = claims("1", Role.USER);
+        User user = user();
         SecurityUser securityUser = SecurityUser.builder()
                 .username("user1")
                 .password("encoded")
                 .role(Role.USER)
+                .user(user)
                 .build();
         RefreshToken refreshToken = RefreshToken.builder()
                 .id("USER-1")
@@ -71,6 +76,7 @@ class JwtAuthenticationProviderTest {
         assertThat(authentication).isInstanceOf(JwtAuthenticationToken.class);
         assertThat(authentication.isAuthenticated()).isTrue();
         assertThat(authentication.getPrincipal()).isEqualTo(1L);
+        assertThat(authentication.getDetails()).isSameAs(user);
     }
 
     @Test
@@ -136,5 +142,15 @@ class JwtAuthenticationProviderTest {
         claims.put("id", id);
         claims.put("role", role.value);
         return claims;
+    }
+
+    private User user() {
+        return User.builder()
+                .name("user")
+                .email("user@email.com")
+                .loginMethod(LoginMethod.EMAIL)
+                .cart(new Cart())
+                .profileSrc("profileSrc")
+                .build();
     }
 }
