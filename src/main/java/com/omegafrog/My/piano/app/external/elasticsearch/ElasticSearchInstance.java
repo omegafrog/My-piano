@@ -31,6 +31,7 @@ import org.springframework.data.util.Pair;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
+import io.micrometer.core.instrument.Timer;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.time.ZoneOffset;
@@ -56,12 +57,24 @@ public class ElasticSearchInstance {
 
     @Async("ThreadPoolTaskExecutor")
     public void invertIndexingSheetPost(SheetPost sheetPost) {
-        sheetPostIndexRepository.save(SheetPostIndex.of(sheetPost));
+        try {
+            sheetPostIndexRepository.save(SheetPostIndex.of(sheetPost));
+            ElasticSearchOperationMetrics.recordIndexingSuccess("sheet_post");
+        } catch (RuntimeException e) {
+            ElasticSearchOperationMetrics.recordIndexingError("sheet_post");
+            throw e;
+        }
     }
 
     @Async("ThreadPoolTaskExecutor")
     public void invertIndexingSheetPost(SheetPostIndex index) {
-        sheetPostIndexRepository.save(index);
+        try {
+            sheetPostIndexRepository.save(index);
+            ElasticSearchOperationMetrics.recordIndexingSuccess("sheet_post");
+        } catch (RuntimeException e) {
+            ElasticSearchOperationMetrics.recordIndexingError("sheet_post");
+            throw e;
+        }
     }
 
     public Pair<Page<Long>, String> searchSheetPost(@Nullable String searchSentence,
@@ -121,14 +134,21 @@ public class ElasticSearchInstance {
                 .from((int) pageable.getOffset())
                 .size(pageable.getPageSize()));
 
+        Timer.Sample sample = ElasticSearchOperationMetrics.startSearchTimer();
         SearchResponse<SheetPostIndex> response = null;
         try {
             response = client.search(searchRequest, SheetPostIndex.class);
         } catch (IOException e) {
+            ElasticSearchOperationMetrics.recordSearchError("sheet_post_search", sample);
             throw new ElasticSearchException("elasticsearch query failed. query:" + searchRequest.query().toString(),
                     e);
         }
+        if (response.timedOut()) {
+            ElasticSearchOperationMetrics.recordSearchTimeout("sheet_post_search", sample);
+            throw new ElasticSearchException("elasticsearch query timed out. query:" + searchRequest.query().toString());
+        }
         long count = response.hits().total().value();
+        ElasticSearchOperationMetrics.recordSearchSuccess("sheet_post_search", sample, count == 0);
 
         List<Hit<SheetPostIndex>> hits = response.hits().hits();
         List<Long> sheetPostIds = new ArrayList<>();
@@ -292,14 +312,21 @@ public class ElasticSearchInstance {
                 .query(functionScoreQuery._toQuery())
                 .size(AUTOCOMPLETE_SIZE));
 
+        Timer.Sample sample = ElasticSearchOperationMetrics.startSearchTimer();
         SearchResponse<SheetPostIndex> response = null;
         try {
             response = client.search(searchRequest, SheetPostIndex.class);
         } catch (IOException e) {
+            ElasticSearchOperationMetrics.recordSearchError("sheet_post_autocomplete", sample);
             throw new ElasticSearchException("sheetpostindex search failed", e);
+        }
+        if (response.timedOut()) {
+            ElasticSearchOperationMetrics.recordSearchTimeout("sheet_post_autocomplete", sample);
+            throw new ElasticSearchException("sheetpostindex search timed out");
         }
 
         List<Hit<SheetPostIndex>> hits = response.hits().hits();
+        ElasticSearchOperationMetrics.recordSearchSuccess("sheet_post_autocomplete", sample, hits.isEmpty());
         return hits.stream().map(Hit::source).toList();
     }
 

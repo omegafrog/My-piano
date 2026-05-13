@@ -24,6 +24,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.omegafrog.My.piano.app.external.elasticsearch.ElasticSearchInstance;
+import com.omegafrog.My.piano.app.external.elasticsearch.ElasticSearchOperationMetrics;
+import com.omegafrog.My.piano.app.external.elasticsearch.exception.ElasticSearchException;
 import com.omegafrog.My.piano.app.external.elasticsearch.SheetPostIndex;
 import com.omegafrog.My.piano.app.external.elasticsearch.SheetPostIndexRepository;
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
@@ -452,12 +454,30 @@ public class SheetPostApplicationService {
 			List<String> genre,
 			Pageable pageable
 	) {
-		Pair<Page<Long>, String> pairs = elasticSearchInstance.searchSheetPost(
+		Pair<Page<Long>, String> pairs;
+		try {
+			pairs = elasticSearchInstance.searchSheetPost(
+						searchSentence,
+						instrument,
+						difficulty,
+						genre,
+						pageable);
+		} catch (ElasticSearchException e) {
+			ElasticSearchOperationMetrics.recordSearchFallback(e);
+			log.warn("Falling back to DB sheet post search because Elasticsearch search failed. sentence={}, page={}",
+					searchSentence, pageable.getPageNumber(), e);
+			SheetPostListCachePayload fallback = loadSheetPostListPayloadDb(
 					searchSentence,
 					instrument,
 					difficulty,
 					genre,
 					pageable);
+			return new SheetPostListCachePayload(
+					fallback.items(),
+					fallback.totalElements(),
+					"es-fallback[reason=" + e.getClass().getSimpleName() + "," + fallback.rawQuery() + "]"
+			);
+		}
 		Page<Long> sheetPostIds = pairs.getFirst();
 		String rawQuery = pairs.getSecond();
 		List<SheetPostListDto> rows = sheetPostIds.getContent().isEmpty()
