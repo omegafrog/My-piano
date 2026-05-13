@@ -23,7 +23,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -31,6 +33,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity(name = "security_user")
+@Table(name = "security_user", uniqueConstraints = {
+		@UniqueConstraint(name = "uk_security_user_username", columnNames = "username")
+})
 @NoArgsConstructor
 @Getter
 @Setter(AccessLevel.PRIVATE)
@@ -44,7 +49,7 @@ public class SecurityUser implements UserDetails {
 	@Getter
 	private Long id;
 
-	@Column(unique = true)
+	@Column(nullable = false)
 	private String username;
 	private String password;
 	private Role role;
