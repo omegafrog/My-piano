@@ -24,6 +24,11 @@ public class AuthenticationUtil {
             throw new AccessDeniedException("authentication is null");
         }
 
+        Object details = authentication.getDetails();
+        if (details instanceof User user) {
+            return user;
+        }
+
         Object principal = authentication.getPrincipal();
         if (!(principal instanceof SecurityUser securityUser)) {
             throw new AccessDeniedException("unexpected principal type");
