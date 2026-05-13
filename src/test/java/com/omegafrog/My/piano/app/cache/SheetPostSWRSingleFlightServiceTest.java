@@ -97,7 +97,6 @@ class SheetPostSWRSingleFlightServiceTest {
         sheetPostCacheCoordinator = new SheetPostCacheCoordinator(cacheManager, new SingleFlightCoordinator(), executorProvider);
 
         service = new SheetPostApplicationService(
-                sheetPostIndexRepository,
                 sheetPostRepository,
                 userRepository,
                 elasticSearchInstance,

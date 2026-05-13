@@ -172,7 +172,6 @@ class SheetPostCachePerformanceCharacterizationTest {
         );
 
         return new SheetPostApplicationService(
-                sheetPostIndexRepository,
                 sheetPostRepository,
                 userRepository,
                 elasticSearchInstance,

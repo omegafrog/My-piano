@@ -25,7 +25,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.omegafrog.My.piano.app.external.elasticsearch.ElasticSearchInstance;
 import com.omegafrog.My.piano.app.external.elasticsearch.SheetPostIndex;
-import com.omegafrog.My.piano.app.external.elasticsearch.SheetPostIndexRepository;
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.utils.MapperUtil;
 import com.omegafrog.My.piano.app.web.domain.FileStorageExecutor;
@@ -59,8 +58,6 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional
 @Slf4j
 public class SheetPostApplicationService {
-	private final SheetPostIndexRepository sheetPostIndexRepository;
-
 	private final SheetPostRepository sheetPostRepository;
 	private final UserRepository userRepository;
 
@@ -209,7 +206,7 @@ public class SheetPostApplicationService {
 
 		// SheetPost 업데이트 (기본 정보: title, content, price 등)
 		SheetPost updated = sheetPost.update(dto);
-		elasticSearchInstance.invertIndexingSheetPost(updated);
+		sheetPostOutboxService.enqueueUpdated(updated.getId());
 		sheetPostCacheCoordinator.evictSheetPostListCache();
 		sheetPostCacheCoordinator.evictSheetPostDetailCache(id);
 		return updated.toDto();
@@ -231,12 +228,12 @@ public class SheetPostApplicationService {
 		User loggedInUser = authenticationUtil.getLoggedInUser();
 		SheetPost sheetPost = sheetPostRepository.findById(id)
 				.orElseThrow(() -> new EntityNotFoundException("Cannot find sheet post entity : " + id));
-		uploadFileExecutor.removeSheetPost(sheetPost);
-		sheetPostIndexRepository.deleteById(id);
-		if (sheetPost.getAuthor().equals(loggedInUser))
-			sheetPostRepository.deleteById(sheetPost.getId());
-		else
+		if (!sheetPost.getAuthor().equals(loggedInUser)) {
 			throw new AccessDeniedException("Cannot delete other user's sheet post entity : " + id);
+		}
+		uploadFileExecutor.removeSheetPost(sheetPost);
+		sheetPostRepository.deleteById(sheetPost.getId());
+		sheetPostOutboxService.enqueueDeleted(sheetPost.getId());
 		sheetPostCacheCoordinator.evictSheetPostListCache();
 		sheetPostCacheCoordinator.evictSheetPostDetailCache(id);
 	}

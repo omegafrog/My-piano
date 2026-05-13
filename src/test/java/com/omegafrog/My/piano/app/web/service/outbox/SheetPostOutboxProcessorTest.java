@@ -72,9 +72,38 @@ class SheetPostOutboxProcessorTest {
     }
 
     @Test
+    @DisplayName("수정 이벤트도 Elasticsearch upsert 성공 후 완료 처리한다")
+    void completeUpdatedEventAfterSuccessfulIndexing() {
+        SheetPostOutboxEvent event = SheetPostOutboxEvent.pending("evt-2", 11L, SheetPostOutboxEventType.SHEET_POST_UPDATED);
+        SheetPost sheetPost = org.mockito.Mockito.mock(SheetPost.class);
+
+        when(outboxRepository.findProcessable(any(LocalDateTime.class), anyInt())).thenReturn(List.of(event));
+        when(sheetPostRepository.findById(11L)).thenReturn(Optional.of(sheetPost));
+
+        processor.processPendingEvents();
+
+        assertThat(event.getStatus()).isEqualTo(SheetPostOutboxEventStatus.COMPLETED);
+        verify(elasticSearchInstance).saveSheetPostIndex(sheetPost);
+    }
+
+    @Test
+    @DisplayName("삭제 이벤트는 엔티티 재조회 없이 Elasticsearch delete 성공 후 완료 처리한다")
+    void completeDeletedEventAfterSuccessfulDelete() {
+        SheetPostOutboxEvent event = SheetPostOutboxEvent.pending("evt-3", 12L, SheetPostOutboxEventType.SHEET_POST_DELETED);
+
+        when(outboxRepository.findProcessable(any(LocalDateTime.class), anyInt())).thenReturn(List.of(event));
+
+        processor.processPendingEvents();
+
+        assertThat(event.getStatus()).isEqualTo(SheetPostOutboxEventStatus.COMPLETED);
+        verify(elasticSearchInstance).deleteSheetPostIndex(12L);
+        verify(sheetPostRepository, never()).findById(any());
+    }
+
+    @Test
     @DisplayName("Elasticsearch 저장 실패 시 completed 처리하지 않고 재시도 가능 상태로 남긴다")
     void markFailedWhenIndexingThrows() {
-        SheetPostOutboxEvent event = SheetPostOutboxEvent.pending("evt-2", 20L, SheetPostOutboxEventType.SHEET_POST_CREATED);
+        SheetPostOutboxEvent event = SheetPostOutboxEvent.pending("evt-4", 20L, SheetPostOutboxEventType.SHEET_POST_CREATED);
         SheetPost sheetPost = org.mockito.Mockito.mock(SheetPost.class);
 
         when(outboxRepository.findProcessable(any(LocalDateTime.class), anyInt())).thenReturn(List.of(event));

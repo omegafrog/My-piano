@@ -78,12 +78,7 @@ public class SheetPostOutboxProcessor {
         LocalDateTime now = now();
 
         try {
-            if (event.getEventType() == SheetPostOutboxEventType.SHEET_POST_CREATED) {
-                SheetPost sheetPost = sheetPostRepository.findById(event.getSheetPostId())
-                        .orElseThrow(() -> new EntityNotFoundException(
-                                "Cannot find sheet post. id=" + event.getSheetPostId()));
-                elasticSearchInstance.saveSheetPostIndex(sheetPost);
-            }
+            applyToElastic(event);
             event.markCompleted(now);
         } catch (Exception e) {
             log.error(
@@ -93,6 +88,18 @@ public class SheetPostOutboxProcessor {
                     e);
             event.markFailed(e.getMessage(), now.plus(retryDelay));
         }
+    }
+
+    private void applyToElastic(SheetPostOutboxEvent event) {
+        if (event.getEventType() == SheetPostOutboxEventType.SHEET_POST_DELETED) {
+            elasticSearchInstance.deleteSheetPostIndex(event.getSheetPostId());
+            return;
+        }
+
+        SheetPost sheetPost = sheetPostRepository.findById(event.getSheetPostId())
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Cannot find sheet post. id=" + event.getSheetPostId()));
+        elasticSearchInstance.saveSheetPostIndex(sheetPost);
     }
 
     private LocalDateTime now() {

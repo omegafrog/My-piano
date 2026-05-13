@@ -72,6 +72,10 @@ public class ElasticSearchInstance {
         sheetPostIndexRepository.save(index);
     }
 
+    public void deleteSheetPostIndex(Long sheetPostId) {
+        sheetPostIndexRepository.deleteById(sheetPostId);
+    }
+
     public Pair<Page<Long>, String> searchSheetPost(@Nullable String searchSentence,
             @Nullable List<String> instruments,
             @Nullable List<String> difficulties,

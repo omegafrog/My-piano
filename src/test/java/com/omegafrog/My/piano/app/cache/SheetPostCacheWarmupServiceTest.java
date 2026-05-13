@@ -91,7 +91,6 @@ class SheetPostCacheWarmupServiceTest {
         sheetPostCacheCoordinator = new SheetPostCacheCoordinator(cacheManager, singleFlightCoordinator, executorProvider);
 
         service = new SheetPostApplicationService(
-                sheetPostIndexRepository,
                 sheetPostRepository,
                 userRepository,
                 elasticSearchInstance,
