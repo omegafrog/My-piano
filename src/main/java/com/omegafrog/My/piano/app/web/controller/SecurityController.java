@@ -76,11 +76,6 @@ public class SecurityController {
     return new ApiResponse<>("validate success.");
   }
 
-  @GetMapping("/revalidate")
-  public JsonAPIResponse revalidateToken() {
-    return new APIBadRequestResponse("Session auth does not support token revalidation.");
-  }
-
   @ExceptionHandler(S3Exception.class)
   public APIBadRequestResponse S3ExceptionHandler(S3Exception ex) {
     return new APIBadRequestResponse(ex.getMessage());

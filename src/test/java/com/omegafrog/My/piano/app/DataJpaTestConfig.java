@@ -2,7 +2,6 @@ package com.omegafrog.My.piano.app;
 
 import com.omegafrog.My.piano.app.external.elasticsearch.SheetPostIndexRepository;
 import com.omegafrog.My.piano.app.external.elasticsearch.SheetPostSearchIndexRepository;
-import com.omegafrog.My.piano.app.security.infrastructure.redis.RedisRefreshTokenRepository;
 import com.omegafrog.My.piano.app.web.infra.Subscription.RedisSubscriptionRepository;
 import com.omegafrog.My.piano.app.web.infra.lesson.RedisLessonLikeCountRepository;
 import com.omegafrog.My.piano.app.web.infra.lesson.RedisLessonViewCountRepository;
@@ -22,8 +21,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
         type = FilterType.ASSIGNABLE_TYPE,
         classes = {SheetPostIndexRepository.class,
                 SheetPostSearchIndexRepository.class,
-                RedisRefreshTokenRepository.class,
-
                 RedisLessonViewCountRepository.class,
                 RedisLessonLikeCountRepository.class,
 

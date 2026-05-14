@@ -5,10 +5,6 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
 import com.google.api.client.json.gson.GsonFactory;
 import com.omegafrog.My.piano.app.security.exception.DuplicatePropertyException;
-import com.omegafrog.My.piano.app.security.jwt.RefreshToken;
-import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
-import com.omegafrog.My.piano.app.security.jwt.TokenInfo;
-import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
 import com.omegafrog.My.piano.app.web.domain.user.SecurityUser;
@@ -20,14 +16,12 @@ import com.omegafrog.My.piano.app.web.dto.user.SecurityUserDto;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 import io.awspring.cloud.s3.ObjectMetadata;
 import io.awspring.cloud.s3.S3Template;
-import io.jsonwebtoken.ExpiredJwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.MediaType;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -50,7 +44,6 @@ public class CommonUserService implements UserDetailsService {
     @Lazy
     private final PasswordEncoder passwordEncoder;
     private final SecurityUserRepository securityUserRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
     private final GooglePublicKeysManager googlePublicKeysManager;
     private final AuthenticationUtil authenticationUtil;
     @Autowired
@@ -59,11 +52,7 @@ public class CommonUserService implements UserDetailsService {
     private String bucketName;
     @Value("${spring.cloud.aws.region.static}")
     private String regionName;
-    @Value("${security.jwt.secret}")
-    private String jwtSecret;
     private final S3Client s3Client;
-    @Autowired
-    private TokenUtils tokenUtils;
 
 
     /**
@@ -152,34 +141,6 @@ public class CommonUserService implements UserDetailsService {
         securityUserRepository.deleteById(securityUser.getId());
     }
 
-
-    public TokenInfo getTokenInfo(ExpiredJwtException e) {
-        Long userId = Long.valueOf((String) e.getClaims().get("id"));
-        Optional<SecurityUser> founded = securityUserRepository.findById(userId);
-        if (founded.isEmpty()) throw new AccessDeniedException("Unauthorized access token.");
-
-        RefreshToken refreshToken = refreshTokenRepository.findByRoleAndUserId(userId, founded.get().getRole())
-                .orElseThrow(() -> new AccessDeniedException("로그인이 만료되었습니다."));
-
-        TokenInfo tokenInfo = tokenUtils.generateToken(String.valueOf(userId), founded.get().getRole());
-        refreshToken.updateRefreshToken(tokenInfo.getRefreshToken().getPayload());
-        return tokenInfo;
-    }
-
-    public TokenInfo loginGoogleUser(String idToken) throws GeneralSecurityException, IOException {
-        GoogleIdToken parsed = getGoogleIdToken(idToken);
-        verifyGoogleIdToken(parsed);
-
-        SecurityUser user = (SecurityUser) loadUserByUsername(parsed.getPayload().getEmail());
-
-        TokenInfo tokenInfo = tokenUtils.generateToken(String.valueOf(user.getId()), user.getRole());
-        Optional<RefreshToken> foundedRefreshToken = refreshTokenRepository.findByRoleAndUserId(user.getId(), user.getRole());
-        if (foundedRefreshToken.isPresent()) {
-            foundedRefreshToken.get().updateRefreshToken(tokenInfo.getRefreshToken().getPayload());
-        } else
-            refreshTokenRepository.save(tokenInfo.getRefreshToken());
-        return tokenInfo;
-    }
 
     public SecurityUser findGoogleUser(String idToken) throws IOException, GeneralSecurityException {
         GoogleIdToken googleIdToken = getGoogleIdToken(idToken);

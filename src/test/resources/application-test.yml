@@ -75,12 +75,6 @@ security:
   password:
     expire:
       period: 90L
-  jwt:
-    accessToken:
-      period: 6000000
-    refreshToken:
-      period: 1209600
-
 firebase:
   app:
     admin:
