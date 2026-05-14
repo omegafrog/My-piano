@@ -90,6 +90,9 @@ public class CommonUserJwtTokenFilter extends OncePerRequestFilter {
             if (refreshToken.isEmpty()) {
                 throw new BadCredentialsException("Already logged out user.");
             }
+            if (!tokenUtils.isNonExpired(refreshToken.get().getPayload())) {
+                throw new BadCredentialsException("Refresh token is expired.");
+            }
             // token validation 진행
             UserDetails user = getUserFromAccessToken(userId);
             Authentication usernameToken = getAuthenticationToken(user);

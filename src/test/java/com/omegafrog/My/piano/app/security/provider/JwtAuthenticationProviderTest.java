@@ -66,6 +66,7 @@ class JwtAuthenticationProviderTest {
         given(tokenUtils.extractClaims("access-token")).willReturn(claims);
         given(securityUserRepository.findById(1L)).willReturn(Optional.of(securityUser));
         given(refreshTokenRepository.findByRoleAndUserId(1L, Role.USER)).willReturn(Optional.of(refreshToken));
+        given(tokenUtils.isNonExpired("refresh")).willReturn(true);
         given(tokenUtils.refreshAccessToken("1", Role.USER, refreshToken))
                 .willReturn(TokenInfo.builder()
                         .grantType("Bearer")
@@ -126,11 +127,41 @@ class JwtAuthenticationProviderTest {
         given(tokenUtils.extractClaims("expired-token")).willThrow(expiredJwtException);
         given(securityUserRepository.findById(1L)).willReturn(Optional.of(securityUser));
         given(refreshTokenRepository.findByRoleAndUserId(1L, Role.USER)).willReturn(Optional.of(refreshToken));
+        given(tokenUtils.isNonExpired("refresh")).willReturn(true);
 
         assertThatThrownBy(() -> jwtAuthenticationProvider
                 .authenticate(JwtAuthenticationToken.unauthenticated("expired-token")))
                 .isInstanceOf(CredentialsExpiredException.class)
                 .hasMessageContaining("expired");
+    }
+
+    @Test
+    @DisplayName("refresh token이 만료되면 access token을 재발급하지 않는다")
+    void authenticateWithExpiredRefreshToken() {
+        Claims claims = claims("1", Role.USER);
+        SecurityUser securityUser = SecurityUser.builder()
+                .username("user1")
+                .password("encoded")
+                .role(Role.USER)
+                .build();
+        RefreshToken refreshToken = RefreshToken.builder()
+                .id("USER-1")
+                .payload("expired-refresh")
+                .userId(1L)
+                .role(Role.USER)
+                .createdAt(LocalDateTime.now())
+                .expiration(1000L)
+                .build();
+
+        given(tokenUtils.extractClaims("access-token")).willReturn(claims);
+        given(securityUserRepository.findById(1L)).willReturn(Optional.of(securityUser));
+        given(refreshTokenRepository.findByRoleAndUserId(1L, Role.USER)).willReturn(Optional.of(refreshToken));
+        given(tokenUtils.isNonExpired("expired-refresh")).willReturn(false);
+
+        assertThatThrownBy(() -> jwtAuthenticationProvider
+                .authenticate(JwtAuthenticationToken.unauthenticated("access-token")))
+                .isInstanceOf(BadCredentialsException.class)
+                .hasMessageContaining("Refresh token is expired");
     }
 
     @Test
