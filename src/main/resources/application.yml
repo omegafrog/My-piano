@@ -7,6 +7,8 @@ spring:
   batch:
     job:
       enabled: false
+    jdbc:
+      initialize-schema: always
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3307/mypiano?characterEncoding=UTF-8&serverTimezone=UTC
@@ -46,7 +48,7 @@ spring:
   redis:
     user:
       host: 127.0.0.1
-      port: 6379
+      port: 16379
     cache:
       host: 127.0.0.1
       port: 6380
@@ -74,12 +76,6 @@ security:
   password:
     expire:
       period: 90L
-  jwt:
-    accessToken:
-      period: 6000000
-    refreshToken:
-      period: 1209600
-
 firebase:
   app:
     admin:

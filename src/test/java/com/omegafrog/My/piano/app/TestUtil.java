@@ -45,22 +45,12 @@ import com.omegafrog.My.piano.app.web.enums.Instrument;
 import com.omegafrog.My.piano.app.web.enums.RefundPolicy;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpSession;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 
 @AutoConfigureMockMvc
 public class TestUtil {
   @Autowired
   private ObjectMapper objectMapper;
-
-  @AllArgsConstructor
-  @Getter
-  public class TokenResponse {
-    String accessToken;
-    Cookie refreshToken;
-  }
 
   public static RegisterUserDto user1 = RegisterUserDto.builder()
       .name("user1")

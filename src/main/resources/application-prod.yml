@@ -62,13 +62,6 @@ security:
     expire:
       period: 90L
   # passwordEncoder secret moved to application-secret.yml
-  # jwt secret moved to application-secret.yml
-  jwt:
-    accessToken:
-      period: 6000000000
-    refreshToken:
-      period: 1209600
-
 firebase:
   app:
     admin:
