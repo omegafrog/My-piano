@@ -77,7 +77,12 @@ class CommonUserRegistrationTest {
     @Test
     @DisplayName("DB unique 제약 위반은 중복 ID 예외로 변환해야 한다.")
     void dataIntegrityViolationIsConvertedToDuplicateUsernameException() {
-        when(securityUserRepository.findByUsername("user1")).thenReturn(Optional.empty());
+        SecurityUser existingUser = SecurityUser.builder()
+                .username("user1")
+                .password("encoded-password")
+                .role(com.omegafrog.My.piano.app.web.domain.user.authorities.Role.USER)
+                .build();
+        when(securityUserRepository.findByUsername("user1")).thenReturn(Optional.empty(), Optional.of(existingUser));
         when(securityUserRepository.findByEmail("user1@email.com")).thenReturn(Optional.empty());
         when(securityUserRepository.save(any(SecurityUser.class)))
                 .thenThrow(new DataIntegrityViolationException("duplicate username"));
@@ -85,6 +90,24 @@ class CommonUserRegistrationTest {
         assertThatThrownBy(() -> commonUserService.registerUserWithoutProfile(registerDto("user1", "user1@email.com")))
                 .isInstanceOf(DuplicatePropertyException.class)
                 .hasMessage("중복된 ID가 존재합니다.");
+    }
+
+    @Test
+    @DisplayName("DB email unique 제약 위반은 중복 이메일 예외로 변환해야 한다.")
+    void dataIntegrityViolationIsConvertedToDuplicateEmailException() {
+        SecurityUser existingUser = SecurityUser.builder()
+                .username("other")
+                .password("encoded-password")
+                .role(com.omegafrog.My.piano.app.web.domain.user.authorities.Role.USER)
+                .build();
+        when(securityUserRepository.findByUsername("user1")).thenReturn(Optional.empty(), Optional.empty());
+        when(securityUserRepository.findByEmail("user1@email.com")).thenReturn(Optional.empty(), Optional.of(existingUser));
+        when(securityUserRepository.save(any(SecurityUser.class)))
+                .thenThrow(new DataIntegrityViolationException("duplicate email"));
+
+        assertThatThrownBy(() -> commonUserService.registerUserWithoutProfile(registerDto("user1", "user1@email.com")))
+                .isInstanceOf(DuplicatePropertyException.class)
+                .hasMessage("중복된 이메일이 존재합니다.");
     }
 
     private RegisterUserDto registerDto(String username, String email) {

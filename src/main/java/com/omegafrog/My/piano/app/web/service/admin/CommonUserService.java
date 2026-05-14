@@ -139,8 +139,18 @@ public class CommonUserService implements UserDetailsService {
             SecurityUser saved = securityUserRepository.save(securityUser);
             return saved.toDto();
         } catch (DataIntegrityViolationException ex) {
-            throw new DuplicatePropertyException("중복된 ID가 존재합니다.", ex);
+            throw resolveDuplicateRegistrationException(dto, ex);
         }
+    }
+
+    private DuplicatePropertyException resolveDuplicateRegistrationException(RegisterUserDto dto, DataIntegrityViolationException ex) {
+        if (securityUserRepository.findByUsername(dto.getUsername()).isPresent()) {
+            return new DuplicatePropertyException("중복된 ID가 존재합니다.", ex);
+        }
+        if (securityUserRepository.findByEmail(dto.getEmail()).isPresent()) {
+            return new DuplicatePropertyException("중복된 이메일이 존재합니다.", ex);
+        }
+        return new DuplicatePropertyException("중복된 ID가 존재합니다.", ex);
     }
 
     public SecurityUserDto registerUser(RegisterUserDto dto, MultipartFile profileImg) throws DuplicatePropertyException, IOException {
