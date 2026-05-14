@@ -27,6 +27,12 @@ public class ElasticSearchConfig {
     private String port;
     @Value("${elasticsearch.apiKey}")
     private String apiKey;
+    @Value("${elasticsearch.connectTimeoutMillis:1000}")
+    private int connectTimeoutMillis;
+    @Value("${elasticsearch.socketTimeoutMillis:3000}")
+    private int socketTimeoutMillis;
+    @Value("${elasticsearch.connectionRequestTimeoutMillis:1000}")
+    private int connectionRequestTimeoutMillis;
 
     @Bean
     public ElasticsearchClient elasticsearchClient(ObjectMapper objectMapper) {
@@ -38,6 +44,10 @@ public class ElasticSearchConfig {
                 .setDefaultHeaders(new Header[]{
                         new BasicHeader("Authorization", "ApiKey " + apiKey)
                 })
+                .setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder
+                        .setConnectTimeout(connectTimeoutMillis)
+                        .setSocketTimeout(socketTimeoutMillis)
+                        .setConnectionRequestTimeout(connectionRequestTimeoutMillis))
                 .build();
 
         // Create the transport with a Jackson mapper
