@@ -84,6 +84,15 @@ public class TokenUtils {
                 .build();
     }
 
+    public TokenInfo refreshAccessToken(String securityUserId, Role role, RefreshToken refreshToken) {
+        String accessToken = getToken(securityUserId, role, Long.parseLong(accessTokenExpirationPeriod));
+        return TokenInfo.builder()
+                .grantType("Bearer")
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
+    }
+
     private boolean verifyAccessTokenString(String[] accessToken) throws AuthenticationException {
         if (accessToken.length == 2) {
             String[] splitted = accessToken[1].split("\\.");

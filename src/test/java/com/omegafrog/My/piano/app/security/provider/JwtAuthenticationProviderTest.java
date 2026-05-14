@@ -3,6 +3,7 @@ package com.omegafrog.My.piano.app.security.provider;
 import com.omegafrog.My.piano.app.security.jwt.JwtAuthenticationToken;
 import com.omegafrog.My.piano.app.security.jwt.RefreshToken;
 import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
+import com.omegafrog.My.piano.app.security.jwt.TokenInfo;
 import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
 import com.omegafrog.My.piano.app.web.domain.user.SecurityUser;
 import com.omegafrog.My.piano.app.web.domain.user.SecurityUserRepository;
@@ -27,6 +28,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class JwtAuthenticationProviderTest {
@@ -64,6 +66,13 @@ class JwtAuthenticationProviderTest {
         given(tokenUtils.extractClaims("access-token")).willReturn(claims);
         given(securityUserRepository.findById(1L)).willReturn(Optional.of(securityUser));
         given(refreshTokenRepository.findByRoleAndUserId(1L, Role.USER)).willReturn(Optional.of(refreshToken));
+        given(tokenUtils.isNonExpired("refresh")).willReturn(true);
+        given(tokenUtils.refreshAccessToken("1", Role.USER, refreshToken))
+                .willReturn(TokenInfo.builder()
+                        .grantType("Bearer")
+                        .accessToken("renewed-access-token")
+                        .refreshToken(refreshToken)
+                        .build());
 
         Authentication authentication = jwtAuthenticationProvider
                 .authenticate(JwtAuthenticationToken.unauthenticated("access-token"));
@@ -71,6 +80,9 @@ class JwtAuthenticationProviderTest {
         assertThat(authentication).isInstanceOf(JwtAuthenticationToken.class);
         assertThat(authentication.isAuthenticated()).isTrue();
         assertThat(authentication.getPrincipal()).isEqualTo(1L);
+        assertThat(((JwtAuthenticationToken) authentication).getTokenInfo().getAccessToken())
+                .isEqualTo("renewed-access-token");
+        verify(tokenUtils).refreshAccessToken("1", Role.USER, refreshToken);
     }
 
     @Test
@@ -115,11 +127,41 @@ class JwtAuthenticationProviderTest {
         given(tokenUtils.extractClaims("expired-token")).willThrow(expiredJwtException);
         given(securityUserRepository.findById(1L)).willReturn(Optional.of(securityUser));
         given(refreshTokenRepository.findByRoleAndUserId(1L, Role.USER)).willReturn(Optional.of(refreshToken));
+        given(tokenUtils.isNonExpired("refresh")).willReturn(true);
 
         assertThatThrownBy(() -> jwtAuthenticationProvider
                 .authenticate(JwtAuthenticationToken.unauthenticated("expired-token")))
                 .isInstanceOf(CredentialsExpiredException.class)
                 .hasMessageContaining("expired");
+    }
+
+    @Test
+    @DisplayName("refresh token이 만료되면 access token을 재발급하지 않는다")
+    void authenticateWithExpiredRefreshToken() {
+        Claims claims = claims("1", Role.USER);
+        SecurityUser securityUser = SecurityUser.builder()
+                .username("user1")
+                .password("encoded")
+                .role(Role.USER)
+                .build();
+        RefreshToken refreshToken = RefreshToken.builder()
+                .id("USER-1")
+                .payload("expired-refresh")
+                .userId(1L)
+                .role(Role.USER)
+                .createdAt(LocalDateTime.now())
+                .expiration(1000L)
+                .build();
+
+        given(tokenUtils.extractClaims("access-token")).willReturn(claims);
+        given(securityUserRepository.findById(1L)).willReturn(Optional.of(securityUser));
+        given(refreshTokenRepository.findByRoleAndUserId(1L, Role.USER)).willReturn(Optional.of(refreshToken));
+        given(tokenUtils.isNonExpired("expired-refresh")).willReturn(false);
+
+        assertThatThrownBy(() -> jwtAuthenticationProvider
+                .authenticate(JwtAuthenticationToken.unauthenticated("access-token")))
+                .isInstanceOf(BadCredentialsException.class)
+                .hasMessageContaining("Refresh token is expired");
     }
 
     @Test

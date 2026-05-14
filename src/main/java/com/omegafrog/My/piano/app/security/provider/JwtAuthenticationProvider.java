@@ -42,7 +42,7 @@ public class JwtAuthenticationProvider implements AuthenticationProvider {
 
             SecurityUser user = findUser(securityUserId);
             RefreshToken refreshToken = findRefreshToken(securityUserId, securityUserRole);
-            TokenInfo tokenInfo = tokenUtils.wrap(accessToken, refreshToken);
+            TokenInfo tokenInfo = tokenUtils.refreshAccessToken(String.valueOf(securityUserId), securityUserRole, refreshToken);
             return JwtAuthenticationToken.authenticated(user.getAuthorities(), tokenInfo, securityUserId);
         } catch (ExpiredJwtException e) {
             validateExpiredTokenClaims(e);
@@ -65,8 +65,12 @@ public class JwtAuthenticationProvider implements AuthenticationProvider {
     }
 
     private RefreshToken findRefreshToken(Long securityUserId, Role securityUserRole) {
-        return refreshTokenRepository.findByRoleAndUserId(securityUserId, securityUserRole)
+        RefreshToken refreshToken = refreshTokenRepository.findByRoleAndUserId(securityUserId, securityUserRole)
                 .orElseThrow(() -> new AuthenticationServiceException("Already logged out user."));
+        if (!tokenUtils.isNonExpired(refreshToken.getPayload())) {
+            throw new BadCredentialsException("Refresh token is expired.");
+        }
+        return refreshToken;
     }
 
     private void validateExpiredTokenClaims(ExpiredJwtException e) {
