@@ -73,6 +73,7 @@ public class ExceptionAdvisor {
     @ExceptionHandler({
             EntityNotFoundException.class,
             EntityExistsException.class, PaymentException.class,
+            IllegalArgumentException.class,
             DuplicatePropertyException.class})
     public Object clientRequestError(RuntimeException ex) {
         apiExceptionLogger.logHandledException(ex, HttpStatus.BAD_REQUEST);
