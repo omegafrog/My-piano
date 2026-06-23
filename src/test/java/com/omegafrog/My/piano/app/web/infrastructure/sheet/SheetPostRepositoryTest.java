@@ -6,6 +6,7 @@ import com.omegafrog.My.piano.app.web.domain.cart.Cart;
 import com.omegafrog.My.piano.app.web.domain.sheet.Genres;
 import com.omegafrog.My.piano.app.web.domain.user.UserRepository;
 import com.omegafrog.My.piano.app.web.dto.sheetPost.UpdateSheetDto;
+import com.omegafrog.My.piano.app.web.dto.sheetPost.SheetPostListDto;
 import com.omegafrog.My.piano.app.web.enums.Difficulty;
 import com.omegafrog.My.piano.app.web.enums.Genre;
 import com.omegafrog.My.piano.app.web.enums.Instrument;
@@ -23,8 +24,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @DataJpaTest
@@ -101,6 +104,22 @@ class SheetPostRepositoryTest {
         sheetPostRepository.deleteById(saved.getId());
         Optional<SheetPost> founded = sheetPostRepository.findById(saved.getId());
         Assertions.assertThat(founded).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Elasticsearch 검색 순서대로 악보 판매글을 조회할 수 있어야 한다.")
+    void findByIdsKeepsSearchResultOrder() {
+        SheetPost first = sheetPostRepository.save(DummyData.sheetPost(a));
+        SheetPost second = sheetPostRepository.save(DummyData.sheetPost(a));
+        SheetPost third = sheetPostRepository.save(DummyData.sheetPost(a));
+
+        List<Long> searchOrderedIds = List.of(third.getId(), first.getId(), second.getId());
+
+        List<Long> actualIds = sheetPostRepository.findByIds(searchOrderedIds, PageRequest.of(0, 3)).stream()
+                .map(SheetPostListDto::getId)
+                .toList();
+
+        Assertions.assertThat(actualIds).containsExactlyElementsOf(searchOrderedIds);
     }
 
 }

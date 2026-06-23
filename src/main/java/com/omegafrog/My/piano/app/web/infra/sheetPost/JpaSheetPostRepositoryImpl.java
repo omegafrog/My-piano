@@ -1,6 +1,9 @@
 package com.omegafrog.My.piano.app.web.infra.sheetPost;
 
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Locale;
 
@@ -177,6 +180,11 @@ public class JpaSheetPostRepositoryImpl implements SheetPostRepository {
 
 	@Override
 	public List<SheetPostListDto> findByIds(List<Long> sheetPostIds, Pageable pageable) {
+		Map<Long, Integer> searchRankById = new HashMap<>();
+		for (int i = 0; i < sheetPostIds.size(); i++) {
+			searchRankById.putIfAbsent(sheetPostIds.get(i), i);
+		}
+
 		QSheetPost sheetPost = QSheetPost.sheetPost;
 		QUser user = QUser.user;
 		QSheet sheet = QSheet.sheet;
@@ -198,12 +206,14 @@ public class JpaSheetPostRepositoryImpl implements SheetPostRepository {
 					sheetPost.price
 				))
 			.from(sheetPost)
-			.join(sheetPost.author, user)
-			.join(sheetPost.sheet, sheet)
-			.where(expressions)
-			.orderBy(sheetPost.createdAt.desc());
+				.join(sheetPost.author, user)
+				.join(sheetPost.sheet, sheet)
+				.where(expressions);
 
-		return query.fetch();
+			return query.fetch().stream()
+					.sorted(Comparator.comparingInt(row ->
+							searchRankById.getOrDefault(row.getId(), Integer.MAX_VALUE)))
+					.toList();
 	}
 
 	@Override
