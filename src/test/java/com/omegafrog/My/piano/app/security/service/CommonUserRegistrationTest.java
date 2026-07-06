@@ -40,7 +40,7 @@ class CommonUserRegistrationTest {
 
     @BeforeEach
     void setUp() {
-        commonUserService = new CommonUserService(passwordEncoder, securityUserRepository, null, null, null, null);
+        commonUserService = new CommonUserService(passwordEncoder, securityUserRepository, null, null, null);
         when(passwordEncoder.encode("password")).thenReturn("encoded-password");
     }
 

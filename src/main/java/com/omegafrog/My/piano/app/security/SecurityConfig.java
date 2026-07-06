@@ -2,10 +2,7 @@ package com.omegafrog.My.piano.app.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
-import com.omegafrog.My.piano.app.security.filter.CommonUserJwtTokenFilter;
 import com.omegafrog.My.piano.app.security.handler.*;
-import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
-import com.omegafrog.My.piano.app.security.jwt.TokenUtils;
 import com.omegafrog.My.piano.app.security.provider.AdminAuthenticationProvider;
 import com.omegafrog.My.piano.app.security.provider.CommonUserAuthenticationProvider;
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
@@ -34,7 +31,9 @@ import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.session.HttpSessionEventPublisher;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -47,14 +46,6 @@ public class SecurityConfig {
 
   @Autowired(required = false)
   private S3Client s3Client;
-
-  @Autowired
-  private RefreshTokenRepository refreshTokenRepository;
-
-  @Bean
-  public TokenUtils tokenUtils() {
-    return new TokenUtils();
-  }
 
   @Autowired
   private SecurityUserRepository securityUserRepository;
@@ -77,7 +68,6 @@ public class SecurityConfig {
   public CommonUserService commonUserService() {
     return new CommonUserService(passwordEncoder(),
         securityUserRepository,
-        refreshTokenRepository,
         googlePublicKeysManager,
         authenticationUtil,
         s3Client);
@@ -101,7 +91,7 @@ public class SecurityConfig {
     return new AdminUserService(
         passwordEncoder(),
         userRepository,
-        refreshTokenRepository,
+        sessionRegistry(),
         securityUserRepository,
         postRepository,
         mapperUtil,
@@ -113,10 +103,6 @@ public class SecurityConfig {
   @Bean
   public CommonUserAuthenticationProvider commonUserAuthenticationProvider() {
     return new CommonUserAuthenticationProvider(commonUserService(), passwordEncoder());
-  }
-
-  public CommonUserJwtTokenFilter commonUserJwtTokenFilter() {
-    return new CommonUserJwtTokenFilter(securityUserRepository, refreshTokenRepository, tokenUtils());
   }
 
   @Bean
@@ -179,7 +165,9 @@ public class SecurityConfig {
         .logout((logout) -> logout.logoutUrl("/api/v1/admin/logout")
             .addLogoutHandler(commonUserLogoutHandler()))
         .sessionManagement((sessionManagement) -> sessionManagement
-            .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+            .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+            .maximumSessions(-1)
+            .sessionRegistry(sessionRegistry()))
         .exceptionHandling((exceptionadvisor) -> exceptionadvisor
             .authenticationEntryPoint(unAuthorizedEntryPoint())
             .accessDeniedHandler(commonUserAccessDeniedHandler()))
@@ -241,11 +229,12 @@ public class SecurityConfig {
             .logoutSuccessHandler(logoutHandler())
             .addLogoutHandler(commonUserLogoutHandler()))
         .sessionManagement(session -> session
-            .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+            .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+            .maximumSessions(-1)
+            .sessionRegistry(sessionRegistry()))
         .exceptionHandling(ex -> ex
             .authenticationEntryPoint(unAuthorizedEntryPoint())
             .accessDeniedHandler(commonUserAccessDeniedHandler()))
-        .addFilterBefore(commonUserJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
         .csrf(AbstractHttpConfigurer::disable)
         .cors(cors -> cors.configurationSource(corsConfigurationSource()));
 
@@ -440,6 +429,16 @@ public class SecurityConfig {
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", configuration);
     return source;
+  }
+
+  @Bean
+  public SessionRegistry sessionRegistry() {
+    return new SessionRegistryImpl();
+  }
+
+  @Bean
+  public HttpSessionEventPublisher httpSessionEventPublisher() {
+    return new HttpSessionEventPublisher();
   }
 
 }

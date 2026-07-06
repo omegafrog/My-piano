@@ -54,3 +54,6 @@ log.*
 .serena
 .sisyphus
 .codex/
+perf/k6/generated/*.json
+perf/k6/results/**
+!perf/k6/results/.gitkeep

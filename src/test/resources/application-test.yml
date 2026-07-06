@@ -16,7 +16,7 @@ spring:
       - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3307/mypianotest?characterEncoding=UTF-8&serverTimezone=UTC
+    url: jdbc:mysql://localhost:3307/mypianotest?characterEncoding=UTF-8&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true&connectTimeout=5000&socketTimeout=10000
     username: root
     password: password
   jpa:
@@ -75,12 +75,6 @@ security:
   password:
     expire:
       period: 90L
-  jwt:
-    accessToken:
-      period: 6000000
-    refreshToken:
-      period: 1209600
-
 firebase:
   app:
     admin:

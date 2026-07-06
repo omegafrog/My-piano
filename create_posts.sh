@@ -7,6 +7,7 @@
 BASE_URL="http://localhost:8080"
 API_ENDPOINT="${BASE_URL}/api/v1/community/posts"
 TOTAL_POSTS=1000
+AUTH_TOKEN="${AUTH_TOKEN:-}"
 
 # 카운터
 success_count=0
@@ -96,6 +97,7 @@ EOF
         -X POST \
         -H "Content-Type: application/json" \
         -H "Accept: application/json" \
+        -H "Authorization: Bearer ${AUTH_TOKEN}" \
         -d "$json_data" \
         "$API_ENDPOINT" 2>/dev/null)
     
@@ -120,6 +122,12 @@ echo "Target: $TOTAL_POSTS posts"
 echo "API Endpoint: $API_ENDPOINT"
 echo "$(printf '%.0s-' {1..50})"
 
+if [ -z "$AUTH_TOKEN" ]; then
+    echo "AUTH_TOKEN is required because POST /api/v1/community/posts requires USER or CREATOR role."
+    echo "Usage: AUTH_TOKEN=<jwt> $0"
+    exit 1
+fi
+
 # 서버 연결 확인
 echo "Checking server connection..."
 server_check=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/actuator/health" 2>/dev/null || echo "000")
@@ -134,7 +142,6 @@ if [ "$server_check" != "200" ]; then
         exit 1
     fi
 fi
-
 # 포스트 생성 시작
 echo "Starting post creation..."
 start_time=$(date +%s)

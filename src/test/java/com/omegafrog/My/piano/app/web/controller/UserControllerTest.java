@@ -7,7 +7,6 @@ import com.omegafrog.My.piano.app.TestUtilConfig;
 import com.omegafrog.My.piano.app.web.dto.post.PostRegisterDto;
 import com.omegafrog.My.piano.app.web.dto.user.RegisterUserDto;
 import com.omegafrog.My.piano.app.web.vo.user.LoginMethod;
-import jakarta.servlet.http.Cookie;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,8 +42,6 @@ class UserControllerTest {
 
   @Autowired
   private Cleanup cleanup;
-  String accessToken;
-  Cookie refreshToken;
   MockHttpSession session;
 
   @Autowired

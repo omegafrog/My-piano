@@ -1,8 +1,6 @@
 package com.omegafrog.My.piano.app.web.service.admin;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.omegafrog.My.piano.app.security.jwt.RefreshToken;
-import com.omegafrog.My.piano.app.security.jwt.RefreshTokenRepository;
 import com.omegafrog.My.piano.app.utils.AuthenticationUtil;
 import com.omegafrog.My.piano.app.utils.MapperUtil;
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
@@ -37,14 +35,18 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.security.authentication.AuthenticationServiceException;
+import org.springframework.security.core.session.SessionInformation;
+import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -54,7 +56,7 @@ public class AdminUserService implements UserDetailsService {
 
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final SessionRegistry sessionRegistry;
     private final SecurityUserRepository securityUserRepository;
     private final PostRepository postRepository;
     private final MapperUtil mapperUtil;
@@ -85,21 +87,20 @@ public class AdminUserService implements UserDetailsService {
     }
 
     public Page<ReturnSessionDto> getLoggedInUsers(Pageable pageable) {
-        Role[] roles = {Role.USER, Role.CREATOR};
-        Page<RefreshToken> token = refreshTokenRepository.findAllByRole(roles, pageable);
-        Page<SecurityUser> allById = securityUserRepository.findAllByUserId(
-                token.stream().map(RefreshToken::getUserId).toList(),
-                pageable);
-        return PageableExecutionUtils.getPage(
-                allById.stream().map(item -> new ReturnSessionDto(item, getLoggedInTime(item, token))).toList(),
-                pageable,
-                allById::getTotalElements);
+        List<ReturnSessionDto> sessions = sessionRegistry.getAllPrincipals().stream()
+                .filter(SecurityUser.class::isInstance)
+                .map(SecurityUser.class::cast)
+                .filter(user -> user.getRole() == Role.USER || user.getRole() == Role.CREATOR)
+                .flatMap(user -> sessionRegistry.getAllSessions(user, false).stream()
+                        .map(session -> new ReturnSessionDto(user, getLoggedInTime(session))))
+                .toList();
+        int start = Math.min((int) pageable.getOffset(), sessions.size());
+        int end = Math.min(start + pageable.getPageSize(), sessions.size());
+        return new PageImpl<>(sessions.subList(start, end), pageable, sessions.size());
     }
 
-    private static LocalDateTime getLoggedInTime(SecurityUser item, Page<RefreshToken> sessions) {
-        return sessions.getContent().stream().
-                filter(session -> session.getUserId().equals(item.getUser().getId()))
-                .findFirst().get().getCreatedAt();
+    private static LocalDateTime getLoggedInTime(SessionInformation session) {
+        return LocalDateTime.ofInstant(session.getLastRequest().toInstant(), ZoneId.systemDefault());
     }
 
     public void disableUser(Long id) {
@@ -117,11 +118,21 @@ public class AdminUserService implements UserDetailsService {
     }
 
     public Long countLoggedInUsers() {
-        return refreshTokenRepository.countByRole(Role.USER);
+        return sessionRegistry.getAllPrincipals().stream()
+                .filter(SecurityUser.class::isInstance)
+                .map(SecurityUser.class::cast)
+                .filter(user -> user.getRole() == Role.USER || user.getRole() == Role.CREATOR)
+                .flatMap(user -> sessionRegistry.getAllSessions(user, false).stream())
+                .count();
     }
 
     public void disconnectLoggedInUser(Long userId, Role role) {
-        refreshTokenRepository.deleteByUserIdAndRole(userId, role);
+        sessionRegistry.getAllPrincipals().stream()
+                .filter(SecurityUser.class::isInstance)
+                .map(SecurityUser.class::cast)
+                .filter(user -> user.getId().equals(userId) && user.getRole() == role)
+                .flatMap(user -> sessionRegistry.getAllSessions(user, false).stream())
+                .forEach(SessionInformation::expireNow);
     }
 
     public Page<UserDto> getAllUsers(Pageable pageable, SearchUserFilter filter) {
