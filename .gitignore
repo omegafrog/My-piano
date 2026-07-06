@@ -57,3 +57,15 @@ log.*
 perf/k6/generated/*.json
 perf/k6/results/**
 !perf/k6/results/.gitkeep
+# harness-codex 운영 파일
+.harness/
+!.harness/
+.harness/*
+!.harness/docs/
+!.harness/docs/**
+harness_codex/
+completions/
+harness
+scripts/install-harness-codex.sh
+scripts/bump_runtime_version.py
+venv/
