@@ -59,6 +59,13 @@ spring:
     redis:
       repositories:
         enabled: false
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: coupon-payment-result-consumer
+      auto-offset-reset: earliest
+      properties:
+        spring.json.trusted.packages: com.omegafrog.My.piano.app.web.event.payment
 
 elasticsearch:
   host: localhost
@@ -79,6 +86,12 @@ firebase:
   app:
     admin:
       json: src/main/resources/firebase-admin.json
+
+coupon:
+  kafka:
+    enabled: false
+    payment-succeeded-topic: payment-succeeded
+    payment-failed-topic: payment-failed
 
 payment:
   toss:

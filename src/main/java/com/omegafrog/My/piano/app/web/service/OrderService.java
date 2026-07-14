@@ -17,6 +17,7 @@ import com.omegafrog.My.piano.app.web.exception.message.ExceptionMessage;
 import com.omegafrog.My.piano.app.web.exception.order.AlreadyPurchasedItemException;
 import com.omegafrog.My.piano.app.web.exception.order.DuplicateItemException;
 import com.omegafrog.My.piano.app.web.exception.order.SamePartyException;
+import com.omegafrog.My.piano.app.web.event.payment.PaymentResultPublisher;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceException;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,8 @@ public class OrderService {
   private final OrderRepository orderRepository;
   private final SellableItemFactory sellableItemFactory;
   private final AuthenticationUtil authenticationUtil;
+  private final CouponApplicationService couponApplicationService;
+  private final PaymentResultPublisher paymentResultPublisher;
   private final String USER_ENTITY_NOT_FOUNT_ERROR_MSG = "Cannot find User entity : ";
 
   public OrderDto makePayment(OrderDto orderDto) throws PersistenceException {
@@ -50,8 +53,12 @@ public class OrderService {
         .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER +
             orderDto.getSeller().getId()));
 
+    couponApplicationService.temporarilyApply(order, buyer.getId());
+    orderDto.setTotalPrice(order.getTotalPrice());
+
     buyer.pay(order);
     seller.receiveCash(orderDto.getTotalPrice());
+    paymentResultPublisher.publishSucceeded(String.valueOf(order.getId()));
     orderDto.setBuyer(buyer.getUserInfo());
     orderDto.setSeller(seller.getUserInfo());
     return orderDto;
@@ -114,7 +121,6 @@ public class OrderService {
       Coupon coupon = couponRepository.findById(dto.getCouponId())
           .orElseThrow(() -> new EntityNotFoundException("Cannot find Coupon entity : "
               + dto.getCouponId()));
-      coupon.validate(buyer);
       orderBuilder = orderBuilder.coupon(coupon);
     }
     return orderBuilder.build();
