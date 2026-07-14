@@ -38,6 +38,7 @@ public class OrderService {
   private final OrderRepository orderRepository;
   private final SellableItemFactory sellableItemFactory;
   private final AuthenticationUtil authenticationUtil;
+  private final CouponApplicationService couponApplicationService;
   private final String USER_ENTITY_NOT_FOUNT_ERROR_MSG = "Cannot find User entity : ";
 
   public OrderDto makePayment(OrderDto orderDto) throws PersistenceException {
@@ -49,6 +50,9 @@ public class OrderService {
     User seller = userRepository.findById(orderDto.getSeller().getId())
         .orElseThrow(() -> new EntityNotFoundException(ExceptionMessage.ENTITY_NOT_FOUND_USER +
             orderDto.getSeller().getId()));
+
+    couponApplicationService.temporarilyApply(order, buyer.getId());
+    orderDto.setTotalPrice(order.getTotalPrice());
 
     buyer.pay(order);
     seller.receiveCash(orderDto.getTotalPrice());
@@ -114,7 +118,6 @@ public class OrderService {
       Coupon coupon = couponRepository.findById(dto.getCouponId())
           .orElseThrow(() -> new EntityNotFoundException("Cannot find Coupon entity : "
               + dto.getCouponId()));
-      coupon.validate(buyer);
       orderBuilder = orderBuilder.coupon(coupon);
     }
     return orderBuilder.build();

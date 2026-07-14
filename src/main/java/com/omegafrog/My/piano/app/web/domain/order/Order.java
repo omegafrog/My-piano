@@ -1,6 +1,7 @@
 package com.omegafrog.My.piano.app.web.domain.order;
 
 import javax.annotation.Nullable;
+import java.math.BigDecimal;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.omegafrog.My.piano.app.web.domain.cart.Cart;
@@ -106,6 +107,11 @@ public class Order {
 		Double totalDiscountRate = couponDiscountRate + discountRate;
 		double tmp = (double)initialPrice * (1 - totalDiscountRate);
 		totalPrice = (int)Math.floor(tmp);
+	}
+
+	public void applyCouponDiscount(BigDecimal discountAmount) {
+		if (discountAmount == null || discountAmount.signum() < 0) throw new IllegalArgumentException("discountAmount must not be negative");
+		totalPrice = Math.max(0, initialPrice - discountAmount.intValueExact());
 	}
 
 	public OrderDto toDto() {
