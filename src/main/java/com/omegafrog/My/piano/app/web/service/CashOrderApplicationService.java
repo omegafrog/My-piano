@@ -18,6 +18,7 @@ import com.omegafrog.My.piano.app.web.exception.payment.CashOrderCalculateFailur
 import com.omegafrog.My.piano.app.web.exception.payment.CashOrderConfirmFailedException;
 import com.omegafrog.My.piano.app.web.exception.payment.TossAPIException;
 import com.omegafrog.My.piano.app.web.exception.payment.WrongOrderStateException;
+import com.omegafrog.My.piano.app.web.event.payment.PaymentResultPublisher;
 import jakarta.persistence.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,6 +48,7 @@ public class CashOrderApplicationService {
   private final TossPaymentInstance paymentInstance;
   private final AuthenticationUtil authenticationUtil;
   private final UserRepository userRepository;
+  private final PaymentResultPublisher paymentResultPublisher;
 
   public CashOrderDto createCashOrder(String orderId, int amount, String name) {
     User loggedInUser = authenticationUtil.getLoggedInUser();
@@ -118,6 +120,7 @@ public class CashOrderApplicationService {
       // order state 변경
       byOrderId.changeState(OrderStatus.DONE);
       tx.commit();
+      paymentResultPublisher.publishSucceeded(orderId);
 
     } catch (EntityNotFoundException | CashOrderCalculateFailureException
         | CashOrderConfirmFailedException | TossAPIException e) {
@@ -125,6 +128,7 @@ public class CashOrderApplicationService {
       tx.begin();
       byOrderId.changeState(OrderStatus.ABORTED);
       tx.commit();
+      paymentResultPublisher.publishFailed(orderId);
       throw e;
     } finally {
       entityManager.merge(user);
