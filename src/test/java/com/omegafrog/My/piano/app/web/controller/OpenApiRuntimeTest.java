@@ -1,4 +1,4 @@
-package com.omegafrog.My.piano.openapi;
+package com.omegafrog.My.piano.app.web.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
