@@ -89,6 +89,7 @@ firebase:
 
 coupon:
   kafka:
+    enabled: false
     payment-succeeded-topic: payment-succeeded
     payment-failed-topic: payment-failed
 

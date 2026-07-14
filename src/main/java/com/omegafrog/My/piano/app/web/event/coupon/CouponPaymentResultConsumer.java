@@ -1,6 +1,7 @@
 package com.omegafrog.My.piano.app.web.event.coupon;
 
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import com.omegafrog.My.piano.app.web.event.payment.PaymentResultEvent;
@@ -9,6 +10,7 @@ import com.omegafrog.My.piano.app.web.service.CouponPaymentResultApplicationServ
 import lombok.RequiredArgsConstructor;
 
 @Component
+@ConditionalOnProperty(name = "coupon.kafka.enabled", havingValue = "true", matchIfMissing = true)
 @RequiredArgsConstructor
 public class CouponPaymentResultConsumer {
     private final CouponPaymentResultApplicationService couponPaymentResultApplicationService;
