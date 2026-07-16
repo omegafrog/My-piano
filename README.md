@@ -105,21 +105,56 @@ Controller Layer → Service Layer → Domain Layer → Infrastructure Layer
 
 ### 로컬 개발 환경 구축
 
-1. **인프라 서비스 시작**
+Windows 11 + WSL2 Ubuntu 24.04에서 Docker Compose와 Java 17을 준비합니다. 실제 운영 비밀정보는 필요하지 않습니다.
+
+1. **인프라·백엔드·초기 콘텐츠 기동**
+
 ```bash
-docker-compose up -d
+./scripts/local-deploy.sh
 ```
 
-2. **애플리케이션 빌드 및 실행**
+이 명령은 MySQL, Elasticsearch, Redis가 healthy 상태가 된 뒤 `local,local-seed` 프로필의 백엔드를 8080에서 시작하고, 커뮤니티·악보 목록에 초기 콘텐츠가 준비될 때까지 기다립니다.
+
+2. **백엔드 smoke 검증**
+
 ```bash
-./gradlew build
-./gradlew bootRun
+./scripts/verify-local-deploy.sh
 ```
 
-3. **서비스 접속**
+검증 명령은 health, 커뮤니티/악보 목록과 상세, 응답에 포함된 모든 로컬 프로필·썸네일·PDF URL, 콘텐츠 금칙어를 검사합니다. 백엔드를 한 번 재기동한 뒤 콘텐츠 수량도 동일한지 확인하며, 하나라도 실패하면 non-zero로 종료합니다.
+
+3. **서비스 접속과 증거 확인**
+
 - API 서버: http://localhost:8080
 - Swagger UI: http://localhost:8080/swagger-ui.html
 - Kibana: http://localhost:5601
+
+```bash
+# 컨테이너 상태와 최근 백엔드 로그
+docker compose --profile local ps
+docker compose --profile local logs --tail=200 app-local
+
+# 수동 health 확인
+curl -fsS http://localhost:8080/healthcheck
+```
+
+4. **재기동·중지·초기화**
+
+```bash
+# 데이터 volume을 유지한 재기동
+docker compose --profile local restart app-local
+
+# 전체 로컬 서비스 중지
+docker compose --profile local down
+
+# 로컬 데이터와 캐시까지 초기화한 뒤 다시 기동
+docker compose --profile local down -v
+./scripts/local-deploy.sh
+```
+
+### 프런트엔드 검증 실패 시
+
+프런트엔드는 백엔드 smoke가 성공한 뒤 별도로 빌드·기동합니다. 프런트 코드·설정·의존성 원인으로 실패하더라도 `verify-local-deploy.sh`의 성공은 독립적으로 유지합니다. 이때 프런트 저장소에는 환경, commit, 재현 명령, 기대/실제 결과, 핵심 오류 로그와 백엔드 단독 성공 증거를 포함한 한국어 이슈를 등록합니다. 이슈 생성 권한이 없다면 같은 내용을 준비해 blocker로 남깁니다.
 
 ### 테스트 실행
 ```bash
@@ -136,7 +171,7 @@ docker-compose up -d
 ## 🔧 주요 설정
 
 ### 데이터베이스 설정
-- 개발: MySQL `mypianodev` 데이터베이스
+- 로컬: MySQL `mypiano` 데이터베이스 (`mypianotest`는 격리 테스트 전용)
 - JPA Auto-DDL 활성화 (개발 환경)
 
 ### 파일 저장소 설정

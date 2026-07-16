@@ -1,0 +1,21 @@
+spring:
+  datasource:
+    url: jdbc:mysql://mysql-mypiano:3306/mypiano?characterEncoding=UTF-8&serverTimezone=UTC
+  jpa:
+    hibernate:
+      ddl-auto: create
+  redis:
+    user:
+      host: redis-mypiano-user
+      port: 6379
+    cache:
+      host: redis-mypiano-cache
+      port: 6379
+
+elasticsearch:
+  host: elasticsearch
+  port: 9200
+
+local:
+  storage:
+    base-path: /workspace/local-storage

@@ -4,7 +4,7 @@ services:
     container_name: mysql-mypiano
     environment:
       - MYSQL_ROOT_PASSWORD=password
-      - MYSQL_DATABASE=mypianotest
+      - MYSQL_DATABASE=mypiano
       - TZ=UTC
     command:
       - --character-set-server=utf8mb4
@@ -86,6 +86,43 @@ services:
     networks:
       - redis-net
 
+  app-local:
+    profiles: ["local"]
+    image: gradle:8.10.2-jdk17
+    container_name: app-local
+    user: gradle
+    working_dir: /workspace
+    command: ["bash", "-lc", "bash ./gradlew --no-daemon --project-cache-dir /workspace/.gradle-app-local bootRun --args='--spring.profiles.active=local,local-seed'"]
+    environment:
+      - GRADLE_USER_HOME=/home/gradle/.gradle-app-local
+      - SPRING_CLOUD_AWS_CREDENTIALS_ACCESS_KEY=local-access-key
+      - SPRING_CLOUD_AWS_CREDENTIALS_SECRET_KEY=local-secret-key
+      - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID=local-client-id
+      - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET=local-client-secret
+      - ELASTICSEARCH_APIKEY=local-api-key
+      - SECURITY_PASSWORDENCODER_SECRET=local-password-encoder-secret
+      - PAYMENT_TOSS_CLIENT_KEY=local-client-key
+      - PAYMENT_TOSS_SECRET_KEY=local-secret-key
+    volumes:
+      - .:/workspace
+      - ./local-storage:/workspace/local-storage
+      - gradle_cache_local:/home/gradle/.gradle-app-local
+    depends_on:
+      mysql-mypiano:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      redis-mypiano-user:
+        condition: service_healthy
+      redis-mypiano-cache:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    networks:
+      - db-net
+      - elastic
+      - redis-net
+
   app-benchmark:
     profiles: ["benchmark"]
     image: gradle:8.10.2-jdk17
@@ -162,6 +199,7 @@ volumes:
   redis_cache_data:
   gradle_cache_benchmark:
   gradle_cache_benchmark_no_cache:
+  gradle_cache_local:
 
 
 networks:
