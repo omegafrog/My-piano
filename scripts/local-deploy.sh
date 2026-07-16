@@ -5,6 +5,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 COMPOSE_FILE="$ROOT_DIR/docker-compose.yml"
 BASE_URL="${LOCAL_BACKEND_URL:-http://localhost:8080}"
+COMPOSE_UP_BUILD_ARGS=()
 
 if docker compose version >/dev/null 2>&1; then
   COMPOSE_CMD=(docker compose)
@@ -17,6 +18,54 @@ fi
 
 compose() {
   "${COMPOSE_CMD[@]}" -f "$COMPOSE_FILE" --profile local "$@"
+}
+
+prepare_elasticsearch_image() {
+  if [[ -d "$ROOT_DIR/docker/elasticsearch" ]]; then
+    return 0
+  fi
+
+  local source_image="docker.elastic.co/elasticsearch/elasticsearch:8.15.0"
+  local compose_image
+  compose_image="$(compose config --images | grep -E -- '(^|/)[^/]*-elasticsearch$|^[^/]*-elasticsearch$' | head -n 1)"
+
+  if [[ -z "$compose_image" ]]; then
+    echo "[local-deploy] unable to resolve the Compose Elasticsearch image name" >&2
+    return 1
+  fi
+
+  echo "[local-deploy] Elasticsearch build context is absent; building $source_image with analysis-nori"
+  docker build --tag "$compose_image" - <<EOF
+FROM $source_image
+RUN bin/elasticsearch-plugin install --batch analysis-nori
+EOF
+  COMPOSE_UP_BUILD_ARGS+=(--no-build)
+}
+
+prepare_local_gradle_cache() {
+  compose run --rm --no-deps --user root --entrypoint bash app-local -lc \
+    'mkdir -p /home/gradle/.gradle-app-local && chown -R gradle:gradle /home/gradle/.gradle-app-local'
+}
+
+configure_elasticsearch() {
+  curl -fsS -X PUT "http://localhost:9200/_index_template/mypiano-local-nori" \
+    -H 'Content-Type: application/json' --data-binary @- >/dev/null <<'JSON'
+{
+  "index_patterns": ["sheetpost"],
+  "template": {
+    "settings": {
+      "analysis": {
+        "analyzer": {
+          "my_nori_analyzer": {
+            "type": "custom",
+            "tokenizer": "nori_tokenizer"
+          }
+        }
+      }
+    }
+  }
+}
+JSON
 }
 
 wait_for() {
@@ -49,7 +98,12 @@ sheet_seed_ready() {
 
 echo "[local-deploy] starting local infrastructure and backend"
 mkdir -p "$ROOT_DIR/local-storage"
-compose up -d mysql-mypiano elasticsearch redis-mypiano-user redis-mypiano-cache app-local
+prepare_elasticsearch_image
+compose up -d "${COMPOSE_UP_BUILD_ARGS[@]}" mysql-mypiano elasticsearch redis-mypiano-user redis-mypiano-cache
+wait_for "Elasticsearch" 60 curl -fsS http://localhost:9200
+configure_elasticsearch
+prepare_local_gradle_cache
+compose up -d "${COMPOSE_UP_BUILD_ARGS[@]}" app-local
 
 wait_for "backend health" 120 curl -fsS "$BASE_URL/healthcheck"
 wait_for "community seed" 60 community_seed_ready

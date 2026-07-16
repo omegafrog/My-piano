@@ -32,6 +32,27 @@ wait_for_health() {
   return 1
 }
 
+community_seed_ready() {
+  curl -fsS "$BASE_URL/api/v1/community/posts?size=100" |
+    python3 -c 'import json,sys; items=json.load(sys.stdin)["data"]["postListDtos"]; raise SystemExit(0 if items else 1)'
+}
+
+sheet_seed_ready() {
+  curl -fsS "$BASE_URL/api/v1/sheet-post?searchBackend=db&size=100" |
+    python3 -c 'import json,sys; items=json.load(sys.stdin)["data"]["content"]; raise SystemExit(0 if items else 1)'
+}
+
+wait_for_seed() {
+  for attempt in $(seq 1 60); do
+    if community_seed_ready >/dev/null 2>&1 && sheet_seed_ready >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 2
+  done
+  echo "[verify-local-deploy] seeded content timeout" >&2
+  return 1
+}
+
 request_json() {
   local url="$1"
   local output="$2"
@@ -153,6 +174,7 @@ verify_asset() {
 }
 
 wait_for_health
+wait_for_seed
 read -r community_before sheets_before < <(fetch_snapshot before)
 
 responses=(
@@ -176,6 +198,7 @@ fi
 echo "[verify-local-deploy] restarting backend to verify repeatable seed"
 compose restart app-local >/dev/null
 wait_for_health
+wait_for_seed
 read -r community_after sheets_after < <(fetch_snapshot after)
 
 if [[ "$community_before" != "$community_after" || "$sheets_before" != "$sheets_after" ]]; then
