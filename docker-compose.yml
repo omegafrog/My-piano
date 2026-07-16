@@ -92,7 +92,7 @@ services:
     container_name: app-local
     user: gradle
     working_dir: /workspace
-    command: ["bash", "-lc", "bash ./gradlew --no-daemon --project-cache-dir /workspace/.gradle-app-local bootRun --args='--spring.profiles.active=local'"]
+    command: ["bash", "-lc", "bash ./gradlew --no-daemon --project-cache-dir /workspace/.gradle-app-local bootRun --args='--spring.profiles.active=local,local-seed'"]
     environment:
       - GRADLE_USER_HOME=/home/gradle/.gradle-app-local
       - SPRING_CLOUD_AWS_CREDENTIALS_ACCESS_KEY=local-access-key
