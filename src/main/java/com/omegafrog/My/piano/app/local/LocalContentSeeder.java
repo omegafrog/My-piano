@@ -36,7 +36,6 @@ import java.util.List;
 public class LocalContentSeeder {
 
     static final String SENTINEL_EMAIL = "local.library@mypiano.dev";
-    private static final String PUBLIC_BASE_URL = "http://localhost:8080";
     private static final String CONTENT_RESOURCE = "local-seed/content.json";
 
     private final UserRepository userRepository;
@@ -45,6 +44,7 @@ public class LocalContentSeeder {
     private final CommentRepository commentRepository;
     private final ObjectMapper objectMapper;
     private final Path storageBasePath;
+    private final String publicBaseUrl;
 
     public LocalContentSeeder(
             UserRepository userRepository,
@@ -52,13 +52,15 @@ public class LocalContentSeeder {
             SheetPostRepository sheetPostRepository,
             CommentRepository commentRepository,
             ObjectMapper objectMapper,
-            String storageBasePath) {
+            String storageBasePath,
+            String publicBaseUrl) {
         this.userRepository = userRepository;
         this.postRepository = postRepository;
         this.sheetPostRepository = sheetPostRepository;
         this.commentRepository = commentRepository;
         this.objectMapper = objectMapper;
         this.storageBasePath = Path.of(storageBasePath).toAbsolutePath().normalize();
+        this.publicBaseUrl = publicBaseUrl.replaceAll("/+$", "");
     }
 
     @Transactional
@@ -198,7 +200,7 @@ public class LocalContentSeeder {
     }
 
     private String publicUrl(String directory, String fileName) {
-        return PUBLIC_BASE_URL + "/" + directory + "/" + fileName;
+        return publicBaseUrl + "/" + directory + "/" + fileName;
     }
 
     record SeedContent(List<UserSeed> users, List<PostSeed> posts, List<SheetPostSeed> sheetPosts) {

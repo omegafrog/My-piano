@@ -114,9 +114,10 @@ resource "aws_instance" "app" {
   monitoring                  = false
 
   user_data = templatefile("${path.module}/user-data.sh.tftpl", {
-    repository_url = var.repository_url
-    repository_ref = var.repository_ref
-    swap_size_gib  = var.swap_size_gib
+    repository_url  = var.repository_url
+    repository_ref  = var.repository_ref
+    swap_size_gib   = var.swap_size_gib
+    public_base_url = "http://${aws_eip.app.public_ip}:8080"
   })
   user_data_replace_on_change = true
 

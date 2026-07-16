@@ -42,6 +42,7 @@ ELASTICSEARCH_APIKEY=local-api-key
 SECURITY_PASSWORDENCODER_SECRET=$(openssl rand -hex 32 2>/dev/null || head -c 32 /dev/urandom | base64)
 PAYMENT_TOSS_CLIENT_KEY=local-client-key
 PAYMENT_TOSS_SECRET_KEY=local-secret-key
+LOCAL_PUBLIC_BASE_URL=${public_base_url}
 EOF
 
 cat > /etc/systemd/system/my-piano.service <<'EOF'

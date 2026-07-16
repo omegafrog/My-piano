@@ -22,14 +22,16 @@ public class LocalContentSeedConfiguration {
             SheetPostRepository sheetPostRepository,
             CommentRepository commentRepository,
             ObjectMapper objectMapper,
-            @Value("${local.storage.base-path}") String storageBasePath) {
+            @Value("${local.storage.base-path}") String storageBasePath,
+            @Value("${local.public-base-url:http://localhost:8080}") String publicBaseUrl) {
         return new LocalContentSeeder(
                 userRepository,
                 postRepository,
                 sheetPostRepository,
                 commentRepository,
                 objectMapper,
-                storageBasePath);
+                storageBasePath,
+                publicBaseUrl);
     }
 
     @Bean
