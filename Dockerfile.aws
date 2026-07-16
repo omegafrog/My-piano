@@ -1,0 +1,22 @@
+FROM gradle:8.10.2-jdk17 AS build
+
+WORKDIR /workspace
+COPY . .
+RUN ./gradlew --no-daemon bootJar -x test \
+    && cp "$(find build/libs -maxdepth 1 -type f -name '*.jar' ! -name '*-plain.jar' | head -n 1)" /tmp/app.jar
+
+FROM eclipse-temurin:17-jre-jammy
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --system --uid 10001 --create-home --home-dir /app mypiano \
+    && mkdir -p /workspace/local-storage \
+    && chown -R mypiano:mypiano /app /workspace/local-storage
+
+WORKDIR /app
+COPY --from=build --chown=mypiano:mypiano /tmp/app.jar /app/app.jar
+
+USER mypiano
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]

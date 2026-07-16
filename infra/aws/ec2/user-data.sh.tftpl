@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+set -euxo pipefail
+
+exec > >(tee -a /var/log/my-piano-bootstrap.log | logger -t my-piano-bootstrap -s 2>/dev/console) 2>&1
+
+dnf update -y
+dnf install -y docker git curl jq
+systemctl enable --now docker
+
+mkdir -p /usr/local/lib/docker/cli-plugins
+case "$(uname -m)" in
+  x86_64) compose_arch=x86_64 ;;
+  aarch64|arm64) compose_arch=aarch64 ;;
+  *) echo "Unsupported architecture: $(uname -m)" >&2; exit 1 ;;
+esac
+curl -fsSL "https://github.com/docker/compose/releases/download/v2.35.1/docker-compose-linux-$compose_arch" \
+  -o /usr/local/lib/docker/cli-plugins/docker-compose
+chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+docker compose version
+
+if ! swapon --show | grep -q /swapfile; then
+  fallocate -l ${swap_size_gib}G /swapfile
+  chmod 600 /swapfile
+  mkswap /swapfile
+  swapon /swapfile
+  echo '/swapfile none swap sw 0 0' >> /etc/fstab
+fi
+sysctl vm.swappiness=20
+echo 'vm.swappiness=20' > /etc/sysctl.d/99-my-piano.conf
+
+rm -rf /opt/my-piano
+git clone --depth 1 --branch '${repository_ref}' '${repository_url}' /opt/my-piano
+cd /opt/my-piano
+
+umask 077
+cat > .env.aws <<EOF
+SPRING_CLOUD_AWS_CREDENTIALS_ACCESS_KEY=local-access-key
+SPRING_CLOUD_AWS_CREDENTIALS_SECRET_KEY=local-secret-key
+SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID=local-client-id
+SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET=local-client-secret
+ELASTICSEARCH_APIKEY=local-api-key
+SECURITY_PASSWORDENCODER_SECRET=$(openssl rand -hex 32 2>/dev/null || head -c 32 /dev/urandom | base64)
+PAYMENT_TOSS_CLIENT_KEY=local-client-key
+PAYMENT_TOSS_SECRET_KEY=local-secret-key
+EOF
+
+cat > /etc/systemd/system/my-piano.service <<'EOF'
+[Unit]
+Description=My Piano single-host Docker stack
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/opt/my-piano
+ExecStart=/usr/bin/docker compose -f docker-compose.aws.yml up -d --build
+ExecStop=/usr/bin/docker compose -f docker-compose.aws.yml down
+TimeoutStartSec=0
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable --now my-piano.service
+
+for attempt in $(seq 1 120); do
+  if curl -fsS http://127.0.0.1:8080/healthcheck >/dev/null; then
+    touch /var/lib/my-piano-bootstrap-complete
+    exit 0
+  fi
+  sleep 10
+done
+
+docker compose -f /opt/my-piano/docker-compose.aws.yml ps
+docker compose -f /opt/my-piano/docker-compose.aws.yml logs --tail=200 app
+exit 1

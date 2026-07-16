@@ -47,6 +47,7 @@ out/
 application.pid
 *.patch
 /local-storage/**
+/.env.aws
 /.claude/**
 mypiano-*-firebase-adminsdk-*.json
 static/**

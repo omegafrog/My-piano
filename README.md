@@ -156,6 +156,10 @@ docker compose --profile local down -v
 
 프런트엔드는 백엔드 smoke가 성공한 뒤 별도로 빌드·기동합니다. 프런트 코드·설정·의존성 원인으로 실패하더라도 `verify-local-deploy.sh`의 성공은 독립적으로 유지합니다. 이때 프런트 저장소에는 환경, commit, 재현 명령, 기대/실제 결과, 핵심 오류 로그와 백엔드 단독 성공 증거를 포함한 한국어 이슈를 등록합니다. 이슈 생성 권한이 없다면 같은 내용을 준비해 blocker로 남깁니다.
 
+### AWS Free Tier 단일 EC2 배포
+
+Elastic IP를 연결한 단일 EC2 배포용 Terraform은 [`infra/aws/ec2/README.md`](infra/aws/ec2/README.md)에 있습니다. 기본값은 서울 리전의 `t3.micro`, 30 GiB gp3, 4 GiB swap이며 MySQL·Elasticsearch·Redis·백엔드를 한 호스트에 실행합니다. Elastic IP는 인스턴스를 중지해도 과금될 수 있으므로 사용하지 않을 때는 `terraform destroy`로 함께 해제합니다.
+
 ### 테스트 실행
 ```bash
 # 전체 테스트
