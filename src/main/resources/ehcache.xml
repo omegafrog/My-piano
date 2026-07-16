@@ -24,7 +24,7 @@
 
     <cache alias="sheetPostViewCounts">
         <key-type>java.lang.Long</key-type>
-        <value-type>java.lang.Object</value-type>
+        <value-type>java.lang.Integer</value-type>
         <expiry>
             <ttl unit="seconds">300</ttl>
         </expiry>
@@ -35,7 +35,7 @@
 
     <cache alias="sheetPostLikeCounts">
         <key-type>java.lang.Long</key-type>
-        <value-type>java.lang.Object</value-type>
+        <value-type>java.lang.Integer</value-type>
         <expiry>
             <ttl unit="seconds">300</ttl>
         </expiry>
@@ -46,7 +46,7 @@
 
     <cache alias="postViewCounts">
         <key-type>java.lang.Long</key-type>
-        <value-type>java.lang.Object</value-type>
+        <value-type>java.lang.Integer</value-type>
         <expiry>
             <ttl unit="seconds">300</ttl>
         </expiry>
@@ -57,7 +57,7 @@
 
     <cache alias="postLikeCounts">
         <key-type>java.lang.Long</key-type>
-        <value-type>java.lang.Object</value-type>
+        <value-type>java.lang.Integer</value-type>
         <expiry>
             <ttl unit="seconds">300</ttl>
         </expiry>
@@ -68,7 +68,7 @@
 
     <cache alias="lessonViewCounts">
         <key-type>java.lang.Long</key-type>
-        <value-type>java.lang.Object</value-type>
+        <value-type>java.lang.Integer</value-type>
         <expiry>
             <ttl unit="seconds">300</ttl>
         </expiry>
@@ -79,7 +79,7 @@
 
     <cache alias="lessonLikeCounts">
         <key-type>java.lang.Long</key-type>
-        <value-type>java.lang.Object</value-type>
+        <value-type>java.lang.Integer</value-type>
         <expiry>
             <ttl unit="seconds">300</ttl>
         </expiry>
