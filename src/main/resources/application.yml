@@ -2,8 +2,9 @@ spring:
   application:
     name: mypiano
   profiles:
-    active: dev
-    include: secret
+    group:
+      dev: secret
+      prod: secret
   batch:
     job:
       enabled: false
