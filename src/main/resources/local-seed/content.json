@@ -1,0 +1,224 @@
+{
+  "users": [
+    {
+      "name": "서하",
+      "username": "seohwa_piano",
+      "email": "local.library@mypiano.dev",
+      "role": "CREATOR",
+      "profileAsset": "seohwa.svg",
+      "profileFile": "seohwa.svg"
+    },
+    {
+      "name": "윤슬",
+      "username": "yoonseul_keys",
+      "email": "yoonseul@mypiano.dev",
+      "role": "CREATOR",
+      "profileAsset": "yoonseul.svg",
+      "profileFile": "yoonseul.svg"
+    },
+    {
+      "name": "도윤",
+      "username": "doyoon_harmony",
+      "email": "doyoon@mypiano.dev",
+      "role": "USER",
+      "profileAsset": "doyoon.svg",
+      "profileFile": "doyoon.svg"
+    },
+    {
+      "name": "하린",
+      "username": "harin_studio",
+      "email": "harin@mypiano.dev",
+      "role": "CREATOR",
+      "profileAsset": "harin.svg",
+      "profileFile": "harin.svg"
+    },
+    {
+      "name": "민재",
+      "username": "minjae_rhythm",
+      "email": "minjae@mypiano.dev",
+      "role": "USER",
+      "profileAsset": "minjae.svg",
+      "profileFile": "minjae.svg"
+    }
+  ],
+  "posts": [
+    {
+      "title": "아침 연습에서 손목 힘을 빼는 방법",
+      "content": "느린 아르페지오를 칠 때 손목을 아주 작게 회전시키니 소리가 한결 고르게 들렸습니다. 메트로놈을 낮춘 뒤 음 사이의 연결을 듣는 데 집중한 과정도 함께 적어 봅니다.",
+      "author": 0,
+      "comment": "저도 오늘 같은 방법으로 연습해 보니 네 번째 손가락이 훨씬 편해졌어요.",
+      "commentAuthor": 2
+    },
+    {
+      "title": "비 오는 날 듣기 좋은 낭만파 소품",
+      "content": "창가에서 듣기 좋은 짧은 곡들을 골라 보았습니다. 화려한 곡보다 선율의 호흡이 길고 중간 성부가 따뜻한 작품들이 오늘 날씨와 잘 어울리네요.",
+      "author": 1,
+      "comment": "저녁에 차를 마시며 들어 보려고 목록에 담아 두었습니다.",
+      "commentAuthor": 4
+    },
+    {
+      "title": "페달을 바꾸는 순간을 귀로 찾기",
+      "content": "악보의 페달 표시만 따라가기보다 화성이 흐려지는 지점을 먼저 들어 보았습니다. 저음이 바뀌기 직전에 발을 가볍게 들어 주면 울림은 남고 음은 또렷해졌습니다.",
+      "author": 3,
+      "comment": "녹음해서 비교하니 차이가 분명해서 연습 방향을 잡기 좋았습니다.",
+      "commentAuthor": 0
+    },
+    {
+      "title": "작은 연주회를 준비하며 정한 곡 순서",
+      "content": "첫 곡은 편안한 왈츠, 가운데에는 리듬이 선명한 곡, 마지막에는 익숙한 영화 음악을 놓았습니다. 듣는 분들이 자연스럽게 분위기를 따라올 수 있도록 조성과 길이도 살폈습니다.",
+      "author": 2,
+      "comment": "분위기가 서서히 밝아지는 구성이라 실제 무대에서도 좋을 것 같아요.",
+      "commentAuthor": 1
+    },
+    {
+      "title": "왼손 반주가 선율을 덮지 않게 연습한 기록",
+      "content": "왼손만 아주 작게 연주한 뒤 오른손 선율을 허밍하며 합쳤습니다. 베이스의 첫 음만 방향을 잡고 나머지는 숨처럼 가볍게 두니 선율이 앞으로 잘 나왔습니다.",
+      "author": 4,
+      "comment": "허밍하면서 합치는 방법이 음량 균형을 잡는 데 정말 유용하네요.",
+      "commentAuthor": 3
+    },
+    {
+      "title": "초견 시간을 즐겁게 만드는 짧은 습관",
+      "content": "매일 한 페이지를 고르고 시작 전에 조표와 반복 기호를 먼저 확인합니다. 틀린 음에서 멈추지 않고 일정한 박으로 끝까지 가는 것을 목표로 하니 부담이 줄었습니다.",
+      "author": 0,
+      "comment": "완벽하게 치려는 마음을 내려놓으니 저도 초견 시간이 기다려집니다.",
+      "commentAuthor": 1
+    },
+    {
+      "title": "연습실에서 발견한 좋은 의자 높이",
+      "content": "팔꿈치가 건반보다 아주 조금 높은 상태에서 어깨가 가장 편했습니다. 발이 바닥에 안정적으로 닿도록 받침을 두니 긴 연습 뒤에도 허리가 덜 피곤했습니다.",
+      "author": 3,
+      "comment": "의자 높이를 다시 맞추니 옥타브 이동이 훨씬 자연스러워졌습니다.",
+      "commentAuthor": 4
+    },
+    {
+      "title": "주말 합주에서 배운 서로의 호흡 듣기",
+      "content": "각자 박자를 세기보다 상대가 프레이즈 끝에서 숨을 놓는 순간을 바라보았습니다. 작은 고개 움직임과 들숨을 함께 맞추니 시작과 마무리가 눈에 띄게 정돈되었습니다.",
+      "author": 1,
+      "comment": "다음 듀엣 연습에서는 음보다 먼저 호흡을 맞춰 보겠습니다.",
+      "commentAuthor": 2
+    }
+  ],
+  "sheetPosts": [
+    {
+      "title": "새벽 산책을 닮은 잔잔한 왈츠",
+      "content": "오른손 선율이 넓게 노래하고 왼손은 가볍게 걸음을 이어 가는 초중급 독주곡입니다. 여유 있는 템포에서 페달을 짧게 바꾸면 맑은 분위기를 살릴 수 있습니다.",
+      "sheetTitle": "새벽 산책 왈츠",
+      "author": 0,
+      "commentAuthor": 1,
+      "comment": "선율이 편안해서 하루를 시작하기 전에 천천히 연주하기 좋았습니다.",
+      "price": 2800,
+      "difficulty": "EASY",
+      "instrument": "PIANO_KEY_88",
+      "genrePrimary": "NEW_AGE",
+      "genreSecondary": "BGM",
+      "solo": true,
+      "lyrics": false,
+      "originalFileName": "새벽 산책 왈츠.pdf",
+      "sheetAsset": "piano-score.pdf.b64",
+      "sheetFile": "dawn-walk-waltz.pdf",
+      "thumbnailAsset": "dawn-walk-waltz.svg",
+      "thumbnailFile": "dawn-walk-waltz.svg"
+    },
+    {
+      "title": "창가에 머문 오후의 재즈",
+      "content": "부드러운 스윙 리듬과 따뜻한 메이저 세븐 화음을 담았습니다. 왼손 보이싱을 단순하게 정리해 재즈에 익숙하지 않아도 흐름을 즐길 수 있습니다.",
+      "sheetTitle": "창가의 오후",
+      "author": 1,
+      "commentAuthor": 3,
+      "comment": "화음 배치가 손에 잘 잡혀서 천천히 스윙 감각을 익히기 좋네요.",
+      "price": 3500,
+      "difficulty": "MEDIUM",
+      "instrument": "PIANO_KEY_88",
+      "genrePrimary": "JAZZ",
+      "genreSecondary": "BGM",
+      "solo": true,
+      "lyrics": false,
+      "originalFileName": "창가의 오후.pdf",
+      "sheetAsset": "piano-score.pdf.b64",
+      "sheetFile": "window-afternoon.pdf",
+      "thumbnailAsset": "window-afternoon.svg",
+      "thumbnailFile": "window-afternoon.svg"
+    },
+    {
+      "title": "별빛 아래에서 나누는 연탄곡",
+      "content": "서로의 손이 자주 겹치지 않도록 음역을 나눈 밝은 연탄곡입니다. 반복되는 주제가 파트 사이를 오가며 두 연주자가 대화하는 느낌을 만듭니다.",
+      "sheetTitle": "별빛 대화",
+      "author": 3,
+      "commentAuthor": 2,
+      "comment": "친구와 첫 연탄곡으로 맞춰 봤는데 역할이 분명해서 즐거웠습니다.",
+      "price": 4200,
+      "difficulty": "MEDIUM",
+      "instrument": "PIANO_KEY_88",
+      "genrePrimary": "DUET",
+      "genreSecondary": "NEW_AGE",
+      "solo": false,
+      "lyrics": false,
+      "originalFileName": "별빛 대화.pdf",
+      "sheetAsset": "piano-score.pdf.b64",
+      "sheetFile": "starlight-dialogue.pdf",
+      "thumbnailAsset": "starlight-dialogue.svg",
+      "thumbnailFile": "starlight-dialogue.svg"
+    },
+    {
+      "title": "따뜻한 기억을 담은 영화풍 테마",
+      "content": "잔잔하게 시작해 후반부에 넓은 옥타브로 감정이 열리는 구성입니다. 영상의 엔딩 장면처럼 긴 여운을 남기도록 마지막 화음을 충분히 유지해 주세요.",
+      "sheetTitle": "오래된 필름의 끝",
+      "author": 0,
+      "commentAuthor": 4,
+      "comment": "마지막 부분의 화성이 아름다워서 작은 발표회 곡으로 골랐습니다.",
+      "price": 3900,
+      "difficulty": "HARD",
+      "instrument": "PIANO_KEY_88",
+      "genrePrimary": "OST",
+      "genreSecondary": "CLASSIC",
+      "solo": true,
+      "lyrics": false,
+      "originalFileName": "오래된 필름의 끝.pdf",
+      "sheetAsset": "piano-score.pdf.b64",
+      "sheetFile": "old-film-ending.pdf",
+      "thumbnailAsset": "old-film-ending.svg",
+      "thumbnailFile": "old-film-ending.svg"
+    },
+    {
+      "title": "아이와 함께 부르는 구름 노래",
+      "content": "오른손은 한 옥타브 안에서 움직이고 왼손은 단순한 두 음 반주를 반복합니다. 가사를 따라 부르며 자연스럽게 박과 셈여림을 익힐 수 있습니다.",
+      "sheetTitle": "구름 우체국",
+      "author": 3,
+      "commentAuthor": 0,
+      "comment": "멜로디가 금방 기억나서 가족과 함께 연주하기 좋았어요.",
+      "price": 2200,
+      "difficulty": "VERY_EASY",
+      "instrument": "PIANO_KEY_61",
+      "genrePrimary": "KIDS",
+      "genreSecondary": "CUSTOM",
+      "solo": true,
+      "lyrics": true,
+      "originalFileName": "구름 우체국.pdf",
+      "sheetAsset": "piano-score.pdf.b64",
+      "sheetFile": "cloud-post-office.pdf",
+      "thumbnailAsset": "cloud-post-office.svg",
+      "thumbnailFile": "cloud-post-office.svg"
+    },
+    {
+      "title": "무대의 첫 장면을 여는 서곡",
+      "content": "선명한 리듬과 상승하는 화음으로 공연의 시작을 표현한 곡입니다. 중간의 조용한 구간에서 호흡을 넓게 잡으면 마지막 주제가 더욱 힘 있게 돌아옵니다.",
+      "sheetTitle": "커튼이 오르는 순간",
+      "author": 1,
+      "commentAuthor": 2,
+      "comment": "리듬이 또렷하고 전개가 극적이라 오프닝 곡으로 잘 어울립니다.",
+      "price": 4600,
+      "difficulty": "HARD",
+      "instrument": "PIANO_KEY_88",
+      "genrePrimary": "MUSICAL",
+      "genreSecondary": "CLASSIC",
+      "solo": true,
+      "lyrics": false,
+      "originalFileName": "커튼이 오르는 순간.pdf",
+      "sheetAsset": "piano-score.pdf.b64",
+      "sheetFile": "rising-curtain.pdf",
+      "thumbnailAsset": "rising-curtain.svg",
+      "thumbnailFile": "rising-curtain.svg"
+    }
+  ]
+}
